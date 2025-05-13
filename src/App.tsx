@@ -12,6 +12,7 @@ import FluxoCaixa from "./pages/FluxoCaixa";
 import Promocoes from "./pages/Promocoes";
 import Simulador from "./pages/Simulador";
 import Marketing from "./pages/Marketing";
+import GerenteIA from "./pages/GerenteIA";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/promocoes" element={<Promocoes />} />
           <Route path="/simulador" element={<Simulador />} />
           <Route path="/marketing" element={<Marketing />} />
+          <Route path="/gerente-ia" element={<GerenteIA />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

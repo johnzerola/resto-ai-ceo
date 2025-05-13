@@ -39,11 +39,11 @@ export function Sidebar({ className }: SidebarProps) {
     { name: "Ficha Técnica", icon: FileText, path: "/ficha-tecnica" },
     { name: "DRE & CMV", icon: DollarSign, path: "/dre-cmv" },
     { name: "Estoque", icon: PackageOpen, path: "/estoque" },
+    { name: "Fluxo de Caixa", icon: Database, path: "/fluxo-caixa" },
     { name: "Promoções", icon: Calendar, path: "/promocoes" },
     { name: "Simulador", icon: BarChartBig, path: "/simulador" },
     { name: "Gerente IA", icon: MessageSquare, path: "/gerente-ia" },
-    { name: "Marketing IA", icon: BarChart4, path: "/marketing-ia" },
-    { name: "Financeiro", icon: Database, path: "/financeiro" },
+    { name: "Marketing", icon: BarChart4, path: "/marketing" },
     { name: "Configurações", icon: Settings, path: "/configuracoes" },
   ];
 
