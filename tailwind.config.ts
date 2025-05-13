@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,43 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Restaurant AI theme colors
+				"resto-blue": {
+					50: "#F0F7FF",
+					100: "#E0EFFF",
+					200: "#C0DFFF",
+					300: "#80BFFF",
+					400: "#4D9FFF",
+					500: "#2E7FE8",
+					600: "#1A5FCC",
+					700: "#0B4FB3",
+					800: "#083F99",
+					900: "#052F80",
+				},
+				"resto-gray": {
+					50: "#F9FAFB",
+					100: "#F3F4F6",
+					200: "#E5E7EB",
+					300: "#D1D5DB",
+					400: "#9CA3AF",
+					500: "#6B7280",
+					600: "#4B5563",
+					700: "#374151",
+					800: "#1F2937",
+					900: "#111827",
+				},
+				"resto-green": {
+					50: "#ECFDF5",
+					100: "#D1FAE5",
+					200: "#A7F3D0",
+					300: "#6EE7B7",
+					400: "#34D399",
+					500: "#10B981",
+					600: "#059669",
+					700: "#047857",
+					800: "#065F46",
+					900: "#064E3B",
 				}
 			},
 			borderRadius: {
@@ -84,11 +122,16 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-slow': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-slow': 'pulse-slow 3s ease-in-out infinite',
 			}
 		}
 	},
