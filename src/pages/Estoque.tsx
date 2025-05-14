@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Layout } from "@/components/restaurant/Layout";
 import { InventoryOverview } from "@/components/restaurant/InventoryOverview";
 import { InventoryForm } from "@/components/restaurant/InventoryForm";
+import { ShoppingList } from "@/components/restaurant/ShoppingList";
 import { Button } from "@/components/ui/button";
 import { Plus, FileDown, FileUp } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Estoque = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -61,7 +63,20 @@ const Estoque = () => {
           }}
         />
       ) : (
-        <InventoryOverview onEdit={editItem} />
+        <Tabs defaultValue="inventory" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="inventory">Inventário</TabsTrigger>
+            <TabsTrigger value="shopping">Lista de Compras</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="inventory">
+            <InventoryOverview onEdit={editItem} />
+          </TabsContent>
+          
+          <TabsContent value="shopping">
+            <ShoppingList />
+          </TabsContent>
+        </Tabs>
       )}
     </Layout>
   );

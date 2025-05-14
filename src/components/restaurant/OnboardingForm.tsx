@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export function OnboardingForm() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     businessName: "",
@@ -23,15 +25,42 @@ export function OnboardingForm() {
   };
 
   const handleNext = () => {
+    if (!formData.businessName || !formData.businessType || !formData.averageMonthlySales) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos antes de continuar.",
+        variant: "destructive"
+      });
+      return;
+    }
     setStep(step + 1);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Save form data to localStorage or context for use in the app
+    
+    // Validar campos do segundo passo
+    if (!formData.fixedExpenses || !formData.variableExpenses || !formData.desiredProfitMargin) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos antes de concluir.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Salvar dados no localStorage
     localStorage.setItem("restaurantData", JSON.stringify(formData));
-    // Navigate to dashboard
-    navigate("/");
+    
+    // Exibir mensagem de sucesso
+    toast({
+      title: "Configuração concluída!",
+      description: "Seus dados foram salvos com sucesso.",
+      variant: "success"
+    });
+    
+    // Navegar para dashboard
+    navigate("/", { replace: true });
   };
 
   const businessTypes = [
