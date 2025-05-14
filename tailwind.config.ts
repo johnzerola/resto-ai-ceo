@@ -56,6 +56,7 @@ export default {
             400: "#4c84ff",
             500: "#1a56db",
             600: "#1245b5",
+            700: "#0e3a8a", // Added the missing 700 shade
           },
           green: {
             500: "#10b981",
