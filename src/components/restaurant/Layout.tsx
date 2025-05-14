@@ -8,10 +8,14 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="md:ml-64 p-4 md:p-6 lg:p-8">
-        {children}
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <div className="flex">
+        <Sidebar />
+        <main className="flex-1 p-8">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
+        </main>
       </div>
       <AIAssistant />
     </div>

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ShoppingItem {
@@ -22,6 +22,7 @@ export function ShoppingList() {
   const [newItemName, setNewItemName] = useState("");
   const [newItemQuantity, setNewItemQuantity] = useState("");
   const [newItemUnit, setNewItemUnit] = useState("un");
+  const [showCompleted, setShowCompleted] = useState(true);
 
   useEffect(() => {
     // Carregar lista de compras do localStorage
@@ -36,7 +37,14 @@ export function ShoppingList() {
   };
 
   const addItem = () => {
-    if (!newItemName.trim()) return;
+    if (!newItemName.trim()) {
+      toast({
+        title: "Nome do item necessário",
+        description: "Por favor, informe o nome do item para adicionar à lista.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const newItem: ShoppingItem = {
       id: Date.now().toString(),
@@ -53,7 +61,6 @@ export function ShoppingList() {
     // Limpar campos
     setNewItemName("");
     setNewItemQuantity("");
-    setNewItemUnit("un");
     
     toast({
       title: "Item adicionado",
@@ -91,19 +98,90 @@ export function ShoppingList() {
     });
   };
 
+  // Adicionar vários itens do inventário com estoque baixo
+  const addInventoryItems = () => {
+    try {
+      const savedInventory = localStorage.getItem("inventory");
+      if (savedInventory) {
+        const inventory = JSON.parse(savedInventory);
+        const lowStockItems = inventory.filter((item: any) => 
+          item.quantity <= item.minStockLevel
+        );
+        
+        if (lowStockItems.length === 0) {
+          toast({
+            title: "Sem itens com estoque baixo",
+            description: "Não há itens com estoque abaixo do mínimo para adicionar."
+          });
+          return;
+        }
+        
+        // Adicionar itens que não estão na lista
+        const currentItemNames = items.map(item => item.name.toLowerCase());
+        const newItems = lowStockItems
+          .filter((item: any) => !currentItemNames.includes(item.name.toLowerCase()))
+          .map((item: any) => ({
+            id: Date.now() + "-" + Math.random().toString(36).substr(2, 9),
+            name: item.name,
+            quantity: Math.ceil(item.minStockLevel - item.quantity).toString(),
+            unit: item.unit,
+            checked: false
+          }));
+          
+        if (newItems.length === 0) {
+          toast({
+            title: "Itens já adicionados",
+            description: "Os itens com estoque baixo já estão na lista de compras."
+          });
+          return;
+        }
+        
+        const updatedList = [...items, ...newItems];
+        setItems(updatedList);
+        saveList(updatedList);
+        
+        toast({
+          title: `${newItems.length} itens adicionados`,
+          description: "Itens com estoque baixo foram adicionados à lista de compras."
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar itens do inventário:", error);
+      toast({
+        title: "Erro ao adicionar itens",
+        description: "Ocorreu um erro ao adicionar itens do inventário.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Filtrar itens com base na preferência de exibição
+  const filteredItems = showCompleted 
+    ? items 
+    : items.filter(item => !item.checked);
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
           <span>Lista de Compras</span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={clearCompleted}
-            disabled={!items.some(item => item.checked)}
-          >
-            Limpar Concluídos
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowCompleted(!showCompleted)}
+            >
+              {showCompleted ? "Ocultar Concluídos" : "Mostrar Todos"}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={clearCompleted}
+              disabled={!items.some(item => item.checked)}
+            >
+              Limpar Concluídos
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -115,6 +193,7 @@ export function ShoppingList() {
               placeholder="Nome do item"
               value={newItemName}
               onChange={(e) => setNewItemName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addItem()}
             />
           </div>
           <div className="w-20">
@@ -124,6 +203,7 @@ export function ShoppingList() {
               placeholder="Qtd"
               value={newItemQuantity}
               onChange={(e) => setNewItemQuantity(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addItem()}
             />
           </div>
           <div className="w-20">
@@ -133,6 +213,7 @@ export function ShoppingList() {
               placeholder="un"
               value={newItemUnit}
               onChange={(e) => setNewItemUnit(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addItem()}
             />
           </div>
           <Button onClick={addItem} className="mb-0">
@@ -140,14 +221,23 @@ export function ShoppingList() {
           </Button>
         </div>
 
+        <Button 
+          variant="outline" 
+          className="w-full mb-4" 
+          onClick={addInventoryItems}
+        >
+          <ShoppingBag className="h-4 w-4 mr-2" />
+          Adicionar Itens com Estoque Baixo
+        </Button>
+
         <div className="border rounded-md">
-          {items.length === 0 ? (
+          {filteredItems.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground">
               Nenhum item na lista de compras
             </div>
           ) : (
-            <ul className="divide-y">
-              {items.map((item) => (
+            <ul className="divide-y max-h-[400px] overflow-y-auto">
+              {filteredItems.map((item) => (
                 <li key={item.id} className="flex items-center justify-between p-3">
                   <div className="flex items-center gap-3">
                     <Checkbox 
