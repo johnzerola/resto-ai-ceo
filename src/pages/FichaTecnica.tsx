@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/restaurant/Layout";
 import { RecipeForm } from "@/components/restaurant/RecipeForm";
@@ -12,6 +11,7 @@ const FichaTecnica = () => {
   const [isAddingRecipe, setIsAddingRecipe] = useState(false);
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [showConfigAlert, setShowConfigAlert] = useState(false);
+  const [missingData, setMissingData] = useState<string[]>([]);
   const navigate = useNavigate();
 
   // Verificar se as configurações financeiras estão definidas
@@ -19,11 +19,17 @@ const FichaTecnica = () => {
     const savedData = localStorage.getItem("restaurantData");
     if (savedData) {
       const data = JSON.parse(savedData);
-      // Verificar se os dados financeiros essenciais estão preenchidos
-      const hasFinancialData = data.fixedExpenses && data.variableExpenses && data.desiredProfitMargin;
-      setShowConfigAlert(!hasFinancialData);
+      // Verificar quais dados financeiros estão faltando
+      const missing: string[] = [];
+      if (!data.fixedExpenses) missing.push("despesas fixas");
+      if (!data.variableExpenses) missing.push("despesas variáveis");
+      if (!data.desiredProfitMargin) missing.push("margem de lucro desejada");
+      
+      setMissingData(missing);
+      setShowConfigAlert(missing.length > 0);
     } else {
       setShowConfigAlert(true);
+      setMissingData(["todos os dados financeiros"]);
     }
   }, []);
 
@@ -73,8 +79,8 @@ const FichaTecnica = () => {
         <Alert className="mb-6 border-amber-500 bg-amber-50">
           <AlertTitle className="text-amber-800">Configurações financeiras incompletas</AlertTitle>
           <AlertDescription className="text-amber-700">
-            Para cálculos mais precisos de preços sugeridos, recomendamos configurar seus dados financeiros.
-            <Button variant="link" className="text-amber-800 p-0 h-auto font-semibold" onClick={goToSettings}>
+            Para cálculos mais precisos de preços sugeridos, configure {missingData.join(", ")} nas configurações.
+            <Button variant="link" className="text-amber-800 p-0 h-auto font-semibold ml-1" onClick={goToSettings}>
               Ir para Configurações
             </Button>
           </AlertDescription>

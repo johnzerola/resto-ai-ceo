@@ -221,14 +221,14 @@ export function RecipeForm({ recipeId, onCancel, onSuccess }: RecipeFormProps) {
   };
   
   // Carregar receita se estiver em modo de edição
-  useState(() => {
+  useEffect(() => {
     if (recipeId) {
       loadRecipe(recipeId);
     } else {
       // Adicionar um ingrediente vazio para nova receita
       addIngredient();
     }
-  });
+  }, [recipeId]);
   
   // Função para salvar a receita
   const onSubmit = (data: Recipe) => {
