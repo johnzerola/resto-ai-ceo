@@ -34,9 +34,23 @@ const Configuracoes = () => {
 
   const handleSave = () => {
     localStorage.setItem("restaurantData", JSON.stringify(restaurantData));
+    
+    // Calcular e mostrar um resumo dos dados financeiros
+    const fixedExpenses = parseFloat(restaurantData.fixedExpenses) || 0;
+    const avgSales = parseFloat(restaurantData.averageMonthlySales) || 0;
+    const variablePercentage = parseFloat(restaurantData.variableExpenses) || 0;
+    const desiredMargin = parseFloat(restaurantData.desiredProfitMargin) || 0;
+    
+    // Mensagem personalizada sobre o impacto nos preços
+    let impactMessage = "";
+    if (fixedExpenses > 0 && avgSales > 0) {
+      const fixedCostPerPlate = fixedExpenses / (avgSales / 50); // Estimando ticket médio de R$50
+      impactMessage = `Com esses dados, cada prato inclui aproximadamente R$${fixedCostPerPlate.toFixed(2)} de custos fixos.`;
+    }
+    
     toast({
       title: "Configurações salvas",
-      description: "As configurações do seu restaurante foram atualizadas com sucesso.",
+      description: `As configurações do seu restaurante foram atualizadas com sucesso. ${impactMessage}`,
       variant: "success"
     });
   };
@@ -110,6 +124,9 @@ const Configuracoes = () => {
                   value={restaurantData.averageMonthlySales}
                   onChange={(e) => handleChange("averageMonthlySales", e.target.value)}
                 />
+                <p className="text-sm text-muted-foreground">
+                  Este valor é usado para calcular o impacto dos custos fixos em cada prato.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -129,6 +146,9 @@ const Configuracoes = () => {
                   value={restaurantData.fixedExpenses}
                   onChange={(e) => handleChange("fixedExpenses", e.target.value)}
                 />
+                <p className="text-sm text-muted-foreground">
+                  Inclua aluguel, salários, contas fixas e outros custos mensais fixos.
+                </p>
               </div>
               
               <div className="space-y-2">
@@ -139,6 +159,9 @@ const Configuracoes = () => {
                   value={restaurantData.variableExpenses}
                   onChange={(e) => handleChange("variableExpenses", e.target.value)}
                 />
+                <p className="text-sm text-muted-foreground">
+                  Percentual sobre o valor de venda (impostos, comissões, taxas de cartão, etc).
+                </p>
               </div>
               
               <div className="space-y-2">
@@ -149,6 +172,18 @@ const Configuracoes = () => {
                   value={restaurantData.desiredProfitMargin}
                   onChange={(e) => handleChange("desiredProfitMargin", e.target.value)}
                 />
+                <p className="text-sm text-muted-foreground">
+                  Percentual de lucro desejado após cobrir todos os custos (fixos e variáveis).
+                </p>
+              </div>
+              
+              <div className="bg-muted p-4 rounded-lg mt-4">
+                <h3 className="text-sm font-medium mb-2">Como esses dados são usados:</h3>
+                <p className="text-sm text-muted-foreground">
+                  Estes valores são utilizados no cálculo automático de preços sugeridos nas suas fichas técnicas.
+                  A fórmula considera o custo dos ingredientes, adiciona uma parte proporcional das despesas fixas 
+                  mensais, calcula o impacto das despesas variáveis e aplica sua margem de lucro desejada.
+                </p>
               </div>
             </CardContent>
           </Card>
