@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileDown, PieChart } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { getFinancialData } from "@/services/FinancialDataService";
 
 // Interface para dados de CMV
 interface CMVCategory {
@@ -37,15 +37,29 @@ export function CMVAnalysis() {
   ];
 
   useEffect(() => {
-    // Simular carregamento de dados do CMV
+    // Carregar dados do CMV
     const loadCMVData = () => {
-      // Aqui você integraria com sua API ou base de dados
-      // Por enquanto, usaremos dados simulados
-      const data = generateSampleCMVData();
+      // Obter dados financeiros atualizados
+      const financialData = getFinancialData();
+      
+      // Gerar dados de CMV com base nos dados financeiros
+      const data = generateCMVData(financialData);
       setCmvData(data);
     };
 
+    // Carregar dados iniciais
     loadCMVData();
+    
+    // Adicionar listener para atualizações nos dados financeiros
+    const handleFinancialDataUpdate = () => {
+      loadCMVData();
+    };
+    
+    window.addEventListener("financialDataUpdated", handleFinancialDataUpdate);
+    
+    return () => {
+      window.removeEventListener("financialDataUpdated", handleFinancialDataUpdate);
+    };
   }, []);
 
   // Função para formatar moeda
@@ -295,48 +309,64 @@ export function CMVAnalysis() {
   );
 }
 
-// Função para gerar dados de exemplo para o CMV
-function generateSampleCMVData(): CMVData {
+// Função para gerar dados de CMV com base nos dados financeiros
+function generateCMVData(financialData: any): CMVData {
+  // Usar categorias de CMV dos dados financeiros se disponíveis
+  const cmvCategories = financialData?.cmvCategories?.length 
+    ? financialData.cmvCategories
+    : [
+        {
+          name: "Pratos Principais",
+          sales: 85000,
+          cost: 25500,
+          cmvPercentage: 30.0,
+          color: "#4f46e5"
+        },
+        {
+          name: "Entradas",
+          sales: 28000,
+          cost: 7280,
+          cmvPercentage: 26.0,
+          color: "#16a34a"
+        },
+        {
+          name: "Sobremesas",
+          sales: 18000,
+          cost: 4680,
+          cmvPercentage: 26.0,
+          color: "#ea580c"
+        },
+        {
+          name: "Bebidas Alcoólicas",
+          sales: 35000,
+          cost: 12600,
+          cmvPercentage: 36.0,
+          color: "#dc2626"
+        },
+        {
+          name: "Bebidas Não Alcoólicas",
+          sales: 14000,
+          cost: 3360,
+          cmvPercentage: 24.0,
+          color: "#0ea5e9"
+        }
+      ];
+
+  // Calcular CMV geral
+  let totalSales = 0;
+  let totalCosts = 0;
+  
+  cmvCategories.forEach(category => {
+    totalSales += category.sales;
+    totalCosts += category.cost;
+  });
+  
+  const overallCMV = totalSales > 0 ? (totalCosts / totalSales * 100) : 0;
+  
   return {
     period: "Maio 2025",
-    overallCMV: 30.3,
-    categories: [
-      {
-        name: "Pratos Principais",
-        sales: 85000,
-        cost: 25500,
-        cmvPercentage: 30.0,
-        color: "#4f46e5"
-      },
-      {
-        name: "Entradas",
-        sales: 28000,
-        cost: 7280,
-        cmvPercentage: 26.0,
-        color: "#16a34a"
-      },
-      {
-        name: "Sobremesas",
-        sales: 18000,
-        cost: 4680,
-        cmvPercentage: 26.0,
-        color: "#ea580c"
-      },
-      {
-        name: "Bebidas Alcoólicas",
-        sales: 35000,
-        cost: 12600,
-        cmvPercentage: 36.0,
-        color: "#dc2626"
-      },
-      {
-        name: "Bebidas Não Alcoólicas",
-        sales: 14000,
-        cost: 3360,
-        cmvPercentage: 24.0,
-        color: "#0ea5e9"
-      }
-    ],
+    overallCMV,
+    categories: cmvCategories,
     benchmarks: {
       industry: 32.0,
       target: 30.0,

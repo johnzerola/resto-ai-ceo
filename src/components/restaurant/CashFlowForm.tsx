@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, AlertCircle, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { CashFlowEntry } from "./CashFlowOverview";
+import { updateFinancialData } from "@/services/FinancialDataService";
 
 interface CashFlowFormProps {
   entryId: string | null;
@@ -107,6 +107,7 @@ export function CashFlowForm({ entryId, onCancel, onSuccess }: CashFlowFormProps
     }
   }, [entryId, setValue]);
 
+  
   // Save cash flow entry
   const onSubmit = (data: CashFlowEntry) => {
     const entryToSave: CashFlowEntry = {
@@ -133,6 +134,9 @@ export function CashFlowForm({ entryId, onCancel, onSuccess }: CashFlowFormProps
       }
       
       localStorage.setItem("cashFlow", JSON.stringify(entries));
+      
+      // Atualizar dados financeiros baseados no fluxo de caixa
+      updateFinancialData(entries);
       
       toast.success(entryId ? "Transação atualizada com sucesso!" : "Nova transação adicionada com sucesso!");
       onSuccess();

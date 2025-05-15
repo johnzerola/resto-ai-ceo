@@ -1,9 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileDown, Calendar } from "lucide-react";
+import { getFinancialData } from "@/services/FinancialDataService";
 
 // Interface para dados do DRE
 interface DREData {
@@ -52,16 +52,30 @@ export function DREOverview() {
     { id: "q2", label: "2º Trimestre 2025" }
   ];
 
+  // Carregar dados financeiros e atualizar o DRE quando houver alterações
   useEffect(() => {
-    // Simular carregamento de dados do DRE
     const loadDREData = () => {
-      // Aqui você integraria com sua API ou base de dados
-      // Por enquanto, usaremos dados simulados
-      const data = generateSampleDREData(selectedPeriod);
+      // Obter dados financeiros atualizados
+      const financialData = getFinancialData();
+      
+      // Gerar dados do DRE com base no período selecionado e nos dados financeiros
+      const data = generateDREData(selectedPeriod, financialData);
       setDreData(data);
     };
 
+    // Carregar dados iniciais
     loadDREData();
+    
+    // Adicionar listener para atualizações nos dados financeiros
+    const handleFinancialDataUpdate = () => {
+      loadDREData();
+    };
+    
+    window.addEventListener("financialDataUpdated", handleFinancialDataUpdate);
+    
+    return () => {
+      window.removeEventListener("financialDataUpdated", handleFinancialDataUpdate);
+    };
   }, [selectedPeriod]);
 
   // Função para formatar moeda
@@ -320,8 +334,8 @@ export function DREOverview() {
   );
 }
 
-// Função para gerar dados de exemplo
-function generateSampleDREData(periodId: string): DREData {
+// Função para gerar dados do DRE com base no período e dados financeiros
+function generateDREData(periodId: string, financialData: any): DREData {
   // Base values
   let multiplier = 1;
   let periodName = "Maio 2025";
@@ -346,18 +360,42 @@ function generateSampleDREData(periodId: string): DREData {
       break;
   }
   
-  // Revenue calculations
-  const foodSales = 125000 * multiplier;
-  const beverageSales = 45000 * multiplier;
-  const deliverySales = 30000 * multiplier;
-  const otherSales = 5000 * multiplier;
+  // Use financial data from cash flow if available, otherwise use sample data
+  const foodSales = financialData?.revenue?.foodSales 
+    ? financialData.revenue.foodSales * multiplier 
+    : 125000 * multiplier;
+    
+  const beverageSales = financialData?.revenue?.beverageSales 
+    ? financialData.revenue.beverageSales * multiplier 
+    : 45000 * multiplier;
+    
+  const deliverySales = financialData?.revenue?.deliverySales 
+    ? financialData.revenue.deliverySales * multiplier 
+    : 30000 * multiplier;
+    
+  const otherSales = financialData?.revenue?.otherSales 
+    ? financialData.revenue.otherSales * multiplier 
+    : 5000 * multiplier;
+    
   const totalRevenue = foodSales + beverageSales + deliverySales + otherSales;
   
-  // Costs calculations
-  const foodCost = foodSales * 0.32;
-  const beverageCost = beverageSales * 0.28;
-  const packagingCost = deliverySales * 0.08;
-  const otherCosts = totalRevenue * 0.02;
+  // Costs calculations - use financial data if available
+  const foodCost = financialData?.costs?.foodCost 
+    ? financialData.costs.foodCost * multiplier 
+    : foodSales * 0.32;
+    
+  const beverageCost = financialData?.costs?.beverageCost 
+    ? financialData.costs.beverageCost * multiplier 
+    : beverageSales * 0.28;
+    
+  const packagingCost = financialData?.costs?.packagingCost 
+    ? financialData.costs.packagingCost * multiplier 
+    : deliverySales * 0.08;
+    
+  const otherCosts = financialData?.costs?.otherCosts 
+    ? financialData.costs.otherCosts * multiplier 
+    : totalRevenue * 0.02;
+    
   const totalCosts = foodCost + beverageCost + packagingCost + otherCosts;
   
   // Gross profit

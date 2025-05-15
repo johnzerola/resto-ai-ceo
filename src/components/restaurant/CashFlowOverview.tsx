@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
+import { updateFinancialData } from "@/services/FinancialDataService";
 
 // Interface for cash flow entry
 export interface CashFlowEntry {
@@ -152,6 +152,10 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
       setCashFlow(updatedCashFlow);
       localStorage.setItem("cashFlow", JSON.stringify(updatedCashFlow));
       calculateSummary(updatedCashFlow);
+      
+      // Atualizar dados financeiros após exclusão de transação
+      updateFinancialData(updatedCashFlow);
+      
       toast.success("Transação excluída com sucesso!");
     }
   };
