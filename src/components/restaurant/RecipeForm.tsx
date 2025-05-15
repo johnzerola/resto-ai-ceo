@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +36,16 @@ interface Recipe {
   profitMargin: number;
 }
 
+// Interface para dados do restaurante
+interface RestaurantData {
+  businessName: string;
+  businessType: string;
+  averageMonthlySales: string;
+  fixedExpenses: string;
+  variableExpenses: string;
+  desiredProfitMargin: string;
+}
+
 interface RecipeFormProps {
   recipeId: string | null;
   onCancel: () => void;
@@ -51,6 +60,7 @@ export function RecipeForm({ recipeId, onCancel, onSuccess }: RecipeFormProps) {
   const [totalCost, setTotalCost] = useState(0);
   const [suggestedPrice, setSuggestedPrice] = useState(0);
   const [profitMargin, setProfitMargin] = useState(0);
+  const [restaurantData, setRestaurantData] = useState<RestaurantData | null>(null);
   
   // Categorias de produtos
   const categories = [
@@ -70,6 +80,14 @@ export function RecipeForm({ recipeId, onCancel, onSuccess }: RecipeFormProps) {
   const servingUnits = [
     "porção", "unidade", "prato", "copo", "taça"
   ];
+
+  // Carregar dados do restaurante
+  useEffect(() => {
+    const savedData = localStorage.getItem("restaurantData");
+    if (savedData) {
+      setRestaurantData(JSON.parse(savedData));
+    }
+  }, []);
 
   // Formulário com react-hook-form
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<Recipe>();
@@ -112,20 +130,57 @@ export function RecipeForm({ recipeId, onCancel, onSuccess }: RecipeFormProps) {
 
   // Calcular custo total e preço sugerido
   const calculateTotalCost = () => {
-    const cost = ingredients.reduce((total, ing) => {
+    // Calcular custo dos ingredientes
+    const ingredientsCost = ingredients.reduce((total, ing) => {
       return total + (ing.quantity * ing.costPerUnit);
     }, 0);
     
-    setTotalCost(cost);
+    // Definir o custo total dos ingredientes
+    setTotalCost(ingredientsCost);
     
-    // Restaurante normal geralmente usa 30% de CMV como referência
-    const desiredProfitMargin = 0.7; // 70% de margem
-    const suggestedPrice = cost / (1 - desiredProfitMargin);
+    // Obter as despesas fixas e variáveis do restaurante
+    let fixedExpenses = 0;
+    let variableExpensesPercentage = 0;
+    let desiredProfitMarginPercentage = 70; // Padrão de 70% se não houver dados
+    
+    if (restaurantData) {
+      fixedExpenses = parseFloat(restaurantData.fixedExpenses) || 0;
+      variableExpensesPercentage = parseFloat(restaurantData.variableExpenses) || 0;
+      desiredProfitMarginPercentage = parseFloat(restaurantData.desiredProfitMargin) || 70;
+    }
+    
+    // Estimativa de vendas mensais para distribuir custos fixos
+    let averageMonthlySales = restaurantData?.averageMonthlySales 
+      ? parseFloat(restaurantData.averageMonthlySales) 
+      : 30000; // valor padrão
+    
+    // Estimar número médio de pratos vendidos por mês (supondo ticket médio de R$50)
+    const estimatedMonthlyDishes = averageMonthlySales / 50;
+    
+    // Calcular custo fixo por prato
+    const fixedCostPerDish = fixedExpenses / estimatedMonthlyDishes;
+    
+    // Calcular custo total (ingredientes + fixo por prato)
+    const totalCostPerDish = ingredientsCost + fixedCostPerDish;
+    
+    // Calcular preço base considerando custos fixos e variáveis
+    const basePrice = totalCostPerDish / (1 - (variableExpensesPercentage / 100));
+    
+    // Calcular preço final considerando margem de lucro desejada
+    const suggestedPrice = basePrice / (1 - (desiredProfitMarginPercentage / 100));
     
     setSuggestedPrice(suggestedPrice);
     
+    // Cálculo da margem real se um preço de venda já foi definido
     if (sellingPrice > 0) {
-      const calculatedMargin = (sellingPrice - cost) / sellingPrice * 100;
+      // Considerar custos variáveis do preço de venda
+      const variableCosts = sellingPrice * (variableExpensesPercentage / 100);
+      
+      // Lucro = Preço - (Custo dos Ingredientes + Custos Fixos por Prato + Custos Variáveis)
+      const profit = sellingPrice - (ingredientsCost + fixedCostPerDish + variableCosts);
+      
+      // Margem = (Lucro / Preço) * 100
+      const calculatedMargin = (profit / sellingPrice) * 100;
       setProfitMargin(calculatedMargin);
     }
   };
