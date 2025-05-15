@@ -4,10 +4,18 @@ import { Layout } from "@/components/restaurant/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getFinancialData } from "@/services/FinancialDataService";
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Configuracoes = () => {
   const { toast } = useToast();
@@ -17,14 +25,31 @@ const Configuracoes = () => {
     averageMonthlySales: "",
     fixedExpenses: "",
     variableExpenses: "",
-    desiredProfitMargin: ""
+    desiredProfitMargin: "",
+    targetFoodCost: "", // Novo campo para custo alvo de alimentos
+    targetBeverageCost: "", // Novo campo para custo alvo de bebidas
+    laborCostPercentage: "", // Novo campo para percentual de custo de mão de obra
+    occupancyCostPercentage: "", // Novo campo para percentual de custo de ocupação
+    averageTicket: "", // Novo campo para ticket médio
+    averageOccupancy: "", // Novo campo para ocupação média
+    tableCount: "", // Novo campo para número de mesas
+    seatsPerTable: "", // Novo campo para assentos por mesa
   });
   
   useEffect(() => {
     // Carregar dados do restaurante do localStorage
     const savedData = localStorage.getItem("restaurantData");
     if (savedData) {
-      setRestaurantData(JSON.parse(savedData));
+      setRestaurantData({...JSON.parse(savedData), 
+        targetFoodCost: JSON.parse(savedData).targetFoodCost || "28", 
+        targetBeverageCost: JSON.parse(savedData).targetBeverageCost || "20",
+        laborCostPercentage: JSON.parse(savedData).laborCostPercentage || "25",
+        occupancyCostPercentage: JSON.parse(savedData).occupancyCostPercentage || "10",
+        averageTicket: JSON.parse(savedData).averageTicket || "",
+        averageOccupancy: JSON.parse(savedData).averageOccupancy || "",
+        tableCount: JSON.parse(savedData).tableCount || "",
+        seatsPerTable: JSON.parse(savedData).seatsPerTable || "",
+      });
     }
   }, []);
 
@@ -41,20 +66,59 @@ const Configuracoes = () => {
     const variablePercentage = parseFloat(restaurantData.variableExpenses) || 0;
     const desiredMargin = parseFloat(restaurantData.desiredProfitMargin) || 0;
     
-    // Mensagem personalizada sobre o impacto nos preços
-    let impactMessage = "";
+    // Calcular métricas de negócios para mostrar no toast
+    let businessMetrics = "";
+    
     if (fixedExpenses > 0 && avgSales > 0) {
-      const fixedCostPerPlate = fixedExpenses / (avgSales / 50); // Estimando ticket médio de R$50
-      impactMessage = `Com esses dados, cada prato inclui aproximadamente R$${fixedCostPerPlate.toFixed(2)} de custos fixos.`;
+      // Calcular custo fixo por venda
+      const fixedCostPerSale = fixedExpenses / avgSales * 100;
+      businessMetrics += `Custos fixos representam ${fixedCostPerSale.toFixed(1)}% das vendas. `;
+      
+      // Calcular ponto de equilíbrio
+      const breakEven = fixedExpenses / (1 - (variablePercentage / 100));
+      businessMetrics += `Ponto de equilíbrio: R$${breakEven.toFixed(2)}. `;
+      
+      // Calcular margem de contribuição
+      const contributionMargin = 100 - variablePercentage;
+      businessMetrics += `Margem de contribuição: ${contributionMargin.toFixed(1)}%.`;
     }
     
     toast({
       title: "Configurações salvas",
-      description: `As configurações do seu restaurante foram atualizadas com sucesso. ${impactMessage}`,
+      description: `As configurações do seu restaurante foram atualizadas com sucesso. ${businessMetrics}`,
       variant: "success"
     });
   };
 
+  const calculateBusinessMetrics = () => {
+    if (!restaurantData.averageMonthlySales || !restaurantData.fixedExpenses) {
+      return null;
+    }
+    
+    const avgSales = parseFloat(restaurantData.averageMonthlySales);
+    const fixedCosts = parseFloat(restaurantData.fixedExpenses);
+    const varCosts = parseFloat(restaurantData.variableExpenses) || 0;
+    
+    // Calcular ponto de equilíbrio
+    const breakEven = fixedCosts / (1 - (varCosts / 100));
+    
+    // Calcular saúde financeira
+    let financialHealth = "Em equilíbrio";
+    if (avgSales > breakEven * 1.2) {
+      financialHealth = "Saudável";
+    } else if (avgSales < breakEven) {
+      financialHealth = "Em risco";
+    }
+    
+    return {
+      breakEven,
+      financialHealth,
+      salesToBreakEven: breakEven - avgSales > 0 ? breakEven - avgSales : 0,
+      salesAboveBreakEven: avgSales - breakEven > 0 ? avgSales - breakEven : 0
+    };
+  };
+
+  const businessMetrics = calculateBusinessMetrics();
   const businessTypes = [
     "Restaurante Casual",
     "Restaurante Fino",
@@ -79,6 +143,7 @@ const Configuracoes = () => {
         <TabsList>
           <TabsTrigger value="negocio">Dados do Negócio</TabsTrigger>
           <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+          <TabsTrigger value="operacional">Operacional</TabsTrigger>
           <TabsTrigger value="integracao">Integração</TabsTrigger>
         </TabsList>
         
@@ -128,6 +193,35 @@ const Configuracoes = () => {
                   Este valor é usado para calcular o impacto dos custos fixos em cada prato.
                 </p>
               </div>
+
+              {businessMetrics && (
+                <div className="bg-muted p-4 rounded-lg mt-4">
+                  <h3 className="text-sm font-medium mb-2">Métricas do Negócio:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="font-medium">Ponto de Equilíbrio:</span> R${businessMetrics.breakEven.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                    </div>
+                    <div>
+                      <span className="font-medium">Saúde Financeira:</span> {" "}
+                      <span className={`font-medium ${
+                        businessMetrics.financialHealth === "Saudável" ? "text-green-600" : 
+                        businessMetrics.financialHealth === "Em risco" ? "text-red-600" : 
+                        "text-amber-600"
+                      }`}>{businessMetrics.financialHealth}</span>
+                    </div>
+                    {businessMetrics.salesToBreakEven > 0 && (
+                      <div>
+                        <span className="font-medium">Faltam:</span> R${businessMetrics.salesToBreakEven.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} para atingir o equilíbrio
+                      </div>
+                    )}
+                    {businessMetrics.salesAboveBreakEven > 0 && (
+                      <div>
+                        <span className="font-medium">Excedente:</span> R${businessMetrics.salesAboveBreakEven.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} acima do ponto de equilíbrio
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -177,14 +271,182 @@ const Configuracoes = () => {
                 </p>
               </div>
               
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="targetFoodCost">CMV Alvo - Alimentos (%)</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span><Info className="h-4 w-4 text-muted-foreground" /></span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="w-[200px]">Percentual alvo de custo de alimentos em relação ao preço de venda</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="targetFoodCost"
+                    type="number"
+                    value={restaurantData.targetFoodCost}
+                    onChange={(e) => handleChange("targetFoodCost", e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="targetBeverageCost">CMV Alvo - Bebidas (%)</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span><Info className="h-4 w-4 text-muted-foreground" /></span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="w-[200px]">Percentual alvo de custo de bebidas em relação ao preço de venda</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="targetBeverageCost"
+                    type="number"
+                    value={restaurantData.targetBeverageCost}
+                    onChange={(e) => handleChange("targetBeverageCost", e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="laborCostPercentage">Custo de Mão de Obra (%)</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span><Info className="h-4 w-4 text-muted-foreground" /></span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="w-[200px]">Percentual de custo com mão de obra em relação à receita</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="laborCostPercentage"
+                    type="number"
+                    value={restaurantData.laborCostPercentage}
+                    onChange={(e) => handleChange("laborCostPercentage", e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="occupancyCostPercentage">Custo de Ocupação (%)</Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span><Info className="h-4 w-4 text-muted-foreground" /></span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="w-[200px]">Percentual de custo com aluguel e ocupação em relação à receita</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <Input
+                    id="occupancyCostPercentage"
+                    type="number"
+                    value={restaurantData.occupancyCostPercentage}
+                    onChange={(e) => handleChange("occupancyCostPercentage", e.target.value)}
+                  />
+                </div>
+              </div>
+              
               <div className="bg-muted p-4 rounded-lg mt-4">
                 <h3 className="text-sm font-medium mb-2">Como esses dados são usados:</h3>
                 <p className="text-sm text-muted-foreground">
-                  Estes valores são utilizados no cálculo automático de preços sugeridos nas suas fichas técnicas.
-                  A fórmula considera o custo dos ingredientes, adiciona uma parte proporcional das despesas fixas 
-                  mensais, calcula o impacto das despesas variáveis e aplica sua margem de lucro desejada.
+                  Estes valores são utilizados no cálculo automático de preços sugeridos nas suas fichas técnicas
+                  e para análises financeiras em todo o sistema. Manter estes valores atualizados garante
+                  análises mais precisas e precificação adequada para seu negócio.
                 </p>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="operacional">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dados Operacionais</CardTitle>
+              <CardDescription>
+                Métricas operacionais do seu restaurante para análises mais precisas
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="averageTicket">Ticket Médio (R$)</Label>
+                  <Input
+                    id="averageTicket"
+                    type="number"
+                    value={restaurantData.averageTicket}
+                    onChange={(e) => handleChange("averageTicket", e.target.value)}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Valor médio gasto por cliente
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="averageOccupancy">Ocupação Média (%)</Label>
+                  <Input
+                    id="averageOccupancy"
+                    type="number"
+                    value={restaurantData.averageOccupancy}
+                    onChange={(e) => handleChange("averageOccupancy", e.target.value)}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Percentual médio de ocupação do estabelecimento
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tableCount">Número de Mesas</Label>
+                  <Input
+                    id="tableCount"
+                    type="number"
+                    value={restaurantData.tableCount}
+                    onChange={(e) => handleChange("tableCount", e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="seatsPerTable">Média de Lugares por Mesa</Label>
+                  <Input
+                    id="seatsPerTable"
+                    type="number"
+                    value={restaurantData.seatsPerTable}
+                    onChange={(e) => handleChange("seatsPerTable", e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              {restaurantData.tableCount && restaurantData.seatsPerTable && (
+                <div className="bg-muted p-4 rounded-lg mt-4">
+                  <h3 className="text-sm font-medium mb-2">Capacidade do Restaurante:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="font-medium">Capacidade Total:</span> {" "}
+                      {parseInt(restaurantData.tableCount) * parseInt(restaurantData.seatsPerTable)} lugares
+                    </div>
+                    {restaurantData.averageOccupancy && (
+                      <div>
+                        <span className="font-medium">Ocupação Média:</span> {" "}
+                        {Math.round(parseInt(restaurantData.tableCount) * parseInt(restaurantData.seatsPerTable) * parseInt(restaurantData.averageOccupancy) / 100)} lugares
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
