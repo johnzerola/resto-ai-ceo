@@ -4,37 +4,49 @@ import { cn } from "@/lib/utils";
 interface StatsCardProps {
   title: string;
   value: string | number;
+  description?: string;
   icon?: React.ReactNode;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
+  trend?: "up" | "down" | { value: number; isPositive: boolean };
+  trendDesirable?: "up" | "down";
   className?: string;
 }
 
-export function StatsCard({ title, value, icon, trend, className }: StatsCardProps) {
+export function StatsCard({ title, value, description, icon, trend, trendDesirable = "up", className }: StatsCardProps) {
+  // Determine if the trend is a string or an object
+  const trendValue = typeof trend === 'object' ? trend.value : 5;
+  const trendIsPositive = typeof trend === 'object' 
+    ? trend.isPositive 
+    : trend === 'up' ? true : trend === 'down' ? false : true;
+
+  const showTrend = trend !== undefined;
+  
   return (
-    <div className={cn("stats-card", className)}>
+    <div className={cn("rounded-lg border bg-card p-4 shadow-sm", className)}>
       <div className="flex justify-between items-start">
         <div>
-          <div className="stats-label">{title}</div>
-          <div className="stats-value mt-2">{value}</div>
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <div className="text-2xl font-bold mt-2">{value}</div>
         </div>
-        {icon && <div className="text-resto-blue-500">{icon}</div>}
+        {icon && <div className="text-blue-500">{icon}</div>}
       </div>
-      {trend && (
+      {showTrend && (
         <div className="mt-3 flex items-center text-xs">
           <span
             className={cn(
               "font-medium",
-              trend.isPositive ? "text-resto-green-600" : "text-destructive"
+              trendIsPositive === (trendDesirable === "up") 
+                ? "text-green-600" 
+                : "text-destructive"
             )}
           >
-            {trend.isPositive ? "+" : "-"}
-            {trend.value}%
+            {trendIsPositive ? "+" : "-"}
+            {trendValue}%
           </span>
-          <span className="ml-2 text-resto-gray-500">vs. mês anterior</span>
+          {description && <span className="ml-2 text-gray-500">{description}</span>}
         </div>
+      )}
+      {!showTrend && description && (
+        <div className="mt-3 text-xs text-gray-500">{description}</div>
       )}
     </div>
   );

@@ -2,9 +2,9 @@
 import { AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-type AlertType = "warning" | "error" | "success";
+export type AlertType = "warning" | "error" | "success";
 
-interface Alert {
+export interface Alert {
   type: AlertType;
   title: string;
   description: string;
@@ -50,29 +50,21 @@ export function Alerts({ alerts }: AlertsProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Alertas e Notificações</CardTitle>
-        <CardDescription>Atenção necessária</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {alerts.map((alert, i) => (
-            <div
-              key={i}
-              className={`p-3 bg-white rounded-md flex items-center space-x-3 ${getBorderColor(
-                alert.type
-              )}`}
-            >
-              {getAlertIcon(alert.type)}
-              <div>
-                <p className="font-medium text-gray-900">{alert.title}</p>
-                <p className="text-sm text-gray-500">{alert.description}</p>
-              </div>
-            </div>
-          ))}
+    <div className="space-y-3">
+      {alerts.map((alert, i) => (
+        <div
+          key={i}
+          className={`p-3 bg-white rounded-md flex items-center space-x-3 ${getBorderColor(
+            alert.type
+          )}`}
+        >
+          {getAlertIcon(alert.type)}
+          <div>
+            <p className="font-medium text-gray-900">{alert.title}</p>
+            <p className="text-sm text-gray-500">{alert.description}</p>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      ))}
+    </div>
   );
 }

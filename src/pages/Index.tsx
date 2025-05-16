@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/restaurant/Layout";
@@ -9,7 +8,7 @@ import { StatsCard } from "@/components/restaurant/StatsCard";
 import { RevenueChart } from "@/components/restaurant/RevenueChart";
 import { TopProducts } from "@/components/restaurant/TopProducts";
 import { AlertCircle, FileDigit, Receipt, ShoppingCart } from "lucide-react";
-import { Alerts } from "@/components/restaurant/Alerts";
+import { Alerts, AlertType } from "@/components/restaurant/Alerts";
 import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
 import { useNavigate } from "react-router-dom";
 import { getFinancialData } from "@/services/FinancialDataService";
@@ -33,17 +32,17 @@ const sampleProducts = [
 
 const sampleAlerts = [
   {
-    type: "warning",
+    type: "warning" as AlertType,
     title: "Estoque Baixo",
     description: "Filé mignon e camarão estão com níveis críticos."
   },
   {
-    type: "error",
+    type: "error" as AlertType,
     title: "CMV Acima da Meta",
     description: "Categoria de carnes com CMV 5% acima da meta estabelecida."
   },
   {
-    type: "success",
+    type: "success" as AlertType,
     title: "Promoção Efetiva",
     description: "Happy hour aumentou vendas de bebidas em 30%."
   }
@@ -83,6 +82,7 @@ const Index = () => {
   return (
     <Layout>
       {showOnboarding ? (
+        
         <div className="max-w-2xl mx-auto mt-8">
           <h1 className="text-2xl font-bold mb-6">Bem-vindo ao Resto AI CEO</h1>
           <p className="text-muted-foreground mb-8">
