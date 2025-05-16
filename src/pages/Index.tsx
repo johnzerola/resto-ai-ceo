@@ -14,6 +14,41 @@ import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
 import { useNavigate } from "react-router-dom";
 import { getFinancialData } from "@/services/FinancialDataService";
 
+// Dados de exemplo para os gráficos e componentes
+const sampleRevenueData = [
+  { name: "Jan", revenue: 12000 },
+  { name: "Fev", revenue: 15000 },
+  { name: "Mar", revenue: 18000 },
+  { name: "Abr", revenue: 20000 },
+  { name: "Mai", revenue: 19000 },
+  { name: "Jun", revenue: 22000 },
+];
+
+const sampleProducts = [
+  { name: "Picanha ao Ponto", sales: 120, revenue: 5400, margin: 35 },
+  { name: "Filé Mignon", sales: 98, revenue: 4900, margin: 40 },
+  { name: "Risoto de Camarão", sales: 75, revenue: 3000, margin: 32 },
+  { name: "Tiramisu", sales: 62, revenue: 1240, margin: 45 },
+];
+
+const sampleAlerts = [
+  {
+    type: "warning",
+    title: "Estoque Baixo",
+    description: "Filé mignon e camarão estão com níveis críticos."
+  },
+  {
+    type: "error",
+    title: "CMV Acima da Meta",
+    description: "Categoria de carnes com CMV 5% acima da meta estabelecida."
+  },
+  {
+    type: "success",
+    title: "Promoção Efetiva",
+    description: "Happy hour aumentou vendas de bebidas em 30%."
+  }
+];
+
 const Index = () => {
   const [hasConfigData, setHasConfigData] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -111,14 +146,14 @@ const Index = () => {
                 <Card className="col-span-2">
                   <CardContent className="pt-6">
                     <h3 className="text-lg font-medium mb-4">Vendas por Período</h3>
-                    <RevenueChart />
+                    <RevenueChart data={sampleRevenueData} />
                   </CardContent>
                 </Card>
                 
                 <Card>
                   <CardContent className="pt-6">
                     <h3 className="text-lg font-medium mb-4">Produtos Mais Vendidos</h3>
-                    <TopProducts />
+                    <TopProducts products={sampleProducts} />
                   </CardContent>
                 </Card>
               </div>
@@ -134,7 +169,7 @@ const Index = () => {
                 <Card>
                   <CardContent className="pt-6">
                     <h3 className="text-lg font-medium mb-4">Alertas</h3>
-                    <Alerts />
+                    <Alerts alerts={sampleAlerts} />
                   </CardContent>
                 </Card>
               </div>
