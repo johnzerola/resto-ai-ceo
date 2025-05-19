@@ -1,5 +1,5 @@
 
-import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName } from '@/integrations/supabase/client';
+import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
@@ -10,7 +10,7 @@ class SupabaseDataService {
   /**
    * Fetches all records from a table with optional filters
    */
-  async getAll<T extends TableName>(
+  async getAll<T extends ValidTableName>(
     table: T,
     filters?: Record<string, any>
   ): Promise<TableRow<T>[]> {
@@ -34,7 +34,7 @@ class SupabaseDataService {
         throw error;
       }
       
-      return data as TableRow<T>[];
+      return (data || []) as TableRow<T>[];
     } catch (error) {
       console.error(`Error fetching data from table ${table}:`, error);
       toast.error(`Error loading data: ${(error as Error).message}`);
@@ -45,7 +45,7 @@ class SupabaseDataService {
   /**
    * Fetches a record by ID
    */
-  async getById<T extends TableName>(
+  async getById<T extends ValidTableName>(
     table: T,
     id: string
   ): Promise<TableRow<T> | null> {
@@ -75,7 +75,7 @@ class SupabaseDataService {
   /**
    * Creates records
    */
-  async create<T extends TableName>(
+  async create<T extends ValidTableName>(
     table: T,
     records: TableInsert<T> | TableInsert<T>[]
   ): Promise<TableRow<T>[]> {
@@ -94,7 +94,7 @@ class SupabaseDataService {
       }
       
       toast.success('Data saved successfully');
-      return data as TableRow<T>[];
+      return (data || []) as TableRow<T>[];
     } catch (error) {
       console.error(`Error creating records in table ${table}:`, error);
       toast.error(`Error saving data: ${(error as Error).message}`);
@@ -105,7 +105,7 @@ class SupabaseDataService {
   /**
    * Updates a record
    */
-  async update<T extends TableName>(
+  async update<T extends ValidTableName>(
     table: T,
     id: string,
     data: TableUpdate<T>
@@ -138,7 +138,7 @@ class SupabaseDataService {
   /**
    * Deletes a record
    */
-  async delete<T extends TableName>(table: T, id: string): Promise<boolean> {
+  async delete<T extends ValidTableName>(table: T, id: string): Promise<boolean> {
     try {
       if (!isValidTableName(table)) {
         throw new Error(`Invalid table name: ${table}`);

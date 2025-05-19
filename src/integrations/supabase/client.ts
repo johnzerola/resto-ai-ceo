@@ -17,26 +17,32 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Helper types for better type safety
+// Helper types for better type safety - refined to be more specific
 export type Tables = Database['public']['Tables'];
 export type TableName = keyof Tables;
+
+// Define table row types more precisely
 export type TableRow<T extends TableName> = Tables[T]['Row'];
 export type TableInsert<T extends TableName> = Tables[T]['Insert'];
 export type TableUpdate<T extends TableName> = Tables[T]['Update'];
 
+// Valid table names as a constant array for type checking
+const VALID_TABLES = [
+  'restaurants',
+  'recipes',
+  'achievements',
+  'cash_flow',
+  'goals',
+  'inventory',
+  'profiles',
+  'recipe_ingredients',
+  'restaurant_members'
+] as const;
+
+// Type for valid table names
+export type ValidTableName = typeof VALID_TABLES[number];
+
 // Validate table name function with proper typing
-export function isValidTableName(tableName: string): tableName is TableName {
-  const validTables: string[] = [
-    'restaurants',
-    'recipes',
-    'achievements',
-    'cash_flow',
-    'goals',
-    'inventory',
-    'profiles',
-    'recipe_ingredients',
-    'restaurant_members'
-  ];
-  
-  return validTables.includes(tableName);
+export function isValidTableName(tableName: string): tableName is ValidTableName {
+  return VALID_TABLES.includes(tableName as ValidTableName);
 }

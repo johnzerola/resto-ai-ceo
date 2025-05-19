@@ -12,7 +12,7 @@ const Documentacao = () => {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Documentação Técnica</h1>
 
-      <Tabs defaultValue="introducao" className="w-[400px]">
+      <Tabs defaultValue="introducao">
         <TabsList>
           <TabsTrigger value="introducao">Introdução</TabsTrigger>
           <TabsTrigger value="arquitetura">Arquitetura</TabsTrigger>
