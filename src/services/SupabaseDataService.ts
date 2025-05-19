@@ -222,10 +222,11 @@ class SupabaseDataService {
         throw result.error;
       }
       
-      // Fixed error: Check if data exists and has at least one item before accessing id
-      if (result.data && result.data.length > 0) {
+      // Make sure data exists and has at least one item
+      if (result.data && Array.isArray(result.data) && result.data.length > 0) {
         toast.success('Payment record created');
-        return result.data[0].id;
+        // Access id safely after confirming the data structure
+        return result.data[0]?.id as string;
       } else {
         toast.success('Payment record created');
         return null;
