@@ -116,7 +116,7 @@ const StatusSistema = () => {
         if (tableName === 'payments') {
           // Para a tabela "payments" que não é uma das tabelas validadas no tipo
           const { count, error } = await supabase
-            .from(tableName)
+            .from(tableName as any)
             .select('*', { count: 'exact', head: true });
           
           if (error) throw error;
@@ -127,7 +127,7 @@ const StatusSistema = () => {
       
       // Para as tabelas conhecidas definidas em VALID_TABLES
       const { count, error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
