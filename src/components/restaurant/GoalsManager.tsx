@@ -40,11 +40,12 @@ export function GoalsManager() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   
-  // Formulário para nova meta
+  // Formulário para nova meta - adicionando a propriedade current
   const [newGoal, setNewGoal] = useState<{
     title: string;
     description: string;
     target: number;
+    current: number; // Adicionando a propriedade current que estava faltando
     unit: string;
     category: GoalCategory;
     deadline?: string;
@@ -53,6 +54,7 @@ export function GoalsManager() {
     title: "",
     description: "",
     target: 0,
+    current: 0, // Inicializando com 0
     unit: "",
     category: "operational"
   });
@@ -94,11 +96,12 @@ export function GoalsManager() {
     try {
       addGoal(newGoal);
       
-      // Resetar formulário
+      // Resetar formulário - incluindo o current
       setNewGoal({
         title: "",
         description: "",
         target: 0,
+        current: 0, // Resetando o current
         unit: "",
         category: "operational"
       });
@@ -221,23 +224,36 @@ export function GoalsManager() {
                   </div>
                 </div>
                 
-                <div className="grid gap-2">
-                  <Label htmlFor="category">Categoria</Label>
-                  <Select 
-                    value={newGoal.category} 
-                    onValueChange={(value: GoalCategory) => setNewGoal({...newGoal, category: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="financial">Financeiro</SelectItem>
-                      <SelectItem value="inventory">Estoque</SelectItem>
-                      <SelectItem value="sales">Vendas</SelectItem>
-                      <SelectItem value="operational">Operacional</SelectItem>
-                      <SelectItem value="customer">Clientes</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="current">Progresso Atual</Label>
+                    <Input
+                      id="current"
+                      type="number"
+                      value={newGoal.current || ""}
+                      onChange={(e) => setNewGoal({...newGoal, current: Number(e.target.value)})}
+                      min={0}
+                    />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label htmlFor="category">Categoria</Label>
+                    <Select 
+                      value={newGoal.category} 
+                      onValueChange={(value: GoalCategory) => setNewGoal({...newGoal, category: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma categoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="financial">Financeiro</SelectItem>
+                        <SelectItem value="inventory">Estoque</SelectItem>
+                        <SelectItem value="sales">Vendas</SelectItem>
+                        <SelectItem value="operational">Operacional</SelectItem>
+                        <SelectItem value="customer">Clientes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 
                 <div className="grid gap-2">
