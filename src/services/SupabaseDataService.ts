@@ -207,7 +207,7 @@ class SupabaseDataService {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
 
-      const { data, error } = await supabase
+      const result = await supabase
         .from('payments' as any)
         .insert({
           restaurant_id: restaurantId,
@@ -216,15 +216,20 @@ class SupabaseDataService {
           payment_method: paymentMethod,
           metadata
         })
-        .select()
-        .single();
+        .select();
       
-      if (error) {
-        throw error;
+      if (result.error) {
+        throw result.error;
       }
       
-      toast.success('Payment record created');
-      return data.id;
+      // Fixed error: Check if data exists and has at least one item before accessing id
+      if (result.data && result.data.length > 0) {
+        toast.success('Payment record created');
+        return result.data[0].id;
+      } else {
+        toast.success('Payment record created');
+        return null;
+      }
     } catch (error) {
       console.error('Error creating payment:', error);
       toast.error(`Error creating payment: ${(error as Error).message}`);
