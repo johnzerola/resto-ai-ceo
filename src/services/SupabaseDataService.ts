@@ -205,7 +205,7 @@ class SupabaseDataService {
     try {
       // Get current user id
       const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
+      const userId = userData?.user?.id;
 
       const result = await supabase
         .from('payments' as any)
@@ -231,7 +231,8 @@ class SupabaseDataService {
           'id' in result.data[0]) {
         
         toast.success('Payment record created');
-        return String(result.data[0].id);
+        // Use non-null assertion since we've already checked that it's not null
+        return String(result.data[0]!.id);
       } else {
         toast.success('Payment record created');
         return null;
