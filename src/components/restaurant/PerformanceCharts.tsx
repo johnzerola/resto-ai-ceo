@@ -13,12 +13,11 @@ import {
   CartesianGrid,
   Bar,
   BarChart,
-  ReferenceLine
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
-import { ChartContainer, ChartTooltipContent, ChartLegendContent } from "@/components/ui/chart";
-import { CalendarDays, TrendingUp, TrendingDown } from "lucide-react";
+import { ChartContainer } from "@/components/ui/chart";
+import { TrendingUp, TrendingDown, CalendarDays } from "lucide-react";
 
 // Dados de exemplo para o gráfico - Aqui seriam substituídos por dados reais da API
 const getDailyData = () => [
@@ -107,6 +106,50 @@ interface ComparisonCardProps {
   percentageDiff: number;
   period: string;
 }
+
+// Componente personalizado para o tooltip
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border rounded-lg shadow-sm">
+        <p className="text-sm font-medium">{label}</p>
+        <div className="mt-2 space-y-1">
+          {payload.map((entry: any, index: number) => (
+            <p 
+              key={`item-${index}`}
+              className="text-xs flex items-center justify-between gap-4"
+            >
+              <span style={{ color: entry.color }}>{entry.name === "atual" ? "Período Atual" : "Período Anterior"}</span>
+              <span className="font-medium">{formatCurrency(entry.value)}</span>
+            </p>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+// Componente personalizado para a legenda
+const CustomLegend = (props: any) => {
+  const { payload } = props;
+  
+  return (
+    <div className="flex items-center justify-center gap-4 pt-3">
+      {payload.map((entry: any, index: number) => (
+        <div key={`legend-${index}`} className="flex items-center gap-1.5">
+          <div
+            className="h-2 w-2 shrink-0 rounded-[2px]"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="text-xs">
+            {entry.dataKey === "atual" ? "Período Atual" : "Período Anterior"}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const ComparisonCard = ({ title, currentValue, previousValue, percentageDiff, period }: ComparisonCardProps) => {
   const isPositive = percentageDiff > 0;
@@ -210,8 +253,8 @@ export function PerformanceCharts() {
                       tickFormatter={(value) => `${value / 1000}k`}
                     />
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <Tooltip content={(props) => <ChartTooltipContent {...props} formatter={(value) => formatCurrency(value)} />} />
-                    <Legend content={(props) => <ChartLegendContent {...props} />} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend content={<CustomLegend />} />
                     <Line name="atual" dataKey="atual" type="monotone" strokeWidth={2} />
                     <Line name="anterior" dataKey="anterior" type="monotone" strokeWidth={2} strokeDasharray="5 5" />
                   </LineChart>
@@ -239,8 +282,8 @@ export function PerformanceCharts() {
                       tickFormatter={(value) => `${value / 1000}k`}
                     />
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <Tooltip content={(props) => <ChartTooltipContent {...props} formatter={(value) => formatCurrency(value)} />} />
-                    <Legend content={(props) => <ChartLegendContent {...props} />} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend content={<CustomLegend />} />
                     <Bar name="atual" dataKey="atual" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                     <Bar name="anterior" dataKey="anterior" fill="#9ca3af" radius={[4, 4, 0, 0]} />
                   </BarChart>
