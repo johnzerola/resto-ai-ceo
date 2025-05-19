@@ -12,6 +12,8 @@ export interface SyncStatus {
     inventory: boolean;
     dre: boolean;
     cmv: boolean;
+    fichaTecnica: boolean;
+    configuracoes: boolean;
   };
 }
 
@@ -23,7 +25,9 @@ let syncStatus: SyncStatus = {
     cashFlow: true,
     inventory: true,
     dre: true,
-    cmv: true
+    cmv: true,
+    fichaTecnica: true,
+    configuracoes: true
   }
 };
 
@@ -107,12 +111,24 @@ export function syncModules(data: any, source: string) {
   try {
     startSync(source);
     
+    // Se a origem for as configurações, sincronizar com todos os módulos
+    if (source === 'configuracoes') {
+      // Atualizar configurações nos módulos relevantes
+      updateModulesFromConfig();
+    }
+    
     // Disparar evento financeiro para atualizar DRE e CMV
     dispatchFinancialDataEvent();
     
     // Disparar evento para atualizar estoque (se aplicável)
     if (data?.inventory || source === 'inventory') {
       const event = new CustomEvent("inventoryUpdated");
+      window.dispatchEvent(event);
+    }
+    
+    // Disparar evento para atualizar ficha técnica (se aplicável)
+    if (source === 'configuracoes') {
+      const event = new CustomEvent("recipesConfigUpdated");
       window.dispatchEvent(event);
     }
     
@@ -144,3 +160,45 @@ export function syncModules(data: any, source: string) {
     return false;
   }
 }
+
+/**
+ * Atualizar todos os módulos com as configurações mais recentes
+ */
+function updateModulesFromConfig() {
+  try {
+    // Obter dados das configurações
+    const configData = localStorage.getItem("restaurantData");
+    if (!configData) return;
+    
+    const config = JSON.parse(configData);
+    
+    // Atualizar informações para cálculos de ficha técnica
+    // Estas configurações são usadas no cálculo de preços sugeridos
+    const techSheetConfig = {
+      fixedExpenses: config.fixedExpenses,
+      variableExpenses: config.variableExpenses,
+      desiredProfitMargin: config.desiredProfitMargin,
+      targetFoodCost: config.targetFoodCost,
+      targetBeverageCost: config.targetBeverageCost
+    };
+    
+    // Salvar configurações específicas para a ficha técnica
+    localStorage.setItem("techSheetConfig", JSON.stringify(techSheetConfig));
+    
+    // Atualizar informações para o DRE/CMV
+    const dreConfig = {
+      laborCostPercentage: config.laborCostPercentage,
+      occupancyCostPercentage: config.occupancyCostPercentage,
+      targetFoodCost: config.targetFoodCost,
+      targetBeverageCost: config.targetBeverageCost
+    };
+    
+    localStorage.setItem("dreConfig", JSON.stringify(dreConfig));
+    
+    console.log("Configurações atualizadas em todos os módulos", config);
+    
+  } catch (error) {
+    console.error("Erro ao atualizar módulos com configurações:", error);
+  }
+}
+

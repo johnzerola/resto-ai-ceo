@@ -8,8 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getFinancialData } from "@/services/FinancialDataService";
-import { Info } from "lucide-react";
+import { getFinancialData, dispatchFinancialDataEvent } from "@/services/FinancialDataService";
+import { Info, Check } from "lucide-react";
+import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
+import { startSync } from "@/services/SyncService";
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +21,7 @@ import {
 
 const Configuracoes = () => {
   const { toast } = useToast();
+  const [syncSuccess, setSyncSuccess] = useState(false);
   const [restaurantData, setRestaurantData] = useState({
     businessName: "",
     businessType: "",
@@ -55,10 +58,22 @@ const Configuracoes = () => {
 
   const handleChange = (field: string, value: string) => {
     setRestaurantData(prev => ({ ...prev, [field]: value }));
+    // Resetar o status de sincronização quando houver alterações
+    setSyncSuccess(false);
   };
 
   const handleSave = () => {
     localStorage.setItem("restaurantData", JSON.stringify(restaurantData));
+    
+    // Iniciar sincronização com outros módulos
+    startSync("configuracoes", ["dre", "cmv", "inventory"]);
+    
+    // Disparar evento de atualização financeira
+    dispatchFinancialDataEvent();
+    
+    // Mostrar feedback visual de sincronização
+    setSyncSuccess(true);
+    setTimeout(() => setSyncSuccess(false), 3000);
     
     // Calcular e mostrar um resumo dos dados financeiros
     const fixedExpenses = parseFloat(restaurantData.fixedExpenses) || 0;
@@ -85,7 +100,7 @@ const Configuracoes = () => {
     
     toast({
       title: "Configurações salvas",
-      description: `As configurações do seu restaurante foram atualizadas com sucesso. ${businessMetrics}`,
+      description: `As configurações do seu restaurante foram atualizadas e sincronizadas com todos os módulos. ${businessMetrics}`,
       variant: "success"
     });
   };
@@ -132,11 +147,14 @@ const Configuracoes = () => {
 
   return (
     <Layout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
-        <p className="text-muted-foreground">
-          Gerencie os dados e preferências do seu restaurante
-        </p>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
+          <p className="text-muted-foreground flex items-center gap-2">
+            Gerencie os dados e preferências do seu restaurante
+            <SyncIndicator />
+          </p>
+        </div>
       </div>
 
       <Tabs defaultValue="negocio" className="space-y-4">
@@ -469,8 +487,21 @@ const Configuracoes = () => {
         </TabsContent>
       </Tabs>
 
-      <div className="mt-6 flex justify-end">
-        <Button onClick={handleSave}>Salvar Alterações</Button>
+      <div className="mt-6 flex justify-between items-center">
+        <div className="text-sm text-muted-foreground">
+          {syncSuccess && (
+            <span className="flex items-center text-green-600">
+              <Check className="h-4 w-4 mr-1" />
+              Dados sincronizados com todos os módulos
+            </span>
+          )}
+        </div>
+        <Button 
+          onClick={handleSave} 
+          className="flex items-center"
+        >
+          Salvar e Sincronizar
+        </Button>
       </div>
     </Layout>
   );

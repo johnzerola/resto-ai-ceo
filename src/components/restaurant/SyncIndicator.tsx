@@ -10,6 +10,7 @@ import { ptBR } from "date-fns/locale";
 export function SyncIndicator() {
   const [isSync, setIsSync] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [syncSource, setSyncSource] = useState<string | null>(null);
   
   useEffect(() => {
     // Obter status inicial
@@ -18,8 +19,10 @@ export function SyncIndicator() {
     setIsSync(status.isSync);
     
     // Listener para início de sincronização
-    const handleSyncStart = () => {
+    const handleSyncStart = (e: Event) => {
+      const customEvent = e as CustomEvent;
       setIsSync(true);
+      setSyncSource(customEvent.detail?.source || null);
     };
     
     // Listener para fim de sincronização
@@ -27,6 +30,7 @@ export function SyncIndicator() {
       const customEvent = e as CustomEvent;
       setIsSync(false);
       setLastSyncTime(customEvent.detail.timestamp);
+      setSyncSource(null);
     };
     
     // Registrar listeners
@@ -52,6 +56,31 @@ export function SyncIndicator() {
       return "Desconhecido";
     }
   };
+
+  // Obter mensagem para o tooltip baseado no estado atual
+  const getSyncTooltipMessage = () => {
+    if (isSync) {
+      return syncSource 
+        ? `Sincronizando a partir de: ${getModuleName(syncSource)}` 
+        : "Sincronizando todos os módulos...";
+    }
+    
+    return `Última sincronização: ${getRelativeTime()}`;
+  };
+  
+  // Função para obter nome amigável do módulo
+  const getModuleName = (moduleId: string): string => {
+    const moduleNames: Record<string, string> = {
+      "cashFlow": "Fluxo de Caixa",
+      "inventory": "Estoque",
+      "dre": "DRE",
+      "cmv": "CMV",
+      "configuracoes": "Configurações",
+      "fichaTecnica": "Ficha Técnica"
+    };
+    
+    return moduleNames[moduleId] || moduleId;
+  };
   
   return (
     <TooltipProvider>
@@ -74,7 +103,10 @@ export function SyncIndicator() {
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Última sincronização: {getRelativeTime()}</p>
+          <p>{getSyncTooltipMessage()}</p>
+          <div className="text-xs mt-1">
+            <p>Módulos atualizados: DRE, CMV, Ficha Técnica, Estoque</p>
+          </div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
