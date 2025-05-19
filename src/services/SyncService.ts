@@ -10,6 +10,11 @@ export interface SyncStatus {
   inProgress: boolean;
 }
 
+// Função para iniciar sincronização (adicionada para resolver o erro)
+export async function startSync(source: string) {
+  return syncModules({}, source);
+}
+
 // Função para sincronizar dados entre módulos
 export async function syncModules(data: any, source: string) {
   try {

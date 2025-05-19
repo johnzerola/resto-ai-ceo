@@ -8,7 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export function SyncIndicator() {
-  const [isSync, setIsSync] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [syncSource, setSyncSource] = useState<string | null>(null);
   
@@ -16,29 +16,29 @@ export function SyncIndicator() {
     // Obter status inicial
     const status = getSyncStatus();
     setLastSyncTime(status.lastSync);
-    setIsSync(status.isSync);
+    setIsSyncing(status.inProgress);
     
     // Listener para início de sincronização
     const handleSyncStart = (e: Event) => {
       const customEvent = e as CustomEvent;
-      setIsSync(true);
+      setIsSyncing(true);
       setSyncSource(customEvent.detail?.source || null);
     };
     
     // Listener para fim de sincronização
     const handleSyncComplete = (e: Event) => {
       const customEvent = e as CustomEvent;
-      setIsSync(false);
+      setIsSyncing(false);
       setLastSyncTime(customEvent.detail.timestamp);
       setSyncSource(null);
     };
     
     // Registrar listeners
-    window.addEventListener(SYNC_EVENT, handleSyncStart);
+    window.addEventListener(`${SYNC_EVENT}Start`, handleSyncStart);
     window.addEventListener(`${SYNC_EVENT}Complete`, handleSyncComplete);
     
     return () => {
-      window.removeEventListener(SYNC_EVENT, handleSyncStart);
+      window.removeEventListener(`${SYNC_EVENT}Start`, handleSyncStart);
       window.removeEventListener(`${SYNC_EVENT}Complete`, handleSyncComplete);
     };
   }, []);
@@ -59,7 +59,7 @@ export function SyncIndicator() {
 
   // Obter mensagem para o tooltip baseado no estado atual
   const getSyncTooltipMessage = () => {
-    if (isSync) {
+    if (isSyncing) {
       return syncSource 
         ? `Sincronizando a partir de: ${getModuleName(syncSource)}` 
         : "Sincronizando todos os módulos...";
@@ -89,16 +89,16 @@ export function SyncIndicator() {
           <Badge 
             variant="outline" 
             className={`flex items-center gap-1 ${
-              isSync 
+              isSyncing 
                 ? "bg-blue-50 text-blue-700 border-blue-200" 
                 : "bg-green-50 text-green-700 border-green-200"
             }`}
           >
             <RefreshCw 
-              className={`h-3 w-3 ${isSync ? "animate-spin" : ""}`} 
+              className={`h-3 w-3 ${isSyncing ? "animate-spin" : ""}`} 
             />
             <span className="text-xs">
-              {isSync ? "Sincronizando..." : "Sincronizado"}
+              {isSyncing ? "Sincronizando..." : "Sincronizado"}
             </span>
           </Badge>
         </TooltipTrigger>
