@@ -1,4 +1,3 @@
-
 import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, ExtendedTableName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -222,20 +221,15 @@ class SupabaseDataService {
         throw result.error;
       }
       
-      // Handle the result with proper null safety
-      if (result.data && 
+      // Use explicit type and null handling for firstItem
+      const firstItem: { id: string } | null = (result.data && 
           Array.isArray(result.data) && 
-          result.data.length > 0) {
-        
-        // Create a strongly-typed local variable that TypeScript can understand
-        const firstItem = result.data[0];
-        
-        // Type guard to ensure firstItem is an object with an id
-        if (firstItem && 
-            typeof firstItem === 'object' && 
-            firstItem !== null && 
-            'id' in firstItem && 
-            firstItem.id !== null) {
+          result.data.length > 0) ? result.data[0] : null;
+      
+      // Explicitly check if firstItem is not null
+      if (firstItem !== null) {
+        // Verify the id property exists
+        if ('id' in firstItem && firstItem.id !== null) {
           toast.success('Payment record created');
           return String(firstItem.id);
         }
