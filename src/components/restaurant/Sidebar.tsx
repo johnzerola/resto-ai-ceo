@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
@@ -16,10 +16,13 @@ import {
   X,
   DollarSign,
   Code,
+  Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/services/AuthService";
+import { Badge } from "@/components/ui/badge";
+import { getAllAchievements } from "@/services/GoalsService";
 
 interface SidebarProps {
   className?: string;
@@ -28,6 +31,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [unlockedAchievements, setUnlockedAchievements] = useState(0);
   const { hasPermission } = useAuth();
 
   const toggleSidebar = () => {
@@ -38,11 +42,43 @@ export function Sidebar({ className }: SidebarProps) {
     setIsMobileOpen(!isMobileOpen);
   };
 
+  // Carregar conquistas desbloqueadas
+  useEffect(() => {
+    const loadAchievements = () => {
+      const achievements = getAllAchievements();
+      const unlocked = achievements.filter(a => a.isUnlocked).length;
+      setUnlockedAchievements(unlocked);
+    };
+    
+    loadAchievements();
+    
+    // Listener para atualização de conquistas
+    const handleAchievementsUpdate = () => {
+      loadAchievements();
+    };
+    
+    window.addEventListener("achievementsUpdated", handleAchievementsUpdate);
+    
+    return () => {
+      window.removeEventListener("achievementsUpdated", handleAchievementsUpdate);
+    };
+  }, []);
+
   const navItems = [
     { name: "Dashboard", icon: Home, path: "/" },
     { name: "Ficha Técnica", icon: FileText, path: "/ficha-tecnica" },
     { name: "DRE & CMV", icon: DollarSign, path: "/dre-cmv" },
-    { name: "Estoque", icon: PackageOpen, path: "/estoque" },
+    { 
+      name: "Estoque", 
+      icon: PackageOpen, 
+      path: "/estoque",
+      badge: unlockedAchievements > 0 ? (
+        <Badge variant="outline" className="ml-auto bg-amber-50 text-amber-600 border-amber-200 flex items-center gap-1 h-5">
+          <Trophy className="h-3 w-3" />
+          {unlockedAchievements}
+        </Badge>
+      ) : undefined
+    },
     { name: "Fluxo de Caixa", icon: Database, path: "/fluxo-caixa" },
     { name: "Promoções", icon: Calendar, path: "/promocoes" },
     { name: "Simulador", icon: BarChartBig, path: "/simulador" },
@@ -131,7 +167,19 @@ export function Sidebar({ className }: SidebarProps) {
                     isCollapsed ? "mr-0 mx-auto" : "mr-3"
                   )}
                 />
-                {!isCollapsed && <span>{item.name}</span>}
+                {!isCollapsed && (
+                  <div className="flex items-center w-full">
+                    <span>{item.name}</span>
+                    {item.badge}
+                  </div>
+                )}
+                {isCollapsed && item.badge && (
+                  <div className="absolute -right-1 -top-1">
+                    <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 flex items-center gap-1 h-5 w-5 p-0 justify-center">
+                      {unlockedAchievements}
+                    </Badge>
+                  </div>
+                )}
               </NavLink>
             ))}
             

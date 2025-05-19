@@ -1,16 +1,18 @@
+
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/restaurant/Layout";
 import { InventoryOverview } from "@/components/restaurant/InventoryOverview";
 import { InventoryForm } from "@/components/restaurant/InventoryForm";
 import { ShoppingList } from "@/components/restaurant/ShoppingList";
 import { Button } from "@/components/ui/button";
-import { Plus, FileDown, FileUp, Link } from "lucide-react";
+import { Plus, FileDown, FileUp, Link, Target } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
 import { syncModules } from "@/services/SyncService";
 import { PerformanceCharts } from "@/components/restaurant/PerformanceCharts";
+import { GoalsManager } from "@/components/restaurant/GoalsManager";
 
 const Estoque = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -111,6 +113,10 @@ const Estoque = () => {
             <TabsTrigger value="shopping">Lista de Compras</TabsTrigger>
             <TabsTrigger value="analytics">Análise de Estoque</TabsTrigger>
             <TabsTrigger value="performance">Desempenho</TabsTrigger>
+            <TabsTrigger value="goals" className="flex items-center gap-1">
+              <Target className="h-4 w-4" />
+              Metas
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="inventory">
@@ -195,6 +201,12 @@ const Estoque = () => {
           
           <TabsContent value="performance">
             <PerformanceCharts />
+          </TabsContent>
+          
+          <TabsContent value="goals">
+            <div className="bg-white p-6 rounded-md shadow-sm border">
+              <GoalsManager />
+            </div>
           </TabsContent>
         </Tabs>
       )}
