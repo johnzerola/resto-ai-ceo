@@ -222,11 +222,16 @@ class SupabaseDataService {
         throw result.error;
       }
       
-      // Make sure data exists and has at least one item
-      if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+      // Added proper type checking and error handling
+      if (result.data && 
+          Array.isArray(result.data) && 
+          result.data.length > 0 && 
+          typeof result.data[0] === 'object' && 
+          result.data[0] !== null && 
+          'id' in result.data[0]) {
+        
         toast.success('Payment record created');
-        // Access id safely after confirming the data structure
-        return result.data[0]?.id as string;
+        return String(result.data[0].id);
       } else {
         toast.success('Payment record created');
         return null;
