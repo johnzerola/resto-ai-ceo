@@ -222,15 +222,18 @@ class SupabaseDataService {
         throw result.error;
       }
       
-      // Properly handle the result with null safety
+      // Handle the result with proper null safety
       if (result.data && 
           Array.isArray(result.data) && 
-          result.data.length > 0 && 
-          result.data[0] !== null) {
+          result.data.length > 0) {
         
-        // Check if the first item has an id property before accessing it
+        // Safely access the first item with null checks
         const firstItem = result.data[0];
-        if (typeof firstItem === 'object' && 'id' in firstItem && firstItem.id) {
+        // Make sure firstItem is not null and has an id property
+        if (firstItem !== null && 
+            typeof firstItem === 'object' && 
+            'id' in firstItem && 
+            firstItem.id !== null) {
           toast.success('Payment record created');
           return String(firstItem.id);
         }
