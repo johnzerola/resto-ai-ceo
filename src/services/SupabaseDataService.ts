@@ -226,13 +226,13 @@ class SupabaseDataService {
       if (result.data && 
           Array.isArray(result.data) && 
           result.data.length > 0 && 
+          result.data[0] !== null &&
           typeof result.data[0] === 'object' && 
-          result.data[0] !== null && 
-          'id' in result.data[0]) {
+          'id' in result.data[0] && 
+          result.data[0].id !== null) {
         
         toast.success('Payment record created');
-        // Use non-null assertion since we've already checked that it's not null
-        return String(result.data[0]!.id);
+        return String(result.data[0].id);
       } else {
         toast.success('Payment record created');
         return null;
