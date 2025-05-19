@@ -1,67 +1,58 @@
-
-import { useEffect, useState } from "react";
+import React from "react";
 import { Sidebar } from "./Sidebar";
-import { AIAssistant } from "./AIAssistant";
-import { toast } from "sonner";
 import { UserMenu } from "./UserMenu";
+import { RestaurantSelector } from "./RestaurantSelector";
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
 
-interface LayoutProps {
-  children: React.ReactNode;
-  title?: string; // Added optional title prop
-}
-
-export function Layout({ children, title }: LayoutProps) {
-  const [dataUpdated, setDataUpdated] = useState(false);
-
-  useEffect(() => {
-    // Detectar atualizações nos dados financeiros
-    const handleFinancialDataUpdate = () => {
-      setDataUpdated(true);
-      
-      // Mostrar notificação
-      toast.success("Dados financeiros atualizados com sucesso!", {
-        description: "DRE e CMV foram sincronizados com o fluxo de caixa.",
-        position: "bottom-right"
-      });
-      
-      // Limpar estado após mostrar a notificação
-      setTimeout(() => {
-        setDataUpdated(false);
-      }, 3000);
-    };
-    
-    window.addEventListener("financialDataUpdated", handleFinancialDataUpdate);
-    
-    return () => {
-      window.removeEventListener("financialDataUpdated", handleFinancialDataUpdate);
-    };
-  }, []);
+export function Layout({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, currentRestaurant, userRestaurants } = useAuth();
+  
+  // Se estiver carregando, mostra spinner
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+  
+  // Se não estiver autenticado, redireciona para login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  
+  // Se não tiver restaurante, redireciona para onboarding
+  if (userRestaurants.length === 0) {
+    return <Navigate to="/onboarding" />;
+  }
+  
+  // Se não tiver restaurante atual selecionado, mas tiver restaurantes disponíveis
+  if (!currentRestaurant && userRestaurants.length > 0) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="flex">
+    <div className="flex min-h-screen w-full flex-col">
+      <div className="flex grow flex-col md:flex-row">
         <Sidebar />
-        <div className="flex-1">
-          <header className="bg-white border-b border-gray-200 h-14 flex items-center px-4 justify-end">
-            <UserMenu />
-          </header>
-          <main className="p-8">
-            <div className="max-w-7xl mx-auto">
-              {/* If there's a title, display it */}
-              {title && <h1 className="text-3xl font-bold mb-6">{title}</h1>}
-              {children}
+        <main className="grow p-4 md:p-8 pt-20 md:pt-8 max-w-7xl mx-auto">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              {/* Espaço reservado para que a largura do conteúdo não mude dependendo da presença do seletor */}
             </div>
-          </main>
-        </div>
+            <div className="flex items-center gap-2">
+              <RestaurantSelector />
+              <UserMenu />
+            </div>
+          </div>
+          {children}
+        </main>
       </div>
-      <AIAssistant />
-      
-      {/* Indicador de sincronização */}
-      {dataUpdated && (
-        <div className="fixed bottom-4 left-4 bg-green-100 text-green-800 px-4 py-2 rounded-md shadow-md border border-green-200 animate-pulse">
-          Dados financeiros sincronizados
-        </div>
-      )}
     </div>
   );
 }

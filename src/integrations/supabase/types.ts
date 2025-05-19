@@ -9,7 +9,401 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          date_unlocked: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_unlocked: boolean | null
+          name: string
+          required_goals: number | null
+          restaurant_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          date_unlocked?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_unlocked?: boolean | null
+          name: string
+          required_goals?: number | null
+          restaurant_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          date_unlocked?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_unlocked?: boolean | null
+          name?: string
+          required_goals?: number | null
+          restaurant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_flow: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          payment_method: string | null
+          restaurant_id: string | null
+          status: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          restaurant_id?: string | null
+          status?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          payment_method?: string | null
+          restaurant_id?: string | null
+          status?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_flow_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          category: string | null
+          completed: boolean | null
+          created_at: string | null
+          current: number | null
+          deadline: string | null
+          description: string | null
+          id: string
+          linked_to: Json | null
+          restaurant_id: string | null
+          reward: string | null
+          target: number
+          title: string
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          current?: number | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          linked_to?: Json | null
+          restaurant_id?: string | null
+          reward?: string | null
+          target: number
+          title: string
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          current?: number | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          linked_to?: Json | null
+          restaurant_id?: string | null
+          reward?: string | null
+          target?: number
+          title?: string
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory: {
+        Row: {
+          category: string | null
+          cost_per_unit: number | null
+          created_at: string | null
+          id: string
+          minimum_stock: number | null
+          name: string
+          quantity: number | null
+          restaurant_id: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          cost_per_unit?: number | null
+          created_at?: string | null
+          id?: string
+          minimum_stock?: number | null
+          name: string
+          quantity?: number | null
+          restaurant_id?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          cost_per_unit?: number | null
+          created_at?: string | null
+          id?: string
+          minimum_stock?: number | null
+          name?: string
+          quantity?: number | null
+          restaurant_id?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string | null
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          name?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      recipe_ingredients: {
+        Row: {
+          cost_per_unit: number | null
+          created_at: string | null
+          id: string
+          name: string
+          quantity: number
+          recipe_id: string | null
+          total_cost: number | null
+          unit: string
+        }
+        Insert: {
+          cost_per_unit?: number | null
+          created_at?: string | null
+          id?: string
+          name: string
+          quantity: number
+          recipe_id?: string | null
+          total_cost?: number | null
+          unit: string
+        }
+        Update: {
+          cost_per_unit?: number | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          quantity?: number
+          recipe_id?: string | null
+          total_cost?: number | null
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          category: string | null
+          cost: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          portion_size: number | null
+          portion_unit: string | null
+          restaurant_id: string | null
+          selling_price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          portion_size?: number | null
+          portion_unit?: string | null
+          restaurant_id?: string | null
+          selling_price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          portion_size?: number | null
+          portion_unit?: string | null
+          restaurant_id?: string | null
+          selling_price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurant_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          restaurant_id: string | null
+          role: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          restaurant_id?: string | null
+          role: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          restaurant_id?: string | null
+          role?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restaurant_members_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      restaurants: {
+        Row: {
+          average_monthly_sales: number | null
+          business_type: string | null
+          created_at: string | null
+          desired_profit_margin: number | null
+          fixed_expenses: number | null
+          id: string
+          name: string
+          owner_id: string
+          target_beverage_cost: number | null
+          target_food_cost: number | null
+          updated_at: string | null
+          variable_expenses: number | null
+        }
+        Insert: {
+          average_monthly_sales?: number | null
+          business_type?: string | null
+          created_at?: string | null
+          desired_profit_margin?: number | null
+          fixed_expenses?: number | null
+          id?: string
+          name: string
+          owner_id: string
+          target_beverage_cost?: number | null
+          target_food_cost?: number | null
+          updated_at?: string | null
+          variable_expenses?: number | null
+        }
+        Update: {
+          average_monthly_sales?: number | null
+          business_type?: string | null
+          created_at?: string | null
+          desired_profit_margin?: number | null
+          fixed_expenses?: number | null
+          id?: string
+          name?: string
+          owner_id?: string
+          target_beverage_cost?: number | null
+          target_food_cost?: number | null
+          updated_at?: string | null
+          variable_expenses?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

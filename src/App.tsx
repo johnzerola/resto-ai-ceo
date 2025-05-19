@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +20,7 @@ import AccessDenied from "./pages/AccessDenied";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import Documentacao from "./pages/Documentacao";
 import PaginaVendas from "./pages/PaginaVendas";
+import Onboarding from "./pages/Onboarding";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserRole } from "./services/AuthService";
@@ -37,6 +39,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/acesso-negado" element={<AccessDenied />} />
             <Route path="/vendas" element={<PaginaVendas />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             
             {/* Rotas protegidas - acesso geral */}
             <Route 
@@ -143,9 +146,6 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            
-            {/* Redirecionar "/" para "/login" quando não estiver autenticado */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
             
             {/* Rota 404 */}
             <Route path="*" element={<NotFound />} />
