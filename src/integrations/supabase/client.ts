@@ -32,7 +32,7 @@ const VALID_TABLES = [
   'cash_flow',
   'goals',
   'inventory',
-  'payments',
+  'payments', // Added 'payments' to the list of valid tables
   'profiles',
   'recipe_ingredients',
   'recipes',
