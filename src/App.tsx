@@ -21,6 +21,7 @@ import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import Documentacao from "./pages/Documentacao";
 import PaginaVendas from "./pages/PaginaVendas";
 import Onboarding from "./pages/Onboarding";
+import SystemAdmin from "./pages/SystemAdmin";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserRole } from "./services/AuthService";
@@ -143,6 +144,16 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole={UserRole.MANAGER}>
                   <Documentacao />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Administração do sistema - apenas proprietário */}
+            <Route 
+              path="/admin-sistema" 
+              element={
+                <ProtectedRoute requiredRole={UserRole.OWNER}>
+                  <SystemAdmin />
                 </ProtectedRoute>
               }
             />

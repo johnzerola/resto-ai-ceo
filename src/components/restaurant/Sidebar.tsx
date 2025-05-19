@@ -16,7 +16,8 @@ import {
   X,
   DollarSign,
   Code,
-  Trophy
+  Trophy,
+  ServerCrash
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -87,8 +88,11 @@ export function Sidebar({ className }: SidebarProps) {
     { name: "Configurações", icon: Settings, path: "/configuracoes" },
   ];
 
-  // Item para documentação técnica - visível apenas para gerentes e proprietários
-  const docItem = { name: "Documentação", icon: Code, path: "/documentacao" };
+  // Itens para administradores
+  const adminItems = [
+    { name: "Documentação", icon: Code, path: "/documentacao" },
+    { name: "Admin Sistema", icon: ServerCrash, path: "/admin-sistema", ownerOnly: true }
+  ];
 
   return (
     <>
@@ -183,28 +187,50 @@ export function Sidebar({ className }: SidebarProps) {
               </NavLink>
             ))}
             
-            {/* Item de documentação técnica condicional */}
-            {hasPermission(UserRole.MANAGER) && (
-              <NavLink
-                to={docItem.path}
-                className={({ isActive }) =>
-                  cn(
-                    isActive
-                      ? "bg-resto-blue-50 text-resto-blue-700"
-                      : "text-resto-gray-600 hover:bg-resto-gray-50",
-                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all"
-                  )
-                }
-              >
-                <docItem.icon
-                  className={cn(
-                    "flex-shrink-0 h-5 w-5",
-                    isCollapsed ? "mr-0 mx-auto" : "mr-3"
-                  )}
-                />
-                {!isCollapsed && <span>{docItem.name}</span>}
-              </NavLink>
+            {/* Divider for admin items */}
+            {(hasPermission(UserRole.MANAGER) || hasPermission(UserRole.OWNER)) && (
+              <div className="border-t border-gray-200 my-2 pt-2">
+                <p className={cn(
+                  "text-xs text-gray-500 px-2 mb-2",
+                  isCollapsed ? "text-center" : "text-left"
+                )}>
+                  {!isCollapsed ? "Administração" : "Admin"}
+                </p>
+              </div>
             )}
+            
+            {/* Admin items */}
+            {adminItems.map((item) => {
+              // Mostrar item apenas se usuário tiver permissão
+              const shouldShow = item.ownerOnly 
+                ? hasPermission(UserRole.OWNER) 
+                : hasPermission(UserRole.MANAGER);
+                
+              if (!shouldShow) return null;
+                
+              return (
+                <NavLink
+                  key={item.name}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    cn(
+                      isActive
+                        ? "bg-resto-blue-50 text-resto-blue-700"
+                        : "text-resto-gray-600 hover:bg-resto-gray-50",
+                      "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all"
+                    )
+                  }
+                >
+                  <item.icon
+                    className={cn(
+                      "flex-shrink-0 h-5 w-5",
+                      isCollapsed ? "mr-0 mx-auto" : "mr-3"
+                    )}
+                  />
+                  {!isCollapsed && <span>{item.name}</span>}
+                </NavLink>
+              );
+            })}
           </nav>
         </div>
 
