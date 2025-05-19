@@ -13,19 +13,19 @@ export function SyncIndicator() {
   const [syncSource, setSyncSource] = useState<string | null>(null);
   
   useEffect(() => {
-    // Obter status inicial
+    // Get initial status
     const status = getSyncStatus();
     setLastSyncTime(status.lastSync);
     setIsSyncing(status.inProgress);
     
-    // Listener para início de sincronização
+    // Listener for sync start
     const handleSyncStart = (e: Event) => {
       const customEvent = e as CustomEvent;
       setIsSyncing(true);
       setSyncSource(customEvent.detail?.source || null);
     };
     
-    // Listener para fim de sincronização
+    // Listener for sync completion
     const handleSyncComplete = (e: Event) => {
       const customEvent = e as CustomEvent;
       setIsSyncing(false);
@@ -33,7 +33,7 @@ export function SyncIndicator() {
       setSyncSource(null);
     };
     
-    // Registrar listeners
+    // Register listeners
     window.addEventListener(`${SYNC_EVENT}Start`, handleSyncStart);
     window.addEventListener(`${SYNC_EVENT}Complete`, handleSyncComplete);
     
@@ -43,7 +43,7 @@ export function SyncIndicator() {
     };
   }, []);
   
-  // Formatar tempo relativo
+  // Format relative time
   const getRelativeTime = () => {
     if (!lastSyncTime) return "Nunca";
     
@@ -57,7 +57,7 @@ export function SyncIndicator() {
     }
   };
 
-  // Obter mensagem para o tooltip baseado no estado atual
+  // Get tooltip message based on current state
   const getSyncTooltipMessage = () => {
     if (isSyncing) {
       return syncSource 
@@ -68,7 +68,7 @@ export function SyncIndicator() {
     return `Última sincronização: ${getRelativeTime()}`;
   };
   
-  // Função para obter nome amigável do módulo
+  // Function to get friendly module name
   const getModuleName = (moduleId: string): string => {
     const moduleNames: Record<string, string> = {
       "cashFlow": "Fluxo de Caixa",

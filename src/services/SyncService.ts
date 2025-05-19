@@ -4,21 +4,21 @@ import { toast } from "sonner";
 
 export const SYNC_EVENT = 'syncModules';
 
-// Interface para status de sincronização
+// Interface for sync status
 export interface SyncStatus {
   lastSync: string | null;
   inProgress: boolean;
 }
 
-// Função para iniciar sincronização
-export async function startSync(source: string) {
+// Function to start synchronization
+export async function startSync(source: string): Promise<boolean> {
   return syncModules({}, source);
 }
 
-// Função para sincronizar dados entre módulos
-export async function syncModules(data: any, source: string) {
+// Function to synchronize data between modules
+export async function syncModules(data: any, source: string): Promise<boolean> {
   try {
-    // Disparar evento antes da sincronização
+    // Dispatch event before synchronization
     const startEvent = new CustomEvent(`${SYNC_EVENT}Start`, {
       detail: {
         source,
@@ -27,19 +27,19 @@ export async function syncModules(data: any, source: string) {
     });
     window.dispatchEvent(startEvent);
     
-    // Atualizar status de sincronização no localStorage
+    // Update sync status in localStorage
     localStorage.setItem('syncStatus', JSON.stringify({
       lastSync: null,
       inProgress: true
     }));
     
-    // Com Supabase, não precisamos sincronizar manualmente os dados
-    // pois eles já estão armazenados no banco de dados
+    // With Supabase, we don't need to manually sync data
+    // as it's already stored in the database
     
-    // Simular um pequeno atraso para a UI
+    // Simulate a small delay for the UI
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Evento de sincronização concluída
+    // Event for sync completion
     const completeEvent = new CustomEvent(`${SYNC_EVENT}Complete`, {
       detail: {
         source,
@@ -49,20 +49,20 @@ export async function syncModules(data: any, source: string) {
     });
     window.dispatchEvent(completeEvent);
     
-    // Atualizar status de sincronização
+    // Update sync status
     localStorage.setItem('syncStatus', JSON.stringify({
       lastSync: new Date().toISOString(),
       inProgress: false
     }));
     
-    // Evento financeiro específico para atualizar componentes que dependem desses dados
+    // Financial event to update components that depend on this data
     window.dispatchEvent(new Event('financialDataUpdated'));
     
     return true;
   } catch (error) {
-    console.error('Erro durante sincronização:', error);
+    console.error('Error during synchronization:', error);
     
-    // Evento de falha de sincronização
+    // Event for sync failure
     const failEvent = new CustomEvent(`${SYNC_EVENT}Fail`, {
       detail: {
         source,
@@ -72,18 +72,18 @@ export async function syncModules(data: any, source: string) {
     });
     window.dispatchEvent(failEvent);
     
-    // Atualizar status de sincronização
+    // Update sync status
     localStorage.setItem('syncStatus', JSON.stringify({
       lastSync: localStorage.getItem('lastSync'),
       inProgress: false
     }));
     
-    toast.error('Erro ao sincronizar dados');
+    toast.error('Error synchronizing data');
     return false;
   }
 }
 
-// Função para obter o status de sincronização
+// Function to get sync status
 export function getSyncStatus(): SyncStatus {
   const status = localStorage.getItem('syncStatus');
   if (status) {
