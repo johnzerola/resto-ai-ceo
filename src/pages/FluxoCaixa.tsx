@@ -1,14 +1,29 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/restaurant/Layout";
 import { CashFlowOverview } from "@/components/restaurant/CashFlowOverview";
 import { CashFlowForm } from "@/components/restaurant/CashFlowForm";
 import { Button } from "@/components/ui/button";
-import { Plus, FileDown } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Plus, FileDown, BarChart } from "lucide-react";
+import { toast } from "sonner";
+import { dispatchFinancialDataEvent } from "@/services/FinancialDataService";
+import { useNavigate } from "react-router-dom";
 
 const FluxoCaixa = () => {
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [showIntegrationInfo, setShowIntegrationInfo] = useState(false);
+  const navigate = useNavigate();
+
+  // Verificar se é a primeira visita à página
+  useEffect(() => {
+    const hasVisited = localStorage.getItem("hasVisitedCashFlow");
+    if (!hasVisited) {
+      setShowIntegrationInfo(true);
+      localStorage.setItem("hasVisitedCashFlow", "true");
+    }
+  }, []);
 
   // Toggle between cash flow list and add/edit form
   const toggleAddEntry = () => {
@@ -20,6 +35,35 @@ const FluxoCaixa = () => {
   const editEntry = (entryId: string) => {
     setSelectedEntryId(entryId);
     setIsAddingEntry(true);
+  };
+
+  // Função para ir para DRE/CMV
+  const goToDreCmv = () => {
+    navigate('/dre-cmv');
+  };
+
+  // Função para exportar dados
+  const exportData = () => {
+    try {
+      const cashFlowData = localStorage.getItem("cashFlow");
+      if (!cashFlowData) {
+        toast.error("Nenhum dado disponível para exportar");
+        return;
+      }
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(cashFlowData);
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", `fluxo-caixa-${new Date().toLocaleDateString()}.json`);
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+
+      toast.success("Dados exportados com sucesso");
+    } catch (error) {
+      toast.error("Erro ao exportar dados");
+      console.error("Erro na exportação:", error);
+    }
   };
 
   return (
@@ -34,9 +78,13 @@ const FluxoCaixa = () => {
         <div className="flex gap-2">
           {!isAddingEntry && (
             <>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={exportData}>
                 <FileDown className="mr-2 h-4 w-4" />
                 Exportar
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToDreCmv}>
+                <BarChart className="mr-2 h-4 w-4" />
+                Ver DRE/CMV
               </Button>
               <Button onClick={toggleAddEntry}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -47,6 +95,29 @@ const FluxoCaixa = () => {
         </div>
       </div>
 
+      {showIntegrationInfo && (
+        <Alert className="mb-6 border-blue-500 bg-blue-50">
+          <AlertTitle className="text-blue-800">Integração Automática</AlertTitle>
+          <AlertDescription className="text-blue-700">
+            <p>Todas as transações registradas no fluxo de caixa são automaticamente sincronizadas com:</p>
+            <ul className="list-disc ml-6 mt-2">
+              <li>Demonstrativo de Resultados (DRE)</li>
+              <li>Análise de Custo de Mercadoria Vendida (CMV)</li>
+              <li>Dashboard Financeiro</li>
+            </ul>
+            <div className="mt-2 flex justify-end">
+              <Button 
+                variant="link" 
+                className="text-blue-800 p-0 h-auto font-semibold" 
+                onClick={() => setShowIntegrationInfo(false)}
+              >
+                Entendi
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {isAddingEntry ? (
         <CashFlowForm 
           entryId={selectedEntryId} 
@@ -54,6 +125,9 @@ const FluxoCaixa = () => {
           onSuccess={() => {
             setIsAddingEntry(false);
             setSelectedEntryId(null);
+            // Disparar evento para atualizar DRE e CMV
+            dispatchFinancialDataEvent();
+            toast.success("Transação salva e dados financeiros atualizados");
           }}
         />
       ) : (

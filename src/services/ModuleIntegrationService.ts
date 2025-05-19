@@ -1,6 +1,6 @@
 
 import { toast } from "sonner";
-import { getFinancialData, updateFinancialData } from "./FinancialDataService";
+import { getFinancialData, updateFinancialData, dispatchFinancialDataEvent } from "./FinancialDataService";
 
 // Interface para dados de estoque
 export interface InventoryItem {
@@ -102,6 +102,10 @@ export function updateInventoryFromSales(recipeId: string, quantity: number): vo
       });
     }
     
+    // Disparar evento para atualizar outros componentes
+    const event = new CustomEvent("inventoryUpdated");
+    window.dispatchEvent(event);
+    
     console.log(`Estoque atualizado após venda de ${quantity}x ${recipe.name}`);
     
   } catch (error) {
@@ -135,9 +139,6 @@ export function updateCMVFromSales(recipeId: string, quantity: number, salePrice
     const totalRevenue = salePrice * quantity;
     const cmvPercentage = (totalCost / totalRevenue) * 100;
     
-    // Atualizar relatórios financeiros
-    const financialData = getFinancialData();
-    
     // Criar entrada para o fluxo de caixa
     const cashFlowEntry = {
       id: Date.now().toString(),
@@ -146,7 +147,10 @@ export function updateCMVFromSales(recipeId: string, quantity: number, salePrice
       description: `Venda de ${quantity}x ${recipe.name}`,
       amount: totalRevenue,
       date: new Date().toISOString(),
-      status: "completed"
+      status: "completed",
+      paymentMethod: "Não especificado",
+      reference: `Venda automática: ${recipe.name}`,
+      notes: `CMV: ${cmvPercentage.toFixed(1)}%, Custo total: ${formatCurrency(totalCost)}`
     };
     
     // Salvar entrada no fluxo de caixa
@@ -182,6 +186,74 @@ export function updateCMVFromSales(recipeId: string, quantity: number, salePrice
   }
 }
 
+// Função para processar compras de insumos para estoque e atualizar fluxo de caixa
+export function processInventoryPurchase(items: InventoryItem[], totalAmount: number): void {
+  try {
+    // Atualizar estoque
+    const inventoryData = localStorage.getItem("inventory");
+    const inventory = inventoryData ? JSON.parse(inventoryData) : {};
+    
+    items.forEach(item => {
+      if (inventory[item.id]) {
+        // Atualizar item existente
+        inventory[item.id] = {
+          ...inventory[item.id],
+          quantity: inventory[item.id].quantity + item.quantity,
+          unitCost: item.unitCost, // Atualiza o custo unitário com o novo preço
+          lastUpdate: new Date().toISOString()
+        };
+      } else {
+        // Adicionar novo item
+        inventory[item.id] = {
+          ...item,
+          lastUpdate: new Date().toISOString()
+        };
+      }
+    });
+    
+    // Salvar inventário atualizado
+    localStorage.setItem("inventory", JSON.stringify(inventory));
+    
+    // Criar entrada no fluxo de caixa
+    const itemNames = items.map(item => item.name).join(", ");
+    const cashFlowEntry = {
+      id: Date.now().toString(),
+      type: "expense",
+      category: "Fornecedores",
+      description: `Compra de insumos: ${itemNames}`,
+      amount: totalAmount,
+      date: new Date().toISOString(),
+      status: "completed",
+      paymentMethod: "Não especificado",
+      reference: `Compra de estoque`,
+      notes: `Itens adquiridos: ${itemNames}`
+    };
+    
+    // Salvar entrada no fluxo de caixa
+    const cashFlowData = localStorage.getItem("cashFlow");
+    const cashFlow = cashFlowData ? JSON.parse(cashFlowData) : [];
+    cashFlow.push(cashFlowEntry);
+    localStorage.setItem("cashFlow", JSON.stringify(cashFlow));
+    
+    // Atualizar dados financeiros
+    updateFinancialData(cashFlow);
+    
+    // Notificar usuário
+    toast.success("Compra de insumos registrada com sucesso", {
+      description: "Estoque, fluxo de caixa e dados financeiros atualizados"
+    });
+    
+    // Disparar eventos para atualização
+    dispatchFinancialDataEvent();
+    const inventoryEvent = new CustomEvent("inventoryUpdated");
+    window.dispatchEvent(inventoryEvent);
+    
+  } catch (error) {
+    console.error("Erro ao processar compra de insumos:", error);
+    toast.error("Erro ao registrar compra de insumos");
+  }
+}
+
 // Função para obter a meta de CMV das configurações
 function getTargetCMV(): number {
   try {
@@ -194,6 +266,14 @@ function getTargetCMV(): number {
     console.error("Erro ao obter meta de CMV:", error);
     return 30; // Valor padrão em caso de erro
   }
+}
+
+// Função auxiliar para formatação de moeda
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
 }
 
 // Interface para alertas do sistema
