@@ -112,7 +112,7 @@ export function IntegracaoModulos() {
       </Table>
       
       <TypographyP>
-        Este mapeamento pode ser customizado em Configurações > Integrações > Categorias Financeiras.
+        Este mapeamento pode ser customizado em Configurações {'>'}  Integrações {'>'}  Categorias Financeiras.
       </TypographyP>
       
       <Separator />

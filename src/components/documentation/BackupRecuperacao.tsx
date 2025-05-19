@@ -57,7 +57,7 @@ export function BackupRecuperacao() {
             <TypographyH4>Backups automáticos</TypographyH4>
             <TypographyP>
               O sistema também realiza backups automáticos semanais que ficam armazenados por 30 dias.
-              Você pode acessá-los na tela de Configurações > Backups > Histórico de Backups.
+              Você pode acessá-los na tela de Configurações {'>'}  Backups {'>'}  Histórico de Backups.
             </TypographyP>
             
             <div className="mt-4">
@@ -126,7 +126,7 @@ export function BackupRecuperacao() {
       <TypographyList>
         <li>Realize um backup completo no dispositivo original</li>
         <li>Instale o Resto AI CEO no novo dispositivo</li>
-        <li>Acesse Configurações > Backups > Importar Dados</li>
+        <li>Acesse Configurações {'>'}  Backups {'>'}  Importar Dados</li>
         <li>Selecione o arquivo de backup para restaurar todos os dados</li>
       </TypographyList>
       
