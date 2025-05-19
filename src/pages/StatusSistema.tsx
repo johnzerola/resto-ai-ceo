@@ -10,8 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getSyncStatus, startSync } from "@/services/SyncService";
-import { supabase } from "@/integrations/supabase/client";
+import { getSyncStatus, startSync, getSyncLogs } from "@/services/SyncService";
+import { supabase, isValidTableName, ExtendedTableName } from "@/integrations/supabase/client";
 import { supabaseDataService } from "@/services/SupabaseDataService";
 import { RefreshCcw, Database, Users, ServerCrash, Activity, CheckCircle2, AlertCircle, RotateCw } from "lucide-react";
 
@@ -103,8 +103,14 @@ const StatusSistema = () => {
   // Contar registros em uma tabela
   const countRows = async (tableName: string) => {
     try {
+      // Verificar se o nome da tabela é válido antes de fazer a consulta
+      if (!isValidTableName(tableName)) {
+        console.error(`Nome de tabela inválido: ${tableName}`);
+        return 0;
+      }
+      
       const { count, error } = await supabase
-        .from(tableName)
+        .from(tableName as ExtendedTableName)
         .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
@@ -115,50 +121,25 @@ const StatusSistema = () => {
     }
   };
 
-  // Simular carregamento de logs de sincronização
+  // Carregar logs de sincronização
   const loadSyncLogs = async () => {
     try {
-      // Em uma implementação real, isso viria do backend
-      // Por enquanto, usamos dados simulados
-      const logs = [
-        {
-          id: "1",
-          timestamp: new Date(Date.now() - 10000).toISOString(),
-          type: "success",
-          source: "app",
-          message: "Sincronização de dados concluída com sucesso"
-        },
-        {
-          id: "2",
-          timestamp: new Date(Date.now() - 600000).toISOString(),
-          type: "warning",
-          source: "fluxo-caixa",
-          message: "Sincronização parcial - alguns registros não foram atualizados"
-        },
-        {
-          id: "3",
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          type: "error",
-          source: "estoque",
-          message: "Falha na sincronização de dados de estoque"
-        },
-        {
-          id: "4",
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          type: "success",
-          source: "app",
-          message: "Backup diário concluído com sucesso"
-        },
-        {
-          id: "5",
-          timestamp: new Date(Date.now() - 172800000).toISOString(),
-          type: "success",
-          source: "app",
-          message: "Sincronização automática realizada"
-        }
-      ];
+      // Obter logs reais do serviço de sincronização
+      const logs = getSyncLogs();
       
-      setSyncLogs(logs);
+      // Mapear logs para o formato esperado pela UI
+      const formattedLogs = logs.map((log, index) => ({
+        id: index.toString(),
+        timestamp: log.timestamp,
+        type: log.success ? "success" : "error",
+        source: log.source,
+        message: log.details?.status === 'started' ? "Sincronização iniciada" :
+                log.details?.status === 'completed' ? "Sincronização concluída com sucesso" :
+                log.details?.status === 'failed' ? `Falha na sincronização: ${log.details?.error}` :
+                "Evento de sincronização"
+      }));
+      
+      setSyncLogs(formattedLogs);
       return true;
     } catch (error) {
       console.error("Erro ao carregar logs:", error);
@@ -229,7 +210,7 @@ const StatusSistema = () => {
                     onClick={handleSync}
                     disabled={isLoading || syncStatus.inProgress}
                   >
-                    <RotateCw className="h-4 w-4 mr-2" />
+                    <RotateCcw className="h-4 w-4 mr-2" />
                     Sincronizar Agora
                   </Button>
                 </div>
