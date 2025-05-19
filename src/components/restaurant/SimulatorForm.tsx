@@ -1,586 +1,383 @@
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
-import { 
-  Calculator, 
-  ChevronRight, 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
-  CircleHelp 
-} from "lucide-react";
-
-interface SimulationFormData {
-  // Financial parameters
-  monthlyRevenue: number;
-  foodCostPercentage: number;
-  laborCostPercentage: number;
-  rentCost: number;
-  utilitiesCost: number;
-  marketingCostPercentage: number;
-  otherCostsPercentage: number;
-  
-  // Scenario adjustments
-  menuPriceAdjustment: number;
-  foodCostReduction: number;
-  laborCostChange: number;
-  marketingInvestment: number;
-  customerGrowth: number;
-  averageTicketChange: number;
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import { formatCurrency } from "@/lib/utils";
 
 interface SimulatorFormProps {
   onSimulate: (data: any) => void;
 }
 
 export function SimulatorForm({ onSimulate }: SimulatorFormProps) {
-  const { register, handleSubmit, setValue, watch } = useForm<SimulationFormData>({
-    defaultValues: {
-      // Financial parameters
-      monthlyRevenue: 100000,
-      foodCostPercentage: 30,
-      laborCostPercentage: 25,
-      rentCost: 10000,
-      utilitiesCost: 5000,
-      marketingCostPercentage: 5,
-      otherCostsPercentage: 10,
-      
-      // Scenario adjustments
-      menuPriceAdjustment: 0,
-      foodCostReduction: 0,
-      laborCostChange: 0,
-      marketingInvestment: 0,
-      customerGrowth: 0,
-      averageTicketChange: 0
+  const { toast } = useToast();
+  
+  // Valores iniciais baseados nos dados do restaurante
+  const [restaurantData, setRestaurantData] = useState(() => {
+    const savedData = localStorage.getItem("restaurantData");
+    if (savedData) {
+      return JSON.parse(savedData);
     }
-  });
-  
-  const [activeTab, setActiveTab] = useState("parameters");
-  
-  // Watch all form values
-  const formValues = watch();
-  
-  // Calculate current profitability
-  const calculateCurrentProfitability = () => {
-    const revenue = formValues.monthlyRevenue;
-    const foodCost = revenue * (formValues.foodCostPercentage / 100);
-    const laborCost = revenue * (formValues.laborCostPercentage / 100);
-    const marketingCost = revenue * (formValues.marketingCostPercentage / 100);
-    const otherCosts = revenue * (formValues.otherCostsPercentage / 100);
-    const fixedCosts = formValues.rentCost + formValues.utilitiesCost;
-    
-    const totalCosts = foodCost + laborCost + marketingCost + otherCosts + fixedCosts;
-    const profit = revenue - totalCosts;
-    const profitMargin = (profit / revenue) * 100;
-    
     return {
-      revenue,
-      foodCost,
-      laborCost,
-      rentCost: formValues.rentCost,
-      utilitiesCost: formValues.utilitiesCost,
-      marketingCost,
-      otherCosts,
-      totalCosts,
-      profit,
-      profitMargin
+      monthlyRevenue: 50000,
+      fixedExpenses: 15000,
+      variableExpenses: 20000,
+      desiredProfitMargin: 15
     };
-  };
-  
-  const currentProfitability = calculateCurrentProfitability();
-  
-  // Handle form submission
-  const onSubmit = (data: SimulationFormData) => {
-    // Calculate current state
-    const current = calculateCurrentProfitability();
+  });
+
+  // Estado para os parâmetros da simulação
+  const [params, setParams] = useState({
+    // Preços
+    menuPriceAdjustment: 0,
+    averageTicketChange: 0,
     
-    // Calculate projected state based on adjustments
-    const projectedRevenue = current.revenue * (1 + data.menuPriceAdjustment / 100) * 
-                            (1 + data.customerGrowth / 100) * 
-                            (1 + data.averageTicketChange / 100);
+    // Custos
+    foodCostReduction: 0,
+    laborCostChange: 0,
     
-    const projectedFoodCost = projectedRevenue * (data.foodCostPercentage / 100) * 
-                              (1 - data.foodCostReduction / 100);
+    // Crescimento
+    customerGrowth: 0,
+    marketingInvestment: 0
+  });
+
+  // Cálculo base
+  const currentRevenue = restaurantData.monthlyRevenue || 50000;
+  const currentFoodCost = currentRevenue * 0.3; // 30% é o CMV médio
+  const currentLaborCost = currentRevenue * 0.25; // 25% é o custo médio com mão de obra
+  const currentRentCost = restaurantData.fixedExpenses * 0.4 || 6000;
+  const currentUtilitiesCost = restaurantData.fixedExpenses * 0.2 || 3000;
+  const currentMarketingCost = restaurantData.fixedExpenses * 0.1 || 1500;
+  const currentOtherCosts = restaurantData.fixedExpenses * 0.3 || 4500;
+  const currentProfit = currentRevenue - (currentFoodCost + currentLaborCost + currentRentCost + currentUtilitiesCost + currentMarketingCost + currentOtherCosts);
+  const currentProfitMargin = (currentProfit / currentRevenue) * 100;
+
+  // Preview da simulação
+  const [preview, setPreview] = useState({
+    revenue: currentRevenue,
+    foodCost: currentFoodCost,
+    laborCost: currentLaborCost,
+    rentCost: currentRentCost,
+    utilitiesCost: currentUtilitiesCost,
+    marketingCost: currentMarketingCost,
+    otherCosts: currentOtherCosts,
+    profit: currentProfit,
+    profitMargin: currentProfitMargin
+  });
+
+  // Atualizar preview quando os parâmetros mudarem
+  const updatePreview = () => {
+    // Calcular projeção de receita
+    const revenueMultiplier = 1 + (params.menuPriceAdjustment + params.customerGrowth) / 100;
+    const projectedRevenue = currentRevenue * revenueMultiplier;
     
-    const projectedLaborCost = current.laborCost * (1 + data.laborCostChange / 100);
+    // Calcular custos projetados
+    const foodCostMultiplier = 1 - (params.foodCostReduction / 100);
+    const projectedFoodCost = (currentFoodCost * foodCostMultiplier) * (1 + (params.customerGrowth / 100));
     
-    const projectedMarketingCost = current.marketingCost * (1 + data.marketingInvestment / 100);
+    const laborCostMultiplier = 1 + (params.laborCostChange / 100);
+    const projectedLaborCost = currentLaborCost * laborCostMultiplier;
     
-    const projectedTotalCosts = projectedFoodCost + projectedLaborCost + 
-                               data.rentCost + data.utilitiesCost + 
-                               projectedMarketingCost + current.otherCosts;
+    const projectedRentCost = currentRentCost; // Aluguel permanece o mesmo
     
-    const projectedProfit = projectedRevenue - projectedTotalCosts;
+    const projectedMarketingCost = currentMarketingCost * (1 + (params.marketingInvestment / 100));
+    
+    const projectedUtilitiesCost = currentUtilitiesCost * (1 + (params.customerGrowth / 100) * 0.3); // Utilities crescem parcialmente com volume
+    
+    const projectedOtherCosts = currentOtherCosts * (1 + (params.customerGrowth / 100) * 0.2); // Outros custos crescem parcialmente com volume
+    
+    // Calcular lucro e margem projetados
+    const projectedProfit = projectedRevenue - (projectedFoodCost + projectedLaborCost + projectedRentCost + projectedUtilitiesCost + projectedMarketingCost + projectedOtherCosts);
     const projectedProfitMargin = (projectedProfit / projectedRevenue) * 100;
     
-    // Prepare simulation result
-    const simulationResult = {
-      current,
-      projected: {
-        revenue: projectedRevenue,
-        foodCost: projectedFoodCost,
-        laborCost: projectedLaborCost,
-        rentCost: data.rentCost,
-        utilitiesCost: data.utilitiesCost,
-        marketingCost: projectedMarketingCost,
-        otherCosts: current.otherCosts,
-        totalCosts: projectedTotalCosts,
-        profit: projectedProfit,
-        profitMargin: projectedProfitMargin
+    setPreview({
+      revenue: projectedRevenue,
+      foodCost: projectedFoodCost,
+      laborCost: projectedLaborCost,
+      rentCost: projectedRentCost,
+      utilitiesCost: projectedUtilitiesCost,
+      marketingCost: projectedMarketingCost,
+      otherCosts: projectedOtherCosts,
+      profit: projectedProfit,
+      profitMargin: projectedProfitMargin
+    });
+  };
+
+  // Atualizar preview quando o formulário é alterado
+  const handleParamChange = (key: keyof typeof params, value: number) => {
+    setParams(prev => {
+      const updated = { ...prev, [key]: value };
+      return updated;
+    });
+    
+    // Chamamos com um timeout para não sobrecarregar com muitas atualizações
+    setTimeout(updatePreview, 0);
+  };
+
+  // Executar simulação
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Preparar dados para a simulação
+    const simulationData = {
+      current: {
+        revenue: currentRevenue,
+        foodCost: currentFoodCost,
+        laborCost: currentLaborCost,
+        rentCost: currentRentCost,
+        utilitiesCost: currentUtilitiesCost,
+        marketingCost: currentMarketingCost,
+        otherCosts: currentOtherCosts,
+        profit: currentProfit,
+        profitMargin: currentProfitMargin
       },
-      adjustments: {
-        menuPriceAdjustment: data.menuPriceAdjustment,
-        foodCostReduction: data.foodCostReduction,
-        laborCostChange: data.laborCostChange,
-        marketingInvestment: data.marketingInvestment,
-        customerGrowth: data.customerGrowth,
-        averageTicketChange: data.averageTicketChange
-      },
+      projected: preview,
+      adjustments: params,
       changes: {
-        revenueChange: projectedRevenue - current.revenue,
-        revenueChangePercent: ((projectedRevenue - current.revenue) / current.revenue) * 100,
-        profitChange: projectedProfit - current.profit,
-        profitChangePercent: ((projectedProfit - current.profit) / current.profit) * 100,
-        marginChange: projectedProfitMargin - current.profitMargin
+        revenueChange: preview.revenue - currentRevenue,
+        revenueChangePercent: ((preview.revenue - currentRevenue) / currentRevenue) * 100,
+        profitChange: preview.profit - currentProfit,
+        profitChangePercent: ((preview.profit - currentProfit) / Math.abs(currentProfit)) * 100,
+        marginChange: preview.profitMargin - currentProfitMargin
       }
     };
     
-    onSimulate(simulationResult);
-  };
-  
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
-  
-  // Helper function to clamp slider values
-  const clampSliderValue = (value: number[], min: number, max: number) => {
-    return Math.max(min, Math.min(max, value[0]));
+    toast({
+      title: "Simulação concluída",
+      description: "Os resultados da simulação estão prontos para análise."
+    });
+    
+    onSimulate(simulationData);
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="parameters">Parâmetros Atuais</TabsTrigger>
-          <TabsTrigger value="scenarios">Cenário Simulado</TabsTrigger>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Tabs defaultValue="prices" className="space-y-4">
+        <TabsList className="grid grid-cols-3 md:w-[400px] mx-auto">
+          <TabsTrigger value="prices">Preços</TabsTrigger>
+          <TabsTrigger value="costs">Custos</TabsTrigger>
+          <TabsTrigger value="growth">Crescimento</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="parameters" className="space-y-6">
-          {/* Current Financial Health Card */}
+        {/* Aba de Preços */}
+        <TabsContent value="prices" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Saúde Financeira Atual</CardTitle>
-              <CardDescription>
-                Baseado nos parâmetros informados
-              </CardDescription>
+              <CardTitle>Ajustes de Preço</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2 border-r pr-4 last:border-r-0">
-                  <p className="text-sm text-muted-foreground">Faturamento Mensal</p>
-                  <p className="text-xl font-semibold">{formatCurrency(currentProfitability.revenue)}</p>
+            <CardContent className="space-y-6">
+              {/* Ajuste de Preços no Cardápio */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="menuPriceAdjustment">Ajuste de Preços no Cardápio</Label>
+                  <span className={`${params.menuPriceAdjustment > 0 ? 'text-green-600' : params.menuPriceAdjustment < 0 ? 'text-red-600' : ''} font-medium`}>
+                    {params.menuPriceAdjustment > 0 ? '+' : ''}{params.menuPriceAdjustment}%
+                  </span>
                 </div>
-                <div className="space-y-2 border-r pr-4 last:border-r-0">
-                  <p className="text-sm text-muted-foreground">Lucro Operacional</p>
-                  <p className={`text-xl font-semibold ${currentProfitability.profit >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {formatCurrency(currentProfitability.profit)}
-                  </p>
+                <Slider 
+                  id="menuPriceAdjustment"
+                  min={-20} 
+                  max={20} 
+                  step={0.5}
+                  value={[params.menuPriceAdjustment]}
+                  onValueChange={([value]) => handleParamChange('menuPriceAdjustment', value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Ajuste os preços do cardápio em até ±20%
+                </p>
+              </div>
+              
+              {/* Variação do Ticket Médio */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="averageTicketChange">Variação do Ticket Médio</Label>
+                  <span className={`${params.averageTicketChange > 0 ? 'text-green-600' : params.averageTicketChange < 0 ? 'text-red-600' : ''} font-medium`}>
+                    {params.averageTicketChange > 0 ? '+' : ''}{params.averageTicketChange}%
+                  </span>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Margem de Lucro</p>
-                  <p className={`text-xl font-semibold ${currentProfitability.profitMargin >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {currentProfitability.profitMargin.toFixed(1)}%
-                  </p>
-                </div>
+                <Slider 
+                  id="averageTicketChange"
+                  min={-15} 
+                  max={15} 
+                  step={0.5}
+                  value={[params.averageTicketChange]}
+                  onValueChange={([value]) => handleParamChange('averageTicketChange', value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Variação esperada no valor médio gasto por cliente
+                </p>
               </div>
             </CardContent>
           </Card>
-          
-          {/* Revenue Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-green-600" />
-                Receita Mensal
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="monthlyRevenue">Faturamento Mensal (R$)</Label>
-                    <span className="text-sm font-medium">
-                      {formatCurrency(formValues.monthlyRevenue)}
-                    </span>
-                  </div>
-                  <Input
-                    id="monthlyRevenue"
-                    type="number"
-                    min="1000"
-                    step="1000"
-                    {...register("monthlyRevenue", { valueAsNumber: true })}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Informe o faturamento mensal médio do seu restaurante
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Costs Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2 text-red-600" />
-                Custos e Despesas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Variable Costs */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-muted-foreground">Custos Variáveis (% da receita)</h4>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label htmlFor="foodCostPercentage">Custo de Alimentos e Bebidas (%)</Label>
-                      <span className="text-sm font-medium">{formValues.foodCostPercentage}%</span>
-                    </div>
-                    <Input
-                      id="foodCostPercentage"
-                      type="number"
-                      min="1"
-                      max="100"
-                      {...register("foodCostPercentage", { valueAsNumber: true })}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label htmlFor="laborCostPercentage">Custo de Mão de Obra (%)</Label>
-                      <span className="text-sm font-medium">{formValues.laborCostPercentage}%</span>
-                    </div>
-                    <Input
-                      id="laborCostPercentage"
-                      type="number"
-                      min="1"
-                      max="100"
-                      {...register("laborCostPercentage", { valueAsNumber: true })}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label htmlFor="marketingCostPercentage">Marketing e Propaganda (%)</Label>
-                      <span className="text-sm font-medium">{formValues.marketingCostPercentage}%</span>
-                    </div>
-                    <Input
-                      id="marketingCostPercentage"
-                      type="number"
-                      min="0"
-                      max="100"
-                      {...register("marketingCostPercentage", { valueAsNumber: true })}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label htmlFor="otherCostsPercentage">Outros Custos Variáveis (%)</Label>
-                      <span className="text-sm font-medium">{formValues.otherCostsPercentage}%</span>
-                    </div>
-                    <Input
-                      id="otherCostsPercentage"
-                      type="number"
-                      min="0"
-                      max="100"
-                      {...register("otherCostsPercentage", { valueAsNumber: true })}
-                    />
-                  </div>
-                </div>
-                
-                {/* Fixed Costs */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-muted-foreground">Custos Fixos (R$)</h4>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label htmlFor="rentCost">Aluguel e Taxas (R$)</Label>
-                      <span className="text-sm font-medium">{formatCurrency(formValues.rentCost)}</span>
-                    </div>
-                    <Input
-                      id="rentCost"
-                      type="number"
-                      min="0"
-                      step="100"
-                      {...register("rentCost", { valueAsNumber: true })}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label htmlFor="utilitiesCost">Utilidades (Água, Luz, Gás) (R$)</Label>
-                      <span className="text-sm font-medium">{formatCurrency(formValues.utilitiesCost)}</span>
-                    </div>
-                    <Input
-                      id="utilitiesCost"
-                      type="number"
-                      min="0"
-                      step="100"
-                      {...register("utilitiesCost", { valueAsNumber: true })}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="flex justify-end">
-            <Button 
-              type="button" 
-              onClick={() => setActiveTab("scenarios")}
-              className="flex items-center"
-            >
-              Próximo: Simular Cenário
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
         </TabsContent>
         
-        <TabsContent value="scenarios" className="space-y-6">
-          {/* Menu Price Card */}
+        {/* Aba de Custos */}
+        <TabsContent value="costs" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <DollarSign className="h-5 w-5 mr-2" />
-                Ajuste de Preços
-              </CardTitle>
-              <CardDescription>
-                Simule alterações nos preços do cardápio
-              </CardDescription>
+              <CardTitle>Ajustes de Custos</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="menuPriceAdjustment">Ajuste de Preços no Cardápio</Label>
-                    <span className="text-sm font-medium">
-                      {formValues.menuPriceAdjustment > 0 ? "+" : ""}{formValues.menuPriceAdjustment}%
-                    </span>
-                  </div>
-                  <Slider
-                    id="menuPriceAdjustment"
-                    min={-20}
-                    max={20}
-                    step={1}
-                    value={[formValues.menuPriceAdjustment]}
-                    onValueChange={(value) => setValue("menuPriceAdjustment", clampSliderValue(value, -20, 20))}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>-20%</span>
-                    <span>0%</span>
-                    <span>+20%</span>
-                  </div>
-                  <p className="text-xs mt-2 text-muted-foreground flex items-center">
-                    <CircleHelp className="h-3 w-3 mr-1" />
-                    {formValues.menuPriceAdjustment > 0 
-                      ? `Um aumento de ${formValues.menuPriceAdjustment}% nos preços pode impactar o volume de clientes.`
-                      : formValues.menuPriceAdjustment < 0
-                      ? `Uma redução de ${Math.abs(formValues.menuPriceAdjustment)}% nos preços pode atrair mais clientes mas reduz margem.`
-                      : "Sem alterações nos preços do cardápio."}
-                  </p>
+            <CardContent className="space-y-6">
+              {/* Redução no Custo de Alimentos */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="foodCostReduction">Redução no Custo de Alimentos</Label>
+                  <span className={`${params.foodCostReduction > 0 ? 'text-green-600' : ''} font-medium`}>
+                    {params.foodCostReduction > 0 ? '-' : ''}{params.foodCostReduction}%
+                  </span>
                 </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="averageTicketChange">Variação do Ticket Médio</Label>
-                    <span className="text-sm font-medium">
-                      {formValues.averageTicketChange > 0 ? "+" : ""}{formValues.averageTicketChange}%
-                    </span>
-                  </div>
-                  <Slider
-                    id="averageTicketChange"
-                    min={-20}
-                    max={20}
-                    step={1}
-                    value={[formValues.averageTicketChange]}
-                    onValueChange={(value) => setValue("averageTicketChange", clampSliderValue(value, -20, 20))}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>-20%</span>
-                    <span>0%</span>
-                    <span>+20%</span>
-                  </div>
-                  <p className="text-xs mt-2 text-muted-foreground flex items-center">
-                    <CircleHelp className="h-3 w-3 mr-1" />
-                    Variação do valor médio gasto por cliente independente da alteração de preços.
-                  </p>
+                <Slider 
+                  id="foodCostReduction"
+                  min={0} 
+                  max={15} 
+                  step={0.5}
+                  value={[params.foodCostReduction]}
+                  onValueChange={([value]) => handleParamChange('foodCostReduction', value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Redução potencial nos custos de ingredientes
+                </p>
+              </div>
+              
+              {/* Variação no Custo de Mão de Obra */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="laborCostChange">Variação no Custo de Mão de Obra</Label>
+                  <span className={`${params.laborCostChange < 0 ? 'text-green-600' : params.laborCostChange > 0 ? 'text-red-600' : ''} font-medium`}>
+                    {params.laborCostChange > 0 ? '+' : ''}{params.laborCostChange}%
+                  </span>
                 </div>
+                <Slider 
+                  id="laborCostChange"
+                  min={-10} 
+                  max={15} 
+                  step={0.5}
+                  value={[params.laborCostChange]}
+                  onValueChange={([value]) => handleParamChange('laborCostChange', value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Variação esperada nos custos com funcionários
+                </p>
               </div>
             </CardContent>
           </Card>
-          
-          {/* Cost Optimization Card */}
+        </TabsContent>
+        
+        {/* Aba de Crescimento */}
+        <TabsContent value="growth" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2" />
-                Otimização de Custos
-              </CardTitle>
-              <CardDescription>
-                Simule reduções e melhorias operacionais
-              </CardDescription>
+              <CardTitle>Estratégias de Crescimento</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="foodCostReduction">Redução no Custo de Alimentos</Label>
-                    <span className="text-sm font-medium">
-                      {formValues.foodCostReduction > 0 ? "-" : ""}{formValues.foodCostReduction}%
-                    </span>
-                  </div>
-                  <Slider
-                    id="foodCostReduction"
-                    min={0}
-                    max={15}
-                    step={0.5}
-                    value={[formValues.foodCostReduction]}
-                    onValueChange={(value) => setValue("foodCostReduction", clampSliderValue(value, 0, 15))}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>0%</span>
-                    <span>7.5%</span>
-                    <span>15%</span>
-                  </div>
-                  <p className="text-xs mt-2 text-muted-foreground flex items-center">
-                    <CircleHelp className="h-3 w-3 mr-1" />
-                    Reduções através de renegociação com fornecedores, controle de desperdício ou substituição de insumos.
-                  </p>
+            <CardContent className="space-y-6">
+              {/* Investimento em Marketing */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="marketingInvestment">Investimento em Marketing</Label>
+                  <span className={`${params.marketingInvestment > 0 ? 'text-blue-600' : ''} font-medium`}>
+                    {params.marketingInvestment > 0 ? '+' : ''}{params.marketingInvestment}%
+                  </span>
                 </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="laborCostChange">Variação no Custo de Mão de Obra</Label>
-                    <span className="text-sm font-medium">
-                      {formValues.laborCostChange > 0 ? "+" : ""}{formValues.laborCostChange}%
-                    </span>
-                  </div>
-                  <Slider
-                    id="laborCostChange"
-                    min={-15}
-                    max={15}
-                    step={0.5}
-                    value={[formValues.laborCostChange]}
-                    onValueChange={(value) => setValue("laborCostChange", clampSliderValue(value, -15, 15))}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>-15%</span>
-                    <span>0%</span>
-                    <span>+15%</span>
-                  </div>
-                  <p className="text-xs mt-2 text-muted-foreground flex items-center">
-                    <CircleHelp className="h-3 w-3 mr-1" />
-                    {formValues.laborCostChange > 0 
-                      ? `Um aumento de ${formValues.laborCostChange}% na folha pode melhorar qualidade do atendimento.`
-                      : formValues.laborCostChange < 0
-                      ? `Uma redução de ${Math.abs(formValues.laborCostChange)}% na folha pode reduzir a qualidade do serviço.`
-                      : "Sem alterações no custo de mão de obra."}
-                  </p>
+                <Slider 
+                  id="marketingInvestment"
+                  min={0} 
+                  max={50} 
+                  step={1}
+                  value={[params.marketingInvestment]}
+                  onValueChange={([value]) => handleParamChange('marketingInvestment', value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Aumento percentual no investimento em marketing
+                </p>
+              </div>
+              
+              {/* Crescimento de Clientes */}
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="customerGrowth">Crescimento de Clientes</Label>
+                  <span className={`${params.customerGrowth > 0 ? 'text-green-600' : params.customerGrowth < 0 ? 'text-red-600' : ''} font-medium`}>
+                    {params.customerGrowth > 0 ? '+' : ''}{params.customerGrowth}%
+                  </span>
                 </div>
+                <Slider 
+                  id="customerGrowth"
+                  min={-10} 
+                  max={30} 
+                  step={1}
+                  value={[params.customerGrowth]}
+                  onValueChange={([value]) => handleParamChange('customerGrowth', value)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Variação esperada no número de clientes
+                </p>
               </div>
             </CardContent>
           </Card>
-          
-          {/* Customer Growth Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <Users className="h-5 w-5 mr-2" />
-                Crescimento de Clientes
-              </CardTitle>
-              <CardDescription>
-                Simule alterações no fluxo de clientes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="marketingInvestment">Investimento em Marketing</Label>
-                    <span className="text-sm font-medium">
-                      {formValues.marketingInvestment > 0 ? "+" : ""}{formValues.marketingInvestment}%
-                    </span>
-                  </div>
-                  <Slider
-                    id="marketingInvestment"
-                    min={-20}
-                    max={50}
-                    step={1}
-                    value={[formValues.marketingInvestment]}
-                    onValueChange={(value) => setValue("marketingInvestment", clampSliderValue(value, -20, 50))}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>-20%</span>
-                    <span>0%</span>
-                    <span>+50%</span>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <Label htmlFor="customerGrowth">Crescimento no Número de Clientes</Label>
-                    <span className="text-sm font-medium">
-                      {formValues.customerGrowth > 0 ? "+" : ""}{formValues.customerGrowth}%
-                    </span>
-                  </div>
-                  <Slider
-                    id="customerGrowth"
-                    min={-20}
-                    max={30}
-                    step={1}
-                    value={[formValues.customerGrowth]}
-                    onValueChange={(value) => setValue("customerGrowth", clampSliderValue(value, -20, 30))}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>-20%</span>
-                    <span>0%</span>
-                    <span>+30%</span>
-                  </div>
-                  <p className="text-xs mt-2 text-muted-foreground flex items-center">
-                    <CircleHelp className="h-3 w-3 mr-1" />
-                    Estimativa de crescimento baseada nas alterações de preço e marketing.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="flex justify-between">
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={() => setActiveTab("parameters")}
-            >
-              Voltar aos Parâmetros
-            </Button>
-            <Button type="submit">
-              <Calculator className="mr-2 h-4 w-4" />
-              Calcular Simulação
-            </Button>
-          </div>
         </TabsContent>
       </Tabs>
+      
+      {/* Resumo e Preview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Preview da Simulação</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Faturamento</p>
+              <div className="flex items-baseline justify-between">
+                <p className="text-xl font-semibold">{formatCurrency(preview.revenue)}</p>
+                <span className={`text-sm ${preview.revenue > currentRevenue ? 'text-green-600' : preview.revenue < currentRevenue ? 'text-red-600' : ''}`}>
+                  {preview.revenue !== currentRevenue ? (
+                    <>
+                      {preview.revenue > currentRevenue ? '+' : ''}
+                      {((preview.revenue - currentRevenue) / currentRevenue * 100).toFixed(1)}%
+                    </>
+                  ) : '—'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Lucro</p>
+              <div className="flex items-baseline justify-between">
+                <p className="text-xl font-semibold">{formatCurrency(preview.profit)}</p>
+                <span className={`text-sm ${preview.profit > currentProfit ? 'text-green-600' : preview.profit < currentProfit ? 'text-red-600' : ''}`}>
+                  {preview.profit !== currentProfit ? (
+                    <>
+                      {preview.profit > currentProfit ? '+' : ''}
+                      {((preview.profit - currentProfit) / Math.abs(currentProfit) * 100).toFixed(1)}%
+                    </>
+                  ) : '—'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Margem</p>
+              <div className="flex items-baseline justify-between">
+                <p className="text-xl font-semibold">{preview.profitMargin.toFixed(1)}%</p>
+                <span className={`text-sm ${preview.profitMargin > currentProfitMargin ? 'text-green-600' : preview.profitMargin < currentProfitMargin ? 'text-red-600' : ''}`}>
+                  {preview.profitMargin !== currentProfitMargin ? (
+                    <>
+                      {preview.profitMargin > currentProfitMargin ? '+' : ''}
+                      {(preview.profitMargin - currentProfitMargin).toFixed(1)}pp
+                    </>
+                  ) : '—'}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t mt-4 pt-4">
+            <Button type="submit" className="w-full">Gerar Relatório Detalhado</Button>
+          </div>
+        </CardContent>
+      </Card>
     </form>
   );
 }

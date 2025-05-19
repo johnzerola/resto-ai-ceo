@@ -8,13 +8,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatsCard } from "@/components/restaurant/StatsCard";
 import { RevenueChart } from "@/components/restaurant/RevenueChart";
 import { TopProducts } from "@/components/restaurant/TopProducts";
-import { AlertCircle, FileDigit, Receipt, ShoppingCart } from "lucide-react";
+import { FileDigit, Receipt, ShoppingCart } from "lucide-react";
 import { Alert, AlertType, Alerts } from "@/components/restaurant/Alerts";
 import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
 import { useNavigate } from "react-router-dom";
 import { getFinancialData } from "@/services/FinancialDataService";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { DashboardCustomizer } from "@/components/restaurant/DashboardCustomizer";
+import { AdvancedAnalytics } from "@/components/restaurant/AdvancedAnalytics";
+import { getSystemAlerts } from "@/services/ModuleIntegrationService";
 
 // Dados de exemplo para os gráficos e componentes
 const sampleRevenueData = [
@@ -33,32 +36,14 @@ const sampleProducts = [
   { name: "Tiramisu", sales: 62, revenue: 1240, margin: 45 },
 ];
 
-const sampleAlerts: Alert[] = [
-  {
-    type: "warning",
-    title: "Estoque Baixo",
-    description: "Filé mignon e camarão estão com níveis críticos.",
-    date: "Hoje, 10:25"
-  },
-  {
-    type: "error",
-    title: "CMV Acima da Meta",
-    description: "Categoria de carnes com CMV 5% acima da meta estabelecida.",
-    date: "Hoje, 09:15"
-  },
-  {
-    type: "success",
-    title: "Promoção Efetiva",
-    description: "Happy hour aumentou vendas de bebidas em 30%.",
-    date: "Ontem, 18:40"
-  }
-];
-
 const Index = () => {
   const [hasConfigData, setHasConfigData] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [selectedKPIs, setSelectedKPIs] = useState<string[]>([]);
   const navigate = useNavigate();
 
+  // Verificar dados de configuração e alertas
   useEffect(() => {
     // Verificar se já existem dados de configuração
     const savedData = localStorage.getItem("restaurantData");
@@ -76,6 +61,29 @@ const Index = () => {
       setShowOnboarding(true);
       setHasConfigData(false);
     }
+
+    // Carregar alertas do sistema
+    setAlerts(getSystemAlerts());
+
+    // Carregar KPIs selecionados
+    const savedKPIs = localStorage.getItem('dashboardKPIs');
+    if (savedKPIs) {
+      setSelectedKPIs(JSON.parse(savedKPIs));
+    } else {
+      // KPIs padrão
+      setSelectedKPIs(['sales_today', 'dishes_sold', 'average_ticket', 'cmv']);
+    }
+    
+    // Configurar ouvinte de evento para atualizações de alertas
+    const handleSystemAlert = () => {
+      setAlerts(getSystemAlerts());
+    };
+    
+    window.addEventListener('systemAlertAdded', handleSystemAlert);
+    
+    return () => {
+      window.removeEventListener('systemAlertAdded', handleSystemAlert);
+    };
   }, []);
 
   const handleConfigComplete = () => {
@@ -96,6 +104,138 @@ const Index = () => {
       toast.info("Analisando CMV", {
         description: "Redirecionando para análise de CMV"
       });
+    }
+  };
+  
+  // Gerenciar KPIs selecionados
+  const handleSaveKPIs = (kpis: string[]) => {
+    setSelectedKPIs(kpis);
+  };
+
+  // Renderizar KPI baseado no ID
+  const renderKPI = (kpiId: string) => {
+    switch (kpiId) {
+      case 'sales_today':
+        return (
+          <StatsCard 
+            title="Vendas Hoje" 
+            value={formatCurrency(2350)} 
+            description="em relação a ontem" 
+            trend={{ value: 5, isPositive: true }}
+          />
+        );
+      case 'dishes_sold':
+        return (
+          <StatsCard 
+            title="Pratos Vendidos" 
+            value="138" 
+            description="23 pratos/hora" 
+          />
+        );
+      case 'average_ticket':
+        return (
+          <StatsCard 
+            title="Ticket Médio" 
+            value={formatCurrency(85)} 
+            description="em relação à semana passada" 
+            trend={{ value: 2.4, isPositive: true }}
+          />
+        );
+      case 'cmv':
+        return (
+          <StatsCard 
+            title="CMV" 
+            value="27%" 
+            description="em relação à meta" 
+            trend={{ value: 1.5, isPositive: false }}
+            trendDesirable="down"
+          />
+        );
+      case 'monthly_revenue':
+        return (
+          <StatsCard 
+            title="Faturamento Mensal" 
+            value={formatCurrency(62350)} 
+            description="projeção para o mês" 
+            trend={{ value: 7.2, isPositive: true }}
+          />
+        );
+      case 'weekly_sales':
+        return (
+          <StatsCard 
+            title="Vendas Semanais" 
+            value={formatCurrency(15800)} 
+            description="últimos 7 dias" 
+            trend={{ value: 3.8, isPositive: true }}
+          />
+        );
+      case 'dish_per_hour':
+        return (
+          <StatsCard 
+            title="Pratos por Hora" 
+            value="23" 
+            description="média do período" 
+          />
+        );
+      case 'table_turnover':
+        return (
+          <StatsCard 
+            title="Rotatividade de Mesas" 
+            value="4.2x" 
+            description="clientes por mesa/dia" 
+            trend={{ value: 0.8, isPositive: true }}
+          />
+        );
+      case 'avg_service_time':
+        return (
+          <StatsCard 
+            title="Tempo de Serviço" 
+            value="18 min" 
+            description="pedido até entrega" 
+            trend={{ value: 2.5, isPositive: false }}
+            trendDesirable="down"
+          />
+        );
+      case 'labor_cost':
+        return (
+          <StatsCard 
+            title="Custo de Pessoal" 
+            value="25%" 
+            description="da receita total" 
+            trend={{ value: 0.5, isPositive: true }}
+            trendDesirable="down"
+          />
+        );
+      case 'utilities_cost':
+        return (
+          <StatsCard 
+            title="Custos Fixos" 
+            value={formatCurrency(9500)} 
+            description="mensal" 
+            trend={{ value: 1.2, isPositive: false }}
+            trendDesirable="down"
+          />
+        );
+      case 'profit_margin':
+        return (
+          <StatsCard 
+            title="Margem de Lucro" 
+            value="15.8%" 
+            description="lucro líquido" 
+            trend={{ value: 0.7, isPositive: true }}
+          />
+        );
+      case 'sales_growth':
+        return (
+          <StatsCard 
+            title="Crescimento" 
+            value="8.3%" 
+            description="vs. mês anterior" 
+            trend={{ value: 8.3, isPositive: true }}
+          />
+        );
+      default:
+        return null;
     }
   };
 
@@ -125,6 +265,7 @@ const Index = () => {
                 Visão geral do seu restaurante
               </p>
             </div>
+            <DashboardCustomizer onSaveSettings={handleSaveKPIs} />
           </div>
 
           <Tabs defaultValue="visao-geral" className="space-y-4">
@@ -132,34 +273,16 @@ const Index = () => {
               <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
               <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
               <TabsTrigger value="operacional">Operacional</TabsTrigger>
+              <TabsTrigger value="insights">Insights</TabsTrigger>
             </TabsList>
             
             <TabsContent value="visao-geral" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatsCard 
-                  title="Vendas Hoje" 
-                  value={formatCurrency(2350)} 
-                  description="em relação a ontem" 
-                  trend={{ value: 5, isPositive: true }}
-                />
-                <StatsCard 
-                  title="Pratos Vendidos" 
-                  value="138" 
-                  description="23 pratos/hora" 
-                />
-                <StatsCard 
-                  title="Ticket Médio" 
-                  value={formatCurrency(85)} 
-                  description="em relação à semana passada" 
-                  trend={{ value: 2.4, isPositive: true }}
-                />
-                <StatsCard 
-                  title="CMV" 
-                  value="27%" 
-                  description="em relação à meta" 
-                  trend={{ value: 1.5, isPositive: false }}
-                  trendDesirable="down"
-                />
+                {selectedKPIs.slice(0, 4).map(kpiId => (
+                  <div key={kpiId}>
+                    {renderKPI(kpiId)}
+                  </div>
+                ))}
               </div>
               
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -189,7 +312,7 @@ const Index = () => {
                 <Card>
                   <CardContent className="pt-6">
                     <h3 className="text-lg font-medium mb-4">Alertas</h3>
-                    <Alerts alerts={sampleAlerts} onActionClick={handleAlertClick} />
+                    <Alerts alerts={alerts} onActionClick={handleAlertClick} />
                   </CardContent>
                 </Card>
               </div>
@@ -225,25 +348,46 @@ const Index = () => {
             </TabsContent>
             
             <TabsContent value="financeiro" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {selectedKPIs
+                  .filter(kpi => ['sales_today', 'monthly_revenue', 'weekly_sales', 'average_ticket', 'cmv', 'profit_margin', 'labor_cost', 'utilities_cost'].includes(kpi))
+                  .map(kpiId => (
+                    <div key={kpiId}>
+                      {renderKPI(kpiId)}
+                    </div>
+                  ))}
+              </div>
+              
+              <AdvancedAnalytics />
+            </TabsContent>
+            
+            <TabsContent value="operacional" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {selectedKPIs
+                  .filter(kpi => ['dishes_sold', 'dish_per_hour', 'table_turnover', 'avg_service_time'].includes(kpi))
+                  .map(kpiId => (
+                    <div key={kpiId}>
+                      {renderKPI(kpiId)}
+                    </div>
+                  ))}
+              </div>
+              
               <Card>
                 <CardContent className="pt-6">
-                  <h3 className="text-lg font-medium">Resumo Financeiro</h3>
-                  <p className="text-muted-foreground mt-2">
-                    Dados financeiros resumidos ainda em desenvolvimento.
+                  <h3 className="text-lg font-medium">Eficiência Operacional</h3>
+                  <p className="text-muted-foreground mt-2 mb-4">
+                    Análise de métricas operacionais por período
                   </p>
+                  
+                  <div className="text-center py-8 text-muted-foreground">
+                    Análises adicionais de eficiência operacional estarão disponíveis em breve.
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
             
-            <TabsContent value="operacional" className="space-y-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <h3 className="text-lg font-medium">Resumo Operacional</h3>
-                  <p className="text-muted-foreground mt-2">
-                    Dados operacionais resumidos ainda em desenvolvimento.
-                  </p>
-                </CardContent>
-              </Card>
+            <TabsContent value="insights" className="space-y-4">
+              <AdvancedAnalytics />
             </TabsContent>
           </Tabs>
         </div>
