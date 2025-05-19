@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { AIAssistant } from "./AIAssistant";
 import { toast } from "sonner";
+import { UserMenu } from "./UserMenu";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -39,11 +40,16 @@ export function Layout({ children }: LayoutProps) {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-8">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
+        <div className="flex-1">
+          <header className="bg-white border-b border-gray-200 h-14 flex items-center px-4 justify-end">
+            <UserMenu />
+          </header>
+          <main className="p-8">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
+        </div>
       </div>
       <AIAssistant />
       
