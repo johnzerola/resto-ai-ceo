@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -17,7 +16,8 @@ import {
   DollarSign,
   Code,
   Trophy,
-  ServerCrash
+  ServerCrash,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -91,7 +91,8 @@ export function Sidebar({ className }: SidebarProps) {
   // Itens para administradores
   const adminItems = [
     { name: "Documentação", icon: Code, path: "/documentacao" },
-    { name: "Admin Sistema", icon: ServerCrash, path: "/admin-sistema", ownerOnly: true }
+    { name: "Admin Sistema", icon: ServerCrash, path: "/admin-sistema", ownerOnly: true },
+    { name: "Status Sistema", icon: Activity, path: "/status-sistema", ownerOnly: true }
   ];
 
   return (
