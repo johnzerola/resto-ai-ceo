@@ -222,7 +222,7 @@ class SupabaseDataService {
         throw result.error;
       }
       
-      // Added proper type checking and error handling
+      // Proper null and type checking with safe navigation
       if (result.data && 
           Array.isArray(result.data) && 
           result.data.length > 0 && 
@@ -232,7 +232,8 @@ class SupabaseDataService {
           result.data[0].id !== null) {
         
         toast.success('Payment record created');
-        return String(result.data[0].id);
+        // Safe access with non-null assertion after all checks
+        return String(result.data[0]!.id!);
       } else {
         toast.success('Payment record created');
         return null;
