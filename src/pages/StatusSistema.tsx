@@ -111,9 +111,9 @@ const StatusSistema = () => {
       
       // Usando a abordagem de type assertion para tabelas conhecidas
       // Isso funciona porque sabemos quais tabelas são válidas no sistema
-      // e estamos usando apenas nomes de tabelas que existem no tipo ValidTableName
+      // e estamos usando apenas nomes de tabelas que existem no tipo ExtendedTableName
       const { count, error } = await supabase
-        .from(tableName as ValidTableName)
+        .from(tableName as ExtendedTableName)
         .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
