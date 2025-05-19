@@ -6,6 +6,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Settings2 } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 export interface KPIOption {
   id: string;
@@ -83,39 +85,83 @@ export function DashboardCustomizer({ onSaveSettings }: DashboardCustomizerProps
     });
   };
 
+  // Resetar para configurações padrão
+  const handleResetDefaults = () => {
+    const defaultKPIs = availableKPIs.filter(kpi => kpi.isDefault).map(kpi => kpi.id);
+    setSelectedKPIs(defaultKPIs);
+    toast.info("Configurações redefinidas para os padrões");
+  };
+
+  // Agrupar as categorias por ordem lógica de negócio
+  const categoryOrder = ["Financeiro", "Operacional", "Custos", "Análise"];
+  const sortedCategories = Object.keys(kpisByCategory).sort(
+    (a, b) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b)
+  );
+
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Settings2 className="mr-2 h-4 w-4" />
-          Personalizar Dashboard
+        <Button variant="outline" size="sm" className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+          <Settings2 className="h-4 w-4" />
+          <span>Personalizar Dashboard</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Personalizar KPIs do Dashboard</DialogTitle>
+          <DialogTitle className="text-xl">Personalizar KPIs do Dashboard</DialogTitle>
         </DialogHeader>
         
         <div className="py-4">
           <p className="text-sm text-muted-foreground mb-6">
-            Selecione os indicadores que deseja visualizar no seu dashboard. Você pode escolher até 8 KPIs.
+            Selecione os indicadores que deseja visualizar no seu dashboard. Os KPIs escolhidos serão exibidos em tempo real.
           </p>
           
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-blue-50 text-blue-600">
+                {selectedKPIs.length} de 8 KPIs selecionados
+              </Badge>
+              {selectedKPIs.length === 8 && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-600">
+                  Limite máximo atingido
+                </Badge>
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={handleResetDefaults}>
+              Restaurar Padrões
+            </Button>
+          </div>
+          
+          <Separator className="mb-6" />
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {Object.entries(kpisByCategory).map(([category, kpis]) => (
-              <div key={category} className="space-y-4">
-                <h3 className="font-medium text-sm">{category}</h3>
-                <div className="space-y-2">
-                  {kpis.map(kpi => (
-                    <div key={kpi.id} className="flex items-start space-x-2">
+            {sortedCategories.map((category) => (
+              <div key={category} className="space-y-4 bg-gray-50 p-4 rounded-lg border">
+                <h3 className="font-medium text-sm flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${
+                    category === "Financeiro" ? "bg-blue-500" : 
+                    category === "Operacional" ? "bg-green-500" : 
+                    category === "Custos" ? "bg-red-500" : "bg-purple-500"
+                  }`}></span>
+                  {category}
+                </h3>
+                <div className="space-y-3">
+                  {kpisByCategory[category].map(kpi => (
+                    <div key={kpi.id} 
+                      className={`flex items-start space-x-2 p-2 rounded-md transition-colors ${
+                        selectedKPIs.includes(kpi.id) ? "bg-blue-50" : "hover:bg-gray-100"
+                      }`}>
                       <Checkbox 
                         id={kpi.id}
                         checked={selectedKPIs.includes(kpi.id)}
                         onCheckedChange={() => handleKPIToggle(kpi.id)}
+                        className={selectedKPIs.includes(kpi.id) ? "border-blue-500" : ""}
                         disabled={!selectedKPIs.includes(kpi.id) && selectedKPIs.length >= 8}
                       />
                       <div className="grid gap-1.5">
-                        <Label htmlFor={kpi.id} className="font-medium">
+                        <Label htmlFor={kpi.id} className={`font-medium ${
+                          selectedKPIs.includes(kpi.id) ? "text-blue-700" : ""
+                        }`}>
                           {kpi.name}
                         </Label>
                         <p className="text-sm text-muted-foreground">
@@ -129,16 +175,13 @@ export function DashboardCustomizer({ onSaveSettings }: DashboardCustomizerProps
             ))}
           </div>
           
-          <div className="mt-6 text-sm text-muted-foreground">
-            {selectedKPIs.length === 8 ? (
-              <p className="text-amber-600">Você atingiu o limite máximo de 8 KPIs.</p>
-            ) : (
-              <p>{selectedKPIs.length} de 8 KPIs selecionados</p>
-            )}
-          </div>
-          
-          <div className="mt-6 flex justify-end">
-            <Button onClick={handleSaveSettings}>Salvar Configurações</Button>
+          <div className="mt-8 flex justify-between items-center">
+            <p className="text-sm text-muted-foreground">
+              Seus KPIs selecionados serão exibidos no dashboard em tempo real.
+            </p>
+            <Button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-700">
+              Salvar Configurações
+            </Button>
           </div>
         </div>
       </DialogContent>
