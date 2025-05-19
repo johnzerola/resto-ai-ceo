@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/restaurant/Layout";
 import { InventoryOverview } from "@/components/restaurant/InventoryOverview";
@@ -11,6 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
 import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
 import { syncModules } from "@/services/SyncService";
+import { PerformanceCharts } from "@/components/restaurant/PerformanceCharts";
 
 const Estoque = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -110,6 +110,7 @@ const Estoque = () => {
             <TabsTrigger value="inventory">Inventário</TabsTrigger>
             <TabsTrigger value="shopping">Lista de Compras</TabsTrigger>
             <TabsTrigger value="analytics">Análise de Estoque</TabsTrigger>
+            <TabsTrigger value="performance">Desempenho</TabsTrigger>
           </TabsList>
           
           <TabsContent value="inventory">
@@ -190,6 +191,10 @@ const Estoque = () => {
                 </Button>
               </div>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="performance">
+            <PerformanceCharts />
           </TabsContent>
         </Tabs>
       )}
