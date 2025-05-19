@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getSyncStatus, startSync, getSyncLogs } from "@/services/SyncService";
-import { supabase, isValidTableName, ExtendedTableName } from "@/integrations/supabase/client";
+import { supabase, isValidTableName, VALID_TABLES } from "@/integrations/supabase/client";
 import { supabaseDataService } from "@/services/SupabaseDataService";
 import { RefreshCcw, Database, Users, ServerCrash, Activity, CheckCircle2, AlertCircle, RotateCw } from "lucide-react";
 
@@ -109,11 +109,25 @@ const StatusSistema = () => {
         return 0;
       }
       
-      // Usando a abordagem de type assertion para tabelas conhecidas
-      // Isso funciona porque sabemos quais tabelas são válidas no sistema
-      // e estamos usando apenas nomes de tabelas que existem no tipo ExtendedTableName
+      // Verificar se é uma tabela conhecida no sistema
+      if (!VALID_TABLES.includes(tableName as any)) {
+        // Se for "payments" ou outra tabela não incluída em VALID_TABLES
+        // podemos ainda tentar contar registros, mas com uma abordagem alternativa
+        if (tableName === 'payments') {
+          // Para a tabela "payments" que não é uma das tabelas validadas no tipo
+          const { count, error } = await supabase
+            .from(tableName)
+            .select('*', { count: 'exact', head: true });
+          
+          if (error) throw error;
+          return count || 0;
+        }
+        return 0;
+      }
+      
+      // Para as tabelas conhecidas definidas em VALID_TABLES
       const { count, error } = await supabase
-        .from(tableName as ExtendedTableName)
+        .from(tableName)
         .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
