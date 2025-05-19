@@ -1,5 +1,5 @@
 
-import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName } from '@/integrations/supabase/client';
+import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, ExtendedTableName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
@@ -10,16 +10,16 @@ class SupabaseDataService {
   /**
    * Fetches all records from a table with optional filters
    */
-  async getAll<T extends ValidTableName>(
+  async getAll<T extends ExtendedTableName>(
     table: T,
     filters?: Record<string, any>
-  ): Promise<TableRow<T>[]> {
+  ): Promise<any[]> {
     try {
       if (!isValidTableName(table)) {
         throw new Error(`Invalid table name: ${table}`);
       }
 
-      let query = supabase.from(table).select();
+      let query = supabase.from(table as any).select();
       
       // Apply filters if provided
       if (filters) {
@@ -34,7 +34,7 @@ class SupabaseDataService {
         throw error;
       }
       
-      return (data || []) as TableRow<T>[];
+      return (data || []) as any[];
     } catch (error) {
       console.error(`Error fetching data from table ${table}:`, error);
       toast.error(`Error loading data: ${(error as Error).message}`);
@@ -45,17 +45,17 @@ class SupabaseDataService {
   /**
    * Fetches a record by ID
    */
-  async getById<T extends ValidTableName>(
+  async getById<T extends ExtendedTableName>(
     table: T,
     id: string
-  ): Promise<TableRow<T> | null> {
+  ): Promise<any | null> {
     try {
       if (!isValidTableName(table)) {
         throw new Error(`Invalid table name: ${table}`);
       }
       
       const { data, error } = await supabase
-        .from(table)
+        .from(table as any)
         .select()
         .eq('id', id)
         .single();
@@ -64,7 +64,7 @@ class SupabaseDataService {
         throw error;
       }
       
-      return data as TableRow<T>;
+      return data as any;
     } catch (error) {
       console.error(`Error fetching record from table ${table}:`, error);
       toast.error(`Error loading data: ${(error as Error).message}`);
@@ -75,17 +75,17 @@ class SupabaseDataService {
   /**
    * Creates records
    */
-  async create<T extends ValidTableName>(
+  async create<T extends ExtendedTableName>(
     table: T,
-    records: TableInsert<T> | TableInsert<T>[]
-  ): Promise<TableRow<T>[]> {
+    records: any | any[]
+  ): Promise<any[]> {
     try {
       if (!isValidTableName(table)) {
         throw new Error(`Invalid table name: ${table}`);
       }
       
       const { data, error } = await supabase
-        .from(table)
+        .from(table as any)
         .insert(records as any)
         .select();
       
@@ -94,7 +94,7 @@ class SupabaseDataService {
       }
       
       toast.success('Data saved successfully');
-      return (data || []) as TableRow<T>[];
+      return (data || []) as any[];
     } catch (error) {
       console.error(`Error creating records in table ${table}:`, error);
       toast.error(`Error saving data: ${(error as Error).message}`);
@@ -105,18 +105,18 @@ class SupabaseDataService {
   /**
    * Updates a record
    */
-  async update<T extends ValidTableName>(
+  async update<T extends ExtendedTableName>(
     table: T,
     id: string,
-    data: TableUpdate<T>
-  ): Promise<TableRow<T> | null> {
+    data: any
+  ): Promise<any | null> {
     try {
       if (!isValidTableName(table)) {
         throw new Error(`Invalid table name: ${table}`);
       }
       
       const { data: updatedData, error } = await supabase
-        .from(table)
+        .from(table as any)
         .update(data as any)
         .eq('id', id)
         .select()
@@ -127,7 +127,7 @@ class SupabaseDataService {
       }
       
       toast.success('Data updated successfully');
-      return updatedData as TableRow<T>;
+      return updatedData as any;
     } catch (error) {
       console.error(`Error updating record in table ${table}:`, error);
       toast.error(`Error updating data: ${(error as Error).message}`);
@@ -138,14 +138,14 @@ class SupabaseDataService {
   /**
    * Deletes a record
    */
-  async delete<T extends ValidTableName>(table: T, id: string): Promise<boolean> {
+  async delete<T extends ExtendedTableName>(table: T, id: string): Promise<boolean> {
     try {
       if (!isValidTableName(table)) {
         throw new Error(`Invalid table name: ${table}`);
       }
       
       const { error } = await supabase
-        .from(table)
+        .from(table as any)
         .delete()
         .eq('id', id);
       
@@ -194,6 +194,7 @@ class SupabaseDataService {
   
   /**
    * Create a payment record
+   * This method is prepared for future integration with actual payment processing
    */
   async createPayment(
     restaurantId: string, 
@@ -207,7 +208,7 @@ class SupabaseDataService {
       const userId = userData.user?.id;
 
       const { data, error } = await supabase
-        .from('payments')
+        .from('payments' as any)
         .insert({
           restaurant_id: restaurantId,
           user_id: userId,

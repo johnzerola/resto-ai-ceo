@@ -27,12 +27,11 @@ export type TableInsert<T extends TableName> = Tables[T]['Insert'];
 export type TableUpdate<T extends TableName> = Tables[T]['Update'];
 
 // Valid table names as a constant array for type checking
-const VALID_TABLES = [
+export const VALID_TABLES = [
   'achievements',
   'cash_flow',
   'goals',
   'inventory',
-  'payments', // Added 'payments' to the list of valid tables
   'profiles',
   'recipe_ingredients',
   'recipes',
@@ -40,10 +39,14 @@ const VALID_TABLES = [
   'restaurants'
 ] as const;
 
-// Type for valid table names
+// Create a union type for valid tables
 export type ValidTableName = typeof VALID_TABLES[number];
 
+// Create a separate type for all tables including the payments table
+// This allows us to have type safety while we wait for the database to be updated
+export type ExtendedTableName = ValidTableName | 'payments';
+
 // Validate table name function with proper typing
-export function isValidTableName(tableName: string): tableName is ValidTableName {
-  return VALID_TABLES.includes(tableName as ValidTableName);
+export function isValidTableName(tableName: string): tableName is ValidTableName | 'payments' {
+  return [...VALID_TABLES, 'payments'].includes(tableName as any);
 }
