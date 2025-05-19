@@ -227,12 +227,13 @@ class SupabaseDataService {
           Array.isArray(result.data) && 
           result.data.length > 0) {
         
-        // Safely access the first item with proper null assertion
+        // Create a strongly-typed local variable that TypeScript can understand
         const firstItem = result.data[0];
         
-        // Using non-null assertion only after explicit check
+        // Type guard to ensure firstItem is an object with an id
         if (firstItem && 
             typeof firstItem === 'object' && 
+            firstItem !== null && 
             'id' in firstItem && 
             firstItem.id !== null) {
           toast.success('Payment record created');
