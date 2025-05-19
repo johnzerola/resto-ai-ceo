@@ -109,8 +109,11 @@ const StatusSistema = () => {
         return 0;
       }
       
+      // Usando a abordagem de type assertion para tabelas conhecidas
+      // Isso funciona porque sabemos quais tabelas são válidas no sistema
+      // e estamos usando apenas nomes de tabelas que existem no tipo ValidTableName
       const { count, error } = await supabase
-        .from(tableName as ExtendedTableName)
+        .from(tableName as ValidTableName)
         .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
@@ -210,7 +213,7 @@ const StatusSistema = () => {
                     onClick={handleSync}
                     disabled={isLoading || syncStatus.inProgress}
                   >
-                    <RotateCcw className="h-4 w-4 mr-2" />
+                    <RotateCw className="h-4 w-4 mr-2" />
                     Sincronizar Agora
                   </Button>
                 </div>
@@ -226,7 +229,7 @@ const StatusSistema = () => {
                           Sincronizando...
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
+                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Sincronizado
                         </Badge>
