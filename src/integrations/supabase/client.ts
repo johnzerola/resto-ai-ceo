@@ -36,7 +36,8 @@ const VALID_TABLES = [
   'inventory',
   'profiles',
   'recipe_ingredients',
-  'restaurant_members'
+  'restaurant_members',
+  'payments'
 ] as const;
 
 // Type for valid table names

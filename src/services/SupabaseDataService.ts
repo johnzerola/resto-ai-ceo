@@ -161,6 +161,71 @@ class SupabaseDataService {
       return false;
     }
   }
+  
+  /**
+   * Upload a file to storage
+   */
+  async uploadFile(
+    restaurantId: string,
+    filePath: string,
+    file: File
+  ): Promise<string | null> {
+    try {
+      const path = `${restaurantId}/${filePath}`;
+      const { data, error } = await supabase.storage
+        .from('restaurant_files')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (error) {
+        throw error;
+      }
+
+      const fileUrl = `${supabase.storage.from('restaurant_files').getPublicUrl(path).data.publicUrl}`;
+      return fileUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error(`Error uploading file: ${(error as Error).message}`);
+      return null;
+    }
+  }
+  
+  /**
+   * Create a payment record
+   */
+  async createPayment(
+    restaurantId: string, 
+    amount: number, 
+    paymentMethod: string,
+    metadata?: Record<string, any>
+  ): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .insert({
+          restaurant_id: restaurantId,
+          user_id: supabase.auth.getUser().then(res => res.data.user?.id),
+          amount,
+          payment_method: paymentMethod,
+          metadata
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Payment record created');
+      return data.id;
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      toast.error(`Error creating payment: ${(error as Error).message}`);
+      return null;
+    }
+  }
 }
 
 // Export singleton instance
