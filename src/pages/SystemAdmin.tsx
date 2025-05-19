@@ -124,7 +124,9 @@ const SystemAdmin = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="success">Ativo</Badge>
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              Ativo
+                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))
@@ -270,28 +272,36 @@ const SystemAdmin = () => {
                     <TableRow>
                       <TableCell>Supabase Auth</TableCell>
                       <TableCell>
-                        <Badge variant="success">Operacional</Badge>
+                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                          Operacional
+                        </Badge>
                       </TableCell>
                       <TableCell>{new Date().toLocaleString()}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Supabase Database</TableCell>
                       <TableCell>
-                        <Badge variant="success">Operacional</Badge>
+                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                          Operacional
+                        </Badge>
                       </TableCell>
                       <TableCell>{new Date().toLocaleString()}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Supabase Storage</TableCell>
                       <TableCell>
-                        <Badge variant="success">Operacional</Badge>
+                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                          Operacional
+                        </Badge>
                       </TableCell>
                       <TableCell>{new Date().toLocaleString()}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Supabase Functions</TableCell>
                       <TableCell>
-                        <Badge variant="success">Operacional</Badge>
+                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                          Operacional
+                        </Badge>
                       </TableCell>
                       <TableCell>{new Date().toLocaleString()}</TableCell>
                     </TableRow>
