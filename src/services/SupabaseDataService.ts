@@ -227,10 +227,11 @@ class SupabaseDataService {
           Array.isArray(result.data) && 
           result.data.length > 0) {
         
-        // Safely access the first item with null checks
+        // Safely access the first item with proper null assertion
         const firstItem = result.data[0];
-        // Make sure firstItem is not null and has an id property
-        if (firstItem !== null && 
+        
+        // Using non-null assertion only after explicit check
+        if (firstItem && 
             typeof firstItem === 'object' && 
             'id' in firstItem && 
             firstItem.id !== null) {
