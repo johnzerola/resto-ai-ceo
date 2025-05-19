@@ -99,7 +99,7 @@ const Login = () => {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-sm text-center w-full">
-              Ainda não tem conta? Solicite ao administrador do sistema.
+              Ainda não tem conta? <Link to="/vendas" className="text-primary font-semibold hover:underline">Conheça nossos planos</Link>
             </div>
           </CardFooter>
         </Card>
