@@ -19,7 +19,7 @@ class SupabaseDataService {
         throw new Error(`Invalid table name: ${table}`);
       }
 
-      let query = supabase.from(table);
+      let query = supabase.from(table).select();
       
       // Apply filters if provided
       if (filters) {
@@ -28,7 +28,7 @@ class SupabaseDataService {
         });
       }
       
-      const { data, error } = await query.select();
+      const { data, error } = await query;
       
       if (error) {
         throw error;
