@@ -86,7 +86,7 @@ class SupabaseDataService {
       
       const { data, error } = await supabase
         .from(table)
-        .insert(records)
+        .insert(records as any)
         .select();
       
       if (error) {
@@ -117,7 +117,7 @@ class SupabaseDataService {
       
       const { data: updatedData, error } = await supabase
         .from(table)
-        .update(data)
+        .update(data as any)
         .eq('id', id as any)
         .select()
         .single();
