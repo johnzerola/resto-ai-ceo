@@ -1,5 +1,6 @@
 
 import { cn } from "@/lib/utils";
+import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 
 interface StatsCardProps {
   title: string;
@@ -19,9 +20,12 @@ export function StatsCard({ title, value, description, icon, trend, trendDesirab
     : trend === 'up' ? true : trend === 'down' ? false : true;
 
   const showTrend = trend !== undefined;
+
+  // Determine if the trend is desirable based on the trendDesirable prop
+  const isTrendDesirable = trendIsPositive === (trendDesirable === "up");
   
   return (
-    <div className={cn("rounded-lg border bg-card p-4 shadow-sm", className)}>
+    <div className={cn("rounded-lg border bg-card p-5 shadow-sm transition-all hover:shadow-md", className)}>
       <div className="flex justify-between items-start">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -30,19 +34,23 @@ export function StatsCard({ title, value, description, icon, trend, trendDesirab
         {icon && <div className="text-blue-500">{icon}</div>}
       </div>
       {showTrend && (
-        <div className="mt-3 flex items-center text-xs">
-          <span
+        <div className="mt-3 flex items-center text-xs font-medium">
+          <div 
             className={cn(
-              "font-medium",
-              trendIsPositive === (trendDesirable === "up") 
-                ? "text-green-600" 
-                : "text-destructive"
+              "mr-2 flex items-center rounded-full px-2 py-1",
+              isTrendDesirable 
+                ? "bg-green-50 text-green-600" 
+                : "bg-red-50 text-destructive"
             )}
           >
-            {trendIsPositive ? "+" : "-"}
+            {trendIsPositive ? (
+              <ArrowUp className="mr-1 h-3 w-3" />
+            ) : (
+              <ArrowDown className="mr-1 h-3 w-3" />
+            )}
             {trendValue}%
-          </span>
-          {description && <span className="ml-2 text-gray-500">{description}</span>}
+          </div>
+          {description && <span className="text-gray-500">{description}</span>}
         </div>
       )}
       {!showTrend && description && (

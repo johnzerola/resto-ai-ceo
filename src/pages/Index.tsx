@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/restaurant/Layout";
@@ -8,10 +9,12 @@ import { StatsCard } from "@/components/restaurant/StatsCard";
 import { RevenueChart } from "@/components/restaurant/RevenueChart";
 import { TopProducts } from "@/components/restaurant/TopProducts";
 import { AlertCircle, FileDigit, Receipt, ShoppingCart } from "lucide-react";
-import { Alerts, AlertType } from "@/components/restaurant/Alerts";
+import { Alert, AlertType, Alerts } from "@/components/restaurant/Alerts";
 import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
 import { useNavigate } from "react-router-dom";
 import { getFinancialData } from "@/services/FinancialDataService";
+import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Dados de exemplo para os gráficos e componentes
 const sampleRevenueData = [
@@ -30,21 +33,24 @@ const sampleProducts = [
   { name: "Tiramisu", sales: 62, revenue: 1240, margin: 45 },
 ];
 
-const sampleAlerts = [
+const sampleAlerts: Alert[] = [
   {
-    type: "warning" as AlertType,
+    type: "warning",
     title: "Estoque Baixo",
-    description: "Filé mignon e camarão estão com níveis críticos."
+    description: "Filé mignon e camarão estão com níveis críticos.",
+    date: "Hoje, 10:25"
   },
   {
-    type: "error" as AlertType,
+    type: "error",
     title: "CMV Acima da Meta",
-    description: "Categoria de carnes com CMV 5% acima da meta estabelecida."
+    description: "Categoria de carnes com CMV 5% acima da meta estabelecida.",
+    date: "Hoje, 09:15"
   },
   {
-    type: "success" as AlertType,
+    type: "success",
     title: "Promoção Efetiva",
-    description: "Happy hour aumentou vendas de bebidas em 30%."
+    description: "Happy hour aumentou vendas de bebidas em 30%.",
+    date: "Ontem, 18:40"
   }
 ];
 
@@ -77,6 +83,20 @@ const Index = () => {
     setShowOnboarding(false);
     // Após completar a configuração, recarregar a página para mostrar o dashboard
     window.location.reload();
+  };
+
+  const handleAlertClick = (alert: Alert) => {
+    if (alert.type === "warning" && alert.title === "Estoque Baixo") {
+      navigate("/estoque");
+      toast.info("Verificando itens com estoque baixo", {
+        description: "Redirecionando para o módulo de estoque"
+      });
+    } else if (alert.type === "error" && alert.title.includes("CMV")) {
+      navigate("/dre-cmv");
+      toast.info("Analisando CMV", {
+        description: "Redirecionando para análise de CMV"
+      });
+    }
   };
 
   return (
@@ -118,9 +138,9 @@ const Index = () => {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard 
                   title="Vendas Hoje" 
-                  value="R$ 2.350,00" 
-                  description="+5% em relação a ontem" 
-                  trend="up"
+                  value={formatCurrency(2350)} 
+                  description="em relação a ontem" 
+                  trend={{ value: 5, isPositive: true }}
                 />
                 <StatsCard 
                   title="Pratos Vendidos" 
@@ -129,15 +149,15 @@ const Index = () => {
                 />
                 <StatsCard 
                   title="Ticket Médio" 
-                  value="R$ 85,00" 
-                  description="+2,4% em relação à semana passada" 
-                  trend="up"
+                  value={formatCurrency(85)} 
+                  description="em relação à semana passada" 
+                  trend={{ value: 2.4, isPositive: true }}
                 />
                 <StatsCard 
                   title="CMV" 
                   value="27%" 
-                  description="-1,5% em relação à meta" 
-                  trend="down"
+                  description="em relação à meta" 
+                  trend={{ value: 1.5, isPositive: false }}
                   trendDesirable="down"
                 />
               </div>
@@ -169,7 +189,7 @@ const Index = () => {
                 <Card>
                   <CardContent className="pt-6">
                     <h3 className="text-lg font-medium mb-4">Alertas</h3>
-                    <Alerts alerts={sampleAlerts} />
+                    <Alerts alerts={sampleAlerts} onActionClick={handleAlertClick} />
                   </CardContent>
                 </Card>
               </div>
