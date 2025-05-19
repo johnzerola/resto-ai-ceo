@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/restaurant/Layout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -11,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getSyncStatus, startSync, getSyncLogs } from "@/services/SyncService";
-import { supabase, isValidTableName, VALID_TABLES } from "@/integrations/supabase/client";
+import { supabase, isValidTableName, VALID_TABLES, getTableQueryBuilder, ExtendedTableName } from "@/integrations/supabase/client";
 import { supabaseDataService } from "@/services/SupabaseDataService";
 import { RefreshCcw, Database, Users, ServerCrash, Activity, CheckCircle2, AlertCircle, RotateCw } from "lucide-react";
 
@@ -109,25 +108,8 @@ const StatusSistema = () => {
         return 0;
       }
       
-      // Verificar se é uma tabela conhecida no sistema
-      if (!VALID_TABLES.includes(tableName as any)) {
-        // Se for "payments" ou outra tabela não incluída em VALID_TABLES
-        // podemos ainda tentar contar registros, mas com uma abordagem alternativa
-        if (tableName === 'payments') {
-          // Para a tabela "payments" que não é uma das tabelas validadas no tipo
-          const { count, error } = await supabase
-            .from(tableName as any)
-            .select('*', { count: 'exact', head: true });
-          
-          if (error) throw error;
-          return count || 0;
-        }
-        return 0;
-      }
-      
-      // Para as tabelas conhecidas definidas em VALID_TABLES
-      const { count, error } = await supabase
-        .from(tableName as any)
+      // Usar nossa nova função auxiliar para obter um query builder tipado
+      const { count, error } = await getTableQueryBuilder(tableName as ExtendedTableName)
         .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
