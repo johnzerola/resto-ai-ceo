@@ -1,6 +1,7 @@
 
 import { toast } from "sonner";
 import { addSystemAlert } from "./ModuleIntegrationService";
+import { getFinancialData } from "./FinancialDataService";
 
 // Interfaces para o sistema de metas
 export interface Goal {
@@ -16,6 +17,10 @@ export interface Goal {
   completed: boolean;
   createdAt: string;
   updatedAt: string;
+  linkedTo?: {
+    source: "dre" | "cmv" | "cashFlow";
+    metric: string;
+  };
 }
 
 export type GoalCategory = 'financial' | 'inventory' | 'sales' | 'operational' | 'customer';
@@ -271,7 +276,11 @@ export function initializeDefaultGoals(): void {
         current: 0,
         unit: "%",
         category: "financial" as GoalCategory,
-        reward: "Bônus de gestão"
+        reward: "Bônus de gestão",
+        linkedTo: {
+          source: "cmv" as const,
+          metric: "reduction"
+        }
       },
       {
         title: "Otimizar estoque mínimo",
@@ -289,6 +298,30 @@ export function initializeDefaultGoals(): void {
         current: 3,
         unit: "%",
         category: "operational" as GoalCategory
+      },
+      {
+        title: "Aumentar faturamento mensal",
+        description: "Aumentar o faturamento mensal em 10% em comparação ao mês anterior",
+        target: 10,
+        current: 0,
+        unit: "%",
+        category: "financial" as GoalCategory,
+        linkedTo: {
+          source: "cashFlow" as const,
+          metric: "revenue_growth"
+        }
+      },
+      {
+        title: "Melhorar margem de lucro",
+        description: "Aumentar a margem de lucro líquida em 3 pontos percentuais",
+        target: 3,
+        current: 0,
+        unit: "p.p.",
+        category: "financial" as GoalCategory,
+        linkedTo: {
+          source: "dre" as const,
+          metric: "profit_margin"
+        }
       }
     ];
     
@@ -299,4 +332,68 @@ export function initializeDefaultGoals(): void {
   if (!localStorage.getItem("achievements")) {
     localStorage.setItem("achievements", JSON.stringify(getDefaultAchievements()));
   }
+}
+
+// Função para sincronizar metas com dados financeiros
+export function syncGoalsWithFinancialData(): void {
+  try {
+    const goals = getAllGoals();
+    const financialData = getFinancialData();
+    let updatedAny = false;
+    
+    // Para cada meta que tem uma fonte de dados vinculada, atualizar o progresso
+    goals.forEach(goal => {
+      if (goal.linkedTo) {
+        const { source, metric } = goal.linkedTo;
+        let newProgress = goal.current;
+        
+        // Calcular novo progresso com base na fonte e métrica
+        switch (source) {
+          case "dre":
+            if (metric === "profit_margin" && financialData.profitMargin) {
+              // Melhorar margem de lucro (em pontos percentuais)
+              const previousMargin = financialData.previousProfitMargin || 0;
+              const currentMargin = financialData.profitMargin;
+              newProgress = Math.max(0, currentMargin - previousMargin);
+            }
+            break;
+            
+          case "cmv":
+            if (metric === "reduction" && financialData.cmvPercentage) {
+              // Redução de CMV (em %)
+              const targetCMV = financialData.targetCMV || 30; // valor padrão se não estiver definido
+              const currentCMV = financialData.cmvPercentage;
+              newProgress = Math.max(0, targetCMV - currentCMV);
+            }
+            break;
+            
+          case "cashFlow":
+            if (metric === "revenue_growth" && financialData.revenueGrowth) {
+              // Crescimento da receita (em %)
+              newProgress = financialData.revenueGrowth;
+            }
+            break;
+        }
+        
+        // Se o progresso calculado for diferente do atual, atualizar
+        if (newProgress !== goal.current) {
+          updateGoalProgress(goal.id, newProgress);
+          updatedAny = true;
+        }
+      }
+    });
+    
+    if (updatedAny) {
+      toast.success("Metas atualizadas com dados financeiros recentes");
+    }
+  } catch (error) {
+    console.error("Erro ao sincronizar metas com dados financeiros:", error);
+  }
+}
+
+// Defina um listener para eventos financeiros
+export function setupFinancialDataListener(): void {
+  window.addEventListener("financialDataUpdated", () => {
+    syncGoalsWithFinancialData();
+  });
 }

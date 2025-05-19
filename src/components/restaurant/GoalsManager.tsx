@@ -6,7 +6,9 @@ import {
   getAllGoals, 
   addGoal, 
   removeGoal,
-  initializeDefaultGoals 
+  initializeDefaultGoals,
+  syncGoalsWithFinancialData,
+  setupFinancialDataListener
 } from "@/services/GoalsService";
 import { GoalProgressCard } from "./GoalProgressCard";
 import { Button } from "@/components/ui/button";
@@ -30,31 +32,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, Trophy, Award, Target } from "lucide-react";
+import { PlusCircle, Trophy, Award, Target, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { AchievementsDisplay } from "./AchievementsDisplay";
+import { Switch } from "@/components/ui/switch";
 
 export function GoalsManager() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [linkToFinancial, setLinkToFinancial] = useState(false);
   
-  // Formulário para nova meta - adicionando a propriedade current
+  // Formulário para nova meta
   const [newGoal, setNewGoal] = useState<{
     title: string;
     description: string;
     target: number;
-    current: number; // Adicionando a propriedade current que estava faltando
+    current: number;
     unit: string;
     category: GoalCategory;
     deadline?: string;
     reward?: string;
+    linkedTo?: {
+      source: "dre" | "cmv" | "cashFlow";
+      metric: string;
+    };
   }>({
     title: "",
     description: "",
     target: 0,
-    current: 0, // Inicializando com 0
+    current: 0,
     unit: "",
     category: "operational"
   });
@@ -65,6 +73,12 @@ export function GoalsManager() {
     
     // Inicializar metas padrão se necessário
     initializeDefaultGoals();
+    
+    // Configurar listener para dados financeiros
+    setupFinancialDataListener();
+    
+    // Sincronizar metas com dados financeiros no carregamento
+    syncGoalsWithFinancialData();
     
     // Listener para atualização de metas
     const handleGoalsUpdated = () => {
@@ -96,15 +110,16 @@ export function GoalsManager() {
     try {
       addGoal(newGoal);
       
-      // Resetar formulário - incluindo o current
+      // Resetar formulário
       setNewGoal({
         title: "",
         description: "",
         target: 0,
-        current: 0, // Resetando o current
+        current: 0,
         unit: "",
         category: "operational"
       });
+      setLinkToFinancial(false);
       
       setIsAddDialogOpen(false);
       loadGoals();
@@ -147,6 +162,76 @@ export function GoalsManager() {
     sales: "Vendas",
     operational: "Operacional",
     customer: "Clientes"
+  };
+  
+  // Atualizar linkedTo com base na categoria
+  const handleCategoryChange = (category: GoalCategory) => {
+    let updatedGoal = {...newGoal, category};
+    
+    // Se a categoria for financeira e a opção de vincular estiver ativada,
+    // adicionar vinculação padrão com base na unidade
+    if (category === "financial" && linkToFinancial) {
+      if (newGoal.unit === "%") {
+        updatedGoal.linkedTo = {
+          source: "dre",
+          metric: "profit_margin"
+        };
+      }
+    } else if (category !== "financial") {
+      // Se não for financeira, remover vinculação
+      setLinkToFinancial(false);
+      delete updatedGoal.linkedTo;
+    }
+    
+    setNewGoal(updatedGoal);
+  };
+  
+  // Alternar vinculação com dados financeiros
+  const handleToggleLink = (checked: boolean) => {
+    setLinkToFinancial(checked);
+    
+    if (checked && newGoal.category === "financial") {
+      // Adicionar vinculação padrão com base na unidade
+      const updatedGoal = {...newGoal};
+      
+      if (newGoal.unit === "%") {
+        updatedGoal.linkedTo = {
+          source: "dre",
+          metric: "profit_margin"
+        };
+      } else {
+        updatedGoal.linkedTo = {
+          source: "cashFlow",
+          metric: "revenue_growth"
+        };
+      }
+      
+      setNewGoal(updatedGoal);
+    } else {
+      // Remover vinculação
+      const updatedGoal = {...newGoal};
+      delete updatedGoal.linkedTo;
+      setNewGoal(updatedGoal);
+    }
+  };
+  
+  // Alterar a fonte de dados para vinculação
+  const handleLinkSourceChange = (source: "dre" | "cmv" | "cashFlow") => {
+    if (!linkToFinancial) return;
+    
+    const metrics: Record<string, string> = {
+      "dre": "profit_margin",
+      "cmv": "reduction",
+      "cashFlow": "revenue_growth"
+    };
+    
+    setNewGoal({
+      ...newGoal,
+      linkedTo: {
+        source,
+        metric: metrics[source]
+      }
+    });
   };
   
   return (
@@ -240,7 +325,7 @@ export function GoalsManager() {
                     <Label htmlFor="category">Categoria</Label>
                     <Select 
                       value={newGoal.category} 
-                      onValueChange={(value: GoalCategory) => setNewGoal({...newGoal, category: value})}
+                      onValueChange={(value: GoalCategory) => handleCategoryChange(value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione uma categoria" />
@@ -255,6 +340,69 @@ export function GoalsManager() {
                     </Select>
                   </div>
                 </div>
+                
+                {newGoal.category === "financial" && (
+                  <div className="border rounded-md p-3 bg-slate-50">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="link-financial">
+                          <div className="flex items-center gap-2">
+                            <Link2 className="h-4 w-4 text-blue-600" />
+                            Sincronizar com dados financeiros
+                          </div>
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          Atualiza automaticamente o progresso com base em DRE, CMV ou Fluxo de Caixa
+                        </p>
+                      </div>
+                      <Switch 
+                        id="link-financial" 
+                        checked={linkToFinancial} 
+                        onCheckedChange={handleToggleLink}
+                      />
+                    </div>
+                    
+                    {linkToFinancial && (
+                      <div className="mt-3 pt-3 border-t">
+                        <Label htmlFor="link-source" className="mb-2 block text-sm">
+                          Fonte de dados
+                        </Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant={newGoal.linkedTo?.source === "dre" ? "default" : "outline"} 
+                            onClick={() => handleLinkSourceChange("dre")}
+                          >
+                            DRE
+                          </Button>
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant={newGoal.linkedTo?.source === "cmv" ? "default" : "outline"} 
+                            onClick={() => handleLinkSourceChange("cmv")}
+                          >
+                            CMV
+                          </Button>
+                          <Button 
+                            type="button" 
+                            size="sm" 
+                            variant={newGoal.linkedTo?.source === "cashFlow" ? "default" : "outline"} 
+                            onClick={() => handleLinkSourceChange("cashFlow")}
+                          >
+                            Fluxo de Caixa
+                          </Button>
+                        </div>
+                        
+                        <p className="text-xs text-blue-600 mt-2">
+                          {newGoal.linkedTo?.source === "dre" && "Vinculado à Margem de Lucro do DRE"}
+                          {newGoal.linkedTo?.source === "cmv" && "Vinculado à Redução do CMV"}
+                          {newGoal.linkedTo?.source === "cashFlow" && "Vinculado ao Crescimento de Receita"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 <div className="grid gap-2">
                   <Label htmlFor="deadline">Prazo Limite</Label>

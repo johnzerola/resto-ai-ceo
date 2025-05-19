@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Goal, updateGoalProgress } from "@/services/GoalsService";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Trophy, Edit, Trash2, CheckCircle2 } from "lucide-react";
+import { Trophy, Edit, Trash2, CheckCircle2, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -51,6 +51,20 @@ export function GoalProgressCard({ goal, onDelete, onEdit }: GoalProgressCardPro
     setIsDeleteDialogOpen(false);
   };
   
+  // Mapeamento de fontes de dados para texto amigável
+  const sourceNames = {
+    "dre": "DRE",
+    "cmv": "CMV",
+    "cashFlow": "Fluxo de Caixa"
+  };
+  
+  // Mapeamento de métricas para texto amigável
+  const metricNames = {
+    "profit_margin": "Margem de Lucro",
+    "reduction": "Redução",
+    "revenue_growth": "Crescimento de Receita"
+  };
+  
   return (
     <div className={cn(
       "rounded-md border p-4 transition-all hover:shadow-md",
@@ -66,8 +80,19 @@ export function GoalProgressCard({ goal, onDelete, onEdit }: GoalProgressCardPro
                 Concluído
               </span>
             )}
+            {goal.linkedTo && (
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                <Link2 className="mr-1 h-3 w-3" />
+                Sincronizado
+              </span>
+            )}
           </div>
           <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
+          {goal.linkedTo && (
+            <p className="text-xs text-blue-600 mt-1">
+              Vinculado a: {sourceNames[goal.linkedTo.source]} ({metricNames[goal.linkedTo.metric as keyof typeof metricNames] || goal.linkedTo.metric})
+            </p>
+          )}
         </div>
         
         {/* Ícone de troféu para recompensa */}
@@ -105,6 +130,8 @@ export function GoalProgressCard({ goal, onDelete, onEdit }: GoalProgressCardPro
             size="sm" 
             className="h-8 w-8 p-0" 
             onClick={() => setIsUpdateDialogOpen(true)}
+            disabled={!!goal.linkedTo}
+            title={goal.linkedTo ? "Progresso atualizado automaticamente" : "Atualizar progresso"}
           >
             <Edit className="h-4 w-4" />
             <span className="sr-only">Atualizar progresso</span>
