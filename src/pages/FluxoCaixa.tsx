@@ -9,6 +9,8 @@ import { Plus, FileDown, BarChart } from "lucide-react";
 import { toast } from "sonner";
 import { dispatchFinancialDataEvent } from "@/services/FinancialDataService";
 import { useNavigate } from "react-router-dom";
+import { syncModules } from "@/services/SyncService";
+import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
 
 const FluxoCaixa = () => {
   const [isAddingEntry, setIsAddingEntry] = useState(false);
@@ -71,8 +73,9 @@ const FluxoCaixa = () => {
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground flex items-center gap-2">
             Controle de entradas e saídas financeiras
+            <SyncIndicator />
           </p>
         </div>
         <div className="flex gap-2">
@@ -125,8 +128,17 @@ const FluxoCaixa = () => {
           onSuccess={() => {
             setIsAddingEntry(false);
             setSelectedEntryId(null);
-            // Disparar evento para atualizar DRE e CMV
-            dispatchFinancialDataEvent();
+            
+            // Usar novo sistema de sincronização
+            const cashFlowData = localStorage.getItem("cashFlow");
+            if (cashFlowData) {
+              const parsedData = JSON.parse(cashFlowData);
+              syncModules(parsedData, "cashFlow");
+            } else {
+              // Manter comportamento anterior como fallback
+              dispatchFinancialDataEvent();
+            }
+            
             toast.success("Transação salva e dados financeiros atualizados");
           }}
         />

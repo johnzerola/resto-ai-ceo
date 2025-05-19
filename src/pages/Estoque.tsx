@@ -9,6 +9,8 @@ import { Plus, FileDown, FileUp, Link } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useNavigate } from "react-router-dom";
+import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
+import { syncModules } from "@/services/SyncService";
 
 const Estoque = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -50,8 +52,9 @@ const Estoque = () => {
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Controle de Estoque</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground flex items-center gap-2">
             Gerencie seu inventário e monitore níveis de estoque
+            <SyncIndicator />
           </p>
         </div>
         <div className="flex gap-2">
@@ -93,6 +96,12 @@ const Estoque = () => {
           onSuccess={() => {
             setIsAddingItem(false);
             setSelectedItemId(null);
+            
+            // Usar novo sistema de sincronização
+            const inventoryData = localStorage.getItem("inventory");
+            if (inventoryData) {
+              syncModules(JSON.parse(inventoryData), "inventory");
+            }
           }}
         />
       ) : (
