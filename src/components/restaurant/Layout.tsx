@@ -7,9 +7,10 @@ import { UserMenu } from "./UserMenu";
 
 interface LayoutProps {
   children: React.ReactNode;
+  title?: string; // Added optional title prop
 }
 
-export function Layout({ children }: LayoutProps) {
+export function Layout({ children, title }: LayoutProps) {
   const [dataUpdated, setDataUpdated] = useState(false);
 
   useEffect(() => {
@@ -46,6 +47,8 @@ export function Layout({ children }: LayoutProps) {
           </header>
           <main className="p-8">
             <div className="max-w-7xl mx-auto">
+              {/* If there's a title, display it */}
+              {title && <h1 className="text-3xl font-bold mb-6">{title}</h1>}
               {children}
             </div>
           </main>

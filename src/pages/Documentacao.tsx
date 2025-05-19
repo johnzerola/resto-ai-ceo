@@ -33,7 +33,6 @@ const Documentacao = () => {
       <div className="space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Documentação</h1>
             <p className="text-muted-foreground mt-1">
               Guias e manuais para uso do sistema Resto AI CEO
             </p>
