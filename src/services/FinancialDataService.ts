@@ -1,4 +1,3 @@
-
 // Serviço para gerenciar a integração entre Fluxo de Caixa, DRE e CMV
 
 import { toast } from "sonner";
@@ -28,6 +27,12 @@ export interface FinancialData {
     cmvPercentage: number;
     color: string;
   }[];
+  // Adicionando propriedades necessárias para o sistema de metas
+  profitMargin?: number;
+  previousProfitMargin?: number;
+  cmvPercentage?: number;
+  targetCMV?: number;
+  revenueGrowth?: number;
 }
 
 // Mapeamento de categorias de fluxo de caixa para categorias financeiras
@@ -204,7 +209,12 @@ export function getFinancialData(): FinancialData {
           otherCosts: 0,
           total: 0
         },
-        cmvCategories: []
+        cmvCategories: [],
+        profitMargin: 0,
+        previousProfitMargin: 0,
+        cmvPercentage: 0,
+        targetCMV: 0,
+        revenueGrowth: 0
       };
     }
   } catch (error) {
@@ -226,7 +236,12 @@ export function getFinancialData(): FinancialData {
         otherCosts: 0,
         total: 0
       },
-      cmvCategories: []
+      cmvCategories: [],
+      profitMargin: 0,
+      previousProfitMargin: 0,
+      cmvPercentage: 0,
+      targetCMV: 0,
+      revenueGrowth: 0
     };
   }
 }

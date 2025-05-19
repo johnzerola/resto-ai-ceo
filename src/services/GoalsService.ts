@@ -350,7 +350,7 @@ export function syncGoalsWithFinancialData(): void {
         // Calcular novo progresso com base na fonte e métrica
         switch (source) {
           case "dre":
-            if (metric === "profit_margin" && financialData.profitMargin) {
+            if (metric === "profit_margin" && financialData.profitMargin !== undefined) {
               // Melhorar margem de lucro (em pontos percentuais)
               const previousMargin = financialData.previousProfitMargin || 0;
               const currentMargin = financialData.profitMargin;
@@ -359,7 +359,7 @@ export function syncGoalsWithFinancialData(): void {
             break;
             
           case "cmv":
-            if (metric === "reduction" && financialData.cmvPercentage) {
+            if (metric === "reduction" && financialData.cmvPercentage !== undefined) {
               // Redução de CMV (em %)
               const targetCMV = financialData.targetCMV || 30; // valor padrão se não estiver definido
               const currentCMV = financialData.cmvPercentage;
@@ -368,7 +368,7 @@ export function syncGoalsWithFinancialData(): void {
             break;
             
           case "cashFlow":
-            if (metric === "revenue_growth" && financialData.revenueGrowth) {
+            if (metric === "revenue_growth" && financialData.revenueGrowth !== undefined) {
               // Crescimento da receita (em %)
               newProgress = financialData.revenueGrowth;
             }
