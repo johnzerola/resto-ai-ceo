@@ -28,15 +28,15 @@ export type TableUpdate<T extends TableName> = Tables[T]['Update'];
 
 // Valid table names as a constant array for type checking
 const VALID_TABLES = [
-  'restaurants',
-  'recipes',
   'achievements',
+  'recipes',
   'cash_flow',
   'goals',
   'inventory',
   'profiles',
   'recipe_ingredients',
   'restaurant_members',
+  'restaurants',
   'payments'
 ] as const;
 

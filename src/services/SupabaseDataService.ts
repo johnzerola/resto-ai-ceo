@@ -19,7 +19,7 @@ class SupabaseDataService {
         throw new Error(`Invalid table name: ${table}`);
       }
 
-      let query = supabase.from(table).select();
+      let query = supabase.from(table);
       
       // Apply filters if provided
       if (filters) {
@@ -28,13 +28,13 @@ class SupabaseDataService {
         });
       }
       
-      const { data, error } = await query;
+      const { data, error } = await query.select();
       
       if (error) {
         throw error;
       }
       
-      return (data || []) as unknown as TableRow<T>[];
+      return (data || []) as TableRow<T>[];
     } catch (error) {
       console.error(`Error fetching data from table ${table}:`, error);
       toast.error(`Error loading data: ${(error as Error).message}`);
@@ -57,14 +57,14 @@ class SupabaseDataService {
       const { data, error } = await supabase
         .from(table)
         .select()
-        .eq('id', id as any)
+        .eq('id', id)
         .single();
       
       if (error) {
         throw error;
       }
       
-      return data as unknown as TableRow<T>;
+      return data as TableRow<T>;
     } catch (error) {
       console.error(`Error fetching record from table ${table}:`, error);
       toast.error(`Error loading data: ${(error as Error).message}`);
@@ -94,7 +94,7 @@ class SupabaseDataService {
       }
       
       toast.success('Data saved successfully');
-      return (data || []) as unknown as TableRow<T>[];
+      return (data || []) as TableRow<T>[];
     } catch (error) {
       console.error(`Error creating records in table ${table}:`, error);
       toast.error(`Error saving data: ${(error as Error).message}`);
@@ -118,7 +118,7 @@ class SupabaseDataService {
       const { data: updatedData, error } = await supabase
         .from(table)
         .update(data as any)
-        .eq('id', id as any)
+        .eq('id', id)
         .select()
         .single();
       
@@ -127,7 +127,7 @@ class SupabaseDataService {
       }
       
       toast.success('Data updated successfully');
-      return updatedData as unknown as TableRow<T>;
+      return updatedData as TableRow<T>;
     } catch (error) {
       console.error(`Error updating record in table ${table}:`, error);
       toast.error(`Error updating data: ${(error as Error).message}`);
@@ -147,7 +147,7 @@ class SupabaseDataService {
       const { error } = await supabase
         .from(table)
         .delete()
-        .eq('id', id as any);
+        .eq('id', id);
       
       if (error) {
         throw error;
@@ -202,11 +202,15 @@ class SupabaseDataService {
     metadata?: Record<string, any>
   ): Promise<string | null> {
     try {
+      // Get current user id
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+
       const { data, error } = await supabase
         .from('payments')
         .insert({
           restaurant_id: restaurantId,
-          user_id: supabase.auth.getUser().then(res => res.data.user?.id),
+          user_id: userId,
           amount,
           payment_method: paymentMethod,
           metadata
