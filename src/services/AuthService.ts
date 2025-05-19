@@ -114,7 +114,7 @@ export const registerUser = (userData: RegistrationData): User | null => {
     saveUsers(users);
 
     addSystemAlert({
-      type: "info",
+      type: "success", // Alterado de "info" para "success" para corresponder ao tipo esperado
       title: "Novo usuário criado",
       description: `${newUser.name} foi adicionado como ${newUser.role}`,
       date: new Date().toLocaleString()
