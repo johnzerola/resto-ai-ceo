@@ -2,6 +2,13 @@ import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableNa
 import { toast } from 'sonner';
 
 /**
+ * Helper function to check if an object has an id property of type string
+ */
+function hasId(obj: any): obj is { id: string } {
+  return obj && typeof obj === 'object' && 'id' in obj && typeof obj.id === 'string';
+}
+
+/**
  * Service for Supabase data operations
  */
 class SupabaseDataService {
@@ -221,18 +228,12 @@ class SupabaseDataService {
         throw result.error;
       }
       
-      // Use explicit type and null handling for firstItem
-      const firstItem: { id: string } | null = (result.data && 
-          Array.isArray(result.data) && 
-          result.data.length > 0) ? result.data[0] : null;
+      // Safely extract firstItem and check if it has an id property
+      const firstItem = Array.isArray(result.data) ? result.data[0] : null;
       
-      // Explicitly check if firstItem is not null
-      if (firstItem !== null) {
-        // Verify the id property exists
-        if ('id' in firstItem && firstItem.id !== null) {
-          toast.success('Payment record created');
-          return String(firstItem.id);
-        }
+      if (hasId(firstItem)) {
+        toast.success('Payment record created');
+        return firstItem.id;
       }
       
       toast.success('Payment record created');
