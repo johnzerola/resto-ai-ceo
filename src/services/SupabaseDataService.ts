@@ -34,7 +34,7 @@ class SupabaseDataService {
         throw error;
       }
       
-      return (data || []) as TableRow<T>[];
+      return (data || []) as unknown as TableRow<T>[];
     } catch (error) {
       console.error(`Error fetching data from table ${table}:`, error);
       toast.error(`Error loading data: ${(error as Error).message}`);
@@ -57,14 +57,14 @@ class SupabaseDataService {
       const { data, error } = await supabase
         .from(table)
         .select()
-        .eq('id', id)
+        .eq('id', id as any)
         .single();
       
       if (error) {
         throw error;
       }
       
-      return data as TableRow<T>;
+      return data as unknown as TableRow<T>;
     } catch (error) {
       console.error(`Error fetching record from table ${table}:`, error);
       toast.error(`Error loading data: ${(error as Error).message}`);
@@ -94,7 +94,7 @@ class SupabaseDataService {
       }
       
       toast.success('Data saved successfully');
-      return (data || []) as TableRow<T>[];
+      return (data || []) as unknown as TableRow<T>[];
     } catch (error) {
       console.error(`Error creating records in table ${table}:`, error);
       toast.error(`Error saving data: ${(error as Error).message}`);
@@ -118,7 +118,7 @@ class SupabaseDataService {
       const { data: updatedData, error } = await supabase
         .from(table)
         .update(data)
-        .eq('id', id)
+        .eq('id', id as any)
         .select()
         .single();
       
@@ -127,7 +127,7 @@ class SupabaseDataService {
       }
       
       toast.success('Data updated successfully');
-      return updatedData as TableRow<T>;
+      return updatedData as unknown as TableRow<T>;
     } catch (error) {
       console.error(`Error updating record in table ${table}:`, error);
       toast.error(`Error updating data: ${(error as Error).message}`);
@@ -147,7 +147,7 @@ class SupabaseDataService {
       const { error } = await supabase
         .from(table)
         .delete()
-        .eq('id', id);
+        .eq('id', id as any);
       
       if (error) {
         throw error;
