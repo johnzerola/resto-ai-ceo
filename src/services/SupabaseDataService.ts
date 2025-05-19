@@ -1,177 +1,167 @@
 
-import { supabase, isValidTableName, TableNames } from '@/integrations/supabase/client';
+import { supabase, TableNames, TableRow, isValidTableName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Database } from '@/integrations/supabase/types';
 
-// Tipos genéricos para facilitar a tipagem
-export type TableRow<T extends TableNames> = Database['public']['Tables'][T]['Row'];
-export type TableInsert<T extends TableNames> = Database['public']['Tables'][T]['Insert'];
-export type TableUpdate<T extends TableNames> = Database['public']['Tables'][T]['Update'];
+/**
+ * Serviço para operações com Supabase
+ */
+class SupabaseDataService {
 
-export class SupabaseDataService {
   /**
-   * Busca dados de uma tabela específica
+   * Busca todos os registros de uma tabela com filtro opcional
    */
-  static async fetchData<T extends TableNames>(
-    tableName: T,
+  async getAll<T extends TableNames>(
+    table: T,
     filters?: Record<string, any>
   ): Promise<TableRow<T>[]> {
     try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Nome de tabela inválido: ${tableName}`);
+      if (!isValidTableName(table)) {
+        throw new Error(`Nome de tabela inválido: ${table}`);
       }
 
-      let query = supabase.from(tableName).select('*');
-
+      let query = supabase.from(table).select();
+      
       // Aplicar filtros se fornecidos
       if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
           query = query.eq(key, value);
         });
       }
-
+      
       const { data, error } = await query;
-
-      if (error) throw error;
+      
+      if (error) {
+        throw error;
+      }
+      
       return data as TableRow<T>[];
     } catch (error) {
-      console.error(`Erro ao buscar dados da tabela ${tableName}:`, error);
+      console.error(`Erro ao buscar dados da tabela ${table}:`, error);
       toast.error(`Erro ao carregar dados: ${(error as Error).message}`);
       return [];
     }
   }
-
+  
   /**
-   * Busca um único registro por ID
+   * Busca um registro específico por ID
    */
-  static async fetchById<T extends TableNames>(
-    tableName: T,
+  async getById<T extends TableNames>(
+    table: T,
     id: string
   ): Promise<TableRow<T> | null> {
     try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Nome de tabela inválido: ${tableName}`);
+      if (!isValidTableName(table)) {
+        throw new Error(`Nome de tabela inválido: ${table}`);
       }
-
+      
       const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
+        .from(table)
+        .select()
         .eq('id', id)
         .single();
-
-      if (error) throw error;
+      
+      if (error) {
+        throw error;
+      }
+      
       return data as TableRow<T>;
     } catch (error) {
-      console.error(`Erro ao buscar registro por ID na tabela ${tableName}:`, error);
+      console.error(`Erro ao buscar registro da tabela ${table}:`, error);
+      toast.error(`Erro ao carregar dados: ${(error as Error).message}`);
       return null;
     }
   }
-
+  
   /**
-   * Insere múltiplos registros em uma tabela
+   * Cria novos registros
    */
-  static async insertMany<T extends TableNames>(
-    tableName: T,
-    records: TableInsert<T>[]
+  async create<T extends TableNames>(
+    table: T,
+    records: Partial<TableRow<T>> | Partial<TableRow<T>>[]
   ): Promise<TableRow<T>[]> {
     try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Nome de tabela inválido: ${tableName}`);
+      if (!isValidTableName(table)) {
+        throw new Error(`Nome de tabela inválido: ${table}`);
       }
-
+      
       const { data, error } = await supabase
-        .from(tableName)
-        .insert(records as any)
+        .from(table)
+        .insert(records)
         .select();
-
-      if (error) throw error;
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Dados salvos com sucesso');
       return data as TableRow<T>[];
     } catch (error) {
-      console.error(`Erro ao inserir registros na tabela ${tableName}:`, error);
+      console.error(`Erro ao criar registros na tabela ${table}:`, error);
       toast.error(`Erro ao salvar dados: ${(error as Error).message}`);
       return [];
     }
   }
-
-  /**
-   * Insere um único registro em uma tabela
-   */
-  static async insert<T extends TableNames>(
-    tableName: T,
-    record: TableInsert<T>
-  ): Promise<TableRow<T> | null> {
-    try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Nome de tabela inválido: ${tableName}`);
-      }
-
-      const { data, error } = await supabase
-        .from(tableName)
-        .insert(record as any)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as TableRow<T>;
-    } catch (error) {
-      console.error(`Erro ao inserir registro na tabela ${tableName}:`, error);
-      toast.error(`Erro ao salvar dados: ${(error as Error).message}`);
-      return null;
-    }
-  }
-
+  
   /**
    * Atualiza um registro existente
    */
-  static async update<T extends TableNames>(
-    tableName: T,
+  async update<T extends TableNames>(
+    table: T,
     id: string,
-    record: TableUpdate<T>
+    data: Partial<TableRow<T>>
   ): Promise<TableRow<T> | null> {
     try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Nome de tabela inválido: ${tableName}`);
+      if (!isValidTableName(table)) {
+        throw new Error(`Nome de tabela inválido: ${table}`);
       }
-
-      const { data, error } = await supabase
-        .from(tableName)
-        .update(record as any)
+      
+      const { data: updatedData, error } = await supabase
+        .from(table)
+        .update(data)
         .eq('id', id)
         .select()
         .single();
-
-      if (error) throw error;
-      return data as TableRow<T>;
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Dados atualizados com sucesso');
+      return updatedData as TableRow<T>;
     } catch (error) {
-      console.error(`Erro ao atualizar registro na tabela ${tableName}:`, error);
+      console.error(`Erro ao atualizar registro na tabela ${table}:`, error);
       toast.error(`Erro ao atualizar dados: ${(error as Error).message}`);
       return null;
     }
   }
-
+  
   /**
    * Remove um registro
    */
-  static async delete<T extends TableNames>(
-    tableName: T,
-    id: string
-  ): Promise<boolean> {
+  async delete<T extends TableNames>(table: T, id: string): Promise<boolean> {
     try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Nome de tabela inválido: ${tableName}`);
+      if (!isValidTableName(table)) {
+        throw new Error(`Nome de tabela inválido: ${table}`);
       }
-
+      
       const { error } = await supabase
-        .from(tableName)
+        .from(table)
         .delete()
         .eq('id', id);
-
-      if (error) throw error;
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Registro removido com sucesso');
       return true;
     } catch (error) {
-      console.error(`Erro ao excluir registro na tabela ${tableName}:`, error);
-      toast.error(`Erro ao excluir dados: ${(error as Error).message}`);
+      console.error(`Erro ao remover registro da tabela ${table}:`, error);
+      toast.error(`Erro ao remover dados: ${(error as Error).message}`);
       return false;
     }
   }
 }
+
+// Exportar instância única
+export const supabaseDataService = new SupabaseDataService();

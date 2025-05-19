@@ -19,7 +19,8 @@ export const supabase = createClient<Database>(
 
 // Tipos auxiliares para simplificar uso
 export type Tables = Database['public']['Tables'];
-export type TableNames = keyof Database['public']['Tables'];
+export type TableRow<T extends keyof Tables> = Tables[T]['Row'];
+export type TableNames = keyof Tables;
 
 // Função de helper para verificar se uma string é um nome de tabela válido
 export function isValidTableName(tableName: string): tableName is TableNames {

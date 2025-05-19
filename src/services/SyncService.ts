@@ -10,7 +10,7 @@ export interface SyncStatus {
   inProgress: boolean;
 }
 
-// Função para iniciar sincronização (adicionada para resolver o erro)
+// Função para iniciar sincronização
 export async function startSync(source: string) {
   return syncModules({}, source);
 }
@@ -35,8 +35,6 @@ export async function syncModules(data: any, source: string) {
     
     // Com Supabase, não precisamos sincronizar manualmente os dados
     // pois eles já estão armazenados no banco de dados
-    
-    // Em vez disso, podemos calcular métricas financeiras se necessário
     
     // Simular um pequeno atraso para a UI
     await new Promise(resolve => setTimeout(resolve, 500));
