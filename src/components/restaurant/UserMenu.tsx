@@ -11,10 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Loader2, LogOut, Settings, User, UserCog } from "lucide-react";
+import { UserRole } from "@/services/AuthService";
 
 export function UserMenu() {
   const { user, logout, isLoading, hasPermission } = useAuth();
-  const { UserRole } = require("@/services/AuthService");
 
   if (isLoading) {
     return (
