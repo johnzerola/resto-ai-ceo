@@ -15,8 +15,11 @@ import {
   Menu,
   X,
   DollarSign,
+  Code,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserRole } from "@/services/AuthService";
 
 interface SidebarProps {
   className?: string;
@@ -25,6 +28,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { hasPermission } = useAuth();
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -46,6 +50,9 @@ export function Sidebar({ className }: SidebarProps) {
     { name: "Marketing", icon: BarChart4, path: "/marketing" },
     { name: "Configurações", icon: Settings, path: "/configuracoes" },
   ];
+
+  // Item para documentação técnica - visível apenas para gerentes e proprietários
+  const docItem = { name: "Documentação", icon: Code, path: "/documentacao" };
 
   return (
     <>
@@ -120,13 +127,36 @@ export function Sidebar({ className }: SidebarProps) {
               >
                 <item.icon
                   className={cn(
-                    "flex-shrink-0 h-5 w-5 mr-3",
+                    "flex-shrink-0 h-5 w-5",
                     isCollapsed ? "mr-0 mx-auto" : "mr-3"
                   )}
                 />
                 {!isCollapsed && <span>{item.name}</span>}
               </NavLink>
             ))}
+            
+            {/* Item de documentação técnica condicional */}
+            {hasPermission(UserRole.MANAGER) && (
+              <NavLink
+                to={docItem.path}
+                className={({ isActive }) =>
+                  cn(
+                    isActive
+                      ? "bg-resto-blue-50 text-resto-blue-700"
+                      : "text-resto-gray-600 hover:bg-resto-gray-50",
+                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all"
+                  )
+                }
+              >
+                <docItem.icon
+                  className={cn(
+                    "flex-shrink-0 h-5 w-5",
+                    isCollapsed ? "mr-0 mx-auto" : "mr-3"
+                  )}
+                />
+                {!isCollapsed && <span>{docItem.name}</span>}
+              </NavLink>
+            )}
           </nav>
         </div>
 

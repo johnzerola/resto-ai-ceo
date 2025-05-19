@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import AccessDenied from "./pages/AccessDenied";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
+import Documentacao from "./pages/Documentacao";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserRole } from "./services/AuthService";
@@ -128,6 +129,16 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRole={UserRole.OWNER}>
                   <GerenciarUsuarios />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Documentação técnica - acesso gerencial ou superior */}
+            <Route 
+              path="/documentacao" 
+              element={
+                <ProtectedRoute requiredRole={UserRole.MANAGER}>
+                  <Documentacao />
                 </ProtectedRoute>
               }
             />
