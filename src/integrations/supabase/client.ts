@@ -50,6 +50,5 @@ export function isValidTableName(tableName: string): tableName is ValidTableName
 
 // Helper function for type-safe table access with any table name
 export function getTableQueryBuilder(tableName: ValidTableName) {
-  // Force type cast here to solve the TypeScript error
   return supabase.from(tableName);
 }
