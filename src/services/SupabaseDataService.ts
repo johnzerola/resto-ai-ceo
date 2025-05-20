@@ -1,5 +1,5 @@
 
-import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, CustomTables } from '@/integrations/supabase/client';
+import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, getTableQueryBuilder } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
@@ -17,7 +17,7 @@ class SupabaseDataService {
   /**
    * Fetches all records from a table with optional filters
    */
-  async getAll<T extends CustomTables>(
+  async getAll<T extends ValidTableName>(
     table: T,
     filters?: Record<string, any>
   ): Promise<any[]> {
@@ -52,7 +52,7 @@ class SupabaseDataService {
   /**
    * Fetches a record by ID
    */
-  async getById<T extends CustomTables>(
+  async getById<T extends ValidTableName>(
     table: T,
     id: string
   ): Promise<any | null> {
@@ -81,7 +81,7 @@ class SupabaseDataService {
   /**
    * Creates records
    */
-  async create<T extends CustomTables>(
+  async create<T extends ValidTableName>(
     table: T,
     records: any | any[]
   ): Promise<any[]> {
@@ -110,7 +110,7 @@ class SupabaseDataService {
   /**
    * Updates a record
    */
-  async update<T extends CustomTables>(
+  async update<T extends ValidTableName>(
     table: T,
     id: string,
     data: any
@@ -142,7 +142,7 @@ class SupabaseDataService {
   /**
    * Deletes a record
    */
-  async delete<T extends CustomTables>(table: T, id: string): Promise<boolean> {
+  async delete<T extends ValidTableName>(table: T, id: string): Promise<boolean> {
     try {
       if (!isValidTableName(table)) {
         throw new Error(`Invalid table name: ${table}`);

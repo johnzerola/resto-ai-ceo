@@ -5,7 +5,7 @@ import { Layout } from "@/components/restaurant/Layout";
 import { RestaurantSelector } from "@/components/restaurant/RestaurantSelector";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth, UserRole } from "@/services/AuthService";
+import { useAuth } from "@/services/AuthService";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,16 +15,6 @@ import { CircleDollarSign, Forklift, PieChart, Salad, Store } from "lucide-react
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { supabaseDataService } from "@/services/SupabaseDataService";
-
-// Define a type for RestaurantSelector props
-type RestaurantSelectorProps = {
-  onRestaurantSelect: (restaurant: any) => void;
-};
-
-// Ensure RestaurantSelector component accepts these props
-declare module "@/components/restaurant/RestaurantSelector" {
-  export const RestaurantSelector: React.FC<RestaurantSelectorProps>;
-}
 
 const Index = () => {
   const { user, userRole } = useAuth();
@@ -77,7 +67,8 @@ const Index = () => {
           </p>
         </div>
 
-        <RestaurantSelector onRestaurantSelect={handleRestaurantSelect} />
+        {/* Remove the onRestaurantSelect prop since it's not accepted by RestaurantSelector */}
+        <RestaurantSelector />
 
         {!selectedRestaurant ? (
           <div className="flex items-center justify-center h-64">

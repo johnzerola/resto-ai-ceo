@@ -87,7 +87,7 @@ export class PaymentService {
         throw error;
       }
       
-      return (data as unknown as Payment[]) || [];
+      return ((data || []) as unknown as Payment[]);
     } catch (error) {
       console.error('Error loading payments:', error);
       toast.error(`Error loading payment data: ${(error as Error).message}`);
@@ -227,7 +227,7 @@ export class PaymentService {
       }
       
       // Update status to 'overdue'
-      const ids = data.map(item => item.id);
+      const ids = data.map((item: any) => item.id);
       const { error: updateError } = await getTableQueryBuilder('payments')
         .update({ status: 'overdue' })
         .in('id', ids);

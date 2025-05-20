@@ -36,22 +36,19 @@ export const VALID_TABLES = [
   'recipe_ingredients',
   'recipes',
   'restaurant_members',
-  'restaurants'
+  'restaurants',
+  'payments' // Added payments to the list of valid tables
 ] as const;
 
 // Create a union type for valid tables
 export type ValidTableName = typeof VALID_TABLES[number];
 
-// Since the payments table doesn't exist in the Database type yet but we need to use it,
-// let's create a special helper type to handle it
-export type CustomTables = ValidTableName | 'payments';
-
 // Validate table name function with proper typing
-export function isValidTableName(tableName: string): tableName is CustomTables {
-  return [...VALID_TABLES, 'payments'].includes(tableName as any);
+export function isValidTableName(tableName: string): tableName is ValidTableName {
+  return VALID_TABLES.includes(tableName as any);
 }
 
 // Helper function for type-safe table access with any table name
-export function getTableQueryBuilder(tableName: CustomTables) {
+export function getTableQueryBuilder(tableName: ValidTableName) {
   return supabase.from(tableName as any);
 }
