@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/restaurant/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserRole, getUsers, getUserByEmail, registerUser } from "@/services/AuthService";
-import { useAuth } from "@/services/AuthService";
+import { useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

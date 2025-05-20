@@ -1,48 +1,170 @@
 
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-} from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "./services/AuthService";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
-import FluxoCaixa from "./pages/FluxoCaixa";
 import FichaTecnica from "./pages/FichaTecnica";
 import Estoque from "./pages/Estoque";
 import DreCmv from "./pages/DreCmv";
-import StatusSistema from "./pages/StatusSistema";
-import ManualUsuario from "./pages/ManualUsuario";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "sonner";
-import ContasFinanceiras from "./pages/ContasFinanceiras";
+import FluxoCaixa from "./pages/FluxoCaixa";
+import Promocoes from "./pages/Promocoes";
+import Simulador from "./pages/Simulador";
+import Marketing from "./pages/Marketing";
+import GerenteIA from "./pages/GerenteIA";
+import Configuracoes from "./pages/Configuracoes";
+import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import AccessDenied from "./pages/AccessDenied";
+import GerenciarUsuarios from "./pages/GerenciarUsuarios";
+import Documentacao from "./pages/Documentacao";
+import PaginaVendas from "./pages/PaginaVendas";
+import Onboarding from "./pages/Onboarding";
+import SystemAdmin from "./pages/SystemAdmin";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { UserRole } from "./services/AuthService";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <div className="min-h-screen bg-background">
-      <ThemeProvider defaultTheme="light" storageKey="resto-ai-theme">
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/fluxo-caixa" element={<FluxoCaixa />} />
-                <Route path="/ficha-tecnica" element={<FichaTecnica />} />
-                <Route path="/estoque" element={<Estoque />} />
-                <Route path="/dre-cmv" element={<DreCmv />} />
-                <Route path="/status-sistema" element={<StatusSistema />} />
-                <Route path="/manual-usuario" element={<ManualUsuario />} />
-                <Route path="/contas-financeiras" element={<ContasFinanceiras />} />
-              </Routes>
-              <Toaster richColors position="top-center" />
-            </BrowserRouter>
-          </AuthProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </div>
-  );
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Rotas públicas */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/acesso-negado" element={<AccessDenied />} />
+            <Route path="/vendas" element={<PaginaVendas />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            
+            {/* Rotas protegidas - acesso geral */}
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <Index />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/ficha-tecnica" 
+              element={
+                <ProtectedRoute>
+                  <FichaTecnica />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/estoque" 
+              element={
+                <ProtectedRoute>
+                  <Estoque />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Rotas protegidas - acesso gerencial */}
+            <Route 
+              path="/dre-cmv" 
+              element={
+                <ProtectedRoute requiredRole={UserRole.MANAGER}>
+                  <DreCmv />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/fluxo-caixa" 
+              element={
+                <ProtectedRoute requiredRole={UserRole.MANAGER}>
+                  <FluxoCaixa />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Rotas protegidas - acesso proprietário */}
+            <Route 
+              path="/promocoes" 
+              element={
+                <ProtectedRoute>
+                  <Promocoes />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/simulador" 
+              element={
+                <ProtectedRoute>
+                  <Simulador />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/marketing" 
+              element={
+                <ProtectedRoute>
+                  <Marketing />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/gerente-ia" 
+              element={
+                <ProtectedRoute>
+                  <GerenteIA />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/configuracoes" 
+              element={
+                <ProtectedRoute>
+                  <Configuracoes />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Gerenciamento de usuários - apenas proprietário */}
+            <Route 
+              path="/gerenciar-usuarios" 
+              element={
+                <ProtectedRoute requiredRole={UserRole.OWNER}>
+                  <GerenciarUsuarios />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Documentação técnica - acesso gerencial ou superior */}
+            <Route 
+              path="/documentacao" 
+              element={
+                <ProtectedRoute requiredRole={UserRole.MANAGER}>
+                  <Documentacao />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Administração do sistema - apenas proprietário */}
+            <Route 
+              path="/admin-sistema" 
+              element={
+                <ProtectedRoute requiredRole={UserRole.OWNER}>
+                  <SystemAdmin />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Rota 404 */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
 export default App;

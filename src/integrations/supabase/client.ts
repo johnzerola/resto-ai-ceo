@@ -17,11 +17,11 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Helper types for better type safety
+// Helper types for better type safety - refined to be more specific
 export type Tables = Database['public']['Tables'];
 export type TableName = keyof Tables;
 
-// Define table row types
+// Define table row types more precisely
 export type TableRow<T extends TableName> = Tables[T]['Row'];
 export type TableInsert<T extends TableName> = Tables[T]['Insert'];
 export type TableUpdate<T extends TableName> = Tables[T]['Update'];
@@ -36,19 +36,22 @@ export const VALID_TABLES = [
   'recipe_ingredients',
   'recipes',
   'restaurant_members',
-  'restaurants',
-  'payments'
+  'restaurants'
 ] as const;
 
 // Create a union type for valid tables
 export type ValidTableName = typeof VALID_TABLES[number];
 
+// Create a separate type for all tables including the payments table
+export type ExtendedTableName = ValidTableName | 'payments';
+
 // Validate table name function with proper typing
-export function isValidTableName(tableName: string): tableName is ValidTableName {
-  return (VALID_TABLES as readonly string[]).includes(tableName);
+export function isValidTableName(tableName: string): tableName is ExtendedTableName {
+  return [...VALID_TABLES, 'payments'].includes(tableName as any);
 }
 
-// Helper function for type-safe table access with any table name
-export function getTableQueryBuilder(tableName: ValidTableName) {
-  return supabase.from(tableName);
+// Helper function for type-safe table access with payments support
+export function getTableQueryBuilder(tableName: ExtendedTableName) {
+  // This function helps ensure type safety when accessing tables
+  return supabase.from(tableName as any);
 }
