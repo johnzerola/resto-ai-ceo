@@ -1,250 +1,202 @@
-import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, ExtendedTableName } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
-/**
- * Helper function to check if an object has an id property of type string
- */
-function hasId(obj: any): obj is { id: string } {
-  return obj && typeof obj === 'object' && 'id' in obj && typeof obj.id === 'string';
+import { supabase, isValidTableName } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Tables, TableName } from "@/integrations/supabase/client";
+
+// Error handling function for Supabase operations
+function handleSupabaseError(operation: string, error: any) {
+  console.error(`Error ${operation}:`, error);
+  toast.error(`Error ${operation}: ${error.message || 'Unknown error'}`);
+  return null;
 }
 
-/**
- * Service for Supabase data operations
- */
-class SupabaseDataService {
+// Define interfaces for reusable SupabaseDataService operations
+export interface Entity {
+  id?: string;
+  [key: string]: any;
+}
 
+// Service for basic CRUD operations with Supabase
+export const SupabaseDataService = {
   /**
-   * Fetches all records from a table with optional filters
+   * Fetches all records from a table
+   * @param tableName The name of the table
+   * @param options Query options like filters
+   * @returns Array of records or empty array on error
    */
-  async getAll<T extends ExtendedTableName>(
-    table: T,
-    filters?: Record<string, any>
-  ): Promise<any[]> {
+  async getAll<T extends TableName>(
+    tableName: T, 
+    options: {
+      filters?: Array<{column: string; value: any}>;
+      orderBy?: {column: string; ascending?: boolean};
+    } = {}
+  ): Promise<Tables[T]['Row'][]> {
     try {
-      if (!isValidTableName(table)) {
-        throw new Error(`Invalid table name: ${table}`);
+      if (!isValidTableName(tableName)) {
+        throw new Error(`Invalid table name: ${tableName}`);
       }
 
-      let query = supabase.from(table as any).select();
-      
+      let query = supabase
+        .from(tableName)
+        .select('*');
+
       // Apply filters if provided
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          query = query.eq(key, value);
+      if (options.filters && options.filters.length > 0) {
+        options.filters.forEach(filter => {
+          query = query.eq(filter.column, filter.value);
         });
       }
-      
+
+      // Apply ordering if provided
+      if (options.orderBy) {
+        query = query.order(options.orderBy.column, {
+          ascending: options.orderBy.ascending ?? true
+        });
+      }
+
       const { data, error } = await query;
       
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
-      return (data || []) as any[];
-    } catch (error) {
-      console.error(`Error fetching data from table ${table}:`, error);
-      toast.error(`Error loading data: ${(error as Error).message}`);
+      return data as Tables[T]['Row'][];
+    } catch (error: any) {
+      console.error(`Error fetching records from ${tableName}:`, error);
       return [];
     }
-  }
-  
+  },
+
   /**
-   * Fetches a record by ID
+   * Fetches a single record by ID
+   * @param tableName The name of the table
+   * @param id The ID of the record
+   * @returns The record or null on error
    */
-  async getById<T extends ExtendedTableName>(
-    table: T,
+  async getById<T extends TableName>(
+    tableName: T, 
     id: string
-  ): Promise<any | null> {
+  ): Promise<Tables[T]['Row'] | null> {
     try {
-      if (!isValidTableName(table)) {
-        throw new Error(`Invalid table name: ${table}`);
+      if (!isValidTableName(tableName)) {
+        throw new Error(`Invalid table name: ${tableName}`);
       }
-      
+
       const { data, error } = await supabase
-        .from(table as any)
-        .select()
+        .from(tableName)
+        .select('*')
         .eq('id', id)
         .single();
       
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
-      return data as any;
-    } catch (error) {
-      console.error(`Error fetching record from table ${table}:`, error);
-      toast.error(`Error loading data: ${(error as Error).message}`);
-      return null;
+      return data as Tables[T]['Row'];
+    } catch (error: any) {
+      return handleSupabaseError(`fetching record from ${tableName}`, error);
     }
-  }
-  
+  },
+
   /**
-   * Creates records
+   * Creates a new record
+   * @param tableName The name of the table
+   * @param record The record to create
+   * @returns The created record or null on error
    */
-  async create<T extends ExtendedTableName>(
-    table: T,
-    records: any | any[]
-  ): Promise<any[]> {
+  async create<T extends TableName>(
+    tableName: T, 
+    record: Tables[T]['Insert']
+  ): Promise<Tables[T]['Row'] | null> {
     try {
-      if (!isValidTableName(table)) {
-        throw new Error(`Invalid table name: ${table}`);
+      if (!isValidTableName(tableName)) {
+        throw new Error(`Invalid table name: ${tableName}`);
       }
-      
+
       const { data, error } = await supabase
-        .from(table as any)
-        .insert(records as any)
-        .select();
+        .from(tableName)
+        .insert([record])
+        .select()
+        .single();
       
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
-      toast.success('Data saved successfully');
-      return (data || []) as any[];
-    } catch (error) {
-      console.error(`Error creating records in table ${table}:`, error);
-      toast.error(`Error saving data: ${(error as Error).message}`);
-      return [];
+      toast.success('Record created successfully');
+      return data as Tables[T]['Row'];
+    } catch (error: any) {
+      return handleSupabaseError(`creating record in ${tableName}`, error);
     }
-  }
-  
+  },
+
   /**
-   * Updates a record
+   * Updates an existing record
+   * @param tableName The name of the table
+   * @param id The ID of the record to update
+   * @param updates The updates to apply
+   * @returns The updated record or null on error
    */
-  async update<T extends ExtendedTableName>(
-    table: T,
-    id: string,
-    data: any
-  ): Promise<any | null> {
+  async update<T extends TableName>(
+    tableName: T, 
+    id: string, 
+    updates: Tables[T]['Update']
+  ): Promise<Tables[T]['Row'] | null> {
     try {
-      if (!isValidTableName(table)) {
-        throw new Error(`Invalid table name: ${table}`);
+      if (!isValidTableName(tableName)) {
+        throw new Error(`Invalid table name: ${tableName}`);
       }
-      
-      const { data: updatedData, error } = await supabase
-        .from(table as any)
-        .update(data as any)
+
+      const { data, error } = await supabase
+        .from(tableName)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
       
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
-      toast.success('Data updated successfully');
-      return updatedData as any;
-    } catch (error) {
-      console.error(`Error updating record in table ${table}:`, error);
-      toast.error(`Error updating data: ${(error as Error).message}`);
-      return null;
+      toast.success('Record updated successfully');
+      return data as Tables[T]['Row'];
+    } catch (error: any) {
+      return handleSupabaseError(`updating record in ${tableName}`, error);
     }
-  }
-  
+  },
+
   /**
    * Deletes a record
+   * @param tableName The name of the table
+   * @param id The ID of the record to delete
+   * @returns True on success, false on error
    */
-  async delete<T extends ExtendedTableName>(table: T, id: string): Promise<boolean> {
+  async delete(tableName: TableName, id: string): Promise<boolean> {
     try {
-      if (!isValidTableName(table)) {
-        throw new Error(`Invalid table name: ${table}`);
+      if (!isValidTableName(tableName)) {
+        throw new Error(`Invalid table name: ${tableName}`);
       }
-      
+
       const { error } = await supabase
-        .from(table as any)
+        .from(tableName)
         .delete()
         .eq('id', id);
       
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       
       toast.success('Record deleted successfully');
       return true;
-    } catch (error) {
-      console.error(`Error deleting record from table ${table}:`, error);
-      toast.error(`Error deleting record: ${(error as Error).message}`);
+    } catch (error: any) {
+      console.error(`Error deleting record from ${tableName}:`, error);
+      toast.error(`Error deleting record: ${error.message || 'Unknown error'}`);
       return false;
     }
-  }
-  
-  /**
-   * Upload a file to storage
-   */
-  async uploadFile(
-    restaurantId: string,
-    filePath: string,
-    file: File
-  ): Promise<string | null> {
-    try {
-      const path = `${restaurantId}/${filePath}`;
-      const { data, error } = await supabase.storage
-        .from('restaurant_files')
-        .upload(path, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) {
-        throw error;
-      }
+  },
 
-      const fileUrl = `${supabase.storage.from('restaurant_files').getPublicUrl(path).data.publicUrl}`;
-      return fileUrl;
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      toast.error(`Error uploading file: ${(error as Error).message}`);
+  /**
+   * Custom query for more complex operations
+   * @param callback Function that performs the query
+   * @returns Result of the callback or null on error
+   */
+  async customQuery<T>(callback: () => Promise<T>): Promise<T | null> {
+    try {
+      return await callback();
+    } catch (error: any) {
+      console.error('Error in custom query:', error);
+      toast.error(`Error: ${error.message || 'Unknown error'}`);
       return null;
     }
   }
-  
-  /**
-   * Create a payment record
-   * This method is prepared for future integration with actual payment processing
-   */
-  async createPayment(
-    restaurantId: string, 
-    amount: number, 
-    paymentMethod: string,
-    metadata?: Record<string, any>
-  ): Promise<string | null> {
-    try {
-      // Get current user id
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-
-      const result = await supabase
-        .from('payments' as any)
-        .insert({
-          restaurant_id: restaurantId,
-          user_id: userId,
-          amount,
-          payment_method: paymentMethod,
-          metadata
-        })
-        .select();
-      
-      if (result.error) {
-        throw result.error;
-      }
-      
-      // Safely extract firstItem and check if it has an id property
-      const firstItem = Array.isArray(result.data) ? result.data[0] : null;
-      
-      if (hasId(firstItem)) {
-        toast.success('Payment record created');
-        return firstItem.id;
-      }
-      
-      toast.success('Payment record created');
-      return null;
-    } catch (error) {
-      console.error('Error creating payment:', error);
-      toast.error(`Error creating payment: ${(error as Error).message}`);
-      return null;
-    }
-  }
-}
-
-// Export singleton instance
-export const supabaseDataService = new SupabaseDataService();
+};

@@ -209,6 +209,62 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          description: string
+          due_date: string
+          id: string
+          metadata: Json | null
+          payment_date: string | null
+          payment_method: string
+          restaurant_id: string | null
+          status: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          description: string
+          due_date: string
+          id?: string
+          metadata?: Json | null
+          payment_date?: string | null
+          payment_method: string
+          restaurant_id?: string | null
+          status: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          description?: string
+          due_date?: string
+          id?: string
+          metadata?: Json | null
+          payment_date?: string | null
+          payment_method?: string
+          restaurant_id?: string | null
+          status?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null

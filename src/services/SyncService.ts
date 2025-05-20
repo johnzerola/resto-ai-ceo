@@ -4,13 +4,13 @@ import { toast } from "sonner";
 
 export const SYNC_EVENT = 'syncModules';
 
-// Interface para status de sincronização
+// Interface for synchronization status
 export interface SyncStatus {
   lastSync: string | null;
   inProgress: boolean;
 }
 
-// Interface para log de sincronização
+// Interface for synchronization log
 export interface SyncLog {
   timestamp: string;
   source: string;
@@ -18,15 +18,15 @@ export interface SyncLog {
   details?: any;
 }
 
-// Função para iniciar sincronização
+// Function to start synchronization
 export async function startSync(source: string): Promise<boolean> {
   return syncModules({}, source);
 }
 
-// Função para sincronizar dados entre módulos
+// Function to synchronize data between modules
 export async function syncModules(data: any, source: string): Promise<boolean> {
   try {
-    // Disparar evento antes da sincronização
+    // Dispatch event before synchronization
     const startEvent = new CustomEvent(`${SYNC_EVENT}Start`, {
       detail: {
         source,
@@ -35,13 +35,13 @@ export async function syncModules(data: any, source: string): Promise<boolean> {
     });
     window.dispatchEvent(startEvent);
     
-    // Atualizar status de sincronização no localStorage
+    // Update synchronization status in localStorage
     localStorage.setItem('syncStatus', JSON.stringify({
       lastSync: null,
       inProgress: true
     }));
     
-    // Registrar início da sincronização nos logs
+    // Log start of synchronization
     addSyncLog({
       timestamp: new Date().toISOString(),
       source,
@@ -49,16 +49,16 @@ export async function syncModules(data: any, source: string): Promise<boolean> {
       details: { status: 'started' }
     });
     
-    // Com o Supabase, não precisamos sincronizar dados manualmente
-    // pois já estão armazenados no banco de dados
+    // With Supabase, we don't need to manually synchronize data
+    // as it's already stored in the database
     
-    // Simular um pequeno atraso para a UI
+    // Simulate a small delay for the UI
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Verificar consistência de dados (simulado)
+    // Check data consistency (simulated)
     const consistency = await checkDataConsistency();
     
-    // Evento para conclusão da sincronização
+    // Event for synchronization completion
     const completeEvent = new CustomEvent(`${SYNC_EVENT}Complete`, {
       detail: {
         source,
@@ -69,13 +69,13 @@ export async function syncModules(data: any, source: string): Promise<boolean> {
     });
     window.dispatchEvent(completeEvent);
     
-    // Atualizar status de sincronização
+    // Update synchronization status
     localStorage.setItem('syncStatus', JSON.stringify({
       lastSync: new Date().toISOString(),
       inProgress: false
     }));
     
-    // Registrar conclusão da sincronização nos logs
+    // Log completion of synchronization
     addSyncLog({
       timestamp: new Date().toISOString(),
       source,
@@ -86,14 +86,14 @@ export async function syncModules(data: any, source: string): Promise<boolean> {
       }
     });
     
-    // Evento financeiro para atualizar componentes que dependem desses dados
+    // Financial event to update components that depend on this data
     window.dispatchEvent(new Event('financialDataUpdated'));
     
     return true;
   } catch (error) {
-    console.error('Erro durante a sincronização:', error);
+    console.error('Error during synchronization:', error);
     
-    // Evento para falha na sincronização
+    // Event for synchronization failure
     const failEvent = new CustomEvent(`${SYNC_EVENT}Fail`, {
       detail: {
         source,
@@ -103,13 +103,13 @@ export async function syncModules(data: any, source: string): Promise<boolean> {
     });
     window.dispatchEvent(failEvent);
     
-    // Atualizar status de sincronização
+    // Update synchronization status
     localStorage.setItem('syncStatus', JSON.stringify({
       lastSync: localStorage.getItem('lastSync'),
       inProgress: false
     }));
     
-    // Registrar falha na sincronização nos logs
+    // Log synchronization failure
     addSyncLog({
       timestamp: new Date().toISOString(),
       source,
@@ -120,12 +120,12 @@ export async function syncModules(data: any, source: string): Promise<boolean> {
       }
     });
     
-    toast.error('Erro ao sincronizar dados');
+    toast.error('Error synchronizing data');
     return false;
   }
 }
 
-// Função para obter status de sincronização
+// Function to get synchronization status
 export function getSyncStatus(): SyncStatus {
   const status = localStorage.getItem('syncStatus');
   if (status) {
@@ -137,10 +137,10 @@ export function getSyncStatus(): SyncStatus {
   };
 }
 
-// Função para adicionar log de sincronização
+// Function to add synchronization log
 function addSyncLog(log: SyncLog): void {
   try {
-    // Obter logs existentes
+    // Get existing logs
     const existingLogsString = localStorage.getItem('syncLogs');
     let logs: SyncLog[] = [];
     
@@ -148,7 +148,7 @@ function addSyncLog(log: SyncLog): void {
       logs = JSON.parse(existingLogsString);
     }
     
-    // Adicionar novo log
+    // Add new log
     logs.unshift(log);
     
     // Manter apenas os últimos 100 logs
@@ -156,14 +156,14 @@ function addSyncLog(log: SyncLog): void {
       logs = logs.slice(0, 100);
     }
     
-    // Salvar logs atualizados
+    // Save updated logs
     localStorage.setItem('syncLogs', JSON.stringify(logs));
   } catch (error) {
-    console.error('Erro ao adicionar log de sincronização:', error);
+    console.error('Error adding synchronization log:', error);
   }
 }
 
-// Função para obter logs de sincronização
+// Function to get synchronization logs
 export function getSyncLogs(): SyncLog[] {
   try {
     const logs = localStorage.getItem('syncLogs');
@@ -172,17 +172,17 @@ export function getSyncLogs(): SyncLog[] {
     }
     return [];
   } catch (error) {
-    console.error('Erro ao obter logs de sincronização:', error);
+    console.error('Error getting synchronization logs:', error);
     return [];
   }
 }
 
-// Função para verificar consistência de dados
+// Function to check data consistency
 async function checkDataConsistency(): Promise<{ status: string, details?: any }> {
-  // Em uma implementação real, este método verificaria
-  // se os dados locais estão sincronizados com o Supabase
+  // In a real implementation, this method would check
+  // if local data is synchronized with Supabase
   
-  // Por enquanto, retornamos um resultado simulado
+  // For now, we return a simulated result
   return {
     status: 'consistent',
     details: {
