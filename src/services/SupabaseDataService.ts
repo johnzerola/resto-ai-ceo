@@ -1,4 +1,5 @@
-import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName } from '@/integrations/supabase/client';
+
+import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, AnyTableName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
@@ -16,7 +17,7 @@ class SupabaseDataService {
   /**
    * Fetches all records from a table with optional filters
    */
-  async getAll<T extends ValidTableName>(
+  async getAll<T extends AnyTableName>(
     table: T,
     filters?: Record<string, any>
   ): Promise<any[]> {
@@ -25,7 +26,7 @@ class SupabaseDataService {
         throw new Error(`Invalid table name: ${table}`);
       }
 
-      let query = supabase.from(table as any).select();
+      let query = supabase.from(table).select();
       
       // Apply filters if provided
       if (filters) {
@@ -51,7 +52,7 @@ class SupabaseDataService {
   /**
    * Fetches a record by ID
    */
-  async getById<T extends ValidTableName>(
+  async getById<T extends AnyTableName>(
     table: T,
     id: string
   ): Promise<any | null> {
@@ -61,7 +62,7 @@ class SupabaseDataService {
       }
       
       const { data, error } = await supabase
-        .from(table as any)
+        .from(table)
         .select()
         .eq('id', id)
         .single();
@@ -81,7 +82,7 @@ class SupabaseDataService {
   /**
    * Creates records
    */
-  async create<T extends ValidTableName>(
+  async create<T extends AnyTableName>(
     table: T,
     records: any | any[]
   ): Promise<any[]> {
@@ -91,7 +92,7 @@ class SupabaseDataService {
       }
       
       const { data, error } = await supabase
-        .from(table as any)
+        .from(table)
         .insert(records as any)
         .select();
       
@@ -111,7 +112,7 @@ class SupabaseDataService {
   /**
    * Updates a record
    */
-  async update<T extends ValidTableName>(
+  async update<T extends AnyTableName>(
     table: T,
     id: string,
     data: any
@@ -122,7 +123,7 @@ class SupabaseDataService {
       }
       
       const { data: updatedData, error } = await supabase
-        .from(table as any)
+        .from(table)
         .update(data as any)
         .eq('id', id)
         .select()
@@ -144,14 +145,14 @@ class SupabaseDataService {
   /**
    * Deletes a record
    */
-  async delete<T extends ValidTableName>(table: T, id: string): Promise<boolean> {
+  async delete<T extends AnyTableName>(table: T, id: string): Promise<boolean> {
     try {
       if (!isValidTableName(table)) {
         throw new Error(`Invalid table name: ${table}`);
       }
       
       const { error } = await supabase
-        .from(table as any)
+        .from(table)
         .delete()
         .eq('id', id);
       

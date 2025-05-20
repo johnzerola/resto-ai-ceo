@@ -17,11 +17,11 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Helper types for better type safety - refined to be more specific
+// Helper types for better type safety
 export type Tables = Database['public']['Tables'];
 export type TableName = keyof Tables;
 
-// Define table row types more precisely
+// Define table row types
 export type TableRow<T extends TableName> = Tables[T]['Row'];
 export type TableInsert<T extends TableName> = Tables[T]['Insert'];
 export type TableUpdate<T extends TableName> = Tables[T]['Update'];
@@ -36,23 +36,28 @@ export const VALID_TABLES = [
   'recipe_ingredients',
   'recipes',
   'restaurant_members',
-  'restaurants',
-  'payments' // Added payments to valid tables
+  'restaurants'
 ] as const;
 
 // Create a union type for valid tables
 export type ValidTableName = typeof VALID_TABLES[number];
 
-// Create an extended table name type that includes 'payments'
-export type ExtendedTableName = ValidTableName;
+// Since the payments table doesn't exist in the Database type yet but we need to use it,
+// let's create a special type for handling it temporarily until the database schema is updated
+export type PaymentsTableName = 'payments';
+export type AnyTableName = ValidTableName | PaymentsTableName;
 
 // Validate table name function with proper typing
-export function isValidTableName(tableName: string): tableName is ValidTableName {
-  return VALID_TABLES.includes(tableName as any);
+export function isValidTableName(tableName: string): tableName is ValidTableName | PaymentsTableName {
+  return [...VALID_TABLES, 'payments'].includes(tableName as any);
 }
 
 // Helper function for type-safe table access
-export function getTableQueryBuilder(tableName: ValidTableName) {
-  // This function helps ensure type safety when accessing tables
+export function getTableQueryBuilder<T extends ValidTableName>(tableName: T) {
   return supabase.from(tableName);
+}
+
+// Special case for payments table
+export function getPaymentsTableQueryBuilder() {
+  return supabase.from('payments');
 }

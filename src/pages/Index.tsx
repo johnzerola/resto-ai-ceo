@@ -1,3 +1,4 @@
+
 // Imports e código existente...
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/restaurant/Layout";
@@ -89,11 +90,6 @@ const Index = () => {
     navigate(path);
   };
 
-  // Create a custom RestaurantSelectorWrapper to handle props
-  const RestaurantSelectorWrapper = () => (
-    <RestaurantSelector onRestaurantSelect={handleRestaurantSelect} />
-  );
-
   return (
     <ProtectedRoute>
       <Layout>
@@ -104,7 +100,8 @@ const Index = () => {
           </p>
         </div>
 
-        <RestaurantSelectorWrapper />
+        {/* Pass the prop directly to RestaurantSelector instead of using a wrapper */}
+        <RestaurantSelector onRestaurantSelect={handleRestaurantSelect} />
 
         {!selectedRestaurant ? (
           <div className="flex items-center justify-center h-64">
