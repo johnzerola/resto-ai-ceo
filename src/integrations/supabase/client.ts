@@ -37,7 +37,7 @@ export const VALID_TABLES = [
   'recipes',
   'restaurant_members',
   'restaurants',
-  'payments'
+  'payments' // Added payments to valid tables
 ] as const;
 
 // Create a union type for valid tables

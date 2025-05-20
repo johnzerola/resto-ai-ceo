@@ -7,6 +7,7 @@ import { Session, User } from "@supabase/supabase-js";
 export enum UserRole {
   VISITOR = "visitor",
   STAFF = "staff",
+  EMPLOYEE = "employee",  // Added the missing EMPLOYEE role
   MANAGER = "manager",
   OWNER = "owner",
   ADMIN = "admin"
@@ -181,4 +182,49 @@ export const useAuth = () => {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+};
+
+// Add missing user management functions for GerenciarUsuarios.tsx
+export const getUsers = () => {
+  // Mock implementation for now - would connect to Supabase in a real app
+  return [
+    {
+      id: "1",
+      name: "Admin User",
+      email: "admin@example.com",
+      role: UserRole.OWNER,
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString()
+    },
+    {
+      id: "2",
+      name: "Manager User",
+      email: "manager@example.com",
+      role: UserRole.MANAGER,
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString()
+    }
+  ];
+};
+
+export const getUserByEmail = (email: string) => {
+  const users = getUsers();
+  return users.find(user => user.email === email) || null;
+};
+
+export const registerUser = (userData: {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}) => {
+  // Mock implementation for now
+  return {
+    id: Math.random().toString(36).substring(7),
+    name: userData.name,
+    email: userData.email,
+    role: userData.role,
+    createdAt: new Date().toISOString(),
+    lastLogin: null
+  };
 };

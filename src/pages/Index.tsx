@@ -4,22 +4,49 @@ import { Layout } from "@/components/restaurant/Layout";
 import { RestaurantSelector } from "@/components/restaurant/RestaurantSelector";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { useUser, useAuth, UserRole } from "@/services/AuthService";
+import { useAuth, UserRole } from "@/services/AuthService";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Progress } from "@/components/ui/progress";
 import { CircleDollarSign, Forklift, PieChart, Salad, Store } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { supabaseDataService } from "@/services/SupabaseDataService";
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+// Temporary placeholder chart data
+const costData = {
+  labels: ['Alimentos', 'Bebidas', 'Outros'],
+  datasets: [
+    {
+      label: 'Custos',
+      data: [300, 50, 100],
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+      ],
+      borderWidth: 0,
+    },
+  ],
+};
+
+const stockData = {
+  labels: ['Em Estoque', 'Mínimo', 'Ideal'],
+  datasets: [
+    {
+      label: 'Estoque',
+      data: [60, 30, 100],
+      backgroundColor: [
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+      ],
+      borderWidth: 0,
+    },
+  ],
+};
 
 const Index = () => {
   const { user, userRole } = useAuth();
@@ -27,78 +54,6 @@ const Index = () => {
   const [restaurantData, setRestaurantData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-
-  // Dados de exemplo para o gráfico de custos
-  const costData = {
-    labels: ['Alimentos', 'Bebidas', 'Outros'],
-    datasets: [
-      {
-        label: 'Custos',
-        data: [300, 50, 100],
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.6)',
-          'rgba(54, 162, 235, 0.6)',
-          'rgba(255, 206, 86, 0.6)',
-        ],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  // Opções de configuração do gráfico
-  const costOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: '#6B7280', // Cor do texto da legenda
-          boxWidth: 12, // Largura da caixa de cor da legenda
-          padding: 20, // Espaçamento ao redor dos itens da legenda
-          font: {
-            size: 14 // Tamanho da fonte da legenda
-          }
-        },
-      },
-    },
-  };
-
-  // Dados de exemplo para o gráfico de estoque
-  const stockData = {
-    labels: ['Em Estoque', 'Mínimo', 'Ideal'],
-    datasets: [
-      {
-        label: 'Estoque',
-        data: [60, 30, 100],
-        backgroundColor: [
-          'rgba(75, 192, 192, 0.6)',
-          'rgba(255, 159, 64, 0.6)',
-          'rgba(153, 102, 255, 0.6)',
-        ],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  // Opções de configuração do gráfico de estoque
-  const stockOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: '#6B7280', // Cor do texto da legenda
-          boxWidth: 12, // Largura da caixa de cor da legenda
-          padding: 20, // Espaçamento ao redor dos itens da legenda
-          font: {
-            size: 14 // Tamanho da fonte da legenda
-          }
-        },
-      },
-    },
-  };
 
   useEffect(() => {
     const storedRestaurantData = localStorage.getItem("restaurantData");
@@ -134,6 +89,11 @@ const Index = () => {
     navigate(path);
   };
 
+  // Create a custom RestaurantSelectorWrapper to handle props
+  const RestaurantSelectorWrapper = () => (
+    <RestaurantSelector onRestaurantSelect={handleRestaurantSelect} />
+  );
+
   return (
     <ProtectedRoute>
       <Layout>
@@ -144,7 +104,7 @@ const Index = () => {
           </p>
         </div>
 
-        <RestaurantSelector onRestaurantSelect={handleRestaurantSelect} />
+        <RestaurantSelectorWrapper />
 
         {!selectedRestaurant ? (
           <div className="flex items-center justify-center h-64">
@@ -164,11 +124,11 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <div className="text-2xl font-bold">
-                    {isLoading ? <Skeleton width={100} /> : `R$ ${restaurantData?.average_monthly_sales || 0}`}
+                    {isLoading ? <Skeleton className="w-24 h-8" /> : `R$ ${restaurantData?.average_monthly_sales || 0}`}
                   </div>
                   <Progress value={restaurantData?.average_monthly_sales ? (restaurantData?.average_monthly_sales / 10000) * 100 : 0} />
                   <p className="text-sm text-muted-foreground">
-                    {isLoading ? <Skeleton width={150} /> : `Meta: R$ 10.000`}
+                    {isLoading ? <Skeleton className="w-36 h-4" /> : `Meta: R$ 10.000`}
                   </p>
                 </CardContent>
               </Card>
@@ -182,11 +142,11 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <div className="text-2xl font-bold">
-                    {isLoading ? <Skeleton width={100} /> : `R$ ${restaurantData?.fixed_expenses || 0}`}
+                    {isLoading ? <Skeleton className="w-24 h-8" /> : `R$ ${restaurantData?.fixed_expenses || 0}`}
                   </div>
                   <Progress value={restaurantData?.fixed_expenses ? (restaurantData?.fixed_expenses / 5000) * 100 : 0} />
                   <p className="text-sm text-muted-foreground">
-                    {isLoading ? <Skeleton width={150} /> : `Meta: R$ 5.000`}
+                    {isLoading ? <Skeleton className="w-36 h-4" /> : `Meta: R$ 5.000`}
                   </p>
                 </CardContent>
               </Card>
@@ -200,11 +160,11 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <div className="text-2xl font-bold">
-                    {isLoading ? <Skeleton width={100} /> : `${restaurantData?.desired_profit_margin || 0}%`}
+                    {isLoading ? <Skeleton className="w-24 h-8" /> : `${restaurantData?.desired_profit_margin || 0}%`}
                   </div>
                   <Progress value={restaurantData?.desired_profit_margin || 0} />
                   <p className="text-sm text-muted-foreground">
-                    {isLoading ? <Skeleton width={150} /> : `Meta: 20%`}
+                    {isLoading ? <Skeleton className="w-36 h-4" /> : `Meta: 20%`}
                   </p>
                 </CardContent>
               </Card>
@@ -218,11 +178,11 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <div className="text-2xl font-bold">
-                    {isLoading ? <Skeleton width={100} /> : `${restaurantData?.target_food_cost || 0}%`}
+                    {isLoading ? <Skeleton className="w-24 h-8" /> : `${restaurantData?.target_food_cost || 0}%`}
                   </div>
                   <Progress value={restaurantData?.target_food_cost || 0} />
                   <p className="text-sm text-muted-foreground">
-                    {isLoading ? <Skeleton width={150} /> : `Meta: 30%`}
+                    {isLoading ? <Skeleton className="w-36 h-4" /> : `Meta: 30%`}
                   </p>
                 </CardContent>
               </Card>
@@ -230,7 +190,8 @@ const Index = () => {
 
             <Separator className="my-6" />
 
-            <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+            {/* Temporarily remove charts until we add the chart dependencies */}
+            {/* <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Visão Geral de Custos</CardTitle>
@@ -240,7 +201,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <div style={{ height: '300px' }}>
-                    <Doughnut data={costData} options={costOptions} />
+                    Chart placeholder
                   </div>
                 </CardContent>
               </Card>
@@ -254,11 +215,11 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <div style={{ height: '300px' }}>
-                    <Doughnut data={stockData} options={stockOptions} />
+                    Chart placeholder
                   </div>
                 </CardContent>
               </Card>
-            </div>
+            </div> */}
 
             <Separator className="my-6" />
 

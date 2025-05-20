@@ -1,5 +1,5 @@
 
-import { supabase, getTableQueryBuilder } from '@/integrations/supabase/client';
+import { supabase, getTableQueryBuilder, ValidTableName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -54,7 +54,8 @@ export class PaymentService {
     } = {}
   ): Promise<Payment[]> {
     try {
-      let query = getTableQueryBuilder('payments')
+      let query = supabase
+        .from('payments')
         .select()
         .eq('restaurant_id', restaurantId);
       
@@ -85,7 +86,7 @@ export class PaymentService {
         throw error;
       }
       
-      return (data as unknown) as Payment[];
+      return (data || []) as unknown as Payment[];
     } catch (error) {
       console.error('Erro ao carregar pagamentos:', error);
       toast.error(`Erro ao carregar dados de pagamentos: ${(error as Error).message}`);
@@ -103,7 +104,8 @@ export class PaymentService {
         id: uuidv4(),
       };
       
-      const { data, error } = await getTableQueryBuilder('payments')
+      const { data, error } = await supabase
+        .from('payments')
         .insert(newPayment)
         .select();
       
@@ -117,7 +119,7 @@ export class PaymentService {
           : 'Conta a receber registrada com sucesso'
       );
       
-      return ((data && data[0]) as unknown) as Payment;
+      return ((data && data[0]) || null) as unknown as Payment | null;
     } catch (error) {
       console.error('Erro ao criar pagamento:', error);
       toast.error(`Erro ao registrar ${payment.type === 'payable' ? 'conta a pagar' : 'conta a receber'}: ${(error as Error).message}`);
@@ -130,7 +132,8 @@ export class PaymentService {
    */
   async updatePayment(id: string, updates: PaymentUpdate): Promise<Payment | null> {
     try {
-      const { data, error } = await getTableQueryBuilder('payments')
+      const { data, error } = await supabase
+        .from('payments')
         .update(updates)
         .eq('id', id)
         .select();
@@ -140,7 +143,7 @@ export class PaymentService {
       }
       
       toast.success('Registro atualizado com sucesso');
-      return ((data && data[0]) as unknown) as Payment;
+      return ((data && data[0]) || null) as unknown as Payment | null;
     } catch (error) {
       console.error('Erro ao atualizar pagamento:', error);
       toast.error(`Erro ao atualizar registro: ${(error as Error).message}`);
@@ -153,7 +156,8 @@ export class PaymentService {
    */
   async markAsPaid(id: string, paymentDate = new Date()): Promise<Payment | null> {
     try {
-      const { data, error } = await getTableQueryBuilder('payments')
+      const { data, error } = await supabase
+        .from('payments')
         .update({
           status: 'paid',
           payment_date: paymentDate instanceof Date ? paymentDate.toISOString() : paymentDate
@@ -170,7 +174,7 @@ export class PaymentService {
       // Disparar evento para atualização de dados financeiros
       this.dispatchPaymentEvent();
       
-      return ((data && data[0]) as unknown) as Payment;
+      return ((data && data[0]) || null) as unknown as Payment | null;
     } catch (error) {
       console.error('Erro ao confirmar pagamento:', error);
       toast.error(`Erro ao confirmar pagamento: ${(error as Error).message}`);
