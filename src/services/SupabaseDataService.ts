@@ -41,7 +41,7 @@ class SupabaseDataService {
         throw error;
       }
       
-      return (data || []) as any[];
+      return (data || []) as unknown as any[];
     } catch (error) {
       console.error(`Error fetching data from table ${table}:`, error);
       toast.error(`Error loading data: ${(error as Error).message}`);
