@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Routes,
@@ -5,7 +6,7 @@ import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "./services/AuthService";
 import Index from "./pages/Index";
 import FluxoCaixa from "./pages/FluxoCaixa";
@@ -24,12 +25,14 @@ function App() {
   return (
     <div className="min-h-screen bg-background">
       <ThemeProvider defaultTheme="light" storageKey="resto-ai-theme">
-        <AuthProvider>
-          <QueryClientProvider client={queryClient}>
-            <RouterProvider router={createAppRouter()} />
-            <Toaster richColors position="top-center" />
-          </QueryClientProvider>
-        </AuthProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <QueryClientProvider client={queryClient}>
+              <RouterProvider router={createAppRouter()} />
+              <Toaster richColors position="top-center" />
+            </QueryClientProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </ThemeProvider>
     </div>
   );

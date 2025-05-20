@@ -85,7 +85,7 @@ export class PaymentService {
         throw error;
       }
       
-      return data as Payment[];
+      return (data as unknown) as Payment[];
     } catch (error) {
       console.error('Erro ao carregar pagamentos:', error);
       toast.error(`Erro ao carregar dados de pagamentos: ${(error as Error).message}`);
@@ -117,7 +117,7 @@ export class PaymentService {
           : 'Conta a receber registrada com sucesso'
       );
       
-      return (data && data[0]) as Payment;
+      return ((data && data[0]) as unknown) as Payment;
     } catch (error) {
       console.error('Erro ao criar pagamento:', error);
       toast.error(`Erro ao registrar ${payment.type === 'payable' ? 'conta a pagar' : 'conta a receber'}: ${(error as Error).message}`);
@@ -140,7 +140,7 @@ export class PaymentService {
       }
       
       toast.success('Registro atualizado com sucesso');
-      return (data && data[0]) as Payment;
+      return ((data && data[0]) as unknown) as Payment;
     } catch (error) {
       console.error('Erro ao atualizar pagamento:', error);
       toast.error(`Erro ao atualizar registro: ${(error as Error).message}`);
@@ -170,7 +170,7 @@ export class PaymentService {
       // Disparar evento para atualização de dados financeiros
       this.dispatchPaymentEvent();
       
-      return (data && data[0]) as Payment;
+      return ((data && data[0]) as unknown) as Payment;
     } catch (error) {
       console.error('Erro ao confirmar pagamento:', error);
       toast.error(`Erro ao confirmar pagamento: ${(error as Error).message}`);

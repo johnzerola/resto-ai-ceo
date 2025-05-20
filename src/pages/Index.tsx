@@ -1,360 +1,335 @@
-import { useEffect, useState } from "react";
+// Imports e código existente...
+import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/restaurant/Layout";
-import { OnboardingForm } from "@/components/restaurant/OnboardingForm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertType, Alerts } from "@/components/restaurant/Alerts";
+import { RestaurantSelector } from "@/components/restaurant/RestaurantSelector";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { useUser, useAuth, UserRole } from "@/services/AuthService";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { DashboardCustomizer } from "@/components/restaurant/DashboardCustomizer";
-import { AdvancedAnalytics } from "@/components/restaurant/AdvancedAnalytics";
-import { getSystemAlerts } from "@/services/ModuleIntegrationService";
-import { DashboardFinancial } from "@/components/restaurant/DashboardFinancial";
-import { StatsCard } from "@/components/restaurant/StatsCard";
-import { formatCurrency } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Progress } from "@/components/ui/progress";
+import { CircleDollarSign, Forklift, PieChart, Salad, Store } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { supabaseDataService } from "@/services/SupabaseDataService";
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const Index = () => {
-  const [hasConfigData, setHasConfigData] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [selectedKPIs, setSelectedKPIs] = useState<string[]>([]);
-  const [restaurantId, setRestaurantId] = useState<string>("");
+  const { user, userRole } = useAuth();
+  const [selectedRestaurant, setSelectedRestaurant] = useState<any>(null);
+  const [restaurantData, setRestaurantData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Verificar dados de configuração e alertas
+  // Dados de exemplo para o gráfico de custos
+  const costData = {
+    labels: ['Alimentos', 'Bebidas', 'Outros'],
+    datasets: [
+      {
+        label: 'Custos',
+        data: [300, 50, 100],
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+        ],
+        borderWidth: 0,
+      },
+    ],
+  };
+
+  // Opções de configuração do gráfico
+  const costOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#6B7280', // Cor do texto da legenda
+          boxWidth: 12, // Largura da caixa de cor da legenda
+          padding: 20, // Espaçamento ao redor dos itens da legenda
+          font: {
+            size: 14 // Tamanho da fonte da legenda
+          }
+        },
+      },
+    },
+  };
+
+  // Dados de exemplo para o gráfico de estoque
+  const stockData = {
+    labels: ['Em Estoque', 'Mínimo', 'Ideal'],
+    datasets: [
+      {
+        label: 'Estoque',
+        data: [60, 30, 100],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(255, 159, 64, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+        ],
+        borderWidth: 0,
+      },
+    ],
+  };
+
+  // Opções de configuração do gráfico de estoque
+  const stockOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          color: '#6B7280', // Cor do texto da legenda
+          boxWidth: 12, // Largura da caixa de cor da legenda
+          padding: 20, // Espaçamento ao redor dos itens da legenda
+          font: {
+            size: 14 // Tamanho da fonte da legenda
+          }
+        },
+      },
+    },
+  };
+
   useEffect(() => {
-    // Verificar se já existem dados de configuração
-    const savedData = localStorage.getItem("restaurantData");
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      // Verificar se os dados mínimos foram configurados
-      const hasMinimumData = data.businessName && 
-                            data.fixedExpenses && 
-                            data.variableExpenses && 
-                            data.desiredProfitMargin;
-      
-      setHasConfigData(hasMinimumData);
-      setShowOnboarding(!hasMinimumData);
-      
-      if (data.id) {
-        setRestaurantId(data.id);
-      }
-    } else {
-      setShowOnboarding(true);
-      setHasConfigData(false);
+    const storedRestaurantData = localStorage.getItem("restaurantData");
+    if (storedRestaurantData) {
+      setSelectedRestaurant(JSON.parse(storedRestaurantData));
     }
-
-    // Carregar alertas do sistema
-    setAlerts(getSystemAlerts());
-
-    // Carregar KPIs selecionados
-    const savedKPIs = localStorage.getItem('dashboardKPIs');
-    if (savedKPIs) {
-      setSelectedKPIs(JSON.parse(savedKPIs));
-    } else {
-      // KPIs padrão
-      setSelectedKPIs(['sales_today', 'dishes_sold', 'average_ticket', 'cmv']);
-    }
-    
-    // Configurar ouvinte de evento para atualizações de alertas
-    const handleSystemAlert = () => {
-      setAlerts(getSystemAlerts());
-    };
-    
-    window.addEventListener('systemAlertAdded', handleSystemAlert);
-    
-    return () => {
-      window.removeEventListener('systemAlertAdded', handleSystemAlert);
-    };
   }, []);
 
-  const handleConfigComplete = () => {
-    setHasConfigData(true);
-    setShowOnboarding(false);
-    // Após completar a configuração, recarregar a página para mostrar o dashboard
-    window.location.reload();
+  useEffect(() => {
+    const fetchRestaurantData = async () => {
+      setIsLoading(true);
+      try {
+        if (selectedRestaurant) {
+          const restaurant = await supabaseDataService.getById('restaurants', selectedRestaurant.id);
+          setRestaurantData(restaurant);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do restaurante:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRestaurantData();
+  }, [selectedRestaurant]);
+
+  const handleRestaurantSelect = (restaurant: any) => {
+    setSelectedRestaurant(restaurant);
+    localStorage.setItem("restaurantData", JSON.stringify(restaurant));
   };
 
-  const handleAlertClick = (alert: Alert) => {
-    if (alert.type === "warning" && alert.title === "Estoque Baixo") {
-      navigate("/estoque");
-      toast.info("Verificando itens com estoque baixo", {
-        description: "Redirecionando para o módulo de estoque"
-      });
-    } else if (alert.type === "error" && alert.title.includes("CMV")) {
-      navigate("/dre-cmv");
-      toast.info("Analisando CMV", {
-        description: "Redirecionando para análise de CMV"
-      });
-    } else if (alert.type === "error" && alert.title.includes("vencida")) {
-      navigate("/contas-financeiras");
-      toast.info("Verificando contas vencidas", {
-        description: "Redirecionando para contas a pagar/receber"
-      });
-    }
-  };
-  
-  // Gerenciar KPIs selecionados
-  const handleSaveKPIs = (kpis: string[]) => {
-    setSelectedKPIs(kpis);
-  };
-
-  // Renderizar KPI baseado no ID
-  const renderKPI = (kpiId: string) => {
-    switch (kpiId) {
-      case 'sales_today':
-        return (
-          <StatsCard 
-            title="Vendas Hoje" 
-            value={formatCurrency(2350)} 
-            description="em relação a ontem" 
-            trend={{ value: 5, isPositive: true }}
-          />
-        );
-      case 'dishes_sold':
-        return (
-          <StatsCard 
-            title="Pratos Vendidos" 
-            value="138" 
-            description="23 pratos/hora" 
-          />
-        );
-      case 'average_ticket':
-        return (
-          <StatsCard 
-            title="Ticket Médio" 
-            value={formatCurrency(85)} 
-            description="em relação à semana passada" 
-            trend={{ value: 2.4, isPositive: true }}
-          />
-        );
-      case 'cmv':
-        return (
-          <StatsCard 
-            title="CMV" 
-            value="27%" 
-            description="em relação à meta" 
-            trend={{ value: 1.5, isPositive: false }}
-            trendDesirable="down"
-          />
-        );
-      case 'monthly_revenue':
-        return (
-          <StatsCard 
-            title="Faturamento Mensal" 
-            value={formatCurrency(62350)} 
-            description="projeção para o mês" 
-            trend={{ value: 7.2, isPositive: true }}
-          />
-        );
-      case 'weekly_sales':
-        return (
-          <StatsCard 
-            title="Vendas Semanais" 
-            value={formatCurrency(15800)} 
-            description="últimos 7 dias" 
-            trend={{ value: 3.8, isPositive: true }}
-          />
-        );
-      case 'dish_per_hour':
-        return (
-          <StatsCard 
-            title="Pratos por Hora" 
-            value="23" 
-            description="média do período" 
-          />
-        );
-      case 'table_turnover':
-        return (
-          <StatsCard 
-            title="Rotatividade de Mesas" 
-            value="4.2x" 
-            description="clientes por mesa/dia" 
-            trend={{ value: 0.8, isPositive: true }}
-          />
-        );
-      case 'avg_service_time':
-        return (
-          <StatsCard 
-            title="Tempo de Serviço" 
-            value="18 min" 
-            description="pedido até entrega" 
-            trend={{ value: 2.5, isPositive: false }}
-            trendDesirable="down"
-          />
-        );
-      case 'labor_cost':
-        return (
-          <StatsCard 
-            title="Custo de Pessoal" 
-            value="25%" 
-            description="da receita total" 
-            trend={{ value: 0.5, isPositive: true }}
-            trendDesirable="down"
-          />
-        );
-      case 'utilities_cost':
-        return (
-          <StatsCard 
-            title="Custos Fixos" 
-            value={formatCurrency(9500)} 
-            description="mensal" 
-            trend={{ value: 1.2, isPositive: false }}
-            trendDesirable="down"
-          />
-        );
-      case 'profit_margin':
-        return (
-          <StatsCard 
-            title="Margem de Lucro" 
-            value="15.8%" 
-            description="lucro líquido" 
-            trend={{ value: 0.7, isPositive: true }}
-          />
-        );
-      case 'sales_growth':
-        return (
-          <StatsCard 
-            title="Crescimento" 
-            value="8.3%" 
-            description="vs. mês anterior" 
-            trend={{ value: 8.3, isPositive: true }}
-          />
-        );
-      default:
-        return null;
-    }
+  const handleNavigate = (path: string) => {
+    navigate(path);
   };
 
   return (
-    <Layout>
-      {showOnboarding ? (
-        <div className="max-w-2xl mx-auto mt-8">
-          <h1 className="text-2xl font-bold mb-6">Bem-vindo ao Resto AI CEO</h1>
-          <p className="text-muted-foreground mb-8">
-            Para começar, vamos configurar os dados financeiros do seu restaurante.
-            Isso nos ajudará a fornecer análises mais precisas e recomendações personalizadas.
+    <ProtectedRoute>
+      <Layout>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Visão geral do seu negócio
           </p>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <OnboardingForm onComplete={handleConfigComplete} />
-            </CardContent>
-          </Card>
         </div>
-      ) : (
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-              <p className="text-muted-foreground">
-                Visão geral do seu restaurante
-              </p>
-            </div>
-            <DashboardCustomizer onSaveSettings={handleSaveKPIs} />
-          </div>
 
-          <Tabs defaultValue="visao-geral" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
-              <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-              <TabsTrigger value="operacional">Operacional</TabsTrigger>
-              <TabsTrigger value="insights">Insights</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="visao-geral" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {selectedKPIs.slice(0, 4).map(kpiId => (
-                  <div key={kpiId}>
-                    {renderKPI(kpiId)}
-                  </div>
-                ))}
-              </div>
-              
-              {restaurantId && <DashboardFinancial restaurantId={restaurantId} />}
-              
-              <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardContent className="pt-6">
-                    <h3 className="text-lg font-medium mb-4">Alertas</h3>
-                    <Alerts alerts={alerts} onActionClick={handleAlertClick} />
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="pt-6">
-                    <h3 className="text-lg font-medium mb-4">Próximos Passos</h3>
-                    <div className="space-y-2">
-                      <p>Aqui estão algumas ações recomendadas:</p>
-                      <ul className="list-disc ml-5 space-y-1">
-                        <li>Verifique suas metas e desempenho financeiro</li>
-                        <li>Atualize seu estoque e inventário</li>
-                        <li>Revise suas receitas e precificação</li>
-                        <li>Configure suas promoções para o período</li>
-                      </ul>
-                      <div className="mt-4">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => navigate("/dre-cmv")}
-                          className="w-full mt-2"
-                        >
-                          Ver relatórios financeiros
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="financeiro" className="space-y-4">
-              {restaurantId ? (
-                <DashboardFinancial restaurantId={restaurantId} />
-              ) : (
-                <Card>
-                  <CardContent className="py-8 text-center">
-                    <p className="text-muted-foreground">
-                      Configure os dados do restaurante para visualizar informações financeiras.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-              
-              <AdvancedAnalytics />
-            </TabsContent>
-            
-            <TabsContent value="operacional" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {selectedKPIs
-                  .filter(kpi => ['dishes_sold', 'dish_per_hour', 'table_turnover', 'avg_service_time'].includes(kpi))
-                  .map(kpiId => (
-                    <div key={kpiId}>
-                      {renderKPI(kpiId)}
-                    </div>
-                  ))}
-              </div>
-              
+        <RestaurantSelector onRestaurantSelect={handleRestaurantSelect} />
+
+        {!selectedRestaurant ? (
+          <div className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">
+              Selecione um restaurante para visualizar os dados.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
               <Card>
-                <CardContent className="pt-6">
-                  <h3 className="text-lg font-medium">Eficiência Operacional</h3>
-                  <p className="text-muted-foreground mt-2 mb-4">
-                    Análise de métricas operacionais por período
+                <CardHeader>
+                  <CardTitle>Vendas Mensais</CardTitle>
+                  <CardDescription>
+                    Visão geral das vendas do mês atual
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="text-2xl font-bold">
+                    {isLoading ? <Skeleton width={100} /> : `R$ ${restaurantData?.average_monthly_sales || 0}`}
+                  </div>
+                  <Progress value={restaurantData?.average_monthly_sales ? (restaurantData?.average_monthly_sales / 10000) * 100 : 0} />
+                  <p className="text-sm text-muted-foreground">
+                    {isLoading ? <Skeleton width={150} /> : `Meta: R$ 10.000`}
                   </p>
-                  
-                  <div className="text-center py-8 text-muted-foreground">
-                    Análises adicionais de eficiência operacional estarão disponíveis em breve.
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Custo Total</CardTitle>
+                  <CardDescription>
+                    Visão geral dos custos do mês atual
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="text-2xl font-bold">
+                    {isLoading ? <Skeleton width={100} /> : `R$ ${restaurantData?.fixed_expenses || 0}`}
+                  </div>
+                  <Progress value={restaurantData?.fixed_expenses ? (restaurantData?.fixed_expenses / 5000) * 100 : 0} />
+                  <p className="text-sm text-muted-foreground">
+                    {isLoading ? <Skeleton width={150} /> : `Meta: R$ 5.000`}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Margem de Lucro</CardTitle>
+                  <CardDescription>
+                    Visão geral da margem de lucro atual
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="text-2xl font-bold">
+                    {isLoading ? <Skeleton width={100} /> : `${restaurantData?.desired_profit_margin || 0}%`}
+                  </div>
+                  <Progress value={restaurantData?.desired_profit_margin || 0} />
+                  <p className="text-sm text-muted-foreground">
+                    {isLoading ? <Skeleton width={150} /> : `Meta: 20%`}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>CMV</CardTitle>
+                  <CardDescription>
+                    Visão geral do Custo de Mercadorias Vendidas
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4">
+                  <div className="text-2xl font-bold">
+                    {isLoading ? <Skeleton width={100} /> : `${restaurantData?.target_food_cost || 0}%`}
+                  </div>
+                  <Progress value={restaurantData?.target_food_cost || 0} />
+                  <p className="text-sm text-muted-foreground">
+                    {isLoading ? <Skeleton width={150} /> : `Meta: 30%`}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Separator className="my-6" />
+
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Visão Geral de Custos</CardTitle>
+                  <CardDescription>
+                    Análise detalhada dos seus custos
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div style={{ height: '300px' }}>
+                    <Doughnut data={costData} options={costOptions} />
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-            
-            <TabsContent value="insights" className="space-y-4">
-              <AdvancedAnalytics />
-            </TabsContent>
-          </Tabs>
-        </div>
-      )}
-    </Layout>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Visão Geral de Estoque</CardTitle>
+                  <CardDescription>
+                    Análise detalhada do seu estoque
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div style={{ height: '300px' }}>
+                    <Doughnut data={stockData} options={stockOptions} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Separator className="my-6" />
+
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="financas">
+                <AccordionTrigger>
+                  <CircleDollarSign className="mr-2 h-4 w-4" />
+                  Controle Financeiro
+                </AccordionTrigger>
+                <AccordionContent>
+                  Gerencie suas finanças de forma eficiente.
+                  <div className="mt-4 space-x-2">
+                    <Button size="sm" onClick={() => handleNavigate("/fluxo-caixa")}>
+                      Fluxo de Caixa
+                    </Button>
+                    <Button size="sm" onClick={() => handleNavigate("/contas-financeiras")}>
+                      Contas a Pagar/Receber
+                    </Button>
+                    <Button size="sm" onClick={() => handleNavigate("/dre-cmv")}>
+                      DRE/CMV
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="producao">
+                <AccordionTrigger>
+                  <Salad className="mr-2 h-4 w-4" />
+                  Gestão de Produção
+                </AccordionTrigger>
+                <AccordionContent>
+                  Otimize suas receitas e controle os custos dos ingredientes.
+                  <div className="mt-4 space-x-2">
+                    <Button size="sm" onClick={() => handleNavigate("/ficha-tecnica")}>
+                      Ficha Técnica
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="estoque">
+                <AccordionTrigger>
+                  <Forklift className="mr-2 h-4 w-4" />
+                  Controle de Estoque
+                </AccordionTrigger>
+                <AccordionContent>
+                  Mantenha seu estoque sempre em dia.
+                  <div className="mt-4 space-x-2">
+                    <Button size="sm" onClick={() => handleNavigate("/estoque")}>
+                      Estoque
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="sistema">
+                <AccordionTrigger>
+                  <Store className="mr-2 h-4 w-4" />
+                  Status do Sistema
+                </AccordionTrigger>
+                <AccordionContent>
+                  Acompanhe o status e a saúde do sistema.
+                  <div className="mt-4 space-x-2">
+                    <Button size="sm" onClick={() => handleNavigate("/status-sistema")}>
+                      Status do Sistema
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </>
+        )}
+      </Layout>
+    </ProtectedRoute>
   );
 };
 

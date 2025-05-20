@@ -43,6 +43,9 @@ export const VALID_TABLES = [
 // Create a union type for valid tables
 export type ValidTableName = typeof VALID_TABLES[number];
 
+// Create an extended table name type that includes 'payments'
+export type ExtendedTableName = ValidTableName;
+
 // Validate table name function with proper typing
 export function isValidTableName(tableName: string): tableName is ValidTableName {
   return VALID_TABLES.includes(tableName as any);

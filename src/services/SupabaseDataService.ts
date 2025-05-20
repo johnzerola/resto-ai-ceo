@@ -1,4 +1,5 @@
-import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, ExtendedTableName } from '@/integrations/supabase/client';
+
+import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
@@ -16,7 +17,7 @@ class SupabaseDataService {
   /**
    * Fetches all records from a table with optional filters
    */
-  async getAll<T extends ExtendedTableName>(
+  async getAll<T extends ValidTableName>(
     table: T,
     filters?: Record<string, any>
   ): Promise<any[]> {

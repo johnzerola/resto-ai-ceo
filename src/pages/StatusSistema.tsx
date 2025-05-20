@@ -6,7 +6,7 @@ import { UserRole } from "@/services/AuthService";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { getSyncStatus, startSync, getSyncLogs } from "@/services/SyncService";
-import { supabase, isValidTableName, getTableQueryBuilder, ExtendedTableName } from "@/integrations/supabase/client";
+import { supabase, isValidTableName, getTableQueryBuilder, ValidTableName } from "@/integrations/supabase/client";
 import { RefreshCcw, Database, Activity } from "lucide-react";
 import { SyncTab } from "@/components/restaurant/StatusTabs/SyncTab";
 import { DatabaseTab } from "@/components/restaurant/StatusTabs/DatabaseTab";
@@ -108,7 +108,7 @@ const StatusSistema = () => {
       }
       
       // Usar nossa função auxiliar para obter um query builder tipado
-      const { count, error } = await getTableQueryBuilder(tableName as ExtendedTableName)
+      const { count, error } = await getTableQueryBuilder(tableName as ValidTableName)
         .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
