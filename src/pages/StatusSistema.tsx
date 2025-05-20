@@ -1,18 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/restaurant/Layout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getSyncStatus, startSync, getSyncLogs } from "@/services/SyncService";
-import { supabase, isValidTableName, VALID_TABLES, getTableQueryBuilder, ExtendedTableName } from "@/integrations/supabase/client";
-import { supabaseDataService } from "@/services/SupabaseDataService";
-import { RefreshCcw, Database, Users, ServerCrash, Activity, CheckCircle2, AlertCircle, RotateCw } from "lucide-react";
+import { supabase, isValidTableName, getTableQueryBuilder, ExtendedTableName } from "@/integrations/supabase/client";
+import { RefreshCcw, Database, Activity } from "lucide-react";
+import { SyncTab } from "@/components/restaurant/StatusTabs/SyncTab";
+import { DatabaseTab } from "@/components/restaurant/StatusTabs/DatabaseTab";
+import { HealthTab } from "@/components/restaurant/StatusTabs/HealthTab";
 
 const StatusSistema = () => {
   const [activeTab, setActiveTab] = useState("sync");
@@ -89,7 +87,8 @@ const StatusSistema = () => {
         { name: "restaurants", rows: await countRows('restaurants'), size: "0.3 MB", lastUpdated: new Date().toISOString() },
         { name: "recipes", rows: await countRows('recipes'), size: "0.5 MB", lastUpdated: new Date().toISOString() },
         { name: "inventory", rows: await countRows('inventory'), size: "0.8 MB", lastUpdated: new Date().toISOString() },
-        { name: "cash_flow", rows: await countRows('cash_flow'), size: "1.2 MB", lastUpdated: new Date().toISOString() }
+        { name: "cash_flow", rows: await countRows('cash_flow'), size: "1.2 MB", lastUpdated: new Date().toISOString() },
+        { name: "payments", rows: await countRows('payments'), size: "0.3 MB", lastUpdated: new Date().toISOString() }
       ];
       setTables(tablesData);
       return true;
@@ -108,7 +107,7 @@ const StatusSistema = () => {
         return 0;
       }
       
-      // Usar nossa nova função auxiliar para obter um query builder tipado
+      // Usar nossa função auxiliar para obter um query builder tipado
       const { count, error } = await getTableQueryBuilder(tableName as ExtendedTableName)
         .select('*', { count: 'exact', head: true });
       
@@ -176,7 +175,7 @@ const StatusSistema = () => {
           </p>
         </div>
 
-        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid grid-cols-3 w-full md:w-1/2">
             <TabsTrigger value="sync">
               <RefreshCcw className="h-4 w-4 mr-2" />
@@ -193,288 +192,27 @@ const StatusSistema = () => {
           </TabsList>
 
           {/* Tab Sincronização */}
-          <TabsContent value="sync" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Status de Sincronização</CardTitle>
-                    <CardDescription>
-                      Estado atual da sincronização de dados entre o aplicativo e o Supabase
-                    </CardDescription>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleSync}
-                    disabled={isLoading || syncStatus.inProgress}
-                  >
-                    <RotateCw className="h-4 w-4 mr-2" />
-                    Sincronizar Agora
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border rounded-lg p-4">
-                    <div className="text-sm font-medium text-muted-foreground mb-2">Status Atual</div>
-                    <div className="flex items-center">
-                      {syncStatus.inProgress ? (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
-                          <RotateCw className="h-3 w-3 mr-1 animate-spin" />
-                          Sincronizando...
-                        </Badge>
-                      ) : (
-                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Sincronizado
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="border rounded-lg p-4">
-                    <div className="text-sm font-medium text-muted-foreground mb-2">Última Sincronização</div>
-                    <div className="font-medium">
-                      {syncStatus.lastSync ? new Date(syncStatus.lastSync).toLocaleString() : "Nunca"}
-                    </div>
-                  </div>
-                </div>
-                
-                <Card>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-md">Histórico de Sincronização</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="max-h-64 overflow-y-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Data</TableHead>
-                            <TableHead>Origem</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Mensagem</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {syncLogs.map((log) => (
-                            <TableRow key={log.id}>
-                              <TableCell className="text-sm">
-                                {new Date(log.timestamp).toLocaleString()}
-                              </TableCell>
-                              <TableCell className="text-sm">{log.source}</TableCell>
-                              <TableCell>
-                                <Badge 
-                                  variant={
-                                    log.type === "success" ? "default" : 
-                                    log.type === "warning" ? "outline" : 
-                                    log.type === "error" ? "destructive" : "secondary"
-                                  }
-                                  className={log.type === "success" ? "bg-green-500 hover:bg-green-600" : ""}
-                                >
-                                  {log.type === "success" ? "Sucesso" : 
-                                   log.type === "warning" ? "Alerta" : 
-                                   log.type === "error" ? "Erro" : log.type}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-sm">{log.message}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </CardContent>
-            </Card>
+          <TabsContent value="sync">
+            <SyncTab 
+              isLoading={isLoading} 
+              syncStatus={syncStatus}
+              syncLogs={syncLogs}
+              onSync={handleSync}
+            />
           </TabsContent>
 
           {/* Tab Banco de Dados */}
-          <TabsContent value="db" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Tabelas do Sistema</CardTitle>
-                    <CardDescription>
-                      Informações sobre as tabelas no banco de dados
-                    </CardDescription>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={loadTables}
-                    disabled={isLoading}
-                  >
-                    <RefreshCcw className="h-4 w-4 mr-2" />
-                    Atualizar
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>Registros</TableHead>
-                      <TableHead>Tamanho</TableHead>
-                      <TableHead>Última Atualização</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {tables.map((table) => (
-                      <TableRow key={table.name}>
-                        <TableCell className="font-medium">{table.name}</TableCell>
-                        <TableCell>{table.rows}</TableCell>
-                        <TableCell>{table.size}</TableCell>
-                        <TableCell>{new Date(table.lastUpdated).toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))}
-                    {tables.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
-                          {isLoading ? "Carregando..." : "Nenhuma tabela encontrada"}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+          <TabsContent value="db">
+            <DatabaseTab 
+              isLoading={isLoading} 
+              tables={tables}
+              onRefresh={loadTables}
+            />
           </TabsContent>
 
           {/* Tab Saúde do Sistema */}
-          <TabsContent value="health" className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Saúde do Sistema</CardTitle>
-                <CardDescription>
-                  Status atual dos recursos do sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">CPU</span>
-                    <span className="text-sm font-medium">{systemHealth.cpu}%</span>
-                  </div>
-                  <Progress value={systemHealth.cpu} />
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Memória</span>
-                    <span className="text-sm font-medium">{systemHealth.memory}%</span>
-                  </div>
-                  <Progress value={systemHealth.memory} />
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Armazenamento</span>
-                    <span className="text-sm font-medium">{systemHealth.storage}%</span>
-                  </div>
-                  <Progress value={systemHealth.storage} />
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">Rede</span>
-                    <span className="text-sm font-medium">{systemHealth.network}%</span>
-                  </div>
-                  <Progress value={systemHealth.network} />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Logs do Sistema</CardTitle>
-                <CardDescription>
-                  Últimos eventos registrados
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="max-h-64 overflow-auto">
-                <div className="font-mono text-xs space-y-2">
-                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                    [INFO] {new Date().toISOString()} - Sistema inicializado com sucesso
-                  </div>
-                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                    [INFO] {new Date(Date.now() - 500000).toISOString()} - Backup automático executado
-                  </div>
-                  <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
-                    [WARN] {new Date(Date.now() - 1000000).toISOString()} - Tentativas de login múltiplas
-                  </div>
-                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                    [INFO] {new Date(Date.now() - 2000000).toISOString()} - Atualização de dados concluída
-                  </div>
-                  <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                    [INFO] {new Date(Date.now() - 3000000).toISOString()} - Novo usuário registrado
-                  </div>
-                  <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
-                    [ERROR] {new Date(Date.now() - 5000000).toISOString()} - Falha na sincronização
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Status da Integração</CardTitle>
-                <CardDescription>
-                  Status da conexão com serviços externos
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Serviço</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Última Verificação</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>Supabase Auth</TableCell>
-                      <TableCell>
-                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                          Operacional
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date().toLocaleString()}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Supabase Database</TableCell>
-                      <TableCell>
-                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                          Operacional
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date().toLocaleString()}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Supabase Storage</TableCell>
-                      <TableCell>
-                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                          Operacional
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date().toLocaleString()}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Supabase Functions</TableCell>
-                      <TableCell>
-                        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                          Operacional
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date().toLocaleString()}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+          <TabsContent value="health">
+            <HealthTab systemHealth={systemHealth} />
           </TabsContent>
         </Tabs>
       </Layout>

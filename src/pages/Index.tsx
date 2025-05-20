@@ -1,46 +1,24 @@
-
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/restaurant/Layout";
 import { OnboardingForm } from "@/components/restaurant/OnboardingForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { StatsCard } from "@/components/restaurant/StatsCard";
-import { RevenueChart } from "@/components/restaurant/RevenueChart";
-import { TopProducts } from "@/components/restaurant/TopProducts";
-import { FileDigit, Receipt, ShoppingCart } from "lucide-react";
 import { Alert, AlertType, Alerts } from "@/components/restaurant/Alerts";
-import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
 import { useNavigate } from "react-router-dom";
-import { getFinancialData } from "@/services/FinancialDataService";
-import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { DashboardCustomizer } from "@/components/restaurant/DashboardCustomizer";
 import { AdvancedAnalytics } from "@/components/restaurant/AdvancedAnalytics";
 import { getSystemAlerts } from "@/services/ModuleIntegrationService";
-
-// Dados de exemplo para os gráficos e componentes
-const sampleRevenueData = [
-  { name: "Jan", revenue: 12000 },
-  { name: "Fev", revenue: 15000 },
-  { name: "Mar", revenue: 18000 },
-  { name: "Abr", revenue: 20000 },
-  { name: "Mai", revenue: 19000 },
-  { name: "Jun", revenue: 22000 },
-];
-
-const sampleProducts = [
-  { name: "Picanha ao Ponto", sales: 120, revenue: 5400, margin: 35 },
-  { name: "Filé Mignon", sales: 98, revenue: 4900, margin: 40 },
-  { name: "Risoto de Camarão", sales: 75, revenue: 3000, margin: 32 },
-  { name: "Tiramisu", sales: 62, revenue: 1240, margin: 45 },
-];
+import { DashboardFinancial } from "@/components/restaurant/DashboardFinancial";
+import { StatsCard } from "@/components/restaurant/StatsCard";
+import { formatCurrency } from "@/lib/utils";
 
 const Index = () => {
   const [hasConfigData, setHasConfigData] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [selectedKPIs, setSelectedKPIs] = useState<string[]>([]);
+  const [restaurantId, setRestaurantId] = useState<string>("");
   const navigate = useNavigate();
 
   // Verificar dados de configuração e alertas
@@ -57,6 +35,10 @@ const Index = () => {
       
       setHasConfigData(hasMinimumData);
       setShowOnboarding(!hasMinimumData);
+      
+      if (data.id) {
+        setRestaurantId(data.id);
+      }
     } else {
       setShowOnboarding(true);
       setHasConfigData(false);
@@ -103,6 +85,11 @@ const Index = () => {
       navigate("/dre-cmv");
       toast.info("Analisando CMV", {
         description: "Redirecionando para análise de CMV"
+      });
+    } else if (alert.type === "error" && alert.title.includes("vencida")) {
+      navigate("/contas-financeiras");
+      toast.info("Verificando contas vencidas", {
+        description: "Redirecionando para contas a pagar/receber"
       });
     }
   };
@@ -242,7 +229,6 @@ const Index = () => {
   return (
     <Layout>
       {showOnboarding ? (
-        
         <div className="max-w-2xl mx-auto mt-8">
           <h1 className="text-2xl font-bold mb-6">Bem-vindo ao Resto AI CEO</h1>
           <p className="text-muted-foreground mb-8">
@@ -285,78 +271,54 @@ const Index = () => {
                 ))}
               </div>
               
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="col-span-2">
-                  <CardContent className="pt-6">
-                    <h3 className="text-lg font-medium mb-4">Vendas por Período</h3>
-                    <RevenueChart data={sampleRevenueData} />
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="pt-6">
-                    <h3 className="text-lg font-medium mb-4">Produtos Mais Vendidos</h3>
-                    <TopProducts products={sampleProducts} />
-                  </CardContent>
-                </Card>
-              </div>
+              {restaurantId && <DashboardFinancial restaurantId={restaurantId} />}
               
               <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardContent className="pt-6">
-                    <h3 className="text-lg font-medium mb-4">CMV por Categoria</h3>
-                    <CMVAnalysis />
-                  </CardContent>
-                </Card>
-                
                 <Card>
                   <CardContent className="pt-6">
                     <h3 className="text-lg font-medium mb-4">Alertas</h3>
                     <Alerts alerts={alerts} onActionClick={handleAlertClick} />
                   </CardContent>
                 </Card>
-              </div>
-              
-              <div className="grid gap-4 md:grid-cols-3">
-                <Button 
-                  onClick={() => navigate("/ficha-tecnica")}
-                  variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center gap-2"
-                >
-                  <Receipt className="h-6 w-6" />
-                  <span>Fichas Técnicas</span>
-                </Button>
                 
-                <Button 
-                  onClick={() => navigate("/estoque")}
-                  variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center gap-2"
-                >
-                  <ShoppingCart className="h-6 w-6" />
-                  <span>Estoque e Compras</span>
-                </Button>
-                
-                <Button 
-                  onClick={() => navigate("/dre-cmv")}
-                  variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center gap-2"
-                >
-                  <FileDigit className="h-6 w-6" />
-                  <span>DRE e Análise de CMV</span>
-                </Button>
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="text-lg font-medium mb-4">Próximos Passos</h3>
+                    <div className="space-y-2">
+                      <p>Aqui estão algumas ações recomendadas:</p>
+                      <ul className="list-disc ml-5 space-y-1">
+                        <li>Verifique suas metas e desempenho financeiro</li>
+                        <li>Atualize seu estoque e inventário</li>
+                        <li>Revise suas receitas e precificação</li>
+                        <li>Configure suas promoções para o período</li>
+                      </ul>
+                      <div className="mt-4">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => navigate("/dre-cmv")}
+                          className="w-full mt-2"
+                        >
+                          Ver relatórios financeiros
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
             
             <TabsContent value="financeiro" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {selectedKPIs
-                  .filter(kpi => ['sales_today', 'monthly_revenue', 'weekly_sales', 'average_ticket', 'cmv', 'profit_margin', 'labor_cost', 'utilities_cost'].includes(kpi))
-                  .map(kpiId => (
-                    <div key={kpiId}>
-                      {renderKPI(kpiId)}
-                    </div>
-                  ))}
-              </div>
+              {restaurantId ? (
+                <DashboardFinancial restaurantId={restaurantId} />
+              ) : (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <p className="text-muted-foreground">
+                      Configure os dados do restaurante para visualizar informações financeiras.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
               
               <AdvancedAnalytics />
             </TabsContent>
