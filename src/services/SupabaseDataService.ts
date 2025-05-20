@@ -1,3 +1,4 @@
+
 import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, getTableQueryBuilder } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -90,7 +91,7 @@ class SupabaseDataService {
       }
       
       const { data, error } = await getTableQueryBuilder(table)
-        .insert(records as any)
+        .insert(records)
         .select();
       
       if (error) {
@@ -120,7 +121,7 @@ class SupabaseDataService {
       }
       
       const { data: updatedData, error } = await getTableQueryBuilder(table)
-        .update(data as any)
+        .update(data)
         .eq('id', id)
         .select()
         .single();
@@ -209,14 +210,21 @@ class SupabaseDataService {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id;
 
+      const payment = {
+        restaurant_id: restaurantId,
+        user_id: userId,
+        amount,
+        payment_method: paymentMethod,
+        description: "Payment transaction",
+        due_date: new Date().toISOString(),
+        status: "pending",
+        type: "payable",
+        category: "outros",
+        metadata
+      };
+
       const result = await getTableQueryBuilder('payments')
-        .insert({
-          restaurant_id: restaurantId,
-          user_id: userId,
-          amount,
-          payment_method: paymentMethod,
-          metadata
-        })
+        .insert(payment)
         .select();
       
       if (result.error) {
@@ -224,7 +232,7 @@ class SupabaseDataService {
       }
       
       // Safely extract firstItem and check if it has an id property
-      const firstItem = Array.isArray(result.data) ? result.data[0] : null;
+      const firstItem = Array.isArray(result.data) && result.data.length > 0 ? result.data[0] : null;
       
       if (hasId(firstItem)) {
         toast.success('Payment record created');
