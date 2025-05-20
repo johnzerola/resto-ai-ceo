@@ -25,54 +25,26 @@ function App() {
   return (
     <div className="min-h-screen bg-background">
       <ThemeProvider defaultTheme="light" storageKey="resto-ai-theme">
-        <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <QueryClientProvider client={queryClient}>
-              <RouterProvider router={createAppRouter()} />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/fluxo-caixa" element={<FluxoCaixa />} />
+                <Route path="/ficha-tecnica" element={<FichaTecnica />} />
+                <Route path="/estoque" element={<Estoque />} />
+                <Route path="/dre-cmv" element={<DreCmv />} />
+                <Route path="/status-sistema" element={<StatusSistema />} />
+                <Route path="/manual-usuario" element={<ManualUsuario />} />
+                <Route path="/contas-financeiras" element={<ContasFinanceiras />} />
+              </Routes>
               <Toaster richColors position="top-center" />
-            </QueryClientProvider>
+            </BrowserRouter>
           </AuthProvider>
-        </BrowserRouter>
+        </QueryClientProvider>
       </ThemeProvider>
     </div>
   );
-}
-
-function createAppRouter() {
-  return createBrowserRouter([
-    {
-      path: "/",
-      element: <Index />,
-    },
-    {
-      path: "/fluxo-caixa",
-      element: <FluxoCaixa />,
-    },
-    {
-      path: "/ficha-tecnica",
-      element: <FichaTecnica />,
-    },
-    {
-      path: "/estoque",
-      element: <Estoque />,
-    },
-    {
-      path: "/dre-cmv",
-      element: <DreCmv />,
-    },
-    {
-      path: "/status-sistema",
-      element: <StatusSistema />,
-    },
-    {
-      path: "/manual-usuario",
-      element: <ManualUsuario />,
-    },
-    {
-      path: "/contas-financeiras",
-      element: <ContasFinanceiras />
-    },
-  ]);
 }
 
 export default App;

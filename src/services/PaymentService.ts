@@ -87,7 +87,8 @@ export class PaymentService {
         throw error;
       }
       
-      return (data || []) as unknown as Payment[];
+      // Use simple type assertion to avoid deep type instantiation
+      return (data || []) as any;
     } catch (error) {
       console.error('Error loading payments:', error);
       toast.error(`Error loading payment data: ${(error as Error).message}`);
@@ -119,7 +120,8 @@ export class PaymentService {
           : 'Receivable account registered successfully'
       );
       
-      return (data && data[0] ? data[0] as unknown as Payment : null);
+      // Use simple type assertion to avoid deep type instantiation
+      return (data && data[0] ? data[0] as any : null);
     } catch (error) {
       console.error('Error creating payment:', error);
       toast.error(`Error registering ${payment.type === 'payable' ? 'payable' : 'receivable'}: ${(error as Error).message}`);
@@ -142,7 +144,8 @@ export class PaymentService {
       }
       
       toast.success('Record updated successfully');
-      return (data && data[0] ? data[0] as unknown as Payment : null);
+      // Use simple type assertion to avoid deep type instantiation
+      return (data && data[0] ? data[0] as any : null);
     } catch (error) {
       console.error('Error updating payment:', error);
       toast.error(`Error updating record: ${(error as Error).message}`);
@@ -172,7 +175,8 @@ export class PaymentService {
       // Dispatch event to update financial data
       this.dispatchPaymentEvent();
       
-      return (data && data[0] ? data[0] as unknown as Payment : null);
+      // Use simple type assertion to avoid deep type instantiation
+      return (data && data[0] ? data[0] as any : null);
     } catch (error) {
       console.error('Error confirming payment:', error);
       toast.error(`Error confirming payment: ${(error as Error).message}`);

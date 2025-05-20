@@ -41,7 +41,8 @@ class SupabaseDataService {
         throw error;
       }
       
-      return (data || []) as unknown as any[];
+      // Using type assertion to avoid deep type instantiation
+      return (data || []) as any;
     } catch (error) {
       console.error(`Error fetching data from table ${table}:`, error);
       toast.error(`Error loading data: ${(error as Error).message}`);
@@ -99,7 +100,7 @@ class SupabaseDataService {
       }
       
       toast.success('Data saved successfully');
-      return (data || []) as any[];
+      return (data || []) as any;
     } catch (error) {
       console.error(`Error creating records in table ${table}:`, error);
       toast.error(`Error saving data: ${(error as Error).message}`);
