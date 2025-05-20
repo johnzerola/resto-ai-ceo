@@ -16,38 +16,15 @@ import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { supabaseDataService } from "@/services/SupabaseDataService";
 
-// Temporary placeholder chart data
-const costData = {
-  labels: ['Alimentos', 'Bebidas', 'Outros'],
-  datasets: [
-    {
-      label: 'Custos',
-      data: [300, 50, 100],
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.6)',
-        'rgba(54, 162, 235, 0.6)',
-        'rgba(255, 206, 86, 0.6)',
-      ],
-      borderWidth: 0,
-    },
-  ],
+// Define a type for RestaurantSelector props
+type RestaurantSelectorProps = {
+  onRestaurantSelect: (restaurant: any) => void;
 };
 
-const stockData = {
-  labels: ['Em Estoque', 'Mínimo', 'Ideal'],
-  datasets: [
-    {
-      label: 'Estoque',
-      data: [60, 30, 100],
-      backgroundColor: [
-        'rgba(75, 192, 192, 0.6)',
-        'rgba(255, 159, 64, 0.6)',
-        'rgba(153, 102, 255, 0.6)',
-      ],
-      borderWidth: 0,
-    },
-  ],
-};
+// Ensure RestaurantSelector component accepts these props
+declare module "@/components/restaurant/RestaurantSelector" {
+  export const RestaurantSelector: React.FC<RestaurantSelectorProps>;
+}
 
 const Index = () => {
   const { user, userRole } = useAuth();
@@ -100,7 +77,6 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Pass the prop directly to RestaurantSelector instead of using a wrapper */}
         <RestaurantSelector onRestaurantSelect={handleRestaurantSelect} />
 
         {!selectedRestaurant ? (
@@ -187,7 +163,7 @@ const Index = () => {
 
             <Separator className="my-6" />
 
-            {/* Temporarily remove charts until we add the chart dependencies */}
+            {/* Charts commented out until chart dependencies are configured */}
             {/* <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
               <Card>
                 <CardHeader>

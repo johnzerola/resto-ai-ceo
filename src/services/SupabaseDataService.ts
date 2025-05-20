@@ -1,5 +1,5 @@
 
-import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, AnyTableName } from '@/integrations/supabase/client';
+import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, CustomTables } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 /**
@@ -17,7 +17,7 @@ class SupabaseDataService {
   /**
    * Fetches all records from a table with optional filters
    */
-  async getAll<T extends AnyTableName>(
+  async getAll<T extends CustomTables>(
     table: T,
     filters?: Record<string, any>
   ): Promise<any[]> {
@@ -26,7 +26,7 @@ class SupabaseDataService {
         throw new Error(`Invalid table name: ${table}`);
       }
 
-      let query = supabase.from(table).select();
+      let query = getTableQueryBuilder(table).select();
       
       // Apply filters if provided
       if (filters) {
@@ -52,7 +52,7 @@ class SupabaseDataService {
   /**
    * Fetches a record by ID
    */
-  async getById<T extends AnyTableName>(
+  async getById<T extends CustomTables>(
     table: T,
     id: string
   ): Promise<any | null> {
@@ -61,8 +61,7 @@ class SupabaseDataService {
         throw new Error(`Invalid table name: ${table}`);
       }
       
-      const { data, error } = await supabase
-        .from(table)
+      const { data, error } = await getTableQueryBuilder(table)
         .select()
         .eq('id', id)
         .single();
@@ -82,7 +81,7 @@ class SupabaseDataService {
   /**
    * Creates records
    */
-  async create<T extends AnyTableName>(
+  async create<T extends CustomTables>(
     table: T,
     records: any | any[]
   ): Promise<any[]> {
@@ -91,8 +90,7 @@ class SupabaseDataService {
         throw new Error(`Invalid table name: ${table}`);
       }
       
-      const { data, error } = await supabase
-        .from(table)
+      const { data, error } = await getTableQueryBuilder(table)
         .insert(records as any)
         .select();
       
@@ -112,7 +110,7 @@ class SupabaseDataService {
   /**
    * Updates a record
    */
-  async update<T extends AnyTableName>(
+  async update<T extends CustomTables>(
     table: T,
     id: string,
     data: any
@@ -122,8 +120,7 @@ class SupabaseDataService {
         throw new Error(`Invalid table name: ${table}`);
       }
       
-      const { data: updatedData, error } = await supabase
-        .from(table)
+      const { data: updatedData, error } = await getTableQueryBuilder(table)
         .update(data as any)
         .eq('id', id)
         .select()
@@ -145,14 +142,13 @@ class SupabaseDataService {
   /**
    * Deletes a record
    */
-  async delete<T extends AnyTableName>(table: T, id: string): Promise<boolean> {
+  async delete<T extends CustomTables>(table: T, id: string): Promise<boolean> {
     try {
       if (!isValidTableName(table)) {
         throw new Error(`Invalid table name: ${table}`);
       }
       
-      const { error } = await supabase
-        .from(table)
+      const { error } = await getTableQueryBuilder(table)
         .delete()
         .eq('id', id);
       
@@ -214,8 +210,7 @@ class SupabaseDataService {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id;
 
-      const result = await supabase
-        .from('payments' as any)
+      const result = await getTableQueryBuilder('payments')
         .insert({
           restaurant_id: restaurantId,
           user_id: userId,
