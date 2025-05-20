@@ -87,8 +87,8 @@ export class PaymentService {
         throw error;
       }
       
-      // Use simple type assertion to avoid deep type instantiation
-      return (data || []) as any;
+      // Use explicit type assertion to avoid deep type instantiation
+      return (data || []) as Payment[];
     } catch (error) {
       console.error('Error loading payments:', error);
       toast.error(`Error loading payment data: ${(error as Error).message}`);
@@ -120,8 +120,8 @@ export class PaymentService {
           : 'Receivable account registered successfully'
       );
       
-      // Use simple type assertion to avoid deep type instantiation
-      return (data && data[0] ? data[0] as any : null);
+      // Use explicit type assertion to avoid deep type instantiation
+      return data && data[0] ? (data[0] as Payment) : null;
     } catch (error) {
       console.error('Error creating payment:', error);
       toast.error(`Error registering ${payment.type === 'payable' ? 'payable' : 'receivable'}: ${(error as Error).message}`);
@@ -144,8 +144,8 @@ export class PaymentService {
       }
       
       toast.success('Record updated successfully');
-      // Use simple type assertion to avoid deep type instantiation
-      return (data && data[0] ? data[0] as any : null);
+      // Use explicit type assertion to avoid deep type instantiation
+      return data && data[0] ? (data[0] as Payment) : null;
     } catch (error) {
       console.error('Error updating payment:', error);
       toast.error(`Error updating record: ${(error as Error).message}`);
@@ -175,8 +175,8 @@ export class PaymentService {
       // Dispatch event to update financial data
       this.dispatchPaymentEvent();
       
-      // Use simple type assertion to avoid deep type instantiation
-      return (data && data[0] ? data[0] as any : null);
+      // Use explicit type assertion to avoid deep type instantiation
+      return data && data[0] ? (data[0] as Payment) : null;
     } catch (error) {
       console.error('Error confirming payment:', error);
       toast.error(`Error confirming payment: ${(error as Error).message}`);

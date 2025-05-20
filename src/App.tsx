@@ -3,8 +3,6 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  createBrowserRouter,
-  RouterProvider,
 } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "./services/AuthService";
