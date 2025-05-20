@@ -1,4 +1,3 @@
-
 import { supabase, TableName, TableRow, TableInsert, TableUpdate, isValidTableName, ValidTableName, getTableQueryBuilder } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 

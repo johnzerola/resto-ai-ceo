@@ -1,4 +1,3 @@
-
 // Imports e código existente...
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/restaurant/Layout";
@@ -67,7 +66,7 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Remove the onRestaurantSelect prop since it's not accepted by RestaurantSelector */}
+        {/* Remove the invalid prop */}
         <RestaurantSelector />
 
         {!selectedRestaurant ? (
@@ -151,39 +150,6 @@ const Index = () => {
                 </CardContent>
               </Card>
             </div>
-
-            <Separator className="my-6" />
-
-            {/* Charts commented out until chart dependencies are configured */}
-            {/* <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Visão Geral de Custos</CardTitle>
-                  <CardDescription>
-                    Análise detalhada dos seus custos
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div style={{ height: '300px' }}>
-                    Chart placeholder
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Visão Geral de Estoque</CardTitle>
-                  <CardDescription>
-                    Análise detalhada do seu estoque
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div style={{ height: '300px' }}>
-                    Chart placeholder
-                  </div>
-                </CardContent>
-              </Card>
-            </div> */}
 
             <Separator className="my-6" />
 

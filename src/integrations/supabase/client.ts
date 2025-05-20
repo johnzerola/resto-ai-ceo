@@ -37,7 +37,7 @@ export const VALID_TABLES = [
   'recipes',
   'restaurant_members',
   'restaurants',
-  'payments' // Added payments to the list of valid tables
+  'payments'
 ] as const;
 
 // Create a union type for valid tables
@@ -45,10 +45,11 @@ export type ValidTableName = typeof VALID_TABLES[number];
 
 // Validate table name function with proper typing
 export function isValidTableName(tableName: string): tableName is ValidTableName {
-  return VALID_TABLES.includes(tableName as any);
+  return (VALID_TABLES as readonly string[]).includes(tableName);
 }
 
 // Helper function for type-safe table access with any table name
 export function getTableQueryBuilder(tableName: ValidTableName) {
-  return supabase.from(tableName as any);
+  // Force type cast here to solve the TypeScript error
+  return supabase.from(tableName);
 }
