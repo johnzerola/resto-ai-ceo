@@ -335,10 +335,10 @@ export function initializeDefaultGoals(): void {
 }
 
 // Função para sincronizar metas com dados financeiros
-export function syncGoalsWithFinancialData(): void {
+export async function syncGoalsWithFinancialData(): Promise<void> {
   try {
     const goals = getAllGoals();
-    const financialData = getFinancialData();
+    const financialData = await getFinancialData();
     let updatedAny = false;
     
     // Para cada meta que tem uma fonte de dados vinculada, atualizar o progresso

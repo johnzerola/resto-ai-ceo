@@ -96,7 +96,7 @@ export async function syncModules(data: any, source: string): Promise<boolean> {
       const config = JSON.parse(restaurantData);
       
       // Update financial data with configuration values
-      const financialData = getFinancialData();
+      const financialData = await getFinancialData();
       
       // Apply target values from configuration
       if (config.targetFoodCost) {

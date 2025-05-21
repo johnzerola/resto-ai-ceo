@@ -16,10 +16,10 @@ export type { FinancialData } from "@/types/financial-data";
 /**
  * Função para atualizar dados financeiros com base em entradas de fluxo de caixa
  */
-export function updateFinancialData(entries: CashFlowEntry[]): void {
+export async function updateFinancialData(entries: CashFlowEntry[]): Promise<void> {
   try {
     // Recuperar dados financeiros existentes ou inicializar
-    const existingData = getFinancialData();
+    const existingData = await getFinancialData();
     
     // Preparar dados atualizados
     const updatedData: FinancialData = {

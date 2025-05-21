@@ -69,10 +69,10 @@ export function saveFinancialData(data: FinancialData): void {
 /**
  * Sincronizar dados financeiros com configurações do restaurante
  */
-export function syncFinancialWithConfig(): void {
+export async function syncFinancialWithConfig(): Promise<void> {
   try {
     const restaurantDataStr = localStorage.getItem("restaurantData");
-    const financialData = getFinancialData();
+    const financialData = await getFinancialData();
     
     if (restaurantDataStr) {
       const restaurantData = JSON.parse(restaurantDataStr);
