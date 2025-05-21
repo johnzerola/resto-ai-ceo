@@ -5,14 +5,14 @@ import { toast } from "sonner";
 import { CashFlowEntry } from "@/components/restaurant/CashFlowOverview";
 import { FinancialData } from "@/types/financial-data";
 import { categoryMappings } from "@/config/category-mappings";
-import { calculateCMVCategories } from "@/utils/financial-utils";
-import { getFinancialData, saveFinancialData } from "@/services/FinancialStorageService";
+import { calculateCMVCategories, dispatchFinancialDataEvent } from "@/utils/financial-utils";
+import { getFinancialData, saveFinancialData, syncFinancialWithConfig } from "@/services/FinancialStorageService";
 import { Payment } from "@/services/PaymentService";
 import { syncGoalsWithFinancialData } from "@/services/GoalsService";
 import { startSync } from "@/services/SyncService";
 
 // Reexportamos as funções necessárias para manter compatibilidade com o código existente
-export { getFinancialData, saveFinancialData } from "@/services/FinancialStorageService";
+export { getFinancialData, saveFinancialData, syncFinancialWithConfig } from "@/services/FinancialStorageService";
 export { dispatchFinancialDataEvent } from "@/utils/financial-utils";
 export type { FinancialData } from "@/types/financial-data";
 
