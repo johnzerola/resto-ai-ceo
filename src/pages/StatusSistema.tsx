@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/restaurant/Layout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getSyncStatus, startSync, getSyncLogs } from "@/services/SyncService";
 import { supabase, isValidTableName, VALID_TABLES, getTableQueryBuilder, ExtendedTableName } from "@/integrations/supabase/client";
-import { supabaseDataService } from "@/services/SupabaseDataService";
+import { SupabaseDataService } from "@/services/SupabaseDataService";
 import { RefreshCcw, Database, Users, ServerCrash, Activity, CheckCircle2, AlertCircle, RotateCw } from "lucide-react";
 
 const StatusSistema = () => {

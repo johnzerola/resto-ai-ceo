@@ -84,11 +84,11 @@ export const SupabaseDataService = {
         .from(tableName)
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       
-      return data as Tables[T]['Row'];
+      return data as Tables[T]['Row'] | null;
     } catch (error: any) {
       return handleSupabaseError(`fetching record from ${tableName}`, error);
     }
@@ -113,12 +113,12 @@ export const SupabaseDataService = {
         .from(tableName)
         .insert([record])
         .select()
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       
       toast.success('Record created successfully');
-      return data as Tables[T]['Row'];
+      return data as Tables[T]['Row'] | null;
     } catch (error: any) {
       return handleSupabaseError(`creating record in ${tableName}`, error);
     }
@@ -146,12 +146,12 @@ export const SupabaseDataService = {
         .update(updates)
         .eq('id', id)
         .select()
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       
       toast.success('Record updated successfully');
-      return data as Tables[T]['Row'];
+      return data as Tables[T]['Row'] | null;
     } catch (error: any) {
       return handleSupabaseError(`updating record in ${tableName}`, error);
     }
