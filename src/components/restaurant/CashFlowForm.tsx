@@ -109,7 +109,7 @@ export function CashFlowForm({ entryId, onCancel, onSuccess }: CashFlowFormProps
 
   
   // Save cash flow entry
-  const onSubmit = (data: CashFlowEntry) => {
+  const onSubmit = async (data: CashFlowEntry) => {
     const entryToSave: CashFlowEntry = {
       ...data,
       id: entryId || Date.now().toString(),
@@ -136,7 +136,7 @@ export function CashFlowForm({ entryId, onCancel, onSuccess }: CashFlowFormProps
       localStorage.setItem("cashFlow", JSON.stringify(entries));
       
       // Atualizar dados financeiros baseados no fluxo de caixa
-      updateFinancialData(entries);
+      await updateFinancialData(entries);
       
       toast.success(entryId ? "Transação atualizada com sucesso!" : "Nova transação adicionada com sucesso!");
       onSuccess();

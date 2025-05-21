@@ -28,6 +28,12 @@ export async function initializeNewUserData(userId?: string): Promise<boolean> {
     // Reset financial data to empty state
     saveFinancialData(createEmptyFinancialData());
     
+    // Reset cash flow data
+    localStorage.setItem("cashFlow", JSON.stringify([]));
+    
+    // Reset goals data
+    localStorage.setItem("goals", JSON.stringify([]));
+    
     // Get user information if available
     if (userId) {
       const { data: userData } = await supabase
@@ -42,7 +48,8 @@ export async function initializeNewUserData(userId?: string): Promise<boolean> {
           businessName: userData.name ? `Restaurante de ${userData.name}` : "Meu Restaurante",
           targetFoodCost: 30,
           targetBeverageCost: 25,
-          isNewUser: true
+          isNewUser: true,
+          lastFinancialUpdate: new Date().toISOString()
         };
         
         localStorage.setItem('restaurantData', JSON.stringify(restaurantData));

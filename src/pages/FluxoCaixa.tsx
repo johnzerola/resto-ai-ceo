@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, FileDown, BarChart } from "lucide-react";
 import { toast } from "sonner";
-import { dispatchFinancialDataEvent } from "@/services/FinancialDataService";
+import { syncAllModules } from "@/services/FinancialDataService";
 import { useNavigate } from "react-router-dom";
-import { syncModules } from "@/services/SyncService";
 import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
 
 const FluxoCaixa = () => {
@@ -107,6 +106,7 @@ const FluxoCaixa = () => {
               <li>Demonstrativo de Resultados (DRE)</li>
               <li>Análise de Custo de Mercadoria Vendida (CMV)</li>
               <li>Dashboard Financeiro</li>
+              <li>Metas e Indicadores de Desempenho</li>
             </ul>
             <div className="mt-2 flex justify-end">
               <Button 
@@ -125,21 +125,20 @@ const FluxoCaixa = () => {
         <CashFlowForm 
           entryId={selectedEntryId} 
           onCancel={toggleAddEntry} 
-          onSuccess={() => {
+          onSuccess={async () => {
             setIsAddingEntry(false);
             setSelectedEntryId(null);
             
-            // Usar novo sistema de sincronização
+            // Usar sistema de sincronização aprimorado
             const cashFlowData = localStorage.getItem("cashFlow");
             if (cashFlowData) {
               const parsedData = JSON.parse(cashFlowData);
-              syncModules(parsedData, "cashFlow");
+              await syncAllModules("cashFlow");
+              
+              toast.success("Transação salva e todos os módulos atualizados");
             } else {
-              // Manter comportamento anterior como fallback
-              dispatchFinancialDataEvent();
+              toast.warning("Transação salva mas não há dados para sincronizar");
             }
-            
-            toast.success("Transação salva e dados financeiros atualizados");
           }}
         />
       ) : (
