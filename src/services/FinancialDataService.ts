@@ -41,7 +41,13 @@ export async function updateFinancialData(entries: CashFlowEntry[]): Promise<voi
         packagingCost: 0,
         otherCosts: 0,
         total: 0
-      }
+      },
+      cmvCategories: existingData.cmvCategories || [],
+      profitMargin: existingData.profitMargin || 0,
+      previousProfitMargin: existingData.previousProfitMargin || 0,
+      cmvPercentage: existingData.cmvPercentage || 0,
+      targetCMV: existingData.targetCMV || 0,
+      revenueGrowth: existingData.revenueGrowth || 0
     };
     
     // Filtrar apenas transações concluídas
@@ -63,16 +69,21 @@ export async function updateFinancialData(entries: CashFlowEntry[]): Promise<voi
           updatedData.revenue.otherSales += entry.amount;
         }
       } else if (mapping && entry.type === "expense") {
-        // Atualizar custos
+        // Atualizar custos - verificar se é insumo para CMV ou outra despesa para DRE
         if (mapping.category === "foodCost") {
+          // Insumo alimentício para CMV
           updatedData.costs.foodCost += entry.amount;
         } else if (mapping.category === "beverageCost") {
+          // Insumo de bebidas para CMV
           updatedData.costs.beverageCost += entry.amount;
         } else if (mapping.category === "packagingCost") {
+          // Insumo de embalagens para CMV
           updatedData.costs.packagingCost += entry.amount;
         } else if (mapping.category === "otherCosts") {
+          // Outros insumos para CMV
           updatedData.costs.otherCosts += entry.amount;
         }
+        // Outras despesas não são consideradas no CMV, apenas no DRE
       }
     });
     
@@ -91,6 +102,17 @@ export async function updateFinancialData(entries: CashFlowEntry[]): Promise<voi
     
     // Atualizar categorias de CMV
     updatedData.cmvCategories = calculateCMVCategories(updatedData.revenue, updatedData.costs);
+    
+    // Calcular CMV percentual
+    if (updatedData.revenue.total > 0) {
+      updatedData.cmvPercentage = (updatedData.costs.total / updatedData.revenue.total) * 100;
+    }
+    
+    // Calcular margem de lucro
+    if (updatedData.revenue.total > 0) {
+      updatedData.previousProfitMargin = updatedData.profitMargin;
+      updatedData.profitMargin = ((updatedData.revenue.total - updatedData.costs.total) / updatedData.revenue.total) * 100;
+    }
     
     // Salvar dados atualizados
     await saveFinancialData(updatedData);
@@ -148,19 +170,23 @@ export async function updateFinancialDataFromPayments(payments: Payment[]): Prom
         
         revenueTotal += payment.amount;
       } else if (payment.type === "expense") {
-        // Processar despesas
-        // No CMV, apenas insumos são considerados, conforme solicitado
+        // Processar despesas - apenas insumos são considerados no CMV
         if (payment.category === "food") {
+          // Insumo alimentício para CMV
           updatedData.costs.foodCost += payment.amount;
+          costTotal += payment.amount;
         } else if (payment.category === "beverage") {
+          // Insumo de bebidas para CMV
           updatedData.costs.beverageCost += payment.amount;
+          costTotal += payment.amount;
         } else if (payment.category === "supplies") {
+          // Insumo de embalagens para CMV
           updatedData.costs.packagingCost += payment.amount;
+          costTotal += payment.amount;
         } else {
-          updatedData.costs.otherCosts += payment.amount;
+          // Outras despesas não são consideradas no CMV, apenas no DRE
+          // Não atualizamos o costs.otherCosts aqui, pois não é insumo
         }
-        
-        costTotal += payment.amount;
       }
     });
     
@@ -186,8 +212,7 @@ export async function updateFinancialDataFromPayments(payments: Payment[]): Prom
       updatedData.profitMargin = ((updatedData.revenue.total - updatedData.costs.total) / updatedData.revenue.total) * 100;
       
       // Calcular percentual de CMV
-      const cmvTotal = updatedData.costs.foodCost + updatedData.costs.beverageCost + updatedData.costs.packagingCost;
-      updatedData.cmvPercentage = (cmvTotal / updatedData.revenue.total) * 100;
+      updatedData.cmvPercentage = (updatedData.costs.total / updatedData.revenue.total) * 100;
     }
     
     // Salvar dados atualizados
@@ -221,7 +246,10 @@ export async function syncAllModules(source: string): Promise<void> {
     // Notificar sistema sobre atualização
     dispatchFinancialDataEvent();
     
+    toast.success("Todos os módulos sincronizados com sucesso");
   } catch (error) {
     console.error("Erro ao sincronizar módulos:", error);
+    toast.error("Erro ao sincronizar alguns módulos");
   }
 }
+
