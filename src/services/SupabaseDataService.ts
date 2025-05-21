@@ -30,7 +30,7 @@ export const SupabaseDataService = {
       filters?: Array<{column: string; value: any}>;
       orderBy?: {column: string; ascending?: boolean};
     } = {}
-  ): Promise<Tables[T]['Row'][]> {
+  ): Promise<Array<Tables[T]['Row']>> {
     try {
       if (!isValidTableName(tableName)) {
         throw new Error(`Invalid table name: ${tableName}`);
@@ -58,7 +58,8 @@ export const SupabaseDataService = {
       
       if (error) throw error;
       
-      return data as Tables[T]['Row'][];
+      // Use type assertion with unknown as intermediate step to satisfy TypeScript
+      return (data as unknown) as Array<Tables[T]['Row']>;
     } catch (error: any) {
       console.error(`Error fetching records from ${tableName}:`, error);
       return [];
@@ -83,12 +84,13 @@ export const SupabaseDataService = {
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
-        .eq('id', id)
+        .eq('id', id as any) // Use type assertion to fix the string assignment error
         .maybeSingle();
       
       if (error) throw error;
       
-      return data as Tables[T]['Row'] | null;
+      // Use type assertion with unknown as intermediate step to satisfy TypeScript
+      return (data as unknown) as Tables[T]['Row'] | null;
     } catch (error: any) {
       return handleSupabaseError(`fetching record from ${tableName}`, error);
     }
@@ -118,7 +120,8 @@ export const SupabaseDataService = {
       if (error) throw error;
       
       toast.success('Record created successfully');
-      return data as Tables[T]['Row'] | null;
+      // Use type assertion with unknown as intermediate step to satisfy TypeScript
+      return (data as unknown) as Tables[T]['Row'] | null;
     } catch (error: any) {
       return handleSupabaseError(`creating record in ${tableName}`, error);
     }
@@ -144,14 +147,15 @@ export const SupabaseDataService = {
       const { data, error } = await supabase
         .from(tableName)
         .update(updates)
-        .eq('id', id)
+        .eq('id', id as any) // Use type assertion to fix the string assignment error
         .select()
         .maybeSingle();
       
       if (error) throw error;
       
       toast.success('Record updated successfully');
-      return data as Tables[T]['Row'] | null;
+      // Use type assertion with unknown as intermediate step to satisfy TypeScript
+      return (data as unknown) as Tables[T]['Row'] | null;
     } catch (error: any) {
       return handleSupabaseError(`updating record in ${tableName}`, error);
     }
@@ -172,7 +176,7 @@ export const SupabaseDataService = {
       const { error } = await supabase
         .from(tableName)
         .delete()
-        .eq('id', id);
+        .eq('id', id as any); // Use type assertion to fix the string assignment error
       
       if (error) throw error;
       
