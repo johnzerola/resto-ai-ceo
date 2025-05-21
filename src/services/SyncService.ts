@@ -1,6 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getFinancialData, saveFinancialData } from "./FinancialStorageService";
+import { createEmptyFinancialData } from "@/utils/financial-utils";
 
 export const SYNC_EVENT = 'syncModules';
 
@@ -16,6 +18,45 @@ export interface SyncLog {
   source: string;
   success: boolean;
   details?: any;
+}
+
+// Function to initialize data for new users
+export async function initializeNewUserData(userId?: string): Promise<boolean> {
+  try {
+    console.log("Initializing data for new user");
+    
+    // Reset financial data to empty state
+    saveFinancialData(createEmptyFinancialData());
+    
+    // Get user information if available
+    if (userId) {
+      const { data: userData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      // Store basic restaurant data if exists
+      if (userData) {
+        const restaurantData = {
+          businessName: userData.name ? `Restaurante de ${userData.name}` : "Meu Restaurante",
+          targetFoodCost: 30,
+          targetBeverageCost: 25,
+          isNewUser: true
+        };
+        
+        localStorage.setItem('restaurantData', JSON.stringify(restaurantData));
+      }
+    }
+    
+    // Event to notify app that user data has been initialized
+    window.dispatchEvent(new CustomEvent('newUserInitialized'));
+    
+    return true;
+  } catch (error) {
+    console.error('Error initializing user data:', error);
+    return false;
+  }
 }
 
 // Function to start synchronization
@@ -48,6 +89,23 @@ export async function syncModules(data: any, source: string): Promise<boolean> {
       success: true,
       details: { status: 'started' }
     });
+    
+    // Synchronize configuration data with financial data
+    const restaurantData = localStorage.getItem('restaurantData');
+    if (restaurantData) {
+      const config = JSON.parse(restaurantData);
+      
+      // Update financial data with configuration values
+      const financialData = getFinancialData();
+      
+      // Apply target values from configuration
+      if (config.targetFoodCost) {
+        financialData.targetCMV = config.targetFoodCost;
+      }
+      
+      // Save updated financial data
+      saveFinancialData(financialData);
+    }
     
     // With Supabase, we don't need to manually synchronize data
     // as it's already stored in the database
@@ -120,7 +178,7 @@ export async function syncModules(data: any, source: string): Promise<boolean> {
       }
     });
     
-    toast.error('Error synchronizing data');
+    toast.error('Erro ao sincronizar dados');
     return false;
   }
 }
