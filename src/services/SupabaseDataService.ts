@@ -111,9 +111,10 @@ export const SupabaseDataService = {
         throw new Error(`Invalid table name: ${tableName}`);
       }
 
+      // Force any type here to handle complex nested typings
       const { data, error } = await supabase
         .from(tableName)
-        .insert([record])
+        .insert([record as any])
         .select()
         .maybeSingle();
       
@@ -146,7 +147,7 @@ export const SupabaseDataService = {
 
       const { data, error } = await supabase
         .from(tableName)
-        .update(updates)
+        .update(updates as any) // Use type assertion to fix complex type issues
         .eq('id', id as any) // Use type assertion to fix the string assignment error
         .select()
         .maybeSingle();
