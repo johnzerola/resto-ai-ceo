@@ -78,7 +78,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           
-          {/* Banner de confirmação de email */}
+          {/* Banner de confirmação de email - com destaque e animação aprimorada */}
           <EmailConfirmationBanner />
           
           {children}
