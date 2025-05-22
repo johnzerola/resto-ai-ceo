@@ -18,6 +18,9 @@ import { toast } from "sonner";
 import { DashboardCustomizer } from "@/components/restaurant/DashboardCustomizer";
 import { AdvancedAnalytics } from "@/components/restaurant/AdvancedAnalytics";
 import { getSystemAlerts } from "@/services/ModuleIntegrationService";
+import { DailySnapshot } from "@/components/restaurant/DailySnapshot";
+import { PerformanceComparison } from "@/components/restaurant/PerformanceComparison";
+import { QuickReports } from "@/components/restaurant/QuickReports";
 
 // Dados de exemplo para os gráficos e componentes
 const sampleRevenueData = [
@@ -242,7 +245,6 @@ const Index = () => {
   return (
     <Layout>
       {showOnboarding ? (
-        
         <div className="max-w-2xl mx-auto mt-8">
           <h1 className="text-2xl font-bold mb-6">Bem-vindo ao Resto AI CEO</h1>
           <p className="text-muted-foreground mb-8">
@@ -258,6 +260,7 @@ const Index = () => {
         </div>
       ) : (
         <div>
+          {/* Dashboard com novos componentes contextuais */}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
@@ -267,6 +270,15 @@ const Index = () => {
             </div>
             <DashboardCustomizer onSaveSettings={handleSaveKPIs} />
           </div>
+
+          {/* Novo componente de snapshot diário com dados em tempo real */}
+          <DailySnapshot />
+          
+          {/* Comparativo de desempenho */}
+          <PerformanceComparison />
+          
+          {/* Acesso rápido a relatórios */}
+          <QuickReports />
 
           <Tabs defaultValue="visao-geral" className="space-y-4">
             <TabsList>

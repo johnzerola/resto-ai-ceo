@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Mail, AlertCircle, X, ShieldCheck, ArrowRight } from "lucide-react";
+import { Mail, X, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { checkEmailConfirmation, resendConfirmationEmail } from "@/utils/auth-utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { Progress } from "@/components/ui/progress";
 
 export const EmailConfirmationBanner = () => {
   const [showBanner, setShowBanner] = useState(false);
@@ -14,6 +15,7 @@ export const EmailConfirmationBanner = () => {
   const [dismissUntil, setDismissUntil] = useState<number | null>(
     parseInt(localStorage.getItem("emailBannerDismissedUntil") || "0")
   );
+  const [progress, setProgress] = useState(0);
   const { user } = useAuth();
   
   useEffect(() => {
@@ -33,11 +35,40 @@ export const EmailConfirmationBanner = () => {
     
     checkConfirmation();
     
-    // Verificar novamente a cada 5 minutos
-    const intervalId = setInterval(checkConfirmation, 5 * 60 * 1000);
+    // Verificar novamente a cada 3 minutos
+    const intervalId = setInterval(checkConfirmation, 3 * 60 * 1000);
     
     return () => clearInterval(intervalId);
   }, [user, dismissUntil]);
+  
+  // Efeito para progresso de verificação
+  useEffect(() => {
+    if (!showBanner || isEmailConfirmed) return;
+    
+    // Simular verificação em progresso
+    const timer = setInterval(() => {
+      setProgress((oldProgress) => {
+        const newProgress = Math.min(oldProgress + 1, 100);
+        if (newProgress === 100) {
+          clearInterval(timer);
+          checkEmailConfirmation().then(confirmed => {
+            setIsEmailConfirmed(confirmed);
+            if (confirmed) {
+              setShowBanner(false);
+              toast.success("Email confirmado com sucesso!", {
+                description: "Agora você tem acesso completo a todas as funcionalidades."
+              });
+            } else {
+              setProgress(0);
+            }
+          });
+        }
+        return newProgress;
+      });
+    }, 3000);
+    
+    return () => clearInterval(timer);
+  }, [showBanner, isEmailConfirmed]);
   
   const handleResendEmail = async () => {
     if (isResending) return;
@@ -62,7 +93,7 @@ export const EmailConfirmationBanner = () => {
     setShowBanner(false);
   };
   
-  if (!showBanner || !user) return null;
+  if (!showBanner || !user || isEmailConfirmed) return null;
   
   return (
     <Alert 
@@ -71,7 +102,11 @@ export const EmailConfirmationBanner = () => {
     >
       <div className="flex items-start gap-3">
         <div className="shrink-0 bg-amber-100 rounded-full p-2 mt-0.5">
-          <ShieldCheck className="h-5 w-5 text-amber-600" />
+          {progress > 0 && progress < 100 ? (
+            <div className="h-5 w-5 rounded-full border-2 border-amber-600 border-t-transparent animate-spin" />
+          ) : (
+            <ShieldCheck className="h-5 w-5 text-amber-600" />
+          )}
         </div>
         <div className="flex-1">
           <AlertTitle className="text-amber-800 text-lg font-semibold mb-2 flex items-center">
@@ -83,7 +118,18 @@ export const EmailConfirmationBanner = () => {
               Para garantir acesso a todas as funcionalidades e receber notificações importantes,
               por favor clique no link de confirmação que enviamos.
             </p>
-            <div className="mt-3 flex flex-wrap gap-3">
+            
+            {progress > 0 && progress < 100 && (
+              <div className="my-3">
+                <div className="flex items-center justify-between mb-1 text-sm">
+                  <span>Verificando confirmação...</span>
+                  <span>{progress}%</span>
+                </div>
+                <Progress value={progress} className="h-2 bg-amber-200" />
+              </div>
+            )}
+            
+            <div className="mt-4 flex flex-wrap gap-3">
               <Button 
                 variant="default"
                 className="bg-amber-600 hover:bg-amber-700 border-none text-white"

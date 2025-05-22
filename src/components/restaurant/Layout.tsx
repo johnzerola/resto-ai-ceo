@@ -20,15 +20,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     // Registrar ouvinte de evento personalizado
     window.addEventListener('sidebarToggle' as any, handleSidebarToggle as any);
     
-    // Inicializar como aberto e fechar após 1 segundo
-    setSidebarState('open');
-    const timer = setTimeout(() => {
-      setSidebarState('closed');
-    }, 1000);
+    // Inicializar como aberto em desktop e fechado em mobile
+    const isMobile = window.innerWidth < 768;
+    setSidebarState(isMobile ? 'closed' : 'open');
     
     return () => {
       window.removeEventListener('sidebarToggle' as any, handleSidebarToggle as any);
-      clearTimeout(timer);
     };
   }, []);
   
@@ -65,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex grow flex-col md:flex-row">
         <Sidebar />
         <main className={cn(
-          "grow p-4 md:p-8 pt-20 md:pt-8 max-w-7xl mx-auto transition-all duration-300",
+          "grow p-4 md:p-6 pt-20 md:pt-6 max-w-7xl mx-auto transition-all duration-300",
           sidebarState === 'open' ? "md:ml-64" : "md:ml-16"
         )}>
           <div className="flex justify-between items-start mb-4">
@@ -78,7 +75,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           
-          {/* Banner de confirmação de email - com destaque e animação aprimorada */}
+          {/* Banner de confirmação de email com design aprimorado */}
           <EmailConfirmationBanner />
           
           {children}
