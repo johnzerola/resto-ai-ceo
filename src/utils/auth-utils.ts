@@ -56,13 +56,25 @@ export async function checkEmailConfirmation() {
     
     if (!session) return false;
     
-    // O Supabase não fornece diretamente a informação se o email foi confirmado
-    // Então vamos verificar se há alguma operação pendente de confirmação
+    // Verificar se o email está confirmado
     const { data: { user } } = await supabase.auth.getUser();
     
-    // Se o usuário existe e tem email, consideramos confirmado
-    // Esta é uma verificação básica - em um sistema real seria mais complexa
-    return !!user && !!user.email;
+    // Verificar status de confirmação de email do usuário
+    if (user?.email_confirmed_at) {
+      return true;
+    }
+    
+    // Verificar via API se o email foi confirmado recentemente
+    const { data, error } = await supabase.functions.invoke('check-email-confirmation', {
+      body: { user_id: user?.id }
+    });
+    
+    if (error) {
+      console.error("Erro ao verificar confirmação de email:", error);
+      return false;
+    }
+    
+    return data?.confirmed || false;
   } catch (error) {
     console.error("Erro ao verificar confirmação de email:", error);
     return false;
@@ -94,17 +106,39 @@ export async function resendConfirmationEmail() {
       return false;
     }
     
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email
+    // Usar a nova Edge Function para enviar email com template personalizado
+    const { data, error } = await supabase.functions.invoke('send-confirmation-email', {
+      body: { 
+        email: user.email,
+        name: user.user_metadata?.name || 'Usuário',
+      }
     });
     
     if (error) {
+      console.error("Erro ao reenviar email:", error);
       toast.error(`Erro ao reenviar email: ${error.message}`);
       return false;
     }
     
-    toast.success("Email de confirmação enviado com sucesso!");
+    // Fallback para método padrão caso a função não esteja disponível
+    if (!data?.success) {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email,
+        options: {
+          emailRedirectTo: window.location.origin
+        }
+      });
+      
+      if (resendError) {
+        toast.error(`Erro ao reenviar email: ${resendError.message}`);
+        return false;
+      }
+    }
+    
+    toast.success("Email de confirmação enviado com sucesso!", {
+      description: "Por favor, verifique sua caixa de entrada ou pasta de spam."
+    });
     return true;
   } catch (error) {
     console.error("Erro ao reenviar email de confirmação:", error);
@@ -112,3 +146,12 @@ export async function resendConfirmationEmail() {
     return false;
   }
 }
+
+/**
+ * Dispara evento de alternância do sidebar
+ */
+export function dispatchSidebarToggle(isCollapsed: boolean) {
+  const event = new CustomEvent('sidebarToggle', { detail: { isCollapsed } });
+  window.dispatchEvent(event);
+}
+

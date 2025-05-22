@@ -14,10 +14,7 @@ import {
   Menu,
   X,
   DollarSign,
-  Code,
-  Trophy,
-  ServerCrash,
-  Activity
+  Code
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,12 +33,48 @@ export function Sidebar({ className }: SidebarProps) {
   const { hasPermission } = useAuth();
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    
+    // Disparar evento para notificar o Layout de que o sidebar foi alternado
+    if (typeof window !== "undefined") {
+      const event = new CustomEvent('sidebarToggle', { 
+        detail: { isCollapsed: newState } 
+      });
+      window.dispatchEvent(event);
+    }
   };
 
   const toggleMobileSidebar = () => {
     setIsMobileOpen(!isMobileOpen);
   };
+
+  // Inicializar o menu como aberto e depois fechar após 1 segundo
+  useEffect(() => {
+    setIsCollapsed(false);
+    
+    // Disparar evento para notificar o Layout que o sidebar está aberto inicialmente
+    if (typeof window !== "undefined") {
+      const event = new CustomEvent('sidebarToggle', { 
+        detail: { isCollapsed: false } 
+      });
+      window.dispatchEvent(event);
+    }
+    
+    const timer = setTimeout(() => {
+      setIsCollapsed(true);
+      
+      // Disparar evento para notificar o Layout que o sidebar foi fechado automaticamente
+      if (typeof window !== "undefined") {
+        const event = new CustomEvent('sidebarToggle', { 
+          detail: { isCollapsed: true } 
+        });
+        window.dispatchEvent(event);
+      }
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Carregar conquistas desbloqueadas
   useEffect(() => {
@@ -75,7 +108,6 @@ export function Sidebar({ className }: SidebarProps) {
       path: "/estoque",
       badge: unlockedAchievements > 0 ? (
         <Badge variant="outline" className="ml-auto bg-amber-50 text-amber-600 border-amber-200 flex items-center gap-1 h-5">
-          <Trophy className="h-3 w-3" />
           {unlockedAchievements}
         </Badge>
       ) : undefined
@@ -88,12 +120,8 @@ export function Sidebar({ className }: SidebarProps) {
     { name: "Configurações", icon: Settings, path: "/configuracoes" },
   ];
 
-  // Itens para administradores
-  const adminItems = [
-    { name: "Documentação", icon: Code, path: "/documentacao" },
-    { name: "Admin Sistema", icon: ServerCrash, path: "/admin-sistema", ownerOnly: true },
-    { name: "Status Sistema", icon: Activity, path: "/status-sistema", ownerOnly: true }
-  ];
+  // Item para documentação técnica (apenas para gerentes)
+  const docItem = { name: "Documentação", icon: Code, path: "/documentacao" };
 
   return (
     <>
@@ -180,58 +208,34 @@ export function Sidebar({ className }: SidebarProps) {
                 )}
                 {isCollapsed && item.badge && (
                   <div className="absolute -right-1 -top-1">
-                    <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 flex items-center gap-1 h-5 w-5 p-0 justify-center">
-                      {unlockedAchievements}
-                    </Badge>
+                    {item.badge}
                   </div>
                 )}
               </NavLink>
             ))}
             
-            {/* Divider for admin items */}
-            {(hasPermission(UserRole.MANAGER) || hasPermission(UserRole.OWNER)) && (
-              <div className="border-t border-gray-200 my-2 pt-2">
-                <p className={cn(
-                  "text-xs text-gray-500 px-2 mb-2",
-                  isCollapsed ? "text-center" : "text-left"
-                )}>
-                  {!isCollapsed ? "Administração" : "Admin"}
-                </p>
-              </div>
+            {/* Item de documentação técnica para gerentes */}
+            {hasPermission(UserRole.MANAGER) && (
+              <NavLink
+                to={docItem.path}
+                className={({ isActive }) =>
+                  cn(
+                    isActive
+                      ? "bg-resto-blue-50 text-resto-blue-700"
+                      : "text-resto-gray-600 hover:bg-resto-gray-50",
+                    "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all"
+                  )
+                }
+              >
+                <docItem.icon
+                  className={cn(
+                    "flex-shrink-0 h-5 w-5",
+                    isCollapsed ? "mr-0 mx-auto" : "mr-3"
+                  )}
+                />
+                {!isCollapsed && <span>{docItem.name}</span>}
+              </NavLink>
             )}
-            
-            {/* Admin items */}
-            {adminItems.map((item) => {
-              // Mostrar item apenas se usuário tiver permissão
-              const shouldShow = item.ownerOnly 
-                ? hasPermission(UserRole.OWNER) 
-                : hasPermission(UserRole.MANAGER);
-                
-              if (!shouldShow) return null;
-                
-              return (
-                <NavLink
-                  key={item.name}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    cn(
-                      isActive
-                        ? "bg-resto-blue-50 text-resto-blue-700"
-                        : "text-resto-gray-600 hover:bg-resto-gray-50",
-                      "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all"
-                    )
-                  }
-                >
-                  <item.icon
-                    className={cn(
-                      "flex-shrink-0 h-5 w-5",
-                      isCollapsed ? "mr-0 mx-auto" : "mr-3"
-                    )}
-                  />
-                  {!isCollapsed && <span>{item.name}</span>}
-                </NavLink>
-              );
-            })}
           </nav>
         </div>
 
