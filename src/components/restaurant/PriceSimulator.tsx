@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,8 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
 import { Calculator, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import { SensitivityAnalysis } from "./SensitivityAnalysis";
+import { CompetitiveBenchmark } from "./CompetitiveBenchmark";
+import { SmartAlerts } from "./SmartAlerts";
 
 export function PriceSimulator() {
   const [formData, setFormData] = useState({
@@ -144,12 +147,15 @@ export function PriceSimulator() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Simulador de Preços para Restaurante
+            Simulador de Preços Avançado
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Ferramenta completa com análise de sensibilidade, benchmarking e alertas inteligentes
+          </p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Formulário */}
+            {/* Formulário - manter código existente */}
             <div className="space-y-4">
               <div>
                 <Label htmlFor="priceType">Tipo de Preço</Label>
@@ -239,12 +245,11 @@ export function PriceSimulator() {
               </Button>
             </div>
 
-            {/* Resultados */}
+            {/* Resultados Básicos */}
             {results && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Resultados da Simulação</h3>
                 
-                {/* Tabela de Resultados */}
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -297,99 +302,141 @@ export function PriceSimulator() {
         </CardContent>
       </Card>
 
-      {/* Análise Financeira Detalhada */}
+      {/* Análises Avançadas */}
       {results && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Projeção Financeira Mensal
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>Receita Projetada:</span>
-                  <span className="font-semibold">{formatCurrency(results.monthlyRevenue)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Custos Totais:</span>
-                  <span className="font-semibold">{formatCurrency(results.monthlyCosts)}</span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span>Lucro Projetado:</span>
-                  <span className={`font-semibold ${results.monthlyProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {formatCurrency(results.monthlyProfit)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Margem Efetiva:</span>
-                  <span className="font-semibold">{results.actualMargin.toFixed(1)}%</span>
-                </div>
-                <div className="border-t pt-2">
-                  <div className="flex justify-between">
-                    <span>Ponto de Equilíbrio:</span>
-                    <span className="font-semibold">
-                      {Math.ceil(results.breakEvenUnits)} {formData.priceType === 'kg' ? 'kg' : 'pessoas'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Receita de Equilíbrio:</span>
-                    <span>{formatCurrency(results.breakEvenRevenue)}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="financial" className="space-y-4">
+          <TabsList className="grid grid-cols-4 md:w-[600px] mx-auto">
+            <TabsTrigger value="financial">Financeiro</TabsTrigger>
+            <TabsTrigger value="sensitivity">Sensibilidade</TabsTrigger>
+            <TabsTrigger value="competitive">Competitivo</TabsTrigger>
+            <TabsTrigger value="alerts">Alertas</TabsTrigger>
+          </TabsList>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Análise de Viabilidade</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {results.viabilityAnalysis.map((analysis: any, index: number) => {
-                  const IconComponent = analysis.icon;
-                  return (
-                    <div key={index} className="flex items-start gap-2">
-                      <IconComponent className={`h-4 w-4 mt-0.5 ${
-                        analysis.type === 'success' ? 'text-green-600' : 
-                        analysis.type === 'warning' ? 'text-yellow-600' : 'text-red-600'
-                      }`} />
-                      <span className={`text-sm ${
-                        analysis.type === 'success' ? 'text-green-700' : 
-                        analysis.type === 'warning' ? 'text-yellow-700' : 'text-red-700'
-                      }`}>
-                        {analysis.message}
+          <TabsContent value="financial" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Projeção Financeira Mensal
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* ... keep existing code (financial projection content) */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Receita Projetada:</span>
+                      <span className="font-semibold">{formatCurrency(results.monthlyRevenue)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Custos Totais:</span>
+                      <span className="font-semibold">{formatCurrency(results.monthlyCosts)}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span>Lucro Projetado:</span>
+                      <span className={`font-semibold ${results.monthlyProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(results.monthlyProfit)}
                       </span>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="flex justify-between">
+                      <span>Margem Efetiva:</span>
+                      <span className="font-semibold">{results.actualMargin.toFixed(1)}%</span>
+                    </div>
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between">
+                        <span>Ponto de Equilíbrio:</span>
+                        <span className="font-semibold">
+                          {Math.ceil(results.breakEvenUnits)} {formData.priceType === 'kg' ? 'kg' : 'pessoas'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>Receita de Equilíbrio:</span>
+                        <span>{formatCurrency(results.breakEvenRevenue)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-              {formData.currentPrice && results.priceVariation !== 0 && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-blue-800">Comparação com Preço Atual</h4>
-                  <p className="text-sm text-blue-700 mt-1">
-                    O preço sugerido é {results.priceVariation > 0 ? 'maior' : 'menor'} que o atual em{' '}
-                    <span className="font-semibold">{Math.abs(results.priceVariation).toFixed(1)}%</span>
-                  </p>
-                </div>
-              )}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Análise de Viabilidade</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* ... keep existing code (viability analysis content) */}
+                  <div className="space-y-3">
+                    {results.viabilityAnalysis.map((analysis: any, index: number) => {
+                      const IconComponent = analysis.icon;
+                      return (
+                        <div key={index} className="flex items-start gap-2">
+                          <IconComponent className={`h-4 w-4 mt-0.5 ${
+                            analysis.type === 'success' ? 'text-green-600' : 
+                            analysis.type === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                          }`} />
+                          <span className={`text-sm ${
+                            analysis.type === 'success' ? 'text-green-700' : 
+                            analysis.type === 'warning' ? 'text-yellow-700' : 'text-red-700'
+                          }`}>
+                            {analysis.message}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
 
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-800">Considerações Importantes</h4>
-                <ul className="text-sm text-gray-600 mt-1 space-y-1">
-                  <li>• Monitore a flutuação de preços dos ingredientes</li>
-                  <li>• Considere a sazonalidade do seu negócio</li>
-                  <li>• Analise preços da concorrência local</li>
-                  <li>• Teste o preço gradualmente se necessário</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  {formData.currentPrice && results.priceVariation !== 0 && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-800">Comparação com Preço Atual</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        O preço sugerido é {results.priceVariation > 0 ? 'maior' : 'menor'} que o atual em{' '}
+                        <span className="font-semibold">{Math.abs(results.priceVariation).toFixed(1)}%</span>
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-800">Considerações Importantes</h4>
+                    <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                      <li>• Monitore a flutuação de preços dos ingredientes</li>
+                      <li>• Considere a sazonalidade do seu negócio</li>
+                      <li>• Analise preços da concorrência local</li>
+                      <li>• Teste o preço gradualmente se necessário</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sensitivity">
+            <SensitivityAnalysis
+              basePrice={results.suggestedPrice}
+              baseCost={parseFloat(formData.ingredientCost)}
+              baseRevenue={results.monthlyRevenue}
+              baseProfit={results.monthlyProfit}
+              baseMargin={results.actualMargin}
+              monthlySales={parseFloat(formData.monthlySalesProjection)}
+            />
+          </TabsContent>
+
+          <TabsContent value="competitive">
+            <CompetitiveBenchmark
+              suggestedPrice={results.suggestedPrice}
+              priceType={formData.priceType}
+            />
+          </TabsContent>
+
+          <TabsContent value="alerts">
+            <SmartAlerts
+              margin={results.actualMargin}
+              suggestedPrice={results.suggestedPrice}
+              currentPrice={formData.currentPrice ? parseFloat(formData.currentPrice) : undefined}
+              breakEvenUnits={results.breakEvenUnits}
+              monthlySales={parseFloat(formData.monthlySalesProjection)}
+              totalCostPerUnit={results.totalCostPerUnit}
+            />
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
