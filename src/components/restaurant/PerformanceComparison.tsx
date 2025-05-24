@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -221,13 +220,29 @@ export const PerformanceComparison = () => {
     }
   };
   
-  // Configurar cores do gráfico
+  // Configurar cores do gráfico com estrutura correta
   const chartConfig = {
-    sales: {
-      current: { theme: { light: "#3b82f6", dark: "#60a5fa" } },
-      previous: { theme: { light: "#93c5fd", dark: "#bfdbfe" } },
-      target: { theme: { light: "#fb923c", dark: "#fdba74" } },
+    current: {
+      label: "Atual",
+      theme: {
+        light: "#3b82f6",
+        dark: "#60a5fa"
+      }
     },
+    previous: {
+      label: getComparisonName(),
+      theme: {
+        light: "#93c5fd",
+        dark: "#bfdbfe"
+      }
+    },
+    target: {
+      label: "Meta",
+      theme: {
+        light: "#fb923c",
+        dark: "#fdba74"
+      }
+    }
   };
   
   return (
@@ -384,7 +399,7 @@ export const PerformanceComparison = () => {
                     name="Atual" 
                     type="monotone" 
                     dataKey="current" 
-                    stroke="var(--color-sales-current)" 
+                    stroke="var(--color-current)" 
                     strokeWidth={2}
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
@@ -393,7 +408,7 @@ export const PerformanceComparison = () => {
                     name={getComparisonName()} 
                     type="monotone" 
                     dataKey="previous" 
-                    stroke="var(--color-sales-previous)" 
+                    stroke="var(--color-previous)" 
                     strokeWidth={2}
                     strokeDasharray="5 5"
                     dot={{ r: 4 }}
@@ -403,7 +418,7 @@ export const PerformanceComparison = () => {
                       name="Meta" 
                       type="monotone" 
                       dataKey="target" 
-                      stroke="var(--color-sales-target)" 
+                      stroke="var(--color-target)" 
                       strokeWidth={2}
                       strokeDasharray="3 3"
                       dot={{ r: 4 }}
@@ -436,13 +451,13 @@ export const PerformanceComparison = () => {
                   <Bar 
                     name="Atual" 
                     dataKey="current" 
-                    fill="#3b82f6"
+                    fill="var(--color-current)"
                     radius={[4, 4, 0, 0]}
                   />
                   <Bar 
                     name={getComparisonName()} 
                     dataKey="previous" 
-                    fill="#93c5fd" 
+                    fill="var(--color-previous)" 
                     radius={[4, 4, 0, 0]}
                   />
                   <Legend align="right" />
