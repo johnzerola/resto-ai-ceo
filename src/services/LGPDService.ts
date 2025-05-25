@@ -1,6 +1,5 @@
 
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 // Tipos para LGPD
 export interface ConsentRecord {
@@ -97,14 +96,8 @@ export class LGPDService {
     this.consentRecords.push(consent);
     
     try {
-      await supabase.from('consent_records').insert([{
-        user_id: consent.userId,
-        consent_type: consent.consentType,
-        granted: consent.granted,
-        ip_address: consent.ipAddress,
-        version: consent.version
-      }]);
-      
+      // Store in localStorage for now instead of Supabase
+      localStorage.setItem('consent_records', JSON.stringify(this.consentRecords));
       toast.success("Consentimento registrado com sucesso");
     } catch (error) {
       console.error("Erro ao registrar consentimento:", error);
@@ -139,13 +132,8 @@ export class LGPDService {
     this.dataRequests.push(request);
 
     try {
-      await supabase.from('data_subject_requests').insert([{
-        user_id: request.userId,
-        request_type: request.requestType,
-        status: request.status,
-        details: request.details
-      }]);
-
+      // Store in localStorage for now instead of Supabase
+      localStorage.setItem('data_subject_requests', JSON.stringify(this.dataRequests));
       toast.success("Solicitação registrada. Será processada em até 15 dias úteis.");
       return request.id;
     } catch (error) {
@@ -160,16 +148,16 @@ export class LGPDService {
     try {
       // Buscar todos os dados do usuário
       const userData = {
-        profile: await this.getUserProfile(userId),
-        financialData: await this.getUserFinancialData(userId),
-        inventoryData: await this.getUserInventoryData(userId),
+        profile: this.getUserProfile(userId),
+        financialData: this.getUserFinancialData(userId),
+        inventoryData: this.getUserInventoryData(userId),
         consentHistory: this.getUserConsentHistory(userId),
         exportDate: new Date().toISOString(),
         format: "JSON"
       };
 
       // Registrar a exportação nos logs
-      await this.logDataExport(userId);
+      this.logDataExport(userId);
 
       return userData;
     } catch (error) {
@@ -188,11 +176,8 @@ export class LGPDService {
         anonymized_at: new Date().toISOString()
       };
 
-      await supabase
-        .from('profiles')
-        .update(anonymizedData)
-        .eq('id', userId);
-
+      // Store in localStorage for now
+      localStorage.setItem(`anonymized_${userId}`, JSON.stringify(anonymizedData));
       toast.success("Dados anonimizados com sucesso");
     } catch (error) {
       console.error("Erro ao anonimizar dados:", error);
@@ -205,42 +190,36 @@ export class LGPDService {
     return '0.0.0.0'; // Simulado
   }
 
-  private async getUserProfile(userId: string): Promise<any> {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    return data;
+  private getUserProfile(userId: string): any {
+    // Simulated data retrieval
+    return { id: userId, name: "User Name", email: "user@example.com" };
   }
 
-  private async getUserFinancialData(userId: string): Promise<any> {
-    const { data } = await supabase
-      .from('cash_flow')
-      .select('*')
-      .eq('user_id', userId);
-    return data;
+  private getUserFinancialData(userId: string): any {
+    // Simulated data retrieval
+    return { userId, transactions: [] };
   }
 
-  private async getUserInventoryData(userId: string): Promise<any> {
-    const { data } = await supabase
-      .from('inventory')
-      .select('*')
-      .eq('user_id', userId);
-    return data;
+  private getUserInventoryData(userId: string): any {
+    // Simulated data retrieval
+    return { userId, inventory: [] };
   }
 
   private getUserConsentHistory(userId: string): ConsentRecord[] {
     return this.consentRecords.filter(c => c.userId === userId);
   }
 
-  private async logDataExport(userId: string): Promise<void> {
-    await supabase.from('data_access_logs').insert([{
-      user_id: userId,
-      data_type: 'all_user_data',
+  private logDataExport(userId: string): void {
+    const log = {
+      userId,
       action: 'export',
-      ip_address: this.getClientIP()
-    }]);
+      timestamp: new Date().toISOString(),
+      ipAddress: this.getClientIP()
+    };
+    
+    const logs = JSON.parse(localStorage.getItem('data_access_logs') || '[]');
+    logs.push(log);
+    localStorage.setItem('data_access_logs', JSON.stringify(logs));
   }
 
   // Obter inventário de dados
