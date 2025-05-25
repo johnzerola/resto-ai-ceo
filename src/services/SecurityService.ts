@@ -1,6 +1,5 @@
 
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 // Tipos para auditoria de segurança
 export interface SecurityEvent {
@@ -35,6 +34,50 @@ export class SecurityService {
       SecurityService.instance = new SecurityService();
     }
     return SecurityService.instance;
+  }
+
+  constructor() {
+    // Carregar dados do localStorage na inicialização
+    this.loadFromStorage();
+  }
+
+  // Carregar dados do localStorage
+  private loadFromStorage(): void {
+    try {
+      const securityLogs = localStorage.getItem('security_logs');
+      if (securityLogs) {
+        this.securityLogs = JSON.parse(securityLogs);
+      }
+
+      const dataAccessLogs = localStorage.getItem('data_access_logs');
+      if (dataAccessLogs) {
+        this.dataAccessLogs = JSON.parse(dataAccessLogs);
+      }
+
+      const failedAttempts = localStorage.getItem('failed_login_attempts');
+      if (failedAttempts) {
+        this.failedLoginAttempts = new Map(JSON.parse(failedAttempts));
+      }
+
+      const blockedIPs = localStorage.getItem('blocked_ips');
+      if (blockedIPs) {
+        this.blockedIPs = new Set(JSON.parse(blockedIPs));
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados de segurança:", error);
+    }
+  }
+
+  // Salvar dados no localStorage
+  private saveToStorage(): void {
+    try {
+      localStorage.setItem('security_logs', JSON.stringify(this.securityLogs));
+      localStorage.setItem('data_access_logs', JSON.stringify(this.dataAccessLogs));
+      localStorage.setItem('failed_login_attempts', JSON.stringify(Array.from(this.failedLoginAttempts.entries())));
+      localStorage.setItem('blocked_ips', JSON.stringify(Array.from(this.blockedIPs)));
+    } catch (error) {
+      console.error("Erro ao salvar dados de segurança:", error);
+    }
   }
 
   // Criptografia de dados sensíveis
@@ -113,9 +156,7 @@ export class SecurityService {
     };
 
     this.securityLogs.push(securityEvent);
-    
-    // Salvar no Supabase de forma assíncrona
-    this.saveSecurityEventToDatabase(securityEvent);
+    this.saveToStorage();
     
     // Verificar tentativas de login falhadas
     if (event.eventType === 'failed_login') {
@@ -142,28 +183,16 @@ export class SecurityService {
       setTimeout(() => {
         this.blockedIPs.delete(identifier);
         this.failedLoginAttempts.delete(identifier);
+        this.saveToStorage();
       }, 15 * 60 * 1000);
     }
+    
+    this.saveToStorage();
   }
 
   // Verificar se IP está bloqueado
   isIPBlocked(ip: string): boolean {
     return this.blockedIPs.has(ip);
-  }
-
-  // Salvar evento no banco de dados
-  private async saveSecurityEventToDatabase(event: SecurityEvent): Promise<void> {
-    try {
-      await supabase.from('security_logs').insert([{
-        user_id: event.userId,
-        event_type: event.eventType,
-        ip_address: event.ipAddress,
-        user_agent: event.userAgent,
-        details: event.details
-      }]);
-    } catch (error) {
-      console.error("Erro ao salvar log de segurança:", error);
-    }
   }
 
   // Log de acesso a dados
@@ -178,21 +207,7 @@ export class SecurityService {
     };
 
     this.dataAccessLogs.push(accessLog);
-    this.saveDataAccessLog(accessLog);
-  }
-
-  // Salvar log de acesso a dados
-  private async saveDataAccessLog(log: DataAccessLog): Promise<void> {
-    try {
-      await supabase.from('data_access_logs').insert([{
-        user_id: log.userId,
-        data_type: log.dataType,
-        action: log.action,
-        ip_address: log.ipAddress
-      }]);
-    } catch (error) {
-      console.error("Erro ao salvar log de acesso:", error);
-    }
+    this.saveToStorage();
   }
 
   // Validação de entrada para prevenir XSS
@@ -223,6 +238,22 @@ export class SecurityService {
   // Obter logs de acesso a dados
   getDataAccessLogs(): DataAccessLog[] {
     return [...this.dataAccessLogs];
+  }
+
+  // Limpar logs antigos (manter apenas dos últimos 30 dias)
+  cleanOldLogs(): void {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    this.securityLogs = this.securityLogs.filter(log => 
+      new Date(log.timestamp) > thirtyDaysAgo
+    );
+    
+    this.dataAccessLogs = this.dataAccessLogs.filter(log => 
+      new Date(log.timestamp) > thirtyDaysAgo
+    );
+    
+    this.saveToStorage();
   }
 }
 

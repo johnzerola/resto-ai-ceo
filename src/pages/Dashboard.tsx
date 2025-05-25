@@ -22,27 +22,29 @@ const sampleRevenueData = [
 const sampleGoal = {
   id: "1",
   title: "Meta de Vendas Mensais",
+  description: "Aumentar as vendas mensais do restaurante",
   target: 50000,
   current: 32000,
   unit: "R$",
   deadline: new Date("2024-12-31"),
-  category: "vendas"
+  category: "vendas" as const,
+  completed: false,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
 };
 
 const sampleAlerts = [
   {
-    id: "1",
-    title: "Estoque Baixo",
-    message: "Alguns ingredientes estão com estoque baixo",
     type: "warning" as const,
-    timestamp: new Date().toISOString()
+    title: "Estoque Baixo",
+    description: "Alguns ingredientes estão com estoque baixo",
+    date: new Date().toLocaleDateString('pt-BR')
   },
   {
-    id: "2", 
-    title: "Meta Atingida",
-    message: "Parabéns! Você atingiu 80% da meta mensal",
     type: "success" as const,
-    timestamp: new Date().toISOString()
+    title: "Meta Atingida",
+    description: "Parabéns! Você atingiu 80% da meta mensal",
+    date: new Date().toLocaleDateString('pt-BR')
   }
 ];
 
