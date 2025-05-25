@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -27,6 +28,7 @@ import { SecurityMiddleware } from "@/components/security/SecurityMiddleware";
 import { useSecurityMonitoring } from "@/hooks/useSecurityMonitoring";
 import Privacidade from "./pages/Privacidade";
 import SecurityCenter from "./pages/SecurityCenter";
+import PaginaVendas from "./pages/PaginaVendas";
 
 const queryClient = new QueryClient();
 
@@ -38,7 +40,8 @@ function AppWithSecurity() {
     <div className="min-h-screen bg-gray-50">
       <Toaster />
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<PaginaVendas />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
