@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -27,6 +26,7 @@ import { ConsentBanner } from "@/components/security/ConsentBanner";
 import { SecurityMiddleware } from "@/components/security/SecurityMiddleware";
 import { useSecurityMonitoring } from "@/hooks/useSecurityMonitoring";
 import Privacidade from "./pages/Privacidade";
+import SecurityCenter from "./pages/SecurityCenter";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +64,7 @@ function AppWithSecurity() {
         <Route path="/documentacao" element={<Documentacao />} />
         <Route path="/ai-assistant" element={<AIAssistantPage />} />
         <Route path="/privacidade" element={<Privacidade />} />
+        <Route path="/security-center" element={<SecurityCenter />} />
       </Routes>
       <ConsentBanner />
     </div>
