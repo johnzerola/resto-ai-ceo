@@ -30,46 +30,53 @@ import Privacidade from "./pages/Privacidade";
 
 const queryClient = new QueryClient();
 
-function App() {
+// Component that uses security monitoring inside AuthProvider
+function AppWithSecurity() {
   useSecurityMonitoring();
 
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Toaster />
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        
+        <Route path="/financeiro" element={<Financeiro />} />
+        <Route path="/cmv" element={<CMV />} />
+        <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
+        <Route path="/dre" element={<DRE />} />
+        
+        <Route path="/fichas-tecnicas" element={<FichaTecnica />} />
+        <Route path="/gerenciar-estoque" element={<GerenciarEstoque />} />
+        
+        <Route path="/receitas" element={<Receitas />} />
+        <Route path="/despesas" element={<Despesas />} />
+        <Route path="/fornecedores" element={<Fornecedores />} />
+        <Route path="/funcionarios" element={<Funcionarios />} />
+        <Route path="/clientes" element={<Clientes />} />
+        
+        <Route path="/metas" element={<Metas />} />
+        <Route path="/integracoes" element={<Integracoes />} />
+        <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
+        
+        <Route path="/documentacao" element={<Documentacao />} />
+        <Route path="/ai-assistant" element={<AIAssistantPage />} />
+        <Route path="/privacidade" element={<Privacidade />} />
+      </Routes>
+      <ConsentBanner />
+    </div>
+  );
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SecurityMiddleware>
         <BrowserRouter>
           <AuthProvider>
-            <div className="min-h-screen bg-gray-50">
-              <Toaster />
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                
-                <Route path="/financeiro" element={<Financeiro />} />
-                <Route path="/cmv" element={<CMV />} />
-                <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
-                <Route path="/dre" element={<DRE />} />
-                
-                <Route path="/fichas-tecnicas" element={<FichaTecnica />} />
-                <Route path="/gerenciar-estoque" element={<GerenciarEstoque />} />
-                
-                <Route path="/receitas" element={<Receitas />} />
-                <Route path="/despesas" element={<Despesas />} />
-                <Route path="/fornecedores" element={<Fornecedores />} />
-                <Route path="/funcionarios" element={<Funcionarios />} />
-                <Route path="/clientes" element={<Clientes />} />
-                
-                <Route path="/metas" element={<Metas />} />
-                <Route path="/integracoes" element={<Integracoes />} />
-                <Route path="/configuracoes" element={<Configuracoes />} />
-                <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
-                
-                <Route path="/documentacao" element={<Documentacao />} />
-                <Route path="/ai-assistant" element={<AIAssistantPage />} />
-                <Route path="/privacidade" element={<Privacidade />} />
-              </Routes>
-              <ConsentBanner />
-            </div>
+            <AppWithSecurity />
           </AuthProvider>
         </BrowserRouter>
       </SecurityMiddleware>
