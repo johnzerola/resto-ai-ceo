@@ -26,8 +26,8 @@ const sampleGoal = {
   target: 50000,
   current: 32000,
   unit: "R$",
-  deadline: new Date("2024-12-31"),
-  category: "vendas" as const,
+  deadline: new Date("2024-12-31").toISOString(),
+  category: "sales" as const,
   completed: false,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString()
@@ -35,12 +35,14 @@ const sampleGoal = {
 
 const sampleAlerts = [
   {
+    id: "1",
     type: "warning" as const,
     title: "Estoque Baixo",
     description: "Alguns ingredientes estão com estoque baixo",
     date: new Date().toLocaleDateString('pt-BR')
   },
   {
+    id: "2",
     type: "success" as const,
     title: "Meta Atingida",
     description: "Parabéns! Você atingiu 80% da meta mensal",
