@@ -202,7 +202,7 @@ export function SecurityDashboard() {
                   </TableRow>
                 ))}
               </TableBody>
-            </TableTable>
+            </Table>
           ) : (
             <p className="text-center py-8 text-muted-foreground">
               Nenhum acesso a dados registrado
