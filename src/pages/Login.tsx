@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -38,12 +37,20 @@ const Login = () => {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { login, register } = useAuth();
+  const { login, register, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
   // Obter a página de redirecionamento após login (se houver)
-  const from = (location.state as { from?: string })?.from || "/";
+  const from = (location.state as { from?: string })?.from || "/dashboard";
+
+  // Redirecionar automaticamente se já estiver autenticado
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      console.log("Usuário já autenticado, redirecionando para:", from);
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate, from]);
 
   // Form para login
   const loginForm = useForm<LoginFormValues>({
@@ -69,13 +76,23 @@ const Login = () => {
     setIsSubmitting(true);
     
     try {
+      console.log("Tentando fazer login com:", values.email);
       const success = await login(values.email, values.password);
+      
       if (success) {
+        console.log("Login bem-sucedido, redirecionando para:", from);
         toast.success("Login realizado com sucesso!");
-        navigate(from, { replace: true });
+        // Aguardar um pouco para garantir que o estado seja atualizado
+        setTimeout(() => {
+          navigate(from, { replace: true });
+        }, 100);
+      } else {
+        console.log("Login falhou");
+        toast.error("Erro ao fazer login. Verifique suas credenciais.");
       }
     } catch (error) {
       console.error("Erro de login:", error);
+      toast.error("Erro ao fazer login. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -85,18 +102,36 @@ const Login = () => {
     setIsSubmitting(true);
     
     try {
+      console.log("Tentando registrar usuário:", values.email);
       const success = await register(values.name, values.email, values.password);
+      
       if (success) {
         toast.success("Registro realizado com sucesso! Agora você pode fazer login.");
         setActiveTab("login");
         registerForm.reset();
+      } else {
+        console.log("Registro falhou");
+        toast.error("Erro ao registrar. Tente novamente.");
       }
     } catch (error) {
       console.error("Erro de registro:", error);
+      toast.error("Erro ao registrar. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Mostrar loading enquanto verifica autenticação
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">

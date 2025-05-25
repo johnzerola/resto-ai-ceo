@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,35 +51,40 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   useEffect(() => {
     // Configurar o listener para mudanças de estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      async (event, newSession) => {
+        console.log("Auth state changed:", event, newSession?.user?.email);
         setSession(newSession);
+        
         if (newSession?.user) {
-          // Adiar a busca de perfil para evitar deadlock
-          setTimeout(() => {
-            fetchUserProfile(newSession.user.id);
-          }, 0);
+          // Buscar perfil do usuário imediatamente após login
+          await fetchUserProfile(newSession.user.id);
         } else {
           setUser(null);
+          setIsLoading(false);
         }
       }
     );
 
     // Verificar se já existe uma sessão
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+    const initializeAuth = async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log("Initial session check:", currentSession?.user?.email);
+      
       setSession(currentSession);
       if (currentSession?.user) {
-        fetchUserProfile(currentSession.user.id);
+        await fetchUserProfile(currentSession.user.id);
       } else {
         setIsLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     return () => {
       subscription?.unsubscribe();
     };
   }, []);
 
-  // Carregar restaurantes do usuário quando o usuário estiver autenticado
   useEffect(() => {
     if (user) {
       loadUserRestaurants();
@@ -93,6 +97,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   // Função para buscar o perfil do usuário
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log("Fetching user profile for:", userId);
+      
       // Buscar perfil do usuário
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -102,11 +108,39 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
       if (profileError) {
         console.error('Erro ao buscar perfil:', profileError);
-        setIsLoading(false);
-        return;
-      }
+        
+        // Se o perfil não existe, criar um novo
+        if (profileError.code === 'PGRST116') {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert([
+                {
+                  id: authUser.id,
+                  name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Usuário',
+                  email: authUser.email || '',
+                  role: UserRole.OWNER
+                }
+              ])
+              .select()
+              .single();
 
-      if (profile) {
+            if (createError) {
+              console.error('Erro ao criar perfil:', createError);
+            } else if (newProfile) {
+              console.log("Perfil criado com sucesso:", newProfile);
+              setUser({
+                id: newProfile.id,
+                name: newProfile.name,
+                email: newProfile.email,
+                role: newProfile.role as UserRole
+              });
+            }
+          }
+        }
+      } else if (profile) {
+        console.log("Perfil encontrado:", profile);
         setUser({
           id: profile.id,
           name: profile.name || 'Usuário',
@@ -121,7 +155,6 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     }
   };
 
-  // Carregar restaurantes do usuário
   const loadUserRestaurants = async () => {
     if (!user?.id) return;
 
@@ -183,6 +216,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
+      console.log("Tentando login com Supabase para:", email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -191,20 +226,23 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       if (error) {
         console.error('Erro de login:', error.message);
         toast.error('Erro ao fazer login: ' + error.message);
+        setIsLoading(false);
         return false;
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
+        console.log("Login bem-sucedido, usuário:", data.user.email);
+        // O fetchUserProfile será chamado automaticamente pelo onAuthStateChange
         return true;
       }
 
+      setIsLoading(false);
       return false;
     } catch (error) {
       console.error('Erro ao fazer login:', error);
       toast.error('Erro ao fazer login');
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
   };
 
