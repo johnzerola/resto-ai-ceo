@@ -14,13 +14,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
-// Esquema de validação para login
+// Esquemas de validação
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
 });
 
-// Esquema de validação para registro
 const registerSchema = z.object({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("Email inválido"),
@@ -42,64 +41,49 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Obter a página de redirecionamento após login (se houver)
+  // Obter destino após login
   const from = (location.state as { from?: string })?.from || "/dashboard";
 
-  // Redirecionar automaticamente se já estiver autenticado
+  // Redirecionar se já autenticado
   useEffect(() => {
-    console.log("Login page - estado auth:", { isAuthenticated, isLoading, from });
-    
     if (isAuthenticated && !isLoading) {
       console.log("Usuário já autenticado, redirecionando para:", from);
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate, from]);
 
-  // Form para login
+  // Forms
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
   });
 
-  // Form para registro
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
 
   const handleLogin = async (values: LoginFormValues) => {
     if (isSubmitting) return;
     
+    console.log("Iniciando processo de login...");
     setIsSubmitting(true);
     
     try {
-      console.log("Tentando fazer login com:", values.email);
       const success = await login(values.email, values.password);
       
       if (success) {
-        console.log("Login bem-sucedido, redirecionando...");
+        console.log("Login bem-sucedido!");
         toast.success("Login realizado com sucesso!");
         
-        // Aguardar um pouco para o estado ser atualizado e redirecionar
-        setTimeout(() => {
-          console.log("Redirecionando para:", from);
-          navigate(from, { replace: true });
-        }, 1000);
+        // Redirecionamento imediato
+        navigate(from, { replace: true });
       } else {
-        console.log("Login falhou");
-        toast.error("Erro ao fazer login. Verifique suas credenciais.");
+        toast.error("Credenciais inválidas. Verifique email e senha.");
       }
     } catch (error) {
-      console.error("Erro de login:", error);
-      toast.error("Erro ao fazer login. Tente novamente.");
+      console.error("Erro no login:", error);
+      toast.error("Erro interno. Tente novamente em alguns instantes.");
     } finally {
       setIsSubmitting(false);
     }
@@ -108,47 +92,46 @@ const Login = () => {
   const handleRegister = async (values: RegisterFormValues) => {
     if (isSubmitting) return;
     
+    console.log("Iniciando registro...");
     setIsSubmitting(true);
     
     try {
-      console.log("Tentando registrar usuário:", values.email);
       const success = await register(values.name, values.email, values.password);
       
       if (success) {
-        toast.success("Registro realizado com sucesso! Agora você pode fazer login.");
+        toast.success("Conta criada com sucesso! Você pode fazer login agora.");
         setActiveTab("login");
         registerForm.reset();
       } else {
-        console.log("Registro falhou");
-        toast.error("Erro ao registrar. Tente novamente.");
+        toast.error("Erro ao criar conta. Email pode já estar em uso.");
       }
     } catch (error) {
-      console.error("Erro de registro:", error);
-      toast.error("Erro ao registrar. Tente novamente.");
+      console.error("Erro no registro:", error);
+      toast.error("Erro interno no registro. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Mostrar loading enquanto verifica autenticação
+  // Loading state durante verificação de auth
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-gray-600">Verificando autenticação...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-medium">Carregando...</p>
         </div>
       </div>
     );
   }
 
-  // Se já está autenticado, mostrar loading enquanto redireciona
+  // Se já autenticado, mostrar redirecionamento
   if (isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-gray-600">Redirecionando...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-medium">Redirecionando...</p>
         </div>
       </div>
     );
@@ -173,7 +156,7 @@ const Login = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <CardContent>
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="login">Entrar</TabsTrigger>
                 <TabsTrigger value="register">Registrar</TabsTrigger>
               </TabsList>
               
@@ -193,6 +176,7 @@ const Login = () => {
                                 type="email"
                                 placeholder="seu@email.com"
                                 className="pl-10"
+                                disabled={isSubmitting}
                                 {...field}
                               />
                             </div>
@@ -207,18 +191,15 @@ const Login = () => {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <div className="flex items-center justify-between">
-                            <FormLabel>Senha</FormLabel>
-                            <Link to="/esqueci-senha" className="text-sm text-primary hover:underline">
-                              Esqueceu a senha?
-                            </Link>
-                          </div>
+                          <FormLabel>Senha</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                               <Input
                                 type="password"
+                                placeholder="••••••••"
                                 className="pl-10"
+                                disabled={isSubmitting}
                                 {...field}
                               />
                             </div>
@@ -228,8 +209,19 @@ const Login = () => {
                       )}
                     />
                     
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? "Entrando..." : "Entrar"}
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Entrando...
+                        </>
+                      ) : (
+                        "Entrar"
+                      )}
                     </Button>
                   </form>
                 </Form>
@@ -250,6 +242,7 @@ const Login = () => {
                               <Input
                                 placeholder="Seu nome completo"
                                 className="pl-10"
+                                disabled={isSubmitting}
                                 {...field}
                               />
                             </div>
@@ -272,6 +265,7 @@ const Login = () => {
                                 type="email"
                                 placeholder="seu@email.com"
                                 className="pl-10"
+                                disabled={isSubmitting}
                                 {...field}
                               />
                             </div>
@@ -292,7 +286,9 @@ const Login = () => {
                               <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                               <Input
                                 type="password"
+                                placeholder="••••••••"
                                 className="pl-10"
+                                disabled={isSubmitting}
                                 {...field}
                               />
                             </div>
@@ -313,7 +309,9 @@ const Login = () => {
                               <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                               <Input
                                 type="password"
+                                placeholder="••••••••"
                                 className="pl-10"
+                                disabled={isSubmitting}
                                 {...field}
                               />
                             </div>
@@ -323,8 +321,19 @@ const Login = () => {
                       )}
                     />
                     
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
-                      {isSubmitting ? "Registrando..." : "Registrar"}
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Registrando...
+                        </>
+                      ) : (
+                        "Criar Conta"
+                      )}
                     </Button>
                   </form>
                 </Form>
@@ -333,16 +342,14 @@ const Login = () => {
           </Tabs>
           
           <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-center w-full">
-              Ao se registrar, você concorda com nossos <Link to="/termos" className="text-primary font-semibold hover:underline">Termos de Serviço</Link>
+            <div className="text-sm text-center w-full text-gray-600">
+              Ao se registrar, você concorda com nossos termos de uso
             </div>
           </CardFooter>
         </Card>
         
         <div className="mt-6 text-center text-sm text-gray-600">
-          <p>
-            © {new Date().getFullYear()} RestoAI CEO. Todos os direitos reservados.
-          </p>
+          <p>© {new Date().getFullYear()} RestoAI CEO. Todos os direitos reservados.</p>
         </div>
       </div>
     </div>

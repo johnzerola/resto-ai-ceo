@@ -16,14 +16,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, user, hasPermission, isLoading } = useAuth();
   const location = useLocation();
 
-  console.log("ProtectedRoute:", { 
+  console.log("ProtectedRoute verificando:", { 
     isAuthenticated, 
     isLoading, 
     path: location.pathname,
     user: user?.email 
   });
 
-  // Mostrar loading melhorado enquanto verifica autenticação
+  // Loading state melhorado com verificação de timeout
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -43,20 +43,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Verificar se o usuário está autenticado
+  // Verificar autenticação - evitar loop em /onboarding
   if (!isAuthenticated) {
     console.log("Usuário não autenticado, redirecionando para login");
-    // Redirecionar para login e lembrar a página atual para redirecionar de volta após o login
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    
+    // Se estiver em /onboarding, redirecionar para dashboard após login
+    const redirectPath = location.pathname === '/onboarding' ? '/dashboard' : location.pathname;
+    
+    return <Navigate to="/login" state={{ from: redirectPath }} replace />;
   }
 
-  // Verificar permissões se um papel específico é requerido
+  // Verificar permissões apenas se role é especificada
   if (requiredRole && user && !hasPermission(requiredRole)) {
-    console.log("Usuário sem permissão, redirecionando para acesso negado");
-    return <Navigate to="/acesso-negado" replace />;
+    console.log("Usuário sem permissão adequada");
+    return <Navigate to="/dashboard" replace />;
   }
 
-  console.log("Acesso autorizado, renderizando componente");
-  // Se o usuário está autenticado e tem permissão, renderizar o componente filho
+  console.log("Acesso autorizado para:", location.pathname);
   return <>{children}</>;
 };

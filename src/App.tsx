@@ -28,59 +28,204 @@ import { SecurityMiddleware } from "@/components/security/SecurityMiddleware";
 import Privacidade from "./pages/Privacidade";
 import SecurityCenter from "./pages/SecurityCenter";
 import PaginaVendas from "./pages/PaginaVendas";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { UserRole } from "./services/AuthService";
 
 const queryClient = new QueryClient();
-
-// Component wrapper that only renders after AuthProvider is ready
-function AuthenticatedApp() {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Toaster />
-      <Routes>
-        <Route path="/" element={<PaginaVendas />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        <Route path="/financeiro" element={<Financeiro />} />
-        <Route path="/cmv" element={<CMV />} />
-        <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
-        <Route path="/dre" element={<DRE />} />
-        
-        <Route path="/fichas-tecnicas" element={<FichaTecnica />} />
-        <Route path="/gerenciar-estoque" element={<GerenciarEstoque />} />
-        
-        <Route path="/receitas" element={<Receitas />} />
-        <Route path="/despesas" element={<Despesas />} />
-        <Route path="/fornecedores" element={<Fornecedores />} />
-        <Route path="/funcionarios" element={<Funcionarios />} />
-        <Route path="/clientes" element={<Clientes />} />
-        
-        <Route path="/metas" element={<Metas />} />
-        <Route path="/integracoes" element={<Integracoes />} />
-        <Route path="/configuracoes" element={<Configuracoes />} />
-        <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
-        
-        <Route path="/documentacao" element={<Documentacao />} />
-        <Route path="/ai-assistant" element={<AIAssistantPage />} />
-        <Route path="/privacidade" element={<Privacidade />} />
-        <Route path="/security-center" element={<SecurityCenter />} />
-      </Routes>
-      <ConsentBanner />
-    </div>
-  );
-}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SecurityMiddleware>
-        <BrowserRouter>
+      <BrowserRouter>
+        <SecurityMiddleware>
           <AuthProvider>
-            <AuthenticatedApp />
+            <div className="min-h-screen bg-gray-50">
+              <Toaster />
+              <Routes>
+                <Route path="/" element={<PaginaVendas />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                
+                {/* Rota onboarding adicionada */}
+                <Route 
+                  path="/onboarding" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/financeiro" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Financeiro />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/cmv" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <CMV />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/fluxo-de-caixa" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <FluxoDeCaixa />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/dre" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <DRE />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/fichas-tecnicas" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <FichaTecnica />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/gerenciar-estoque" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <GerenciarEstoque />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/receitas" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Receitas />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/despesas" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Despesas />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/fornecedores" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Fornecedores />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/funcionarios" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.MANAGER}>
+                      <Funcionarios />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/clientes" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Clientes />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/metas" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Metas />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/integracoes" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.MANAGER}>
+                      <Integracoes />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/configuracoes" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Configuracoes />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/gerenciar-usuarios" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.OWNER}>
+                      <GerenciarUsuarios />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/documentacao" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Documentacao />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/ai-assistant" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <AIAssistantPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route path="/privacidade" element={<Privacidade />} />
+                <Route path="/security-center" element={<SecurityCenter />} />
+              </Routes>
+              <ConsentBanner />
+            </div>
           </AuthProvider>
-        </BrowserRouter>
-      </SecurityMiddleware>
+        </SecurityMiddleware>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }
