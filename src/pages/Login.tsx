@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +47,8 @@ const Login = () => {
 
   // Redirecionar automaticamente se já estiver autenticado
   useEffect(() => {
+    console.log("Login page - estado auth:", { isAuthenticated, isLoading, from });
+    
     if (isAuthenticated && !isLoading) {
       console.log("Usuário já autenticado, redirecionando para:", from);
       navigate(from, { replace: true });
@@ -80,12 +83,14 @@ const Login = () => {
       const success = await login(values.email, values.password);
       
       if (success) {
-        console.log("Login bem-sucedido, redirecionando para:", from);
+        console.log("Login bem-sucedido, aguardando atualização do estado...");
         toast.success("Login realizado com sucesso!");
-        // Aguardar um pouco para garantir que o estado seja atualizado
+        
+        // Aguardar um pouco mais para garantir que o estado seja atualizado
         setTimeout(() => {
+          console.log("Redirecionando para:", from);
           navigate(from, { replace: true });
-        }, 100);
+        }, 500);
       } else {
         console.log("Login falhou");
         toast.error("Erro ao fazer login. Verifique suas credenciais.");
@@ -127,7 +132,19 @@ const Login = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-gray-600">Carregando...</p>
+          <p className="mt-2 text-gray-600">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se já está autenticado, mostrar loading enquanto redireciona
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-gray-600">Redirecionando...</p>
         </div>
       </div>
     );
