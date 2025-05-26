@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +35,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const Login = () => {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
   
   const { login, register, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -48,7 +48,12 @@ const Login = () => {
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
       console.log("Usuário já autenticado, redirecionando para:", from);
-      navigate(from, { replace: true });
+      // Delay pequeno para evitar conflitos
+      const timer = setTimeout(() => {
+        navigate(from, { replace: true });
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, isLoading, navigate, from]);
 
@@ -66,8 +71,9 @@ const Login = () => {
   const handleLogin = async (values: LoginFormValues) => {
     if (isSubmitting) return;
     
-    console.log("Iniciando processo de login...");
+    console.log("Iniciando processo de login...", values.email);
     setIsSubmitting(true);
+    setLoginAttempts(prev => prev + 1);
     
     try {
       const success = await login(values.email, values.password);
@@ -76,8 +82,10 @@ const Login = () => {
         console.log("Login bem-sucedido!");
         toast.success("Login realizado com sucesso!");
         
-        // Redirecionamento imediato
-        navigate(from, { replace: true });
+        // Aguardar um pouco antes de redirecionar para garantir que o estado foi atualizado
+        setTimeout(() => {
+          navigate(from, { replace: true });
+        }, 200);
       } else {
         toast.error("Credenciais inválidas. Verifique email e senha.");
       }
@@ -119,7 +127,7 @@ const Login = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Carregando...</p>
+          <p className="mt-4 text-gray-600 font-medium">Verificando autenticação...</p>
         </div>
       </div>
     );
@@ -223,6 +231,12 @@ const Login = () => {
                         "Entrar"
                       )}
                     </Button>
+                    
+                    {loginAttempts > 0 && (
+                      <div className="text-sm text-gray-600 text-center">
+                        Tentativas de login: {loginAttempts}
+                      </div>
+                    )}
                   </form>
                 </Form>
               </TabsContent>

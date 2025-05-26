@@ -46,16 +46,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 
-                {/* Rota onboarding adicionada */}
-                <Route 
-                  path="/onboarding" 
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                
+                {/* Rota dashboard única - remove conflito com onboarding */}
                 <Route 
                   path="/dashboard" 
                   element={
@@ -65,6 +56,7 @@ function App() {
                   } 
                 />
                 
+                {/* Todas as outras rotas protegidas */}
                 <Route 
                   path="/financeiro" 
                   element={

@@ -3,6 +3,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/services/AuthService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useState } from "react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -15,16 +16,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { isAuthenticated, user, hasPermission, isLoading } = useAuth();
   const location = useLocation();
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
-  console.log("ProtectedRoute verificando:", { 
-    isAuthenticated, 
-    isLoading, 
-    path: location.pathname,
-    user: user?.email 
-  });
+  // Aguardar a verificação inicial da autenticação
+  useEffect(() => {
+    if (!isLoading) {
+      const timer = setTimeout(() => {
+        setHasCheckedAuth(true);
+      }, 100);
 
-  // Loading state melhorado com verificação de timeout
-  if (isLoading) {
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
+
+  // Mostrar loading apenas se ainda estiver carregando OU se não verificou auth ainda
+  if (isLoading || !hasCheckedAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="w-full max-w-md mx-auto p-6">
@@ -43,7 +49,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Verificar autenticação - evitar loop em /onboarding
+  // Verificar autenticação apenas após o loading terminar
   if (!isAuthenticated) {
     console.log("Usuário não autenticado, redirecionando para login");
     

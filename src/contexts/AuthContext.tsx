@@ -51,10 +51,11 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
   useEffect(() => {
     let mounted = true;
+    let authSubscription: any = null;
 
     const initializeAuth = async () => {
       try {
-        console.log("Inicializando autenticação...");
+        console.log("AuthContext: Inicializando autenticação...");
         
         // Obter sessão atual
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
@@ -67,7 +68,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
           return;
         }
         
-        console.log("Sessão inicial obtida:", currentSession?.user?.email || "Nenhuma");
+        console.log("AuthContext: Sessão inicial obtida:", currentSession?.user?.email || "Nenhuma");
         
         if (!mounted) return;
         
@@ -78,6 +79,29 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         } else {
           setIsLoading(false);
         }
+
+        // Configurar listener de mudanças de auth
+        authSubscription = supabase.auth.onAuthStateChange(
+          async (event, newSession) => {
+            console.log("AuthContext: Auth state changed:", event, newSession?.user?.email);
+            
+            if (!mounted) return;
+            
+            setSession(newSession);
+            
+            if (newSession?.user && event !== 'TOKEN_REFRESHED') {
+              console.log("AuthContext: Usuário logado, buscando perfil...");
+              await fetchUserProfile(newSession.user.id);
+            } else if (!newSession) {
+              console.log("AuthContext: Usuário deslogado, limpando estado...");
+              setUser(null);
+              setUserRestaurants([]);
+              setCurrentRestaurant(null);
+              setIsLoading(false);
+            }
+          }
+        );
+
       } catch (error) {
         console.error("Erro na inicialização da auth:", error);
         if (mounted) {
@@ -86,45 +110,13 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       }
     };
 
-    // Configurar o listener DEPOIS da inicialização
-    const setupAuthListener = () => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, newSession) => {
-          console.log("Auth state changed:", event, newSession?.user?.email);
-          
-          if (!mounted) return;
-          
-          setSession(newSession);
-          
-          if (newSession?.user && event !== 'TOKEN_REFRESHED') {
-            console.log("Usuário logado, buscando perfil...");
-            await fetchUserProfile(newSession.user.id);
-          } else if (!newSession) {
-            console.log("Usuário deslogado, limpando estado...");
-            setUser(null);
-            setUserRestaurants([]);
-            setCurrentRestaurant(null);
-            setIsLoading(false);
-          }
-        }
-      );
-
-      return subscription;
-    };
-
-    // Executar inicialização e depois configurar listener
-    initializeAuth().then(() => {
-      if (mounted) {
-        const subscription = setupAuthListener();
-        
-        return () => {
-          subscription?.unsubscribe();
-        };
-      }
-    });
+    initializeAuth();
 
     return () => {
       mounted = false;
+      if (authSubscription?.data?.subscription) {
+        authSubscription.data.subscription.unsubscribe();
+      }
     };
   }, []);
 
@@ -140,7 +132,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   // Função para buscar o perfil do usuário
   const fetchUserProfile = async (userId: string) => {
     try {
-      console.log("Buscando perfil para usuário:", userId);
+      console.log("AuthContext: Buscando perfil para usuário:", userId);
       
       // Buscar perfil do usuário
       const { data: profile, error: profileError } = await supabase
@@ -156,7 +148,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         if (profileError.code === 'PGRST116') {
           const { data: { user: authUser } } = await supabase.auth.getUser();
           if (authUser) {
-            console.log("Criando novo perfil para:", authUser.email);
+            console.log("AuthContext: Criando novo perfil para:", authUser.email);
             const { data: newProfile, error: createError } = await supabase
               .from('profiles')
               .insert([
@@ -174,7 +166,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
               console.error('Erro ao criar perfil:', createError);
               setIsLoading(false);
             } else if (newProfile) {
-              console.log("Perfil criado com sucesso:", newProfile);
+              console.log("AuthContext: Perfil criado com sucesso:", newProfile);
               setUser({
                 id: newProfile.id,
                 name: newProfile.name,
@@ -188,7 +180,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
           setIsLoading(false);
         }
       } else if (profile) {
-        console.log("Perfil encontrado:", profile);
+        console.log("AuthContext: Perfil encontrado:", profile);
         setUser({
           id: profile.id,
           name: profile.name || 'Usuário',
@@ -262,7 +254,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.log("Iniciando processo de login para:", email);
+    console.log("AuthContext: Iniciando processo de login para:", email);
     setIsLoading(true);
     
     try {
@@ -272,14 +264,14 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       });
 
       if (error) {
-        console.error('Erro de login:', error.message);
+        console.error('AuthContext: Erro de login:', error.message);
         toast.error('Erro ao fazer login: ' + error.message);
         setIsLoading(false);
         return false;
       }
 
       if (data.user && data.session) {
-        console.log("Login bem-sucedido para:", data.user.email);
+        console.log("AuthContext: Login bem-sucedido para:", data.user.email);
         // O fetchUserProfile será chamado automaticamente pelo onAuthStateChange
         return true;
       }
@@ -287,7 +279,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       setIsLoading(false);
       return false;
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
+      console.error('AuthContext: Erro ao fazer login:', error);
       toast.error('Erro ao fazer login');
       setIsLoading(false);
       return false;
