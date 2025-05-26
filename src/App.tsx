@@ -25,17 +25,14 @@ import Documentacao from "./pages/Documentacao";
 import { AIAssistantPage } from "./pages/AIAssistantPage";
 import { ConsentBanner } from "@/components/security/ConsentBanner";
 import { SecurityMiddleware } from "@/components/security/SecurityMiddleware";
-import { useSecurityMonitoring } from "@/hooks/useSecurityMonitoring";
 import Privacidade from "./pages/Privacidade";
 import SecurityCenter from "./pages/SecurityCenter";
 import PaginaVendas from "./pages/PaginaVendas";
 
 const queryClient = new QueryClient();
 
-// Component that uses security monitoring inside AuthProvider
-function AppWithSecurity() {
-  useSecurityMonitoring();
-
+// Component wrapper that only renders after AuthProvider is ready
+function AuthenticatedApp() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster />
@@ -80,7 +77,7 @@ function App() {
       <SecurityMiddleware>
         <BrowserRouter>
           <AuthProvider>
-            <AppWithSecurity />
+            <AuthenticatedApp />
           </AuthProvider>
         </BrowserRouter>
       </SecurityMiddleware>

@@ -2,6 +2,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/services/AuthService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -22,13 +23,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     user: user?.email 
   });
 
-  // Mostrar loading enquanto verifica autenticação
+  // Mostrar loading melhorado enquanto verifica autenticação
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-gray-600">Carregando...</p>
+        <div className="w-full max-w-md mx-auto p-6">
+          <div className="text-center mb-6">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-gray-600 font-medium">Verificando autenticação...</p>
+          </div>
+          
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
         </div>
       </div>
     );

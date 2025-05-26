@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,40 +52,22 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   useEffect(() => {
     let mounted = true;
 
-    // Configurar o listener para mudanças de estado de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        console.log("Auth state changed:", event, newSession?.user?.email);
-        
-        if (!mounted) return;
-        
-        setSession(newSession);
-        
-        if (newSession?.user && event !== 'TOKEN_REFRESHED') {
-          console.log("Usuário logado, buscando perfil...");
-          await fetchUserProfile(newSession.user.id);
-        } else if (!newSession) {
-          console.log("Usuário deslogado, limpando estado...");
-          setUser(null);
-          setUserRestaurants([]);
-          setCurrentRestaurant(null);
-          setIsLoading(false);
-        }
-      }
-    );
-
-    // Verificar se já existe uma sessão
     const initializeAuth = async () => {
       try {
+        console.log("Inicializando autenticação...");
+        
+        // Obter sessão atual
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Erro ao obter sessão:", error);
-          setIsLoading(false);
+          if (mounted) {
+            setIsLoading(false);
+          }
           return;
         }
         
-        console.log("Sessão inicial:", currentSession?.user?.email || "Nenhuma");
+        console.log("Sessão inicial obtida:", currentSession?.user?.email || "Nenhuma");
         
         if (!mounted) return;
         
@@ -103,11 +86,45 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       }
     };
 
-    initializeAuth();
+    // Configurar o listener DEPOIS da inicialização
+    const setupAuthListener = () => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, newSession) => {
+          console.log("Auth state changed:", event, newSession?.user?.email);
+          
+          if (!mounted) return;
+          
+          setSession(newSession);
+          
+          if (newSession?.user && event !== 'TOKEN_REFRESHED') {
+            console.log("Usuário logado, buscando perfil...");
+            await fetchUserProfile(newSession.user.id);
+          } else if (!newSession) {
+            console.log("Usuário deslogado, limpando estado...");
+            setUser(null);
+            setUserRestaurants([]);
+            setCurrentRestaurant(null);
+            setIsLoading(false);
+          }
+        }
+      );
+
+      return subscription;
+    };
+
+    // Executar inicialização e depois configurar listener
+    initializeAuth().then(() => {
+      if (mounted) {
+        const subscription = setupAuthListener();
+        
+        return () => {
+          subscription?.unsubscribe();
+        };
+      }
+    });
 
     return () => {
       mounted = false;
-      subscription?.unsubscribe();
     };
   }, []);
 

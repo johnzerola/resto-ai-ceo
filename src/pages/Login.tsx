@@ -76,6 +76,8 @@ const Login = () => {
   });
 
   const handleLogin = async (values: LoginFormValues) => {
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     
     try {
@@ -83,14 +85,14 @@ const Login = () => {
       const success = await login(values.email, values.password);
       
       if (success) {
-        console.log("Login bem-sucedido, aguardando atualização do estado...");
+        console.log("Login bem-sucedido, redirecionando...");
         toast.success("Login realizado com sucesso!");
         
-        // Aguardar um pouco mais para garantir que o estado seja atualizado
+        // Aguardar um pouco para o estado ser atualizado e redirecionar
         setTimeout(() => {
           console.log("Redirecionando para:", from);
           navigate(from, { replace: true });
-        }, 500);
+        }, 1000);
       } else {
         console.log("Login falhou");
         toast.error("Erro ao fazer login. Verifique suas credenciais.");
@@ -104,6 +106,8 @@ const Login = () => {
   };
 
   const handleRegister = async (values: RegisterFormValues) => {
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     
     try {
