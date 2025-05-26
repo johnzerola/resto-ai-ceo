@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,16 +45,18 @@ const Login = () => {
   // Obter destino após login
   const from = (location.state as { from?: string })?.from || "/dashboard";
 
+  console.log("Login - Estado atual:", { 
+    isAuthenticated, 
+    isLoading, 
+    from,
+    pathname: location.pathname 
+  });
+
   // Redirecionar se já autenticado
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      console.log("Usuário já autenticado, redirecionando para:", from);
-      // Delay pequeno para evitar conflitos
-      const timer = setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 100);
-      
-      return () => clearTimeout(timer);
+      console.log("Login - Usuário já autenticado, redirecionando para:", from);
+      navigate(from, { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate, from]);
 
@@ -71,7 +74,7 @@ const Login = () => {
   const handleLogin = async (values: LoginFormValues) => {
     if (isSubmitting) return;
     
-    console.log("Iniciando processo de login...", values.email);
+    console.log("Login - Iniciando processo de login...", values.email);
     setIsSubmitting(true);
     setLoginAttempts(prev => prev + 1);
     
@@ -79,18 +82,15 @@ const Login = () => {
       const success = await login(values.email, values.password);
       
       if (success) {
-        console.log("Login bem-sucedido!");
+        console.log("Login - Login bem-sucedido!");
         toast.success("Login realizado com sucesso!");
         
-        // Aguardar um pouco antes de redirecionar para garantir que o estado foi atualizado
-        setTimeout(() => {
-          navigate(from, { replace: true });
-        }, 200);
+        // O redirecionamento será feito pelo useEffect quando isAuthenticated mudar
       } else {
         toast.error("Credenciais inválidas. Verifique email e senha.");
       }
     } catch (error) {
-      console.error("Erro no login:", error);
+      console.error("Login - Erro no login:", error);
       toast.error("Erro interno. Tente novamente em alguns instantes.");
     } finally {
       setIsSubmitting(false);
@@ -100,7 +100,7 @@ const Login = () => {
   const handleRegister = async (values: RegisterFormValues) => {
     if (isSubmitting) return;
     
-    console.log("Iniciando registro...");
+    console.log("Login - Iniciando registro...");
     setIsSubmitting(true);
     
     try {
@@ -114,7 +114,7 @@ const Login = () => {
         toast.error("Erro ao criar conta. Email pode já estar em uso.");
       }
     } catch (error) {
-      console.error("Erro no registro:", error);
+      console.error("Login - Erro no registro:", error);
       toast.error("Erro interno no registro. Tente novamente.");
     } finally {
       setIsSubmitting(false);

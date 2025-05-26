@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,6 +23,7 @@ import Configuracoes from "./pages/Configuracoes";
 import GerenciarUsuarios from "./pages/GerenciarUsuarios";
 import Documentacao from "./pages/Documentacao";
 import { AIAssistantPage } from "./pages/AIAssistantPage";
+import Index from "./pages/Index";
 import { ConsentBanner } from "@/components/security/ConsentBanner";
 import { SecurityMiddleware } from "@/components/security/SecurityMiddleware";
 import Privacidade from "./pages/Privacidade";
@@ -46,7 +47,17 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 
-                {/* Rota dashboard única - remove conflito com onboarding */}
+                {/* Rota de onboarding que redireciona para dashboard se autenticado */}
+                <Route 
+                  path="/onboarding" 
+                  element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <Navigate to="/dashboard" replace />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                {/* Dashboard principal */}
                 <Route 
                   path="/dashboard" 
                   element={
@@ -56,7 +67,7 @@ function App() {
                   } 
                 />
                 
-                {/* Todas as outras rotas protegidas */}
+                {/* Rotas financeiras */}
                 <Route 
                   path="/financeiro" 
                   element={
@@ -93,6 +104,7 @@ function App() {
                   } 
                 />
                 
+                {/* Rotas operacionais */}
                 <Route 
                   path="/fichas-tecnicas" 
                   element={
@@ -165,6 +177,7 @@ function App() {
                   } 
                 />
                 
+                {/* Rotas administrativas */}
                 <Route 
                   path="/integracoes" 
                   element={
@@ -210,6 +223,7 @@ function App() {
                   } 
                 />
                 
+                {/* Rotas públicas */}
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/security-center" element={<SecurityCenter />} />
               </Routes>

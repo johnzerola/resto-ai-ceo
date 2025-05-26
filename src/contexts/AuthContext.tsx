@@ -51,13 +51,34 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
   useEffect(() => {
     let mounted = true;
-    let authSubscription: any = null;
 
     const initializeAuth = async () => {
       try {
         console.log("AuthContext: Inicializando autenticação...");
         
-        // Obter sessão atual
+        // Configurar listener primeiro
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, newSession) => {
+            console.log("AuthContext: Auth state changed:", event, newSession?.user?.email);
+            
+            if (!mounted) return;
+            
+            setSession(newSession);
+            
+            if (newSession?.user && event !== 'TOKEN_REFRESHED') {
+              console.log("AuthContext: Usuário logado, buscando perfil...");
+              await fetchUserProfile(newSession.user.id);
+            } else if (!newSession) {
+              console.log("AuthContext: Usuário deslogado, limpando estado...");
+              setUser(null);
+              setUserRestaurants([]);
+              setCurrentRestaurant(null);
+              setIsLoading(false);
+            }
+          }
+        );
+
+        // Depois obter sessão atual
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -80,27 +101,10 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
           setIsLoading(false);
         }
 
-        // Configurar listener de mudanças de auth
-        authSubscription = supabase.auth.onAuthStateChange(
-          async (event, newSession) => {
-            console.log("AuthContext: Auth state changed:", event, newSession?.user?.email);
-            
-            if (!mounted) return;
-            
-            setSession(newSession);
-            
-            if (newSession?.user && event !== 'TOKEN_REFRESHED') {
-              console.log("AuthContext: Usuário logado, buscando perfil...");
-              await fetchUserProfile(newSession.user.id);
-            } else if (!newSession) {
-              console.log("AuthContext: Usuário deslogado, limpando estado...");
-              setUser(null);
-              setUserRestaurants([]);
-              setCurrentRestaurant(null);
-              setIsLoading(false);
-            }
-          }
-        );
+        return () => {
+          mounted = false;
+          subscription.unsubscribe();
+        };
 
       } catch (error) {
         console.error("Erro na inicialização da auth:", error);
@@ -114,9 +118,6 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
     return () => {
       mounted = false;
-      if (authSubscription?.data?.subscription) {
-        authSubscription.data.subscription.unsubscribe();
-      }
     };
   }, []);
 
