@@ -11,7 +11,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 // Pages
 import { Dashboard } from "@/pages/Dashboard";
 import Login from "@/pages/Login";
-import Register from "@/pages/Register";
+import { Register } from "@/pages/Register";
 import Onboarding from "@/pages/Onboarding";
 import { FluxoDeCaixa } from "@/pages/FluxoDeCaixa";
 import { DRE } from "@/pages/DRE";
