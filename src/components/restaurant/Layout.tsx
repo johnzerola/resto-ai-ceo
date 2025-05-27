@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { UserMenu } from "./UserMenu";
@@ -63,7 +62,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Sidebar />
         <main className={cn(
           "grow p-4 md:p-6 pt-20 md:pt-6 max-w-7xl mx-auto transition-all duration-300",
-          sidebarState === 'open' ? "md:ml-64" : "md:ml-16"
+          sidebarState === 'open' ? "md:ml-16" : "md:ml-16"
         )}>
           <div className="flex justify-between items-start mb-4">
             <div>

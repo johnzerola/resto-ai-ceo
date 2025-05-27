@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,84 +50,80 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
   useEffect(() => {
     let mounted = true;
+    let authSubscription: any = null;
 
-    const initializeAuth = async () => {
-      try {
-        console.log("AuthContext: Inicializando autenticação...");
-        
-        // Configurar listener primeiro
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, newSession) => {
-            console.log("AuthContext: Auth state changed:", event, newSession?.user?.email);
-            
-            if (!mounted) return;
-            
-            setSession(newSession);
-            
-            if (newSession?.user && event !== 'TOKEN_REFRESHED') {
-              console.log("AuthContext: Usuário logado, buscando perfil...");
-              await fetchUserProfile(newSession.user.id);
-            } else if (!newSession) {
-              console.log("AuthContext: Usuário deslogado, limpando estado...");
-              setUser(null);
-              setUserRestaurants([]);
-              setCurrentRestaurant(null);
-              setIsLoading(false);
-            }
-          }
-        );
+    setIsLoading(true);
 
-        // Depois obter sessão atual
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Erro ao obter sessão:", error);
-          if (mounted) {
-            setIsLoading(false);
-          }
-          return;
-        }
-        
-        console.log("AuthContext: Sessão inicial obtida:", currentSession?.user?.email || "Nenhuma");
-        
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        console.log("AuthContext: Auth state changed:", event, newSession?.user?.email);
         if (!mounted) return;
-        
-        setSession(currentSession);
-        
-        if (currentSession?.user) {
-          await fetchUserProfile(currentSession.user.id);
-        } else {
-          setIsLoading(false);
-        }
+        setSession(newSession);
 
-        return () => {
-          mounted = false;
-          subscription.unsubscribe();
-        };
+        if (newSession?.user) {
+          console.log("AuthContext: Usuário logado ou sessão restaurada...");
+        } else {
+          console.log("AuthContext: Usuário deslogado ou sem sessão, limpando estado...");
+          setUser(null);
+          setUserRestaurants([]);
+          setCurrentRestaurant(null);
+        }
+      }
+    );
+    authSubscription = subscription;
+
+    const getInitialSession = async () => {
+      try {
+        console.log("AuthContext: Obtendo sessão inicial...");
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error("Erro ao obter sessão inicial:", error);
+        } else {
+          console.log("AuthContext: Sessão inicial obtida:", currentSession?.user?.email || "Nenhuma");
+          if (mounted) {
+          }
+        }
 
       } catch (error) {
-        console.error("Erro na inicialização da auth:", error);
-        if (mounted) {
-          setIsLoading(false);
-        }
+         console.error("Erro no getInitialSession:", error);
+      } finally {
+         if (mounted) {
+           setIsLoading(false);
+         }
       }
     };
 
-    initializeAuth();
+    getInitialSession();
 
     return () => {
       mounted = false;
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, []);
 
   useEffect(() => {
-    if (user) {
-      loadUserRestaurants();
+    if (session?.user) {
+      console.log("AuthContext: Sessão detectada, buscando perfil...");
+      setIsLoading(true);
+      fetchUserProfile(session.user.id);
     } else {
+      setUser(null);
       setUserRestaurants([]);
       setCurrentRestaurant(null);
     }
-  }, [user?.id]);
+
+    return () => {
+    };
+  }, [session]);
+
+  useEffect(() => {
+    if (user) {
+      loadUserRestaurants();
+    }
+  }, [user]);
 
   // Função para buscar o perfil do usuário
   const fetchUserProfile = async (userId: string) => {
@@ -165,7 +160,6 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
 
             if (createError) {
               console.error('Erro ao criar perfil:', createError);
-              setIsLoading(false);
             } else if (newProfile) {
               console.log("AuthContext: Perfil criado com sucesso:", newProfile);
               setUser({
@@ -174,11 +168,10 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
                 email: newProfile.email,
                 role: newProfile.role as UserRole
               });
-              setIsLoading(false);
             }
           }
         } else {
-          setIsLoading(false);
+          // Outros erros ao buscar perfil
         }
       } else if (profile) {
         console.log("AuthContext: Perfil encontrado:", profile);
@@ -188,10 +181,10 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
           email: profile.email || '',
           role: profile.role as UserRole || UserRole.EMPLOYEE
         });
-        setIsLoading(false);
       }
     } catch (error) {
       console.error('Erro ao processar perfil:', error);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -267,7 +260,6 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       if (error) {
         console.error('AuthContext: Erro de login:', error.message);
         toast.error('Erro ao fazer login: ' + error.message);
-        setIsLoading(false);
         return false;
       }
 
@@ -277,13 +269,13 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         return true;
       }
 
-      setIsLoading(false);
       return false;
     } catch (error) {
       console.error('AuthContext: Erro ao fazer login:', error);
       toast.error('Erro ao fazer login');
-      setIsLoading(false);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 

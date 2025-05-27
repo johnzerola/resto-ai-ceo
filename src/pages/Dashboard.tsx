@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/restaurant/Layout";
 import { DailySnapshot } from "@/components/restaurant/DailySnapshot";
 import { PerformanceCharts } from "@/components/restaurant/PerformanceCharts";
@@ -78,7 +77,7 @@ export function Dashboard() {
               </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="flex flex-col gap-6">
               <PerformanceCharts />
               <QuickReports />
             </div>

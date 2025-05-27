@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check, ShieldCheck, Star, CircleDollarSign, Users, ArrowRight, Play, TrendingUp, BarChart3, Shield, Zap, Clock, DollarSign } from "lucide-react";
@@ -67,7 +66,7 @@ const PaginaVendas = () => {
             <Link to="/login">
               <Button variant="outline" className="hidden sm:flex">Entrar</Button>
             </Link>
-            <Link to="/register">
+            <Link to="/login">
               <Button>Começar agora</Button>
             </Link>
           </div>
@@ -112,7 +111,7 @@ const PaginaVendas = () => {
                 </Button>
               </div>
               <p className="text-white/80 text-sm mt-3">
-                ✅ Sem cartão de crédito • ✅ Sem compromisso • ✅ Acesso completo
+                ✅ Sem compromisso • ✅ Acesso completo
               </p>
             </div>
           </div>

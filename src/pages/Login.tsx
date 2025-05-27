@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -52,14 +51,6 @@ const Login = () => {
     pathname: location.pathname 
   });
 
-  // Redirecionar se já autenticado
-  useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      console.log("Login - Usuário já autenticado, redirecionando para:", from);
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, isLoading, navigate, from]);
-
   // Forms
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -85,7 +76,8 @@ const Login = () => {
         console.log("Login - Login bem-sucedido!");
         toast.success("Login realizado com sucesso!");
         
-        // O redirecionamento será feito pelo useEffect quando isAuthenticated mudar
+        // Redirecionar para a página de destino após login bem-sucedido
+        navigate(from, { replace: true });
       } else {
         toast.error("Credenciais inválidas. Verifique email e senha.");
       }
@@ -122,24 +114,12 @@ const Login = () => {
   };
 
   // Loading state durante verificação de auth
-  if (isLoading) {
+  if (isLoading && !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Verificando autenticação...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Se já autenticado, mostrar redirecionamento
-  if (isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Redirecionando...</p>
         </div>
       </div>
     );

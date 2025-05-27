@@ -161,7 +161,7 @@ export function Sidebar() {
   return (
     <aside className={`
       ${isCollapsed ? 'w-16' : 'w-60'}
-      flex flex-col h-screen bg-gray-50 border-r border-gray-200 transition-all duration-200`
+      flex flex-col bg-gray-50 border-r border-gray-200 transition-all duration-200 grow`
     }>
       <div className="flex items-center justify-center h-16 shrink-0 bg-resto-blue-500 text-white">
         <button onClick={() => dispatchSidebarToggle(!isCollapsed)}>
