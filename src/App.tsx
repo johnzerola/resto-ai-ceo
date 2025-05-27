@@ -10,21 +10,21 @@ import { AuthProvider } from "@/contexts/AuthContext";
 
 // Pages
 import { Dashboard } from "@/pages/Dashboard";
-import { Login } from "@/pages/Login";
-import { Register } from "@/pages/Register";
-import { Onboarding } from "@/pages/Onboarding";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import Onboarding from "@/pages/Onboarding";
 import { FluxoDeCaixa } from "@/pages/FluxoDeCaixa";
 import { DRE } from "@/pages/DRE";
 import { CMV } from "@/pages/CMV";
 import { Metas } from "@/pages/Metas";
-import { Estoque } from "@/pages/Estoque";
-import { FichaTecnica } from "@/pages/FichaTecnica";
+import Estoque from "@/pages/Estoque";
+import FichaTecnica from "@/pages/FichaTecnica";
 import { AIAssistantPage } from "@/pages/AIAssistantPage";
-import { GerenciarUsuarios } from "@/pages/GerenciarUsuarios";
-import { Privacidade } from "@/pages/Privacidade";
-import { Documentacao } from "@/pages/Documentacao";
-import { Configuracoes } from "@/pages/Configuracoes";
-import { NotFound } from "@/pages/NotFound";
+import GerenciarUsuarios from "@/pages/GerenciarUsuarios";
+import Privacidade from "@/pages/Privacidade";
+import Documentacao from "@/pages/Documentacao";
+import Configuracoes from "@/pages/Configuracoes";
+import NotFound from "@/pages/NotFound";
 import { Assinatura } from "@/pages/Assinatura";
 
 const queryClient = new QueryClient({
