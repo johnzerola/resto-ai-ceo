@@ -11,6 +11,12 @@ export interface User {
   role: UserRole;
 }
 
+interface SubscriptionInfo {
+  subscribed: boolean;
+  subscription_tier: string | null;
+  subscription_end: string | null;
+}
+
 interface RestaurantMember {
   id: string;
   restaurant_id: string;
@@ -31,12 +37,16 @@ interface AuthContextProps {
   session: Session | null;
   currentRestaurant: Restaurant | null;
   userRestaurants: Restaurant[];
+  subscriptionInfo: SubscriptionInfo;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   register: (name: string, email: string, password: string, role?: UserRole) => Promise<boolean>;
   hasPermission: (role: UserRole) => boolean;
   createRestaurant: (name: string, businessType?: string) => Promise<string | null>;
   setCurrentRestaurant: (restaurant: Restaurant | null) => void;
+  checkSubscription: () => Promise<void>;
+  createCheckoutSession: (priceId: string) => Promise<void>;
+  openCustomerPortal: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -47,6 +57,11 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   const [isLoading, setIsLoading] = useState(true);
   const [userRestaurants, setUserRestaurants] = useState<Restaurant[]>([]);
   const [currentRestaurant, setCurrentRestaurant] = useState<Restaurant | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
+    subscribed: false,
+    subscription_tier: null,
+    subscription_end: null
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -104,15 +119,99 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     };
   }, []);
 
+  const checkSubscription = async () => {
+    if (!session) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Error checking subscription:', error);
+        return;
+      }
+
+      setSubscriptionInfo({
+        subscribed: data.subscribed || false,
+        subscription_tier: data.subscription_tier || null,
+        subscription_end: data.subscription_end || null
+      });
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+  };
+
+  const createCheckoutSession = async (priceId: string) => {
+    if (!session) {
+      toast.error('Você precisa estar logado para assinar');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        toast.error('Erro ao criar sessão de checkout');
+        return;
+      }
+
+      // Open Stripe checkout in a new tab
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast.error('Erro ao processar pagamento');
+    }
+  };
+
+  const openCustomerPortal = async () => {
+    if (!session) {
+      toast.error('Você precisa estar logado');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        toast.error('Erro ao abrir portal do cliente');
+        return;
+      }
+
+      // Open customer portal in a new tab
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast.error('Erro ao abrir portal');
+    }
+  };
+
   useEffect(() => {
     if (session?.user) {
       console.log("AuthContext: Sessão detectada, buscando perfil...");
       setIsLoading(true);
       fetchUserProfile(session.user.id);
+      checkSubscription(); // Check subscription when session is available
     } else {
       setUser(null);
       setUserRestaurants([]);
       setCurrentRestaurant(null);
+      setSubscriptionInfo({
+        subscribed: false,
+        subscription_tier: null,
+        subscription_end: null
+      });
     }
 
     return () => {
@@ -399,7 +498,8 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     user: user?.email, 
     isAuthenticated: !!user, 
     isLoading,
-    session: !!session 
+    session: !!session,
+    subscriptionInfo
   });
 
   return (
@@ -410,12 +510,16 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       session,
       currentRestaurant,
       userRestaurants,
+      subscriptionInfo,
       login,
       logout,
       register,
       hasPermission,
       createRestaurant,
-      setCurrentRestaurant
+      setCurrentRestaurant,
+      checkSubscription,
+      createCheckoutSession,
+      openCustomerPortal
     }}>
       {children}
     </AuthContext.Provider>

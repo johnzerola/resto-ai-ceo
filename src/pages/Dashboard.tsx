@@ -1,3 +1,4 @@
+
 import { Layout } from "@/components/restaurant/Layout";
 import { DailySnapshot } from "@/components/restaurant/DailySnapshot";
 import { PerformanceCharts } from "@/components/restaurant/PerformanceCharts";
@@ -7,6 +8,13 @@ import { Alerts } from "@/components/restaurant/Alerts";
 import { GoalProgressCard } from "@/components/restaurant/GoalProgressCard";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Crown, CreditCard } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useEffect } from "react";
 
 // Sample data for components
 const sampleRevenueData = [
@@ -50,6 +58,13 @@ const sampleAlerts = [
 ];
 
 export function Dashboard() {
+  const { subscriptionInfo, checkSubscription } = useAuth();
+
+  useEffect(() => {
+    // Check subscription status when dashboard loads
+    checkSubscription();
+  }, []);
+
   const handleDeleteGoal = (goalId: string) => {
     console.log("Deleting goal:", goalId);
   };
@@ -58,11 +73,57 @@ export function Dashboard() {
     <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
       <Layout>
         <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Visão geral do seu negócio e métricas importantes
-            </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+              <p className="text-muted-foreground">
+                Visão geral do seu negócio e métricas importantes
+              </p>
+            </div>
+            
+            {/* Subscription Status Card */}
+            <Card className={`w-80 ${subscriptionInfo.subscribed ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}`}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Status da Assinatura
+                  </CardTitle>
+                  {subscriptionInfo.subscribed && (
+                    <Crown className="h-5 w-5 text-yellow-500" />
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {subscriptionInfo.subscribed ? (
+                  <div className="space-y-2">
+                    <Badge variant="secondary" className="bg-green-500 text-white">
+                      Plano {subscriptionInfo.subscription_tier}
+                    </Badge>
+                    {subscriptionInfo.subscription_end && (
+                      <p className="text-sm text-muted-foreground">
+                        Renova em: {new Date(subscriptionInfo.subscription_end).toLocaleDateString('pt-BR')}
+                      </p>
+                    )}
+                    <Button asChild variant="outline" size="sm" className="w-full">
+                      <Link to="/assinatura">Gerenciar Assinatura</Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Badge variant="outline" className="border-orange-500 text-orange-700">
+                      Sem Assinatura
+                    </Badge>
+                    <p className="text-sm text-muted-foreground">
+                      Assine um plano para ter acesso a todos os recursos
+                    </p>
+                    <Button asChild size="sm" className="w-full">
+                      <Link to="/assinatura">Ver Planos</Link>
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           <div className="grid gap-6">

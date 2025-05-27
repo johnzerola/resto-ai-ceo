@@ -17,6 +17,7 @@ import {
   Calculator,
   HelpCircle,
   BookOpenCheck,
+  CreditCard,
   LucideIcon
 } from "lucide-react";
 import { NavItem } from "./NavItem";
@@ -110,6 +111,12 @@ const menuItems: MenuItem[] = [
     icon: MessageSquare,
     href: "/ai-assistant",
     description: "Assistente de IA para te ajudar"
+  },
+  {
+    title: "Assinatura",
+    icon: CreditCard,
+    href: "/assinatura",
+    description: "Gerencie sua assinatura e planos"
   },
   {
     title: "Gerenciar Usuários",

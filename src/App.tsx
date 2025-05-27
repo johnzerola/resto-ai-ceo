@@ -1,237 +1,72 @@
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "sonner";
-import { AuthProvider } from "./contexts/AuthContext";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Dashboard } from "./pages/Dashboard";
-import Login from "./pages/Login";
-import { Register } from "./pages/Register";
-import { Financeiro } from "./pages/Financeiro";
-import { CMV } from "./pages/CMV";
-import { FluxoDeCaixa } from "./pages/FluxoDeCaixa";
-import { DRE } from "./pages/DRE";
-import FichaTecnica from "./pages/FichaTecnica";
-import { GerenciarEstoque } from "./pages/GerenciarEstoque";
-import { Receitas } from "./pages/Receitas";
-import { Despesas } from "./pages/Despesas";
-import { Fornecedores } from "./pages/Fornecedores";
-import { Funcionarios } from "./pages/Funcionarios";
-import { Clientes } from "./pages/Clientes";
-import { Metas } from "./pages/Metas";
-import { Integracoes } from "./pages/Integracoes";
-import Configuracoes from "./pages/Configuracoes";
-import GerenciarUsuarios from "./pages/GerenciarUsuarios";
-import Documentacao from "./pages/Documentacao";
-import { AIAssistantPage } from "./pages/AIAssistantPage";
-import Index from "./pages/Index";
-import { ConsentBanner } from "@/components/security/ConsentBanner";
-import { SecurityMiddleware } from "@/components/security/SecurityMiddleware";
-import Privacidade from "./pages/Privacidade";
-import SecurityCenter from "./pages/SecurityCenter";
-import PaginaVendas from "./pages/PaginaVendas";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { UserRole } from "./services/AuthService";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
 
-const queryClient = new QueryClient();
+// Contexts
+import { AuthProvider } from "@/contexts/AuthContext";
+
+// Pages
+import { Dashboard } from "@/pages/Dashboard";
+import { Login } from "@/pages/Login";
+import { Register } from "@/pages/Register";
+import { Onboarding } from "@/pages/Onboarding";
+import { FluxoDeCaixa } from "@/pages/FluxoDeCaixa";
+import { DRE } from "@/pages/DRE";
+import { CMV } from "@/pages/CMV";
+import { Metas } from "@/pages/Metas";
+import { Estoque } from "@/pages/Estoque";
+import { FichaTecnica } from "@/pages/FichaTecnica";
+import { AIAssistantPage } from "@/pages/AIAssistantPage";
+import { GerenciarUsuarios } from "@/pages/GerenciarUsuarios";
+import { Privacidade } from "@/pages/Privacidade";
+import { Documentacao } from "@/pages/Documentacao";
+import { Configuracoes } from "@/pages/Configuracoes";
+import { NotFound } from "@/pages/NotFound";
+import { Assinatura } from "@/pages/Assinatura";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <SecurityMiddleware>
-          <AuthProvider>
-            <div className="min-h-screen bg-gray-50">
-              <Toaster />
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <AuthProvider>
+          <Router>
+            <div className="min-h-screen bg-background">
               <Routes>
-                <Route path="/" element={<PaginaVendas />} />
+                <Route path="/" element={<Dashboard />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                
-                {/* Rota de onboarding que redireciona para dashboard se autenticado */}
-                <Route 
-                  path="/onboarding" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Navigate to="/dashboard" replace />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Dashboard principal */}
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Rotas financeiras */}
-                <Route 
-                  path="/financeiro" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Financeiro />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/cmv" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <CMV />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/fluxo-de-caixa" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <FluxoDeCaixa />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/dre" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <DRE />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Rotas operacionais */}
-                <Route 
-                  path="/fichas-tecnicas" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <FichaTecnica />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/gerenciar-estoque" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <GerenciarEstoque />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/receitas" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Receitas />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/despesas" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Despesas />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/fornecedores" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Fornecedores />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/funcionarios" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.MANAGER}>
-                      <Funcionarios />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/clientes" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Clientes />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/metas" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Metas />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Rotas administrativas */}
-                <Route 
-                  path="/integracoes" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.MANAGER}>
-                      <Integracoes />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/configuracoes" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Configuracoes />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/gerenciar-usuarios" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.OWNER}>
-                      <GerenciarUsuarios />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/documentacao" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <Documentacao />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/ai-assistant" 
-                  element={
-                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <AIAssistantPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                {/* Rotas públicas */}
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
+                <Route path="/dre" element={<DRE />} />
+                <Route path="/cmv" element={<CMV />} />
+                <Route path="/metas" element={<Metas />} />
+                <Route path="/estoque" element={<Estoque />} />
+                <Route path="/fichas-tecnicas" element={<FichaTecnica />} />
+                <Route path="/ai-assistant" element={<AIAssistantPage />} />
+                <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
                 <Route path="/privacidade" element={<Privacidade />} />
-                <Route path="/security-center" element={<SecurityCenter />} />
+                <Route path="/documentacao" element={<Documentacao />} />
+                <Route path="/configuracoes" element={<Configuracoes />} />
+                <Route path="/assinatura" element={<Assinatura />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
-              <ConsentBanner />
             </div>
-          </AuthProvider>
-        </SecurityMiddleware>
-      </BrowserRouter>
+            <Toaster />
+          </Router>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
