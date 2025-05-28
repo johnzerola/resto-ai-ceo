@@ -11,6 +11,13 @@ interface SubscriptionInfo {
   subscription_end?: string | null;
 }
 
+interface Restaurant {
+  id: string;
+  name: string;
+  user_id: string;
+  created_at: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -18,9 +25,17 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   subscriptionInfo: SubscriptionInfo;
+  userRestaurants: Restaurant[];
+  currentRestaurant: Restaurant | null;
   signIn: (email: string, password: string) => Promise<boolean>;
   signUp: (email: string, password: string, name: string) => Promise<boolean>;
   signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, password: string, name: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  hasPermission: (requiredRole: UserRole) => boolean;
+  setCurrentRestaurant: (restaurant: Restaurant) => void;
+  createRestaurant: (name: string) => Promise<void>;
   checkSubscription: () => Promise<void>;
   createCheckoutSession: (priceId: string) => Promise<void>;
   openCustomerPortal: () => Promise<void>;
@@ -33,6 +48,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [userRestaurants, setUserRestaurants] = useState<Restaurant[]>([]);
+  const [currentRestaurant, setCurrentRestaurant] = useState<Restaurant | null>(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
     subscribed: false,
     subscription_tier: null,
@@ -98,7 +115,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data?.url) {
         console.log('Redirecting to checkout:', data.url);
-        // Abrir o checkout do Stripe em uma nova aba
         window.open(data.url, '_blank');
         toast.success('Redirecionando para o checkout...');
       } else {
@@ -138,7 +154,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data?.url) {
         console.log('Redirecting to customer portal:', data.url);
-        // Abrir o portal do cliente em uma nova aba
         window.open(data.url, '_blank');
         toast.success('Redirecionando para o portal...');
       } else {
@@ -227,6 +242,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setSession(null);
       setUserRole(null);
+      setUserRestaurants([]);
+      setCurrentRestaurant(null);
       setSubscriptionInfo({
         subscribed: false,
         subscription_tier: null,
@@ -236,6 +253,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Erro no logout:', error);
       toast.error('Erro no logout.');
+    }
+  };
+
+  // Alias functions for compatibility
+  const login = signIn;
+  const register = signUp;
+  const logout = signOut;
+
+  const hasPermission = (requiredRole: UserRole): boolean => {
+    if (!userRole) return false;
+
+    // Hierarquia de permissões
+    if (userRole === UserRole.OWNER) {
+      return true; // Proprietário tem acesso a tudo
+    }
+    
+    if (userRole === UserRole.MANAGER) {
+      return requiredRole !== UserRole.OWNER; // Gerente não tem acesso às funções exclusivas do proprietário
+    }
+    
+    // Funcionário só tem acesso às funções de funcionário
+    return userRole === requiredRole;
+  };
+
+  const createRestaurant = async (name: string): Promise<void> => {
+    try {
+      if (!user) {
+        toast.error('Usuário não autenticado');
+        return;
+      }
+
+      // Create a mock restaurant for now
+      const newRestaurant: Restaurant = {
+        id: crypto.randomUUID(),
+        name,
+        user_id: user.id,
+        created_at: new Date().toISOString(),
+      };
+
+      setUserRestaurants(prev => [...prev, newRestaurant]);
+      setCurrentRestaurant(newRestaurant);
+      toast.success('Restaurante criado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar restaurante:', error);
+      toast.error('Erro ao criar restaurante');
     }
   };
 
@@ -254,6 +316,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           session: !!currentSession,
           subscriptionInfo
         });
+
+        // Create a default restaurant if none exists
+        const defaultRestaurant: Restaurant = {
+          id: 'default',
+          name: 'Meu Restaurante',
+          user_id: currentSession.user.id,
+          created_at: new Date().toISOString(),
+        };
+        setUserRestaurants([defaultRestaurant]);
+        setCurrentRestaurant(defaultRestaurant);
       }
       
       setIsLoading(false);
@@ -296,6 +368,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Default to employee if no profile found
             setUserRole(UserRole.EMPLOYEE);
           }
+
+          // Set up default restaurant
+          const defaultRestaurant: Restaurant = {
+            id: 'default',
+            name: 'Meu Restaurante',
+            user_id: currentSession.user.id,
+            created_at: new Date().toISOString(),
+          };
+          setUserRestaurants([defaultRestaurant]);
+          setCurrentRestaurant(defaultRestaurant);
         } catch (error) {
           console.error('AuthContext: Erro ao buscar perfil:', error);
           setUserRole(UserRole.EMPLOYEE);
@@ -312,6 +394,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       } else {
         setUserRole(null);
+        setUserRestaurants([]);
+        setCurrentRestaurant(null);
         setSubscriptionInfo({
           subscribed: false,
           subscription_tier: null,
@@ -339,9 +423,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     isAuthenticated,
     subscriptionInfo,
+    userRestaurants,
+    currentRestaurant,
     signIn,
     signUp,
     signOut,
+    login,
+    register,
+    logout,
+    hasPermission,
+    setCurrentRestaurant,
+    createRestaurant,
     checkSubscription,
     createCheckoutSession,
     openCustomerPortal,
