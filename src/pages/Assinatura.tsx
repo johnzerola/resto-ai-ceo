@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/restaurant/Layout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
@@ -54,7 +53,25 @@ export function Assinatura() {
     checkSubscription();
   }, []);
 
+  // Handle URL parameters for success/cancel
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const canceled = urlParams.get('canceled');
+
+    if (success === 'true') {
+      toast.success('Assinatura realizada com sucesso! Verificando status...');
+      // Wait a bit for Stripe to process, then check subscription
+      setTimeout(() => {
+        checkSubscription();
+      }, 2000);
+    } else if (canceled === 'true') {
+      toast.info('Processo de assinatura cancelado.');
+    }
+  }, [checkSubscription]);
+
   const handleSubscribe = (priceId: string) => {
+    console.log('Subscribing to plan with price ID:', priceId);
     createCheckoutSession(priceId);
   };
 
