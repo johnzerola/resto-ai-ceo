@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const AccessDenied = () => {
   const { user } = useAuth();
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário';
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
@@ -20,7 +21,7 @@ const AccessDenied = () => {
         {user && (
           <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6">
             <p className="text-amber-800">
-              Você está conectado como <span className="font-medium">{user.name}</span> ({user.role}).
+              Você está conectado como <span className="font-medium">{userName}</span>.
             </p>
           </div>
         )}

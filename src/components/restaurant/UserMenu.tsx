@@ -35,16 +35,18 @@ export function UserMenu() {
     );
   }
 
+  const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-              {user.name.charAt(0).toUpperCase()}
+              {userName.charAt(0).toUpperCase()}
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm font-medium">{user.name}</p>
+              <p className="text-sm font-medium">{userName}</p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
           </div>
@@ -53,7 +55,7 @@ export function UserMenu() {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>
           <div className="md:hidden">
-            <p className="text-sm font-medium">{user.name}</p>
+            <p className="text-sm font-medium">{userName}</p>
             <p className="text-xs text-muted-foreground">{user.email}</p>
           </div>
           <div className="md:block hidden">

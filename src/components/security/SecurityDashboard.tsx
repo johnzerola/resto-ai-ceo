@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -23,9 +22,11 @@ export function SecurityDashboard() {
     setDataAccessLogs(securityService.getDataAccessLogs());
   };
 
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário';
+
   const exportSecurityReport = () => {
     const report = {
-      user: user?.name,
+      user: userName,
       exportDate: new Date().toISOString(),
       securityEvents: securityLogs.filter(log => log.userId === user?.id),
       dataAccessEvents: dataAccessLogs.filter(log => log.userId === user?.id),

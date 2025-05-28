@@ -26,6 +26,8 @@ const Onboarding = () => {
   const { createRestaurant, user } = useAuth();
   const navigate = useNavigate();
 
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário';
+
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
@@ -43,12 +45,9 @@ const Onboarding = () => {
     setIsSubmitting(true);
     
     try {
-      const restaurantId = await createRestaurant(values.restaurantName, values.businessType);
-      
-      if (restaurantId) {
-        toast.success("Seu restaurante foi configurado com sucesso!");
-        navigate("/");
-      }
+      await createRestaurant(values.restaurantName);
+      toast.success("Seu restaurante foi configurado com sucesso!");
+      navigate("/");
     } catch (error) {
       console.error("Erro ao configurar restaurante:", error);
       toast.error("Erro ao configurar restaurante");
@@ -67,7 +66,7 @@ const Onboarding = () => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Bem-vindo, {user?.name}!</CardTitle>
+            <CardTitle>Bem-vindo, {userName}!</CardTitle>
             <CardDescription>
               Vamos configurar seu restaurante para começar a usar o sistema
             </CardDescription>
