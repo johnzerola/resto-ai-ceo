@@ -1,7 +1,8 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthService, UserRole } from '@/services/AuthService';
+import { UserRole, loginUser, registerUser, logoutUser, getUserById } from '@/services/AuthService';
 import { toast } from 'sonner';
 
 interface SubscriptionInfo {
@@ -154,11 +155,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const success = await AuthService.signIn(email, password);
-      if (success) {
-        toast.success('Login realizado com sucesso!');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Erro no login:', error);
+        toast.error('Erro no login. Verifique suas credenciais.');
+        return false;
       }
-      return success;
+
+      if (data.user) {
+        toast.success('Login realizado com sucesso!');
+        return true;
+      }
+
+      return false;
     } catch (error) {
       console.error('Erro no login:', error);
       toast.error('Erro no login. Verifique suas credenciais.');
@@ -171,11 +184,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const success = await AuthService.signUp(email, password, name);
-      if (success) {
-        toast.success('Conta criada com sucesso! Verifique seu email.');
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Erro no cadastro:', error);
+        toast.error('Erro no cadastro. Tente novamente.');
+        return false;
       }
-      return success;
+
+      if (data.user) {
+        toast.success('Conta criada com sucesso! Verifique seu email.');
+        return true;
+      }
+
+      return false;
     } catch (error) {
       console.error('Erro no cadastro:', error);
       toast.error('Erro no cadastro. Tente novamente.');
@@ -187,7 +217,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async (): Promise<void> => {
     try {
-      await AuthService.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Erro no logout:', error);
+        toast.error('Erro no logout.');
+        return;
+      }
+
       setUser(null);
       setSession(null);
       setUserRole(null);
@@ -246,13 +282,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         setIsLoading(true);
         try {
-          const profile = await AuthService.getUserProfile(currentSession.user.id);
+          // Fetch user profile from Supabase profiles table
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', currentSession.user.id)
+            .single();
+          
           if (profile) {
             console.log('AuthContext: Perfil encontrado:', profile);
             setUserRole(profile.role as UserRole);
+          } else {
+            // Default to employee if no profile found
+            setUserRole(UserRole.EMPLOYEE);
           }
         } catch (error) {
           console.error('AuthContext: Erro ao buscar perfil:', error);
+          setUserRole(UserRole.EMPLOYEE);
         } finally {
           setIsLoading(false);
         }
