@@ -1,60 +1,66 @@
 
-import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/services/AuthService";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Navigate, useLocation } from "react-router-dom";
+import { ReactNode } from "react";
 
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: ReactNode;
   requiredRole?: UserRole;
+  requireAuth?: boolean;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+export function ProtectedRoute({ 
   children, 
-  requiredRole 
-}) => {
-  const { isAuthenticated, user, hasPermission, isLoading } = useAuth();
+  requiredRole, 
+  requireAuth = true 
+}: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, userRole, user } = useAuth();
   const location = useLocation();
 
-  console.log("ProtectedRoute - Estado:", { 
-    isAuthenticated, 
-    isLoading, 
+  console.log('ProtectedRoute - Estado:', {
+    isAuthenticated,
+    isLoading,
     pathname: location.pathname,
-    userRole: user?.role 
+    userRole: userRole || 'undefined',
+    userId: user?.id
   });
 
   // Mostrar loading enquanto verifica autenticação
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-full max-w-md mx-auto p-6">
-          <div className="text-center mb-6">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600 font-medium">Verificando autenticação...</p>
-          </div>
-          
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  // Se não autenticado, redirecionar para login
-  if (!isAuthenticated) {
-    console.log("ProtectedRoute - Usuário não autenticado, redirecionando para login");
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  // Se requer autenticação e não está autenticado, redirecionar para login
+  if (requireAuth && !isAuthenticated) {
+    console.log('ProtectedRoute: Redirecionando para login - usuário não autenticado');
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Verificar permissões apenas se role é especificada
-  if (requiredRole && user && !hasPermission(requiredRole)) {
-    console.log("ProtectedRoute - Usuário sem permissão adequada");
-    return <Navigate to="/dashboard" replace />;
+  // Se especifica um papel específico, verificar permissões
+  if (requiredRole && userRole) {
+    const hasPermission = () => {
+      if (userRole === UserRole.OWNER) {
+        return true; // Proprietário tem acesso a tudo
+      }
+      
+      if (userRole === UserRole.MANAGER) {
+        return requiredRole !== UserRole.OWNER;
+      }
+      
+      return userRole === requiredRole;
+    };
+
+    if (!hasPermission()) {
+      console.log('ProtectedRoute: Acesso negado - permissões insuficientes');
+      return <Navigate to="/access-denied" replace />;
+    }
   }
 
-  console.log("ProtectedRoute - Acesso autorizado para:", location.pathname);
+  // Se passou por todas as verificações, renderizar o componente
   return <>{children}</>;
-};
+}

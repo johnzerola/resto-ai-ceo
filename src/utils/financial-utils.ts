@@ -1,92 +1,94 @@
 
-import { FinancialData, CMVCategory } from "@/types/financial-data";
+import { FinancialData } from "@/types/financial-data";
 
 /**
- * Cria um objeto FinancialData inicial com valores zerados
+ * Criar dados financeiros vazios
  */
 export function createEmptyFinancialData(): FinancialData {
   return {
-    lastUpdate: new Date().toISOString(),
-    revenue: {
-      foodSales: 0,
-      beverageSales: 0,
-      deliverySales: 0,
-      otherSales: 0,
-      total: 0
-    },
-    costs: {
-      foodCost: 0,
-      beverageCost: 0,
-      packagingCost: 0,
-      otherCosts: 0,
-      total: 0
-    },
-    cmvCategories: [],
-    profitMargin: 0,
-    previousProfitMargin: 0,
+    receita: 0,
+    cmv: 0,
     cmvPercentage: 0,
-    targetCMV: 0,
-    revenueGrowth: 0
+    profitMargin: 0,
+    fixedCosts: 0,
+    variableCosts: 0,
+    netProfit: 0,
+    lastUpdate: new Date().toISOString()
   };
 }
 
 /**
- * Calcula as categorias de CMV com base nos dados de receita e custos
+ * Disparar evento de atualização de dados financeiros
  */
-export function calculateCMVCategories(revenue: FinancialData["revenue"], costs: FinancialData["costs"]): CMVCategory[] {
-  return [
-    {
-      name: "Pratos Principais",
-      sales: revenue.foodSales * 0.7,
-      cost: costs.foodCost * 0.7,
-      cmvPercentage: revenue.foodSales > 0 
-        ? (costs.foodCost * 0.7) / (revenue.foodSales * 0.7) * 100 
-        : 0,
-      color: "#4f46e5"
-    },
-    {
-      name: "Entradas",
-      sales: revenue.foodSales * 0.15,
-      cost: costs.foodCost * 0.15,
-      cmvPercentage: revenue.foodSales > 0 
-        ? (costs.foodCost * 0.15) / (revenue.foodSales * 0.15) * 100 
-        : 0,
-      color: "#16a34a"
-    },
-    {
-      name: "Sobremesas",
-      sales: revenue.foodSales * 0.15,
-      cost: costs.foodCost * 0.15,
-      cmvPercentage: revenue.foodSales > 0 
-        ? (costs.foodCost * 0.15) / (revenue.foodSales * 0.15) * 100 
-        : 0,
-      color: "#ea580c"
-    },
-    {
-      name: "Bebidas Alcoólicas",
-      sales: revenue.beverageSales * 0.7,
-      cost: costs.beverageCost * 0.7,
-      cmvPercentage: revenue.beverageSales > 0 
-        ? (costs.beverageCost * 0.7) / (revenue.beverageSales * 0.7) * 100 
-        : 0,
-      color: "#dc2626"
-    },
-    {
-      name: "Bebidas Não Alcoólicas",
-      sales: revenue.beverageSales * 0.3,
-      cost: costs.beverageCost * 0.3,
-      cmvPercentage: revenue.beverageSales > 0 
-        ? (costs.beverageCost * 0.3) / (revenue.beverageSales * 0.3) * 100 
-        : 0,
-      color: "#0ea5e9"
-    }
-  ];
+export function dispatchFinancialDataEvent(): void {
+  window.dispatchEvent(new Event('financialDataUpdated'));
 }
 
 /**
- * Evento personalizado para notificar atualizações nos dados financeiros
+ * Calcular CMV percentual
  */
-export function dispatchFinancialDataEvent(): void {
-  const event = new CustomEvent("financialDataUpdated");
-  window.dispatchEvent(event);
+export function calculateCMVPercentage(cmv: number, receita: number): number {
+  if (receita === 0) return 0;
+  return (cmv / receita) * 100;
+}
+
+/**
+ * Calcular margem de lucro
+ */
+export function calculateProfitMargin(receita: number, totalCosts: number): number {
+  if (receita === 0) return 0;
+  return ((receita - totalCosts) / receita) * 100;
+}
+
+/**
+ * Calcular lucro líquido
+ */
+export function calculateNetProfit(receita: number, totalCosts: number): number {
+  return receita - totalCosts;
+}
+
+/**
+ * Validar dados financeiros
+ */
+export function validateFinancialData(data: Partial<FinancialData>): string[] {
+  const errors: string[] = [];
+  
+  if (data.receita !== undefined && data.receita < 0) {
+    errors.push('A receita não pode ser negativa');
+  }
+  
+  if (data.cmv !== undefined && data.cmv < 0) {
+    errors.push('O CMV não pode ser negativo');
+  }
+  
+  if (data.fixedCosts !== undefined && data.fixedCosts < 0) {
+    errors.push('Os custos fixos não podem ser negativos');
+  }
+  
+  if (data.variableCosts !== undefined && data.variableCosts < 0) {
+    errors.push('Os custos variáveis não podem ser negativos');
+  }
+  
+  return errors;
+}
+
+/**
+ * Formatar valores monetários
+ */
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
+}
+
+/**
+ * Formatar percentuais
+ */
+export function formatPercentage(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }).format(value / 100);
 }

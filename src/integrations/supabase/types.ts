@@ -209,36 +209,6 @@ export type Database = {
           },
         ]
       }
-      PaymentIntests: {
-        Row: {
-          amount: number | null
-          attrs: Json | null
-          created: string | null
-          currency: string | null
-          customer: string | null
-          id: string | null
-          payment_method: string | null
-        }
-        Insert: {
-          amount?: number | null
-          attrs?: Json | null
-          created?: string | null
-          currency?: string | null
-          customer?: string | null
-          id?: string | null
-          payment_method?: string | null
-        }
-        Update: {
-          amount?: number | null
-          attrs?: Json | null
-          created?: string | null
-          currency?: string | null
-          customer?: string | null
-          id?: string | null
-          payment_method?: string | null
-        }
-        Relationships: []
-      }
       payments: {
         Row: {
           amount: number
@@ -294,42 +264,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      Payouts: {
-        Row: {
-          amount: number | null
-          arrival_date: string | null
-          attrs: Json | null
-          created: string | null
-          currency: string | null
-          description: string | null
-          id: string | null
-          statement_descriptor: string | null
-          status: string | null
-        }
-        Insert: {
-          amount?: number | null
-          arrival_date?: string | null
-          attrs?: Json | null
-          created?: string | null
-          currency?: string | null
-          description?: string | null
-          id?: string | null
-          statement_descriptor?: string | null
-          status?: string | null
-        }
-        Update: {
-          amount?: number | null
-          arrival_date?: string | null
-          attrs?: Json | null
-          created?: string | null
-          currency?: string | null
-          description?: string | null
-          id?: string | null
-          statement_descriptor?: string | null
-          status?: string | null
-        }
-        Relationships: []
       }
       profiles: {
         Row: {

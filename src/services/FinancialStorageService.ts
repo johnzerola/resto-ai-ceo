@@ -1,29 +1,56 @@
 
 import { toast } from "sonner";
 import { FinancialData } from "@/types/financial-data";
-import { createEmptyFinancialData, dispatchFinancialDataEvent } from "@/utils/financial-utils";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Obter dados financeiros do localStorage ou criar novos para usuário novo
+ * Criar dados financeiros vazios para novo usuário
+ */
+export function createEmptyFinancialData(): FinancialData {
+  return {
+    receita: 0,
+    cmv: 0,
+    cmvPercentage: 0,
+    profitMargin: 0,
+    fixedCosts: 0,
+    variableCosts: 0,
+    netProfit: 0,
+    lastUpdate: new Date().toISOString()
+  };
+}
+
+/**
+ * Disparar evento de atualização de dados financeiros
+ */
+export function dispatchFinancialDataEvent(): void {
+  window.dispatchEvent(new Event('financialDataUpdated'));
+}
+
+/**
+ * Obter dados financeiros específicos do usuário autenticado
  */
 export async function getFinancialData(): Promise<FinancialData> {
   try {
-    // Verificar se o usuário está autenticado
-    const { data: session } = await supabase.auth.getSession();
-    const isNewUser = localStorage.getItem('isNewUser') === 'true';
-
-    // Para usuário novo ou não autenticado, retornar dados vazios
-    if (isNewUser || !session?.session) {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      console.log('Usuário não autenticado, retornando dados vazios');
       return createEmptyFinancialData();
     }
 
-    // Tentar obter dados do localStorage
-    const savedData = localStorage.getItem("financialData");
+    // Criar chave específica do usuário
+    const userKey = `financialData_${session.user.id}`;
+    const savedData = localStorage.getItem(userKey);
+    
     if (savedData) {
-      return JSON.parse(savedData);
+      const parsedData = JSON.parse(savedData);
+      console.log('Dados financeiros carregados para usuário:', session.user.id);
+      return parsedData;
     } else {
-      return createEmptyFinancialData();
+      console.log('Criando novos dados financeiros para usuário:', session.user.id);
+      const emptyData = createEmptyFinancialData();
+      localStorage.setItem(userKey, JSON.stringify(emptyData));
+      return emptyData;
     }
   } catch (error) {
     console.error("Erro ao obter dados financeiros:", error);
@@ -33,32 +60,33 @@ export async function getFinancialData(): Promise<FinancialData> {
 }
 
 /**
- * Salvar dados financeiros no localStorage e sincronizar com outros módulos
+ * Salvar dados financeiros específicos do usuário autenticado
  */
-export function saveFinancialData(data: FinancialData): void {
+export async function saveFinancialData(data: FinancialData): Promise<void> {
   try {
-    // Salvar no localStorage
-    localStorage.setItem("financialData", JSON.stringify({
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      console.error('Usuário não autenticado, não é possível salvar dados');
+      toast.error("Você precisa estar logado para salvar dados");
+      return;
+    }
+
+    // Criar chave específica do usuário
+    const userKey = `financialData_${session.user.id}`;
+    const dataToSave = {
       ...data,
       lastUpdate: new Date().toISOString()
-    }));
+    };
+    
+    localStorage.setItem(userKey, JSON.stringify(dataToSave));
+    console.log('Dados financeiros salvos para usuário:', session.user.id);
     
     // Notificar outros componentes da atualização
     dispatchFinancialDataEvent();
     
-    // Obter dados de configuração do restaurante para sincronizar
-    const restaurantDataStr = localStorage.getItem("restaurantData");
-    if (restaurantDataStr) {
-      const restaurantData = JSON.parse(restaurantDataStr);
-      
-      // Atualizar restaurantData com valores financeiros relevantes
-      restaurantData.lastFinancialUpdate = new Date().toISOString();
-      restaurantData.cmvPercentage = data.cmvPercentage || 0;
-      restaurantData.profitMargin = data.profitMargin || 0;
-      
-      // Salvar dados atualizados do restaurante
-      localStorage.setItem("restaurantData", JSON.stringify(restaurantData));
-    }
+    // Sincronizar com dados do restaurante se existir
+    await syncWithRestaurantData(data);
     
   } catch (error) {
     console.error("Erro ao salvar dados financeiros:", error);
@@ -69,45 +97,90 @@ export function saveFinancialData(data: FinancialData): void {
 /**
  * Sincronizar dados financeiros com configurações do restaurante
  */
-export async function syncFinancialWithConfig(): Promise<void> {
+async function syncWithRestaurantData(financialData: FinancialData): Promise<void> {
   try {
-    const restaurantDataStr = localStorage.getItem("restaurantData");
-    const financialData = await getFinancialData();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) return;
+
+    const userRestaurantKey = `restaurantData_${session.user.id}`;
+    const restaurantDataStr = localStorage.getItem(userRestaurantKey);
     
     if (restaurantDataStr) {
       const restaurantData = JSON.parse(restaurantDataStr);
       
-      // Aplicar configurações do restaurante aos dados financeiros
-      if (restaurantData.targetFoodCost) {
-        financialData.targetCMV = restaurantData.targetFoodCost;
-      }
+      // Atualizar dados do restaurante com informações financeiras
+      restaurantData.lastFinancialUpdate = new Date().toISOString();
+      restaurantData.cmvPercentage = financialData.cmvPercentage || 0;
+      restaurantData.profitMargin = financialData.profitMargin || 0;
       
-      // Atualizar outros dados relevantes
-      if (restaurantData.averageMonthlyRevenue) {
-        // Usar como base para projeções
-      }
-      
-      // Salvar dados financeiros atualizados
-      saveFinancialData(financialData);
-      
-      toast.success("Dados financeiros sincronizados com configurações");
+      localStorage.setItem(userRestaurantKey, JSON.stringify(restaurantData));
     }
   } catch (error) {
-    console.error("Erro ao sincronizar dados financeiros:", error);
-    toast.error("Erro ao sincronizar dados financeiros");
+    console.error("Erro ao sincronizar dados financeiros com restaurante:", error);
   }
 }
 
 /**
- * Limpar todos os dados financeiros (para novos usuários)
+ * Limpar dados financeiros do usuário atual
  */
-export function clearFinancialData(): void {
+export async function clearFinancialData(): Promise<void> {
   try {
-    localStorage.setItem("financialData", JSON.stringify(createEmptyFinancialData()));
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      console.error('Usuário não autenticado');
+      return;
+    }
+
+    const userKey = `financialData_${session.user.id}`;
+    const emptyData = createEmptyFinancialData();
+    
+    localStorage.setItem(userKey, JSON.stringify(emptyData));
     dispatchFinancialDataEvent();
+    
+    console.log('Dados financeiros limpos para usuário:', session.user.id);
     toast.success("Dados financeiros reiniciados");
   } catch (error) {
     console.error("Erro ao limpar dados financeiros:", error);
     toast.error("Erro ao limpar dados financeiros");
+  }
+}
+
+/**
+ * Migrar dados antigos para o novo formato com isolamento por usuário
+ */
+export async function migrateUserFinancialData(): Promise<void> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) return;
+
+    const userKey = `financialData_${session.user.id}`;
+    const oldKey = 'financialData';
+    
+    // Verificar se já existem dados específicos do usuário
+    if (localStorage.getItem(userKey)) {
+      return; // Já migrado
+    }
+    
+    // Verificar se existem dados antigos
+    const oldData = localStorage.getItem(oldKey);
+    if (oldData) {
+      try {
+        const parsedOldData = JSON.parse(oldData);
+        localStorage.setItem(userKey, JSON.stringify(parsedOldData));
+        console.log('Dados financeiros migrados para usuário:', session.user.id);
+      } catch (error) {
+        console.error('Erro ao migrar dados antigos:', error);
+        // Se houver erro, criar dados vazios
+        localStorage.setItem(userKey, JSON.stringify(createEmptyFinancialData()));
+      }
+    } else {
+      // Criar dados vazios se não houver dados antigos
+      localStorage.setItem(userKey, JSON.stringify(createEmptyFinancialData()));
+    }
+  } catch (error) {
+    console.error("Erro na migração de dados financeiros:", error);
   }
 }

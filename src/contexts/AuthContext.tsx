@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { UserRole, loginUser, registerUser, logoutUser, getUserById } from '@/services/AuthService';
+import { UserRole } from '@/services/AuthService';
 import { toast } from 'sonner';
 
 interface SubscriptionInfo {
@@ -56,6 +56,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     subscription_end: null,
   });
 
+  // Função para limpar dados do usuário
+  const clearUserData = () => {
+    setUser(null);
+    setSession(null);
+    setUserRole(null);
+    setUserRestaurants([]);
+    setCurrentRestaurant(null);
+    setSubscriptionInfo({
+      subscribed: false,
+      subscription_tier: null,
+      subscription_end: null,
+    });
+    
+    // Limpar localStorage de dados específicos do usuário (mantendo configurações globais)
+    const keysToRemove = [
+      'financialData',
+      'cashFlow',
+      'goals',
+      'restaurantData',
+      'currentUser',
+      'inventory',
+      'recipes'
+    ];
+    
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+  };
+
+  // Função para inicializar dados de novo usuário
+  const initializeNewUserData = async (userId: string) => {
+    try {
+      console.log('Inicializando dados para novo usuário:', userId);
+      
+      // Criar dados financeiros vazios
+      const emptyFinancialData = {
+        receita: 0,
+        cmv: 0,
+        cmvPercentage: 0,
+        profitMargin: 0,
+        fixedCosts: 0,
+        variableCosts: 0,
+        netProfit: 0,
+        lastUpdate: new Date().toISOString()
+      };
+      
+      localStorage.setItem('financialData', JSON.stringify(emptyFinancialData));
+      localStorage.setItem('cashFlow', JSON.stringify([]));
+      localStorage.setItem('goals', JSON.stringify([]));
+      localStorage.setItem('inventory', JSON.stringify([]));
+      localStorage.setItem('recipes', JSON.stringify([]));
+      
+      console.log('Dados iniciais criados para novo usuário');
+      return true;
+    } catch (error) {
+      console.error('Erro ao inicializar dados do usuário:', error);
+      return false;
+    }
+  };
+
   const checkSubscription = async () => {
     try {
       if (!session?.access_token) {
@@ -72,7 +132,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error checking subscription:', error);
-        toast.error('Erro ao verificar assinatura');
         return;
       }
 
@@ -84,7 +143,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
     } catch (error) {
       console.error('Error checking subscription:', error);
-      toast.error('Erro ao verificar assinatura');
     }
   };
 
@@ -239,16 +297,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setUser(null);
-      setSession(null);
-      setUserRole(null);
-      setUserRestaurants([]);
-      setCurrentRestaurant(null);
-      setSubscriptionInfo({
-        subscribed: false,
-        subscription_tier: null,
-        subscription_end: null,
-      });
+      clearUserData();
       toast.success('Logout realizado com sucesso!');
     } catch (error) {
       console.error('Erro no logout:', error);
@@ -284,16 +333,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Create a mock restaurant for now
-      const newRestaurant: Restaurant = {
-        id: crypto.randomUUID(),
-        name,
-        user_id: user.id,
-        created_at: new Date().toISOString(),
-      };
+      // Criar restaurante via Supabase
+      const { data, error } = await supabase
+        .from('restaurants')
+        .insert([
+          {
+            name,
+            owner_id: user.id,
+            business_type: 'Restaurante',
+            target_food_cost: 30,
+            target_beverage_cost: 25,
+            desired_profit_margin: 50,
+          }
+        ])
+        .select()
+        .single();
 
-      setUserRestaurants(prev => [...prev, newRestaurant]);
-      setCurrentRestaurant(newRestaurant);
+      if (error) {
+        console.error('Erro ao criar restaurante no Supabase:', error);
+        // Fallback para criar localmente
+        const newRestaurant: Restaurant = {
+          id: crypto.randomUUID(),
+          name,
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+        };
+
+        setUserRestaurants(prev => [...prev, newRestaurant]);
+        setCurrentRestaurant(newRestaurant);
+      } else {
+        const newRestaurant: Restaurant = {
+          id: data.id,
+          name: data.name,
+          user_id: data.owner_id,
+          created_at: data.created_at,
+        };
+
+        setUserRestaurants(prev => [...prev, newRestaurant]);
+        setCurrentRestaurant(newRestaurant);
+      }
+
       toast.success('Restaurante criado com sucesso!');
     } catch (error) {
       console.error('Erro ao criar restaurante:', error);
@@ -302,59 +381,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      
-      if (currentSession?.user) {
-        console.log('AuthContext: Usuário logado ou sessão restaurada...');
-        console.log('AuthContext estado atual:', {
-          user: currentSession.user.email,
-          isAuthenticated: true,
-          isLoading: false,
-          session: !!currentSession,
-          subscriptionInfo
-        });
-
-        // Create a default restaurant if none exists
-        const defaultRestaurant: Restaurant = {
-          id: 'default',
-          name: 'Meu Restaurante',
-          user_id: currentSession.user.id,
-          created_at: new Date().toISOString(),
-        };
-        setUserRestaurants([defaultRestaurant]);
-        setCurrentRestaurant(defaultRestaurant);
+    const initializeAuth = async () => {
+      try {
+        // Verificar sessão existente
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (currentSession?.user) {
+          setSession(currentSession);
+          setUser(currentSession.user);
+          
+          // Verificar se é um usuário novo (criado há menos de 1 hora)
+          const userCreatedAt = new Date(currentSession.user.created_at);
+          const now = new Date();
+          const hoursDiff = (now.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60);
+          
+          if (hoursDiff < 1) {
+            console.log('Novo usuário detectado, inicializando dados...');
+            await initializeNewUserData(currentSession.user.id);
+          }
+        }
+      } catch (error) {
+        console.error('Erro na inicialização da autenticação:', error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
 
-    getSession();
+    initializeAuth();
 
+    // Configurar listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log('AuthContext: Auth state changed:', event, currentSession?.user?.email);
       
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      
+      if (event === 'SIGNED_OUT') {
+        clearUserData();
+        setIsLoading(false);
+        return;
+      }
+
       if (currentSession?.user) {
-        console.log('AuthContext: Usuário logado ou sessão restaurada...');
-        console.log('AuthContext estado atual:', {
-          user: currentSession.user.email,
-          isAuthenticated: true,
-          isLoading: false,
-          session: !!currentSession,
-          subscriptionInfo
-        });
+        setSession(currentSession);
+        setUser(currentSession.user);
         
-        console.log('AuthContext: Sessão detectada, buscando perfil...');
-        console.log('AuthContext: Buscando perfil para usuário:', currentSession.user.id);
+        // Se for um novo login, verificar se precisa inicializar dados
+        if (event === 'SIGNED_IN') {
+          const userCreatedAt = new Date(currentSession.user.created_at);
+          const now = new Date();
+          const hoursDiff = (now.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60);
+          
+          if (hoursDiff < 1) {
+            console.log('Novo usuário logado, inicializando dados...');
+            await initializeNewUserData(currentSession.user.id);
+          }
+        }
         
         setIsLoading(true);
         try {
-          // Fetch user profile from Supabase profiles table
+          // Buscar perfil do usuário
           const { data: profile } = await supabase
             .from('profiles')
             .select('role')
@@ -365,11 +448,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('AuthContext: Perfil encontrado:', profile);
             setUserRole(profile.role as UserRole);
           } else {
-            // Default to employee if no profile found
-            setUserRole(UserRole.EMPLOYEE);
+            console.log('AuthContext: Criando perfil padrão');
+            setUserRole(UserRole.OWNER);
           }
 
-          // Set up default restaurant
+          // Configurar restaurante padrão
           const defaultRestaurant: Restaurant = {
             id: 'default',
             name: 'Meu Restaurante',
@@ -380,27 +463,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setCurrentRestaurant(defaultRestaurant);
         } catch (error) {
           console.error('AuthContext: Erro ao buscar perfil:', error);
-          setUserRole(UserRole.EMPLOYEE);
+          setUserRole(UserRole.OWNER);
         } finally {
           setIsLoading(false);
         }
-        
-        console.log('AuthContext estado atual:', {
-          user: currentSession.user.email,
-          isAuthenticated: true,
-          isLoading: false,
-          session: !!currentSession,
-          subscriptionInfo
-        });
       } else {
-        setUserRole(null);
-        setUserRestaurants([]);
-        setCurrentRestaurant(null);
-        setSubscriptionInfo({
-          subscribed: false,
-          subscription_tier: null,
-          subscription_end: null,
-        });
+        clearUserData();
+        setIsLoading(false);
       }
     });
 
@@ -410,7 +479,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Verificar assinatura quando a sessão mudar
   useEffect(() => {
     if (session?.access_token) {
-      checkSubscription();
+      // Usar setTimeout para evitar problemas de concorrência
+      setTimeout(() => {
+        checkSubscription();
+      }, 1000);
     }
   }, [session?.access_token]);
 
