@@ -2,29 +2,7 @@
 import { toast } from "sonner";
 import { FinancialData } from "@/types/financial-data";
 import { supabase } from "@/integrations/supabase/client";
-
-/**
- * Criar dados financeiros vazios para novo usuário
- */
-export function createEmptyFinancialData(): FinancialData {
-  return {
-    receita: 0,
-    cmv: 0,
-    cmvPercentage: 0,
-    profitMargin: 0,
-    fixedCosts: 0,
-    variableCosts: 0,
-    netProfit: 0,
-    lastUpdate: new Date().toISOString()
-  };
-}
-
-/**
- * Disparar evento de atualização de dados financeiros
- */
-export function dispatchFinancialDataEvent(): void {
-  window.dispatchEvent(new Event('financialDataUpdated'));
-}
+import { createEmptyFinancialData, dispatchFinancialDataEvent } from "@/utils/financial-utils";
 
 /**
  * Obter dados financeiros específicos do usuário autenticado
@@ -91,6 +69,34 @@ export async function saveFinancialData(data: FinancialData): Promise<void> {
   } catch (error) {
     console.error("Erro ao salvar dados financeiros:", error);
     toast.error("Erro ao salvar dados financeiros");
+  }
+}
+
+/**
+ * Sincronizar dados financeiros com configurações do restaurante
+ */
+export async function syncFinancialWithConfig(): Promise<void> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) return;
+
+    const userRestaurantKey = `restaurantData_${session.user.id}`;
+    const restaurantDataStr = localStorage.getItem(userRestaurantKey);
+    const financialData = await getFinancialData();
+    
+    if (restaurantDataStr) {
+      const restaurantData = JSON.parse(restaurantDataStr);
+      
+      // Atualizar dados do restaurante com informações financeiras
+      restaurantData.lastFinancialUpdate = new Date().toISOString();
+      restaurantData.cmvPercentage = financialData.cmvPercentage || 0;
+      restaurantData.profitMargin = financialData.profitMargin || 0;
+      
+      localStorage.setItem(userRestaurantKey, JSON.stringify(restaurantData));
+    }
+  } catch (error) {
+    console.error("Erro ao sincronizar dados financeiros com configurações:", error);
   }
 }
 
