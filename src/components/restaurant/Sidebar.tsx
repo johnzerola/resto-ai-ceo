@@ -15,7 +15,14 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Utensils
+  Utensils,
+  BarChart3,
+  CreditCard,
+  Users,
+  Settings,
+  Bot,
+  HelpCircle,
+  Shield
 } from "lucide-react";
 import { NavItem } from "./NavItem";
 
@@ -27,6 +34,12 @@ const navigation = [
     description: "Visão geral do negócio"
   },
   {
+    title: "Projeções",
+    href: "/projecoes",
+    icon: TrendingUp,
+    description: "Planejamento e cenários futuros"
+  },
+  {
     title: "Fluxo de Caixa",
     href: "/fluxo-de-caixa",
     icon: DollarSign,
@@ -35,7 +48,7 @@ const navigation = [
   {
     title: "DRE",
     href: "/dre",
-    icon: TrendingUp,
+    icon: BarChart3,
     description: "Demonstração de resultados"
   },
   {
@@ -43,6 +56,12 @@ const navigation = [
     href: "/cmv",
     icon: Calculator,
     description: "Custo da mercadoria vendida"
+  },
+  {
+    title: "Simulador",
+    href: "/simulador",
+    icon: Calculator,
+    description: "Simulador de preços"
   },
   {
     title: "Metas",
@@ -63,11 +82,41 @@ const navigation = [
     description: "Gestão do cardápio"
   },
   {
-    title: "Simulador",
-    href: "/simulador",
-    icon: Calculator,
-    description: "Simulador de preços"
+    title: "Assistente IA",
+    href: "/ai-assistant",
+    icon: Bot,
+    description: "Suporte inteligente"
   },
+  {
+    title: "Usuários",
+    href: "/gerenciar-usuarios",
+    icon: Users,
+    description: "Gestão de equipe"
+  },
+  {
+    title: "Assinatura",
+    href: "/assinatura",
+    icon: CreditCard,
+    description: "Planos e pagamentos"
+  },
+  {
+    title: "Configurações",
+    href: "/configuracoes",
+    icon: Settings,
+    description: "Configurações do sistema"
+  },
+  {
+    title: "Documentação",
+    href: "/documentacao",
+    icon: HelpCircle,
+    description: "Ajuda e tutoriais"
+  },
+  {
+    title: "Privacidade",
+    href: "/privacidade",
+    icon: Shield,
+    description: "Política de privacidade"
+  }
 ];
 
 export function Sidebar() {
@@ -143,7 +192,10 @@ export function Sidebar() {
         {/* Header */}
         <div className="flex h-16 items-center justify-between px-4 border-b">
           {!isCollapsed && (
-            <h2 className="text-lg font-semibold">RestoAI CEO</h2>
+            <h2 className="text-lg font-semibold">
+              <span className="text-primary">Resto</span>
+              <span className="text-blue-600">AI</span> CEO
+            </h2>
           )}
           <Button
             variant="ghost"

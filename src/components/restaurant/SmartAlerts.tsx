@@ -2,202 +2,142 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, Info, TrendingDown, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, TrendingUp } from "lucide-react";
 
-interface SmartAlertsProps {
-  margin: number;
-  suggestedPrice: number;
-  currentPrice?: number;
-  breakEvenUnits: number;
-  monthlySales: number;
-  totalCostPerUnit: number;
+interface Recommendation {
+  type: "success" | "warning" | "error" | "info";
+  title: string;
+  description: string;
+  suggestion: string;
 }
 
-export function SmartAlerts({
-  margin,
-  suggestedPrice,
-  currentPrice,
-  breakEvenUnits,
-  monthlySales,
-  totalCostPerUnit
-}: SmartAlertsProps) {
-  const alerts = [];
+interface SmartAlertsProps {
+  recommendations: Recommendation[];
+}
 
-  // Análise de margem
-  if (margin < 10) {
-    alerts.push({
-      type: 'error',
-      icon: AlertTriangle,
-      title: 'Margem Crítica',
-      message: `Margem de ${margin.toFixed(1)}% está muito baixa. Recomenda-se mínimo de 15% para sustentabilidade.`,
-      priority: 1
-    });
-  } else if (margin < 15) {
-    alerts.push({
-      type: 'warning',
-      icon: AlertTriangle,
-      title: 'Margem Baixa',
-      message: `Margem de ${margin.toFixed(1)}% pode ser otimizada. Considere revisar custos ou preços.`,
-      priority: 2
-    });
-  } else if (margin > 30) {
-    alerts.push({
-      type: 'info',
-      icon: Info,
-      title: 'Margem Alta',
-      message: `Margem de ${margin.toFixed(1)}% está excelente, mas verifique se não está afetando a competitividade.`,
-      priority: 3
-    });
-  }
-
-  // Análise de ponto de equilíbrio
-  const breakEvenPercentage = (breakEvenUnits / monthlySales) * 100;
-  if (breakEvenPercentage > 80) {
-    alerts.push({
-      type: 'error',
-      icon: TrendingDown,
-      title: 'Ponto de Equilíbrio Alto',
-      message: `Necessário vender ${breakEvenPercentage.toFixed(1)}% da capacidade para não ter prejuízo. Risco alto.`,
-      priority: 1
-    });
-  } else if (breakEvenPercentage > 60) {
-    alerts.push({
-      type: 'warning',
-      icon: AlertTriangle,
-      title: 'Ponto de Equilíbrio Moderado',
-      message: `Ponto de equilíbrio em ${breakEvenPercentage.toFixed(1)}% da capacidade. Monitore vendas de perto.`,
-      priority: 2
-    });
-  } else {
-    alerts.push({
-      type: 'success',
-      icon: CheckCircle,
-      title: 'Ponto de Equilíbrio Saudável',
-      message: `Ponto de equilíbrio em ${breakEvenPercentage.toFixed(1)}% da capacidade. Boa margem de segurança.`,
-      priority: 3
-    });
-  }
-
-  // Análise de variação de preço
-  if (currentPrice) {
-    const priceVariation = ((suggestedPrice - currentPrice) / currentPrice) * 100;
-    if (Math.abs(priceVariation) > 20) {
-      alerts.push({
-        type: 'warning',
-        icon: AlertTriangle,
-        title: 'Grande Variação de Preço',
-        message: `Mudança de ${priceVariation.toFixed(1)}% no preço pode impactar significativamente a demanda.`,
-        priority: 2
-      });
-    }
-  }
-
-  // Análise de custo unitário
-  const costPercentage = (totalCostPerUnit / suggestedPrice) * 100;
-  if (costPercentage > 70) {
-    alerts.push({
-      type: 'warning',
-      icon: TrendingUp,
-      title: 'Custo Alto',
-      message: `Custos representam ${costPercentage.toFixed(1)}% do preço. Considere otimizar processos.`,
-      priority: 2
-    });
-  }
-
-  // Ordenar alertas por prioridade
-  alerts.sort((a, b) => a.priority - b.priority);
-
-  const getAlertStyle = (type: string) => {
+export function SmartAlerts({ recommendations }: SmartAlertsProps) {
+  const getIcon = (type: string) => {
     switch (type) {
-      case 'error':
-        return 'border-red-500 bg-red-50';
-      case 'warning':
-        return 'border-yellow-500 bg-yellow-50';
-      case 'success':
-        return 'border-green-500 bg-green-50';
+      case "success":
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case "warning":
+        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+      case "error":
+        return <AlertTriangle className="h-4 w-4 text-red-600" />;
+      case "info":
+        return <Info className="h-4 w-4 text-blue-600" />;
       default:
-        return 'border-blue-500 bg-blue-50';
+        return <TrendingUp className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getAlertTextStyle = (type: string) => {
+  const getAlertClass = (type: string) => {
     switch (type) {
-      case 'error':
-        return 'text-red-700';
-      case 'warning':
-        return 'text-yellow-700';
-      case 'success':
-        return 'text-green-700';
+      case "success":
+        return "border-green-200 bg-green-50";
+      case "warning":
+        return "border-yellow-200 bg-yellow-50";
+      case "error":
+        return "border-red-200 bg-red-50";
+      case "info":
+        return "border-blue-200 bg-blue-50";
       default:
-        return 'text-blue-700';
+        return "border-gray-200 bg-gray-50";
     }
   };
 
-  const getBadgeStyle = (type: string) => {
+  const getBadgeClass = (type: string) => {
     switch (type) {
-      case 'error':
-        return 'bg-red-500';
-      case 'warning':
-        return 'bg-yellow-500';
-      case 'success':
-        return 'bg-green-500';
+      case "success":
+        return "bg-green-500";
+      case "warning":
+        return "bg-yellow-500";
+      case "error":
+        return "bg-red-500";
+      case "info":
+        return "bg-blue-500";
       default:
-        return 'bg-blue-500';
+        return "bg-gray-500";
     }
   };
+
+  if (recommendations.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            Alertas Inteligentes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6">
+            <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
+            <h3 className="font-medium text-green-800 mb-2">Configuração Otimizada!</h3>
+            <p className="text-sm text-green-600">
+              Suas configurações estão dentro dos parâmetros recomendados.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5" />
+          <AlertTriangle className="h-5 w-5 text-yellow-600" />
           Alertas Inteligentes
+          <Badge className="ml-2">{recommendations.length}</Badge>
         </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Análises e recomendações baseadas nos dados inseridos
+        <p className="text-muted-foreground text-sm">
+          Recomendações baseadas em melhores práticas do setor
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {alerts.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">
-            <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
-            <p>Todos os indicadores estão dentro dos parâmetros recomendados!</p>
-          </div>
-        ) : (
-          alerts.map((alert, index) => {
-            const IconComponent = alert.icon;
-            return (
-              <Alert key={index} className={getAlertStyle(alert.type)}>
-                <div className="flex items-start gap-3">
-                  <IconComponent className={`h-5 w-5 mt-0.5 ${getAlertTextStyle(alert.type)}`} />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className={`font-medium ${getAlertTextStyle(alert.type)}`}>
-                        {alert.title}
-                      </h4>
-                      <Badge className={`${getBadgeStyle(alert.type)} text-white text-xs`}>
-                        {alert.type === 'error' ? 'Crítico' : 
-                         alert.type === 'warning' ? 'Atenção' :
-                         alert.type === 'success' ? 'Positivo' : 'Info'}
-                      </Badge>
-                    </div>
-                    <AlertDescription className={getAlertTextStyle(alert.type)}>
-                      {alert.message}
-                    </AlertDescription>
-                  </div>
+        {recommendations.map((rec, index) => (
+          <Alert key={index} className={getAlertClass(rec.type)}>
+            <div className="flex items-start gap-3">
+              {getIcon(rec.type)}
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">{rec.title}</h4>
+                  <Badge className={`${getBadgeClass(rec.type)} text-white text-xs`}>
+                    {rec.type.toUpperCase()}
+                  </Badge>
                 </div>
-              </Alert>
-            );
-          })
-        )}
+                <AlertDescription className="mb-2">
+                  {rec.description}
+                </AlertDescription>
+                <div className={`p-3 rounded-md mt-2 ${
+                  rec.type === 'success' ? 'bg-green-100' :
+                  rec.type === 'warning' ? 'bg-yellow-100' :
+                  rec.type === 'error' ? 'bg-red-100' :
+                  'bg-blue-100'
+                }`}>
+                  <p className={`text-sm font-medium ${
+                    rec.type === 'success' ? 'text-green-800' :
+                    rec.type === 'warning' ? 'text-yellow-800' :
+                    rec.type === 'error' ? 'text-red-800' :
+                    'text-blue-800'
+                  }`}>
+                    💡 Sugestão: {rec.suggestion}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Alert>
+        ))}
 
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-800 mb-2">Dicas Gerais:</h4>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Monitore custos semanalmente para ajustes rápidos</li>
-            <li>• Teste preços gradualmente para medir impacto na demanda</li>
-            <li>• Considere ofertas especiais para aumentar volume</li>
-            <li>• Analise concorrência regularmente</li>
+        {/* Additional industry insights */}
+        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+          <h4 className="font-medium text-blue-900 mb-2">🎯 Dicas Adicionais do Setor</h4>
+          <ul className="text-sm text-blue-700 space-y-1">
+            <li>• Monitore a concorrência semanalmente para ajustar preços</li>
+            <li>• Considere promoções estratégicas em dias de menor movimento</li>
+            <li>• Teste diferentes faixas de preço com pequenos ajustes (+/- 5%)</li>
+            <li>• Mantenha margem mínima de 20% para sustentabilidade</li>
           </ul>
         </div>
       </CardContent>

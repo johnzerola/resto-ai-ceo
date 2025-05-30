@@ -1,3 +1,4 @@
+
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -30,6 +31,8 @@ import Configuracoes from "@/pages/Configuracoes";
 import NotFound from "@/pages/NotFound";
 import { Assinatura } from "@/pages/Assinatura";
 import Simulador from "@/pages/Simulador";
+import PaginaVendas from "@/pages/PaginaVendas";
+import { ProjecoesPagina } from "@/pages/ProjecoesPagina";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +53,9 @@ function App() {
             <Router>
               <div className="min-h-screen bg-background">
                 <Routes>
+                  {/* Public sales page */}
+                  <Route path="/vendas" element={<PaginaVendas />} />
+                  
                   {/* Main routes */}
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/dashboard" element={<Dashboard />} />
@@ -66,6 +72,11 @@ function App() {
                   <Route path="/cash-flow" element={<FluxoCaixa />} />
                   <Route path="/dre" element={<DRE />} />
                   <Route path="/cmv" element={<CMV />} />
+                  
+                  {/* Projections and forecasting */}
+                  <Route path="/projecoes" element={<ProjecoesPagina />} />
+                  <Route path="/projections" element={<ProjecoesPagina />} />
+                  <Route path="/forecasting" element={<ProjecoesPagina />} />
                   
                   {/* Management routes */}
                   <Route path="/metas" element={<Metas />} />
