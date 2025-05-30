@@ -30,6 +30,7 @@ import Documentacao from "@/pages/Documentacao";
 import Configuracoes from "@/pages/Configuracoes";
 import NotFound from "@/pages/NotFound";
 import { Assinatura } from "@/pages/Assinatura";
+import Simulador from "@/pages/Simulador";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,11 +57,21 @@ function App() {
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="/access-denied" element={<AccessDenied />} />
                   <Route path="/fluxo-de-caixa" element={<FluxoCaixa />} />
+                  <Route path="/fluxo-caixa" element={<FluxoCaixa />} />
+                  <Route path="/cash-flow" element={<FluxoCaixa />} />
                   <Route path="/dre" element={<DRE />} />
                   <Route path="/cmv" element={<CMV />} />
                   <Route path="/metas" element={<Metas />} />
+                  <Route path="/goals" element={<Metas />} />
                   <Route path="/estoque" element={<Estoque />} />
+                  <Route path="/inventory" element={<Estoque />} />
                   <Route path="/fichas-tecnicas" element={<FichaTecnica />} />
+                  <Route path="/recipes" element={<FichaTecnica />} />
+                  <Route path="/simulador" element={<Simulador />} />
+                  <Route path="/simulator" element={<Simulador />} />
+                  <Route path="/price-simulator" element={<Simulador />} />
+                  <Route path="/cardapio" element={<FichaTecnica />} />
+                  <Route path="/menu" element={<FichaTecnica />} />
                   <Route path="/ai-assistant" element={<AIAssistantPage />} />
                   <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
                   <Route path="/privacidade" element={<Privacidade />} />

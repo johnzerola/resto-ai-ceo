@@ -1,201 +1,163 @@
-import {
-  LayoutDashboard,
-  Settings,
-  Calendar,
-  BarChart,
-  ListChecks,
-  Receipt,
-  MessageSquare,
-  Users,
-  Shield,
-  Pizza,
-  ChefHat,
-  FileText,
-  Goal,
-  TrendingUp,
-  Boxes,
+
+import React, { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  LayoutDashboard, 
+  DollarSign, 
+  TrendingUp, 
+  Target, 
+  Package, 
+  FileText, 
   Calculator,
-  HelpCircle,
-  BookOpenCheck,
-  CreditCard,
-  LucideIcon
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Utensils
 } from "lucide-react";
 import { NavItem } from "./NavItem";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSidebar } from "@/hooks/useSidebar";
-import { useEffect } from "react";
-import { dispatchSidebarToggle } from "@/utils/auth-utils";
 
-interface MenuItem {
-  title: string;
-  icon: LucideIcon;
-  href: string;
-  description: string;
-}
-
-const menuItems: MenuItem[] = [
+const navigation = [
   {
     title: "Dashboard",
-    icon: LayoutDashboard,
     href: "/",
-    description: "Visão geral do seu negócio"
+    icon: LayoutDashboard,
   },
   {
     title: "Fluxo de Caixa",
-    icon: Receipt,
     href: "/fluxo-de-caixa",
-    description: "Registre entradas e saídas de dinheiro"
+    icon: DollarSign,
   },
   {
     title: "DRE",
-    icon: BarChart,
     href: "/dre",
-    description: "Demonstrativo de Resultados"
+    icon: TrendingUp,
   },
   {
     title: "CMV",
-    icon: TrendingUp,
     href: "/cmv",
-    description: "Custo da Mercadoria Vendida"
+    icon: Calculator,
   },
   {
     title: "Metas",
-    icon: Goal,
     href: "/metas",
-    description: "Defina e acompanhe suas metas"
-  },
-  {
-    title: "Cardápio",
-    icon: Pizza,
-    href: "/cardapio",
-    description: "Gerencie seus produtos"
-  },
-  {
-    title: "Fichas Técnicas",
-    icon: ChefHat,
-    href: "/fichas-tecnicas",
-    description: "Controle os ingredientes dos seus pratos"
+    icon: Target,
   },
   {
     title: "Estoque",
-    icon: Boxes,
     href: "/estoque",
-    description: "Controle de estoque e ingredientes"
+    icon: Package,
   },
   {
-    title: "Relatórios",
-    icon: FileText,
-    href: "/relatorios",
-    description: "Visualize seus relatórios"
+    title: "Cardápio",
+    href: "/cardapio",
+    icon: Utensils,
   },
   {
-    title: "Agenda",
-    icon: Calendar,
-    href: "/agenda",
-    description: "Gerencie seus eventos e reservas"
-  },
-  {
-    title: "Checklists",
-    icon: ListChecks,
-    href: "/checklists",
-    description: "Crie e gerencie suas checklists"
-  },
-  {
-    title: "Calculadora",
+    title: "Simulador",
+    href: "/simulador",
     icon: Calculator,
-    href: "/calculadora",
-    description: "Ferramentas úteis para o dia a dia"
   },
-  {
-    title: "Assistente IA",
-    icon: MessageSquare,
-    href: "/ai-assistant",
-    description: "Assistente de IA para te ajudar"
-  },
-  {
-    title: "Assinatura",
-    icon: CreditCard,
-    href: "/assinatura",
-    description: "Gerencie sua assinatura e planos"
-  },
-  {
-    title: "Gerenciar Usuários",
-    icon: Users,
-    href: "/gerenciar-usuarios",
-    description: "Gerencie os usuários do sistema"
-  },
-  {
-    title: "Privacidade & Segurança",
-    icon: Shield,
-    href: "/privacidade",
-    description: "Gerencie dados pessoais e monitore segurança"
-  },
-  {
-    title: "Documentação",
-    icon: BookOpenCheck,
-    href: "/documentacao",
-    description: "Aprenda a usar o sistema"
-  },
-  {
-    title: "Suporte",
-    icon: HelpCircle,
-    href: "/suporte",
-    description: "Tire suas dúvidas"
-  },
-  {
-    title: "Configurações",
-    icon: Settings,
-    href: "/configuracoes",
-    description: "Personalize o sistema"
-  }
 ];
 
 export function Sidebar() {
-  const { isCollapsed, setIsCollapsed } = useSidebar();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // Handle mobile responsive behavior
   useEffect(() => {
-    const handleSidebarToggle = (event: CustomEvent) => {
-      setIsCollapsed(event.detail.isCollapsed);
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMobileOpen(false);
+      }
     };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-    window.addEventListener('sidebarToggle', handleSidebarToggle as EventListener);
+  // Dispatch custom event when sidebar state changes
+  useEffect(() => {
+    const event = new CustomEvent('sidebarToggle', {
+      detail: { isCollapsed, isMobileOpen }
+    });
+    window.dispatchEvent(event);
+  }, [isCollapsed, isMobileOpen]);
 
-    return () => {
-      window.removeEventListener('sidebarToggle', handleSidebarToggle as EventListener);
-    };
-  }, [setIsCollapsed]);
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const toggleMobile = () => {
+    setIsMobileOpen(!isMobileOpen);
+  };
 
   return (
-    <aside className={`
-      ${isCollapsed ? 'w-16' : 'w-60'}
-      flex flex-col bg-gray-50 border-r border-gray-200 transition-all duration-200 grow`
-    }>
-      <div className="flex items-center justify-center h-16 shrink-0 bg-resto-blue-500 text-white">
-        <button onClick={() => dispatchSidebarToggle(!isCollapsed)}>
-          <h1 className={`
-            text-lg font-bold tracking-tight
-            ${isCollapsed ? 'hidden' : ''}
-          `}>Resto<span className="text-green-400">AI</span> CEO</h1>
-          <h1 className={`
-            text-lg font-bold tracking-tight
-            ${!isCollapsed ? 'hidden' : ''}
-          `}>R<span className="text-green-400">AI</span></h1>
-        </button>
+    <>
+      {/* Mobile Menu Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-50 md:hidden"
+        onClick={toggleMobile}
+      >
+        {isMobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+      </Button>
+
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "fixed left-0 top-0 z-40 h-full bg-background border-r transition-all duration-300",
+          isCollapsed ? "w-16" : "w-64",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+      >
+        {/* Header */}
+        <div className="flex h-16 items-center justify-between px-4 border-b">
+          {!isCollapsed && (
+            <h2 className="text-lg font-semibold">RestoAI CEO</h2>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="hidden md:flex"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {/* Navigation */}
+        <ScrollArea className="flex-1 px-3 py-4">
+          <nav className="space-y-2">
+            {navigation.map((item) => (
+              <NavItem
+                key={item.href}
+                href={item.href}
+                icon={item.icon}
+                isCollapsed={isCollapsed}
+                onClick={() => setIsMobileOpen(false)}
+              >
+                {item.title}
+              </NavItem>
+            ))}
+          </nav>
+        </ScrollArea>
       </div>
-      <ScrollArea className="flex-1 p-4">
-        <nav className="grid gap-4">
-          {menuItems.map((item) => (
-            <NavItem
-              key={item.href}
-              title={item.title}
-              icon={item.icon}
-              href={item.href}
-              description={item.description}
-              isCollapsed={isCollapsed}
-            />
-          ))}
-        </nav>
-      </ScrollArea>
-    </aside>
+    </>
   );
 }
