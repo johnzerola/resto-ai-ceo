@@ -17,7 +17,7 @@ import Login from "@/pages/Login";
 import { Register } from "@/pages/Register";
 import Onboarding from "@/pages/Onboarding";
 import AccessDenied from "@/pages/AccessDenied";
-import { FluxoDeCaixa } from "@/pages/FluxoDeCaixa";
+import FluxoCaixa from "@/pages/FluxoCaixa";
 import { DRE } from "@/pages/DRE";
 import { CMV } from "@/pages/CMV";
 import { Metas } from "@/pages/Metas";
@@ -36,7 +36,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,
-      retry: 1, // Reduzir tentativas para melhor performance
+      retry: 1,
     },
   },
 });
@@ -55,7 +55,7 @@ function App() {
                   <Route path="/register" element={<Register />} />
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="/access-denied" element={<AccessDenied />} />
-                  <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
+                  <Route path="/fluxo-de-caixa" element={<FluxoCaixa />} />
                   <Route path="/dre" element={<DRE />} />
                   <Route path="/cmv" element={<CMV />} />
                   <Route path="/metas" element={<Metas />} />

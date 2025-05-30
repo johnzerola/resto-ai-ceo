@@ -11,103 +11,88 @@ interface DataSyncProps {
 export function DataSync({ children }: DataSyncProps) {
   const { user, isLoading } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
-  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     const initializeUserData = async () => {
-      if (isLoading) return;
+      // Don't wait for auth loading to complete - handle both states
+      if (isLoading) {
+        // If still loading auth, wait a bit but don't block indefinitely
+        setTimeout(() => {
+          if (isMounted && isLoading) {
+            console.log('Auth still loading, proceeding anyway');
+            setIsInitialized(true);
+          }
+        }, 2000);
+        return;
+      }
       
       try {
         if (user) {
           console.log('Inicializando dados para usuário:', user.id);
           
-          // Verificar se já foi inicializado para evitar re-execução
-          const initKey = `initialized_${user.id}`;
-          const alreadyInitialized = localStorage.getItem(initKey);
+          // Quick initialization without complex checks
+          await migrateUserFinancialData();
           
-          if (!alreadyInitialized) {
-            // Migrar dados financeiros para o formato específico do usuário
-            await migrateUserFinancialData();
-            
-            // Inicializar outros dados se necessário
-            const userKeys = [
-              'cashFlow',
-              'goals', 
-              'inventory',
-              'recipes',
-              'restaurantData'
-            ];
-            
-            userKeys.forEach(key => {
-              const userKey = `${key}_${user.id}`;
-              
-              // Se não existem dados específicos do usuário, criar dados vazios
-              if (!localStorage.getItem(userKey)) {
-                const defaultValue = key === 'restaurantData' ? {} : [];
-                localStorage.setItem(userKey, JSON.stringify(defaultValue));
-              }
-            });
-            
-            // Marcar como inicializado
-            localStorage.setItem(initKey, 'true');
-            console.log('Inicialização de dados completada para usuário:', user.id);
-          } else {
-            console.log('Dados já inicializados para usuário:', user.id);
-          }
+          // Ensure basic data structure exists
+          const userKeys = [
+            'cashFlow',
+            'goals', 
+            'inventory',
+            'recipes',
+            'restaurantData'
+          ];
+          
+          userKeys.forEach(key => {
+            const userKey = `${key}_${user.id}`;
+            if (!localStorage.getItem(userKey)) {
+              const defaultValue = key === 'restaurantData' ? {} : [];
+              localStorage.setItem(userKey, JSON.stringify(defaultValue));
+            }
+          });
+          
+          console.log('Inicialização completada para usuário:', user.id);
         } else {
-          console.log('Usuário não autenticado');
+          console.log('Usuário não autenticado - prosseguindo sem dados específicos');
         }
         
         if (isMounted) {
           setIsInitialized(true);
-          setHasError(false);
         }
       } catch (error) {
-        console.error('Erro na inicialização de dados:', error);
+        console.error('Erro na inicialização:', error);
+        // Don't block the app even if initialization fails
         if (isMounted) {
-          setHasError(true);
-          setIsInitialized(true); // Permitir que o app continue mesmo com erro
-          toast.error('Erro ao inicializar dados, mas você pode continuar usando o sistema');
+          setIsInitialized(true);
+          toast.error('Erro na inicialização, mas você pode continuar usando o sistema');
         }
       }
     };
 
-    // Pequeno delay para evitar execução imediata
-    const timeoutId = setTimeout(initializeUserData, 100);
+    initializeUserData();
+
+    // Safety timeout - always allow the app to proceed after 3 seconds
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted && !isInitialized) {
+        console.log('Timeout de segurança ativado - prosseguindo');
+        setIsInitialized(true);
+      }
+    }, 3000);
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
+      clearTimeout(safetyTimeout);
     };
   }, [user, isLoading]);
 
-  // Timeout de segurança para evitar travamento infinito
-  useEffect(() => {
-    const safetyTimeout = setTimeout(() => {
-      if (!isInitialized) {
-        console.warn('Inicialização demorou muito, forçando continuação');
-        setIsInitialized(true);
-        toast.warning('Inicialização demorou mais que o esperado, continuando...');
-      }
-    }, 5000); // 5 segundos
-
-    return () => clearTimeout(safetyTimeout);
-  }, [isInitialized]);
-
-  // Não renderizar até que a inicialização esteja completa
-  if (!isInitialized || isLoading) {
+  // Show loading only briefly, then always proceed
+  if (!isInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Inicializando dados...</p>
-          {hasError && (
-            <p className="text-sm text-yellow-600 mt-2">
-              Houve um problema, mas você pode continuar
-            </p>
-          )}
+          <p className="text-muted-foreground">Inicializando sistema...</p>
         </div>
       </div>
     );

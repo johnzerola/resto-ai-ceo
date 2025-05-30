@@ -16,7 +16,6 @@ export async function getFinancialData(): Promise<FinancialData> {
       return createEmptyFinancialData();
     }
 
-    // Criar chave específica do usuário
     const userKey = `financialData_${session.user.id}`;
     const savedData = localStorage.getItem(userKey);
     
@@ -55,7 +54,6 @@ export async function saveFinancialData(data: FinancialData): Promise<void> {
       return;
     }
 
-    // Criar chave específica do usuário
     const userKey = `financialData_${session.user.id}`;
     const dataToSave = {
       ...data,
@@ -65,10 +63,7 @@ export async function saveFinancialData(data: FinancialData): Promise<void> {
     localStorage.setItem(userKey, JSON.stringify(dataToSave));
     console.log('Dados financeiros salvos para usuário:', session.user.id);
     
-    // Notificar outros componentes da atualização
     dispatchFinancialDataEvent();
-    
-    // Sincronizar com dados do restaurante se existir
     await syncWithRestaurantData(data);
     
   } catch (error) {
@@ -93,7 +88,6 @@ export async function syncFinancialWithConfig(): Promise<void> {
       try {
         const restaurantData = JSON.parse(restaurantDataStr);
         
-        // Atualizar dados do restaurante com informações financeiras
         restaurantData.lastFinancialUpdate = new Date().toISOString();
         restaurantData.cmvPercentage = financialData.cmvPercentage || 0;
         restaurantData.profitMargin = financialData.profitMargin || 0;
@@ -124,7 +118,6 @@ async function syncWithRestaurantData(financialData: FinancialData): Promise<voi
       try {
         const restaurantData = JSON.parse(restaurantDataStr);
         
-        // Atualizar dados do restaurante com informações financeiras
         restaurantData.lastFinancialUpdate = new Date().toISOString();
         restaurantData.cmvPercentage = financialData.cmvPercentage || 0;
         restaurantData.profitMargin = financialData.profitMargin || 0;
@@ -171,7 +164,11 @@ export async function migrateUserFinancialData(): Promise<void> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     
-    if (!session?.user) return;
+    if (!session?.user) {
+      // If no user, just return without error
+      console.log('Nenhum usuário autenticado para migração');
+      return;
+    }
 
     const userKey = `financialData_${session.user.id}`;
     
@@ -186,5 +183,6 @@ export async function migrateUserFinancialData(): Promise<void> {
     console.log('Dados financeiros inicializados para usuário:', session.user.id);
   } catch (error) {
     console.error("Erro na migração de dados financeiros:", error);
+    // Don't throw error, just log it
   }
 }

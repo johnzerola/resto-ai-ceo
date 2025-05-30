@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, FileDown, BarChart } from "lucide-react";
 import { toast } from "sonner";
-import { syncAllModules } from "@/services/FinancialDataService";
 import { useNavigate } from "react-router-dom";
 import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
 
@@ -26,24 +25,20 @@ const FluxoCaixa = () => {
     }
   }, []);
 
-  // Toggle between cash flow list and add/edit form
   const toggleAddEntry = () => {
     setIsAddingEntry(!isAddingEntry);
     setSelectedEntryId(null);
   };
 
-  // Function to edit existing entry
   const editEntry = (entryId: string) => {
     setSelectedEntryId(entryId);
     setIsAddingEntry(true);
   };
 
-  // Função para ir para DRE/CMV
   const goToDreCmv = () => {
-    navigate('/dre-cmv');
+    navigate('/dre');
   };
 
-  // Função para exportar dados
   const exportData = () => {
     try {
       const cashFlowData = localStorage.getItem("cashFlow");
@@ -69,81 +64,73 @@ const FluxoCaixa = () => {
 
   return (
     <Layout>
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
-          <p className="text-muted-foreground flex items-center gap-2">
-            Controle de entradas e saídas financeiras
-            <SyncIndicator />
-          </p>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
+            <p className="text-muted-foreground flex items-center gap-2">
+              Controle de entradas e saídas financeiras
+              <SyncIndicator />
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {!isAddingEntry && (
+              <>
+                <Button variant="outline" size="sm" onClick={exportData}>
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Exportar
+                </Button>
+                <Button variant="outline" size="sm" onClick={goToDreCmv}>
+                  <BarChart className="mr-2 h-4 w-4" />
+                  Ver DRE
+                </Button>
+                <Button onClick={toggleAddEntry}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Transação
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
-          {!isAddingEntry && (
-            <>
-              <Button variant="outline" size="sm" onClick={exportData}>
-                <FileDown className="mr-2 h-4 w-4" />
-                Exportar
-              </Button>
-              <Button variant="outline" size="sm" onClick={goToDreCmv}>
-                <BarChart className="mr-2 h-4 w-4" />
-                Ver DRE/CMV
-              </Button>
-              <Button onClick={toggleAddEntry}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Transação
-              </Button>
-            </>
-          )}
-        </div>
+
+        {showIntegrationInfo && (
+          <Alert className="border-blue-500 bg-blue-50">
+            <AlertTitle className="text-blue-800">Integração Automática</AlertTitle>
+            <AlertDescription className="text-blue-700">
+              <p>Todas as transações registradas no fluxo de caixa são automaticamente sincronizadas com:</p>
+              <ul className="list-disc ml-6 mt-2">
+                <li>Demonstrativo de Resultados (DRE)</li>
+                <li>Análise de Custo de Mercadoria Vendida (CMV)</li>
+                <li>Dashboard Financeiro</li>
+                <li>Metas e Indicadores de Desempenho</li>
+              </ul>
+              <div className="mt-2 flex justify-end">
+                <Button 
+                  variant="link" 
+                  className="text-blue-800 p-0 h-auto font-semibold" 
+                  onClick={() => setShowIntegrationInfo(false)}
+                >
+                  Entendi
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isAddingEntry ? (
+          <CashFlowForm 
+            entryId={selectedEntryId} 
+            onCancel={toggleAddEntry} 
+            onSuccess={() => {
+              setIsAddingEntry(false);
+              setSelectedEntryId(null);
+              toast.success("Transação salva com sucesso");
+            }}
+          />
+        ) : (
+          <CashFlowOverview onEdit={editEntry} />
+        )}
       </div>
-
-      {showIntegrationInfo && (
-        <Alert className="mb-6 border-blue-500 bg-blue-50">
-          <AlertTitle className="text-blue-800">Integração Automática</AlertTitle>
-          <AlertDescription className="text-blue-700">
-            <p>Todas as transações registradas no fluxo de caixa são automaticamente sincronizadas com:</p>
-            <ul className="list-disc ml-6 mt-2">
-              <li>Demonstrativo de Resultados (DRE)</li>
-              <li>Análise de Custo de Mercadoria Vendida (CMV)</li>
-              <li>Dashboard Financeiro</li>
-              <li>Metas e Indicadores de Desempenho</li>
-            </ul>
-            <div className="mt-2 flex justify-end">
-              <Button 
-                variant="link" 
-                className="text-blue-800 p-0 h-auto font-semibold" 
-                onClick={() => setShowIntegrationInfo(false)}
-              >
-                Entendi
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {isAddingEntry ? (
-        <CashFlowForm 
-          entryId={selectedEntryId} 
-          onCancel={toggleAddEntry} 
-          onSuccess={async () => {
-            setIsAddingEntry(false);
-            setSelectedEntryId(null);
-            
-            // Usar sistema de sincronização aprimorado
-            const cashFlowData = localStorage.getItem("cashFlow");
-            if (cashFlowData) {
-              const parsedData = JSON.parse(cashFlowData);
-              await syncAllModules("cashFlow");
-              
-              toast.success("Transação salva e todos os módulos atualizados");
-            } else {
-              toast.warning("Transação salva mas não há dados para sincronizar");
-            }
-          }}
-        />
-      ) : (
-        <CashFlowOverview onEdit={editEntry} />
-      )}
     </Layout>
   );
 };
