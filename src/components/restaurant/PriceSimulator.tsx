@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,19 +8,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
-import { Calculator, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle, Utensils } from "lucide-react";
 import { SensitivityAnalysis } from "./SensitivityAnalysis";
 import { CompetitiveBenchmark } from "./CompetitiveBenchmark";
 import { SmartAlerts } from "./SmartAlerts";
 
 export function PriceSimulator() {
   const [formData, setFormData] = useState({
-    priceType: '',
+    businessModel: '', // 'buffet' or 'rodizio'
     ingredientCost: '',
+    wastePercentage: '',
     operationalExpenses: '',
     desiredMargin: '',
     monthlySalesProjection: '',
-    currentPrice: ''
+    currentPrice: '',
+    averageConsumption: '', // kg por pessoa para buffet
+    fixedCosts: '',
+    variableCosts: '',
+    marketPrice: '',
+    seasonalityFactor: '1'
   });
 
   const [results, setResults] = useState<any>(null);
@@ -33,53 +40,84 @@ export function PriceSimulator() {
 
   const calculateSuggestedPrice = () => {
     const ingredientCost = parseFloat(formData.ingredientCost) || 0;
+    const wastePercentage = parseFloat(formData.wastePercentage) || 0;
     const operationalExpenses = parseFloat(formData.operationalExpenses) || 0;
     const desiredMargin = parseFloat(formData.desiredMargin) || 0;
     const monthlySales = parseFloat(formData.monthlySalesProjection) || 0;
     const currentPrice = parseFloat(formData.currentPrice) || 0;
+    const averageConsumption = parseFloat(formData.averageConsumption) || 0;
+    const fixedCosts = parseFloat(formData.fixedCosts) || 0;
+    const variableCosts = parseFloat(formData.variableCosts) || 0;
+    const seasonalityFactor = parseFloat(formData.seasonalityFactor) || 1;
 
-    // Cálculos básicos
-    const fixedCostPerUnit = monthlySales > 0 ? operationalExpenses / monthlySales : 0;
-    const totalCostPerUnit = ingredientCost + fixedCostPerUnit;
-    const suggestedPrice = totalCostPerUnit / (1 - desiredMargin / 100);
-    
-    // Projeções financeiras
-    const monthlyRevenue = suggestedPrice * monthlySales;
-    const monthlyCosts = (ingredientCost * monthlySales) + operationalExpenses;
-    const monthlyProfit = monthlyRevenue - monthlyCosts;
-    const actualMargin = monthlyCosts > 0 ? ((monthlyRevenue - monthlyCosts) / monthlyRevenue) * 100 : 0;
-    
-    // Análise competitiva
-    const priceVariation = currentPrice > 0 ? ((suggestedPrice - currentPrice) / currentPrice) * 100 : 0;
-    
-    // Pontos de equilíbrio
-    const breakEvenUnits = operationalExpenses / (suggestedPrice - ingredientCost);
-    const breakEvenRevenue = breakEvenUnits * suggestedPrice;
+    let calculations: any = {};
 
-    const results = {
-      suggestedPrice,
-      totalCostPerUnit,
-      fixedCostPerUnit,
-      monthlyRevenue,
-      monthlyCosts,
-      monthlyProfit,
-      actualMargin,
-      priceVariation,
-      breakEvenUnits,
-      breakEvenRevenue,
-      viabilityAnalysis: getViabilityAnalysis(actualMargin, priceVariation, monthlyProfit)
-    };
+    if (formData.businessModel === 'buffet') {
+      // Cálculos específicos para buffet por peso
+      const effectiveIngredientCost = ingredientCost * (1 + wastePercentage / 100);
+      const fixedCostPerKg = monthlySales > 0 ? fixedCosts / monthlySales : 0;
+      const totalCostPerKg = effectiveIngredientCost + fixedCostPerKg + variableCosts;
+      const suggestedPricePerKg = totalCostPerKg / (1 - desiredMargin / 100);
+      
+      calculations = {
+        suggestedPrice: suggestedPricePerKg,
+        totalCostPerUnit: totalCostPerKg,
+        fixedCostPerUnit: fixedCostPerKg,
+        effectiveIngredientCost,
+        monthlyRevenue: suggestedPricePerKg * monthlySales,
+        monthlyCosts: totalCostPerKg * monthlySales + operationalExpenses,
+        breakEvenUnits: fixedCosts / (suggestedPricePerKg - effectiveIngredientCost - variableCosts),
+        wasteImpact: ingredientCost * (wastePercentage / 100)
+      };
+    } else if (formData.businessModel === 'rodizio') {
+      // Cálculos específicos para rodízio por pessoa
+      const costPerPerson = ingredientCost * averageConsumption * (1 + wastePercentage / 100);
+      const fixedCostPerPerson = monthlySales > 0 ? fixedCosts / monthlySales : 0;
+      const totalCostPerPerson = costPerPerson + fixedCostPerPerson + variableCosts;
+      const suggestedPricePerPerson = totalCostPerPerson / (1 - desiredMargin / 100);
+      
+      calculations = {
+        suggestedPrice: suggestedPricePerPerson,
+        totalCostPerUnit: totalCostPerPerson,
+        fixedCostPerUnit: fixedCostPerPerson,
+        costPerPerson,
+        monthlyRevenue: suggestedPricePerPerson * monthlySales,
+        monthlyCosts: totalCostPerPerson * monthlySales + operationalExpenses,
+        breakEvenUnits: fixedCosts / (suggestedPricePerPerson - costPerPerson - variableCosts),
+        averageConsumptionCost: costPerPerson
+      };
+    }
 
-    setResults(results);
+    // Cálculos comuns
+    calculations.monthlyProfit = calculations.monthlyRevenue - calculations.monthlyCosts;
+    calculations.actualMargin = calculations.monthlyRevenue > 0 ? 
+      ((calculations.monthlyRevenue - calculations.monthlyCosts) / calculations.monthlyRevenue) * 100 : 0;
+    calculations.priceVariation = currentPrice > 0 ? 
+      ((calculations.suggestedPrice - currentPrice) / currentPrice) * 100 : 0;
+    calculations.breakEvenRevenue = calculations.breakEvenUnits * calculations.suggestedPrice;
+    calculations.seasonalAdjustment = calculations.suggestedPrice * seasonalityFactor;
+    
+    // Análise de viabilidade
+    calculations.viabilityAnalysis = getViabilityAnalysis(
+      calculations.actualMargin, 
+      calculations.priceVariation, 
+      calculations.monthlyProfit,
+      formData.businessModel
+    );
+
+    setResults(calculations);
   };
 
-  const getViabilityAnalysis = (margin: number, priceVariation: number, profit: number) => {
+  const getViabilityAnalysis = (margin: number, priceVariation: number, profit: number, businessModel: string) => {
     const analyses = [];
     
-    if (margin >= 15) {
+    // Análise de margem específica por modelo
+    const minMargin = businessModel === 'buffet' ? 20 : 15; // Buffet precisa de margem maior
+    
+    if (margin >= minMargin) {
       analyses.push({
         type: 'success',
-        message: 'Margem de lucro saudável (≥15%)',
+        message: `Margem de lucro saudável (≥${minMargin}%) para ${businessModel}`,
         icon: CheckCircle
       });
     } else if (margin >= 10) {
@@ -91,31 +129,27 @@ export function PriceSimulator() {
     } else {
       analyses.push({
         type: 'error',
-        message: 'Margem muito baixa (<10%) - risco alto',
+        message: 'Margem muito baixa - risco alto para sustentabilidade',
         icon: AlertTriangle
       });
     }
 
+    // Análise de variação de preço
     if (Math.abs(priceVariation) <= 10) {
       analyses.push({
         type: 'success',
         message: 'Variação de preço competitiva (±10%)',
         icon: CheckCircle
       });
-    } else if (priceVariation > 10) {
+    } else if (priceVariation > 15) {
       analyses.push({
         type: 'warning',
-        message: `Preço ${priceVariation.toFixed(1)}% acima do atual - avaliar aceitação`,
-        icon: AlertTriangle
-      });
-    } else {
-      analyses.push({
-        type: 'warning',
-        message: `Preço ${Math.abs(priceVariation).toFixed(1)}% abaixo do atual - verificar sustentabilidade`,
+        message: `Aumento significativo de ${priceVariation.toFixed(1)}% - teste gradualmente`,
         icon: AlertTriangle
       });
     }
 
+    // Análise de lucro
     if (profit > 0) {
       analyses.push({
         type: 'success',
@@ -125,7 +159,7 @@ export function PriceSimulator() {
     } else {
       analyses.push({
         type: 'error',
-        message: 'Projeção de prejuízo - revisar estratégia',
+        message: 'Projeção de prejuízo - revisar estratégia urgentemente',
         icon: AlertTriangle
       });
     }
@@ -134,11 +168,17 @@ export function PriceSimulator() {
   };
 
   const isFormValid = () => {
-    return formData.priceType && 
-           formData.ingredientCost && 
-           formData.operationalExpenses && 
-           formData.desiredMargin && 
-           formData.monthlySalesProjection;
+    const basicFields = formData.businessModel && 
+                       formData.ingredientCost && 
+                       formData.operationalExpenses && 
+                       formData.desiredMargin && 
+                       formData.monthlySalesProjection;
+    
+    if (formData.businessModel === 'rodizio') {
+      return basicFields && formData.averageConsumption;
+    }
+    
+    return basicFields;
   };
 
   return (
@@ -146,25 +186,25 @@ export function PriceSimulator() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" />
-            Simulador de Preços Avançado
+            <Utensils className="h-5 w-5" />
+            Simulador de Preços - Rodízio e Buffet
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Ferramenta completa com análise de sensibilidade, benchmarking e alertas inteligentes
+            Calcule preços otimizados para diferentes modelos de negócio considerando desperdício, consumo médio e sazonalidade
           </p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Formulário - manter código existente */}
+            {/* Formulário */}
             <div className="space-y-4">
               <div>
-                <Label htmlFor="priceType">Tipo de Preço</Label>
-                <Select value={formData.priceType} onValueChange={(value) => handleInputChange('priceType', value)}>
+                <Label htmlFor="businessModel">Modelo de Negócio</Label>
+                <Select value={formData.businessModel} onValueChange={(value) => handleInputChange('businessModel', value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
+                    <SelectValue placeholder="Selecione o modelo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="kg">Por Kg</SelectItem>
+                    <SelectItem value="buffet">Buffet por Peso (Kg)</SelectItem>
                     <SelectItem value="rodizio">Rodízio por Pessoa</SelectItem>
                   </SelectContent>
                 </Select>
@@ -172,7 +212,7 @@ export function PriceSimulator() {
 
               <div>
                 <Label htmlFor="ingredientCost">
-                  Custo dos Ingredientes {formData.priceType === 'kg' ? 'por Kg' : 'por Pessoa'}
+                  Custo dos Ingredientes {formData.businessModel === 'buffet' ? 'por Kg' : 'por Kg de Insumo'}
                 </Label>
                 <Input
                   id="ingredientCost"
@@ -184,15 +224,55 @@ export function PriceSimulator() {
                 />
               </div>
 
+              {formData.businessModel === 'rodizio' && (
+                <div>
+                  <Label htmlFor="averageConsumption">Consumo Médio por Pessoa (Kg)</Label>
+                  <Input
+                    id="averageConsumption"
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 0.5"
+                    value={formData.averageConsumption}
+                    onChange={(e) => handleInputChange('averageConsumption', e.target.value)}
+                  />
+                </div>
+              )}
+
               <div>
-                <Label htmlFor="operationalExpenses">Despesas Operacionais Mensais</Label>
+                <Label htmlFor="wastePercentage">Percentual de Desperdício (%)</Label>
                 <Input
-                  id="operationalExpenses"
+                  id="wastePercentage"
+                  type="number"
+                  step="0.1"
+                  placeholder="Ex: 10"
+                  value={formData.wastePercentage}
+                  onChange={(e) => handleInputChange('wastePercentage', e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="fixedCosts">Custos Fixos Mensais</Label>
+                <Input
+                  id="fixedCosts"
                   type="number"
                   step="0.01"
-                  placeholder="Ex: 15000.00"
-                  value={formData.operationalExpenses}
-                  onChange={(e) => handleInputChange('operationalExpenses', e.target.value)}
+                  placeholder="Ex: 10000.00"
+                  value={formData.fixedCosts}
+                  onChange={(e) => handleInputChange('fixedCosts', e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="variableCosts">
+                  Custos Variáveis {formData.businessModel === 'buffet' ? 'por Kg' : 'por Pessoa'}
+                </Label>
+                <Input
+                  id="variableCosts"
+                  type="number"
+                  step="0.01"
+                  placeholder="Ex: 3.00"
+                  value={formData.variableCosts}
+                  onChange={(e) => handleInputChange('variableCosts', e.target.value)}
                 />
               </div>
 
@@ -202,7 +282,7 @@ export function PriceSimulator() {
                   id="desiredMargin"
                   type="number"
                   step="0.1"
-                  placeholder="Ex: 20"
+                  placeholder={formData.businessModel === 'buffet' ? "Ex: 25" : "Ex: 20"}
                   value={formData.desiredMargin}
                   onChange={(e) => handleInputChange('desiredMargin', e.target.value)}
                 />
@@ -210,27 +290,42 @@ export function PriceSimulator() {
 
               <div>
                 <Label htmlFor="monthlySalesProjection">
-                  Projeção de Vendas Mensais {formData.priceType === 'kg' ? '(Kg)' : '(Pessoas)'}
+                  Projeção de Vendas Mensais {formData.businessModel === 'buffet' ? '(Kg)' : '(Pessoas)'}
                 </Label>
                 <Input
                   id="monthlySalesProjection"
                   type="number"
                   step="1"
-                  placeholder={formData.priceType === 'kg' ? "Ex: 1500" : "Ex: 800"}
+                  placeholder={formData.businessModel === 'buffet' ? "Ex: 2000" : "Ex: 800"}
                   value={formData.monthlySalesProjection}
                   onChange={(e) => handleInputChange('monthlySalesProjection', e.target.value)}
                 />
               </div>
 
               <div>
+                <Label htmlFor="seasonalityFactor">Fator de Sazonalidade</Label>
+                <Select value={formData.seasonalityFactor} onValueChange={(value) => handleInputChange('seasonalityFactor', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0.8">Baixa temporada (-20%)</SelectItem>
+                    <SelectItem value="1">Temporada normal</SelectItem>
+                    <SelectItem value="1.2">Alta temporada (+20%)</SelectItem>
+                    <SelectItem value="1.5">Período especial (+50%)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="currentPrice">
-                  Preço Atual {formData.priceType === 'kg' ? 'por Kg' : 'por Pessoa'} (Opcional)
+                  Preço Atual {formData.businessModel === 'buffet' ? 'por Kg' : 'por Pessoa'} (Opcional)
                 </Label>
                 <Input
                   id="currentPrice"
                   type="number"
                   step="0.01"
-                  placeholder="Ex: 45.00"
+                  placeholder={formData.businessModel === 'buffet' ? "Ex: 45.00" : "Ex: 35.00"}
                   value={formData.currentPrice}
                   onChange={(e) => handleInputChange('currentPrice', e.target.value)}
                 />
@@ -241,7 +336,8 @@ export function PriceSimulator() {
                 disabled={!isFormValid()}
                 className="w-full"
               >
-                Calcular Preço Sugerido
+                <Calculator className="mr-2 h-4 w-4" />
+                Calcular Preço Otimizado
               </Button>
             </div>
 
@@ -259,12 +355,21 @@ export function PriceSimulator() {
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell>Tipo de preço</TableCell>
-                      <TableCell>{formData.priceType === 'kg' ? 'Por Kg' : 'Rodízio por Pessoa'}</TableCell>
+                      <TableCell>Modelo de negócio</TableCell>
+                      <TableCell>{formData.businessModel === 'buffet' ? 'Buffet por Peso' : 'Rodízio por Pessoa'}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell>Custo dos ingredientes</TableCell>
-                      <TableCell>{formatCurrency(parseFloat(formData.ingredientCost))}</TableCell>
+                      <TableCell>Custo base {formData.businessModel === 'buffet' ? 'por kg' : 'por pessoa'}</TableCell>
+                      <TableCell>
+                        {formatCurrency(formData.businessModel === 'buffet' ? 
+                          results.effectiveIngredientCost : results.costPerPerson)}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Impacto do desperdício</TableCell>
+                      <TableCell>
+                        {formatCurrency(results.wasteImpact || (results.costPerPerson - parseFloat(formData.ingredientCost) * parseFloat(formData.averageConsumption || '0')))}
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>Custo fixo por unidade</TableCell>
@@ -275,18 +380,8 @@ export function PriceSimulator() {
                       <TableCell>{formatCurrency(results.totalCostPerUnit)}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell>Despesas operacionais</TableCell>
-                      <TableCell>{formatCurrency(parseFloat(formData.operationalExpenses))}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Margem de lucro desejada</TableCell>
+                      <TableCell>Margem desejada</TableCell>
                       <TableCell>{formData.desiredMargin}%</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Projeção de vendas</TableCell>
-                      <TableCell>
-                        {formData.monthlySalesProjection} {formData.priceType === 'kg' ? 'kg' : 'pessoas'}/mês
-                      </TableCell>
                     </TableRow>
                     <TableRow className="bg-green-50">
                       <TableCell className="font-semibold">Preço sugerido</TableCell>
@@ -294,6 +389,14 @@ export function PriceSimulator() {
                         {formatCurrency(results.suggestedPrice)}
                       </TableCell>
                     </TableRow>
+                    {parseFloat(formData.seasonalityFactor) !== 1 && (
+                      <TableRow className="bg-blue-50">
+                        <TableCell className="font-semibold">Preço com sazonalidade</TableCell>
+                        <TableCell className="font-semibold text-blue-700">
+                          {formatCurrency(results.seasonalAdjustment)}
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -322,7 +425,6 @@ export function PriceSimulator() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* ... keep existing code (financial projection content) */}
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span>Receita Projetada:</span>
@@ -346,7 +448,7 @@ export function PriceSimulator() {
                       <div className="flex justify-between">
                         <span>Ponto de Equilíbrio:</span>
                         <span className="font-semibold">
-                          {Math.ceil(results.breakEvenUnits)} {formData.priceType === 'kg' ? 'kg' : 'pessoas'}
+                          {Math.ceil(results.breakEvenUnits)} {formData.businessModel === 'buffet' ? 'kg' : 'pessoas'}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm text-muted-foreground">
@@ -363,7 +465,6 @@ export function PriceSimulator() {
                   <CardTitle>Análise de Viabilidade</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {/* ... keep existing code (viability analysis content) */}
                   <div className="space-y-3">
                     {results.viabilityAnalysis.map((analysis: any, index: number) => {
                       const IconComponent = analysis.icon;
@@ -384,23 +485,26 @@ export function PriceSimulator() {
                     })}
                   </div>
 
-                  {formData.currentPrice && results.priceVariation !== 0 && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                      <h4 className="text-sm font-medium text-blue-800">Comparação com Preço Atual</h4>
-                      <p className="text-sm text-blue-700 mt-1">
-                        O preço sugerido é {results.priceVariation > 0 ? 'maior' : 'menor'} que o atual em{' '}
-                        <span className="font-semibold">{Math.abs(results.priceVariation).toFixed(1)}%</span>
-                      </p>
-                    </div>
-                  )}
-
                   <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-800">Considerações Importantes</h4>
+                    <h4 className="text-sm font-medium text-gray-800">
+                      Dicas para {formData.businessModel === 'buffet' ? 'Buffet' : 'Rodízio'}:
+                    </h4>
                     <ul className="text-sm text-gray-600 mt-1 space-y-1">
-                      <li>• Monitore a flutuação de preços dos ingredientes</li>
-                      <li>• Considere a sazonalidade do seu negócio</li>
-                      <li>• Analise preços da concorrência local</li>
-                      <li>• Teste o preço gradualmente se necessário</li>
+                      {formData.businessModel === 'buffet' ? (
+                        <>
+                          <li>• Monitore o desperdício diariamente</li>
+                          <li>• Controle a temperatura dos alimentos</li>
+                          <li>• Considere horários de maior/menor fluxo</li>
+                          <li>• Ofereça variedade sem comprometer custos</li>
+                        </>
+                      ) : (
+                        <>
+                          <li>• Monitore o consumo médio por cliente</li>
+                          <li>• Controle qualidade e apresentação</li>
+                          <li>• Considere limite de tempo se necessário</li>
+                          <li>• Foque na experiência do cliente</li>
+                        </>
+                      )}
                     </ul>
                   </div>
                 </CardContent>
@@ -422,7 +526,7 @@ export function PriceSimulator() {
           <TabsContent value="competitive">
             <CompetitiveBenchmark
               suggestedPrice={results.suggestedPrice}
-              priceType={formData.priceType}
+              priceType={formData.businessModel}
             />
           </TabsContent>
 

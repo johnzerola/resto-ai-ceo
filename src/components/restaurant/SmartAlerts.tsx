@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, CheckCircle, TrendingUp, TrendingDown, Lightbulb } from "lucide-react";
+import { AlertTriangle, CheckCircle, Info, TrendingDown, TrendingUp } from "lucide-react";
 
 interface SmartAlertsProps {
   margin: number;
@@ -21,136 +21,128 @@ export function SmartAlerts({
   monthlySales,
   totalCostPerUnit
 }: SmartAlertsProps) {
-  
   const alerts = [];
 
-  // Alert de margem baixa
+  // Análise de margem
   if (margin < 10) {
     alerts.push({
       type: 'error',
       icon: AlertTriangle,
       title: 'Margem Crítica',
-      message: `Margem de ${margin.toFixed(1)}% está abaixo do recomendado (mín. 15%). Risco alto de prejuízo.`,
-      suggestion: 'Considere reduzir custos ou aumentar preços gradualmente.'
+      message: `Margem de ${margin.toFixed(1)}% está muito baixa. Recomenda-se mínimo de 15% para sustentabilidade.`,
+      priority: 1
     });
   } else if (margin < 15) {
     alerts.push({
       type: 'warning',
       icon: AlertTriangle,
       title: 'Margem Baixa',
-      message: `Margem de ${margin.toFixed(1)}% pode ser otimizada. Ideal acima de 15%.`,
-      suggestion: 'Analise oportunidades de redução de custos ou ajuste de preços.'
+      message: `Margem de ${margin.toFixed(1)}% pode ser otimizada. Considere revisar custos ou preços.`,
+      priority: 2
+    });
+  } else if (margin > 30) {
+    alerts.push({
+      type: 'info',
+      icon: Info,
+      title: 'Margem Alta',
+      message: `Margem de ${margin.toFixed(1)}% está excelente, mas verifique se não está afetando a competitividade.`,
+      priority: 3
     });
   }
 
-  // Alert de break-even
+  // Análise de ponto de equilíbrio
   const breakEvenPercentage = (breakEvenUnits / monthlySales) * 100;
   if (breakEvenPercentage > 80) {
     alerts.push({
       type: 'error',
       icon: TrendingDown,
       title: 'Ponto de Equilíbrio Alto',
-      message: `Precisa vender ${breakEvenPercentage.toFixed(0)}% da capacidade só para empatar.`,
-      suggestion: 'Reavalie sua estrutura de custos para reduzir o risco operacional.'
+      message: `Necessário vender ${breakEvenPercentage.toFixed(1)}% da capacidade para não ter prejuízo. Risco alto.`,
+      priority: 1
     });
   } else if (breakEvenPercentage > 60) {
     alerts.push({
       type: 'warning',
       icon: AlertTriangle,
-      title: 'Ponto de Equilíbrio Elevado',
-      message: `Break-even em ${breakEvenPercentage.toFixed(0)}% da capacidade.`,
-      suggestion: 'Monitore de perto o volume de vendas para garantir lucratividade.'
+      title: 'Ponto de Equilíbrio Moderado',
+      message: `Ponto de equilíbrio em ${breakEvenPercentage.toFixed(1)}% da capacidade. Monitore vendas de perto.`,
+      priority: 2
+    });
+  } else {
+    alerts.push({
+      type: 'success',
+      icon: CheckCircle,
+      title: 'Ponto de Equilíbrio Saudável',
+      message: `Ponto de equilíbrio em ${breakEvenPercentage.toFixed(1)}% da capacidade. Boa margem de segurança.`,
+      priority: 3
     });
   }
 
-  // Alert de diferença de preço
+  // Análise de variação de preço
   if (currentPrice) {
     const priceVariation = ((suggestedPrice - currentPrice) / currentPrice) * 100;
     if (Math.abs(priceVariation) > 20) {
       alerts.push({
         type: 'warning',
-        icon: priceVariation > 0 ? TrendingUp : TrendingDown,
+        icon: AlertTriangle,
         title: 'Grande Variação de Preço',
-        message: `Preço sugerido é ${Math.abs(priceVariation).toFixed(1)}% ${priceVariation > 0 ? 'maior' : 'menor'} que o atual.`,
-        suggestion: 'Implemente mudanças gradualmente para não impactar a clientela.'
+        message: `Mudança de ${priceVariation.toFixed(1)}% no preço pode impactar significativamente a demanda.`,
+        priority: 2
       });
     }
   }
 
-  // Alert de custo alto
-  const markupMultiplier = suggestedPrice / totalCostPerUnit;
-  if (markupMultiplier < 2) {
+  // Análise de custo unitário
+  const costPercentage = (totalCostPerUnit / suggestedPrice) * 100;
+  if (costPercentage > 70) {
     alerts.push({
       type: 'warning',
-      icon: AlertTriangle,
-      title: 'Markup Baixo',
-      message: `Markup de apenas ${markupMultiplier.toFixed(1)}x sobre o custo.`,
-      suggestion: 'Considere renegociar com fornecedores ou otimizar receitas.'
+      icon: TrendingUp,
+      title: 'Custo Alto',
+      message: `Custos representam ${costPercentage.toFixed(1)}% do preço. Considere otimizar processos.`,
+      priority: 2
     });
   }
 
-  // Sugestões positivas
-  if (margin >= 20) {
-    alerts.push({
-      type: 'success',
-      icon: CheckCircle,
-      title: 'Excelente Margem',
-      message: `Margem de ${margin.toFixed(1)}% está muito boa! Parabéns.`,
-      suggestion: 'Mantenha o controle de custos e monitore a satisfação dos clientes.'
-    });
-  }
+  // Ordenar alertas por prioridade
+  alerts.sort((a, b) => a.priority - b.priority);
 
-  if (breakEvenPercentage < 40) {
-    alerts.push({
-      type: 'success',
-      icon: CheckCircle,
-      title: 'Break-even Saudável',
-      message: `Ponto de equilíbrio em apenas ${breakEvenPercentage.toFixed(0)}% da capacidade.`,
-      suggestion: 'Ótima margem de segurança operacional!'
-    });
-  }
-
-  // Sugestões de otimização
-  const optimizations = [];
-
-  if (margin < 15) {
-    optimizations.push('Negocie melhores preços com fornecedores');
-    optimizations.push('Revise receitas para reduzir desperdício');
-    optimizations.push('Considere ajustar porções para otimizar custos');
-  }
-
-  if (markupMultiplier < 2.5) {
-    optimizations.push('Explore ingredientes alternativos mais econômicos');
-    optimizations.push('Implemente controle rigoroso de estoque');
-  }
-
-  if (optimizations.length > 0) {
-    alerts.push({
-      type: 'info',
-      icon: Lightbulb,
-      title: 'Oportunidades de Otimização',
-      message: 'Identifiquei algumas oportunidades de melhoria:',
-      suggestion: optimizations.join(' • ')
-    });
-  }
-
-  const getAlertColor = (type: string) => {
+  const getAlertStyle = (type: string) => {
     switch (type) {
-      case 'error': return 'border-red-200 bg-red-50';
-      case 'warning': return 'border-yellow-200 bg-yellow-50';
-      case 'success': return 'border-green-200 bg-green-50';
-      case 'info': return 'border-blue-200 bg-blue-50';
-      default: return 'border-gray-200';
+      case 'error':
+        return 'border-red-500 bg-red-50';
+      case 'warning':
+        return 'border-yellow-500 bg-yellow-50';
+      case 'success':
+        return 'border-green-500 bg-green-50';
+      default:
+        return 'border-blue-500 bg-blue-50';
     }
   };
 
-  const getIconColor = (type: string) => {
+  const getAlertTextStyle = (type: string) => {
     switch (type) {
-      case 'error': return 'text-red-600';
-      case 'warning': return 'text-yellow-600';
-      case 'success': return 'text-green-600';
-      case 'info': return 'text-blue-600';
-      default: return 'text-gray-600';
+      case 'error':
+        return 'text-red-700';
+      case 'warning':
+        return 'text-yellow-700';
+      case 'success':
+        return 'text-green-700';
+      default:
+        return 'text-blue-700';
+    }
+  };
+
+  const getBadgeStyle = (type: string) => {
+    switch (type) {
+      case 'error':
+        return 'bg-red-500';
+      case 'warning':
+        return 'bg-yellow-500';
+      case 'success':
+        return 'bg-green-500';
+      default:
+        return 'bg-blue-500';
     }
   };
 
@@ -158,40 +150,56 @@ export function SmartAlerts({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-yellow-600" />
-          Alertas Inteligentes e Sugestões
+          <AlertTriangle className="h-5 w-5" />
+          Alertas Inteligentes
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Análise automática e recomendações para otimização
+          Análises e recomendações baseadas nos dados inseridos
         </p>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {alerts.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">
-            <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-600" />
-            <p>Tudo parece estar em ordem! Seus parâmetros estão dentro dos padrões recomendados.</p>
+            <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+            <p>Todos os indicadores estão dentro dos parâmetros recomendados!</p>
           </div>
         ) : (
           alerts.map((alert, index) => {
             const IconComponent = alert.icon;
             return (
-              <Alert key={index} className={getAlertColor(alert.type)}>
-                <IconComponent className={`h-4 w-4 ${getIconColor(alert.type)}`} />
-                <AlertDescription className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={alert.type === 'error' ? 'destructive' : alert.type === 'warning' ? 'secondary' : 'default'}>
-                      {alert.title}
-                    </Badge>
+              <Alert key={index} className={getAlertStyle(alert.type)}>
+                <div className="flex items-start gap-3">
+                  <IconComponent className={`h-5 w-5 mt-0.5 ${getAlertTextStyle(alert.type)}`} />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className={`font-medium ${getAlertTextStyle(alert.type)}`}>
+                        {alert.title}
+                      </h4>
+                      <Badge className={`${getBadgeStyle(alert.type)} text-white text-xs`}>
+                        {alert.type === 'error' ? 'Crítico' : 
+                         alert.type === 'warning' ? 'Atenção' :
+                         alert.type === 'success' ? 'Positivo' : 'Info'}
+                      </Badge>
+                    </div>
+                    <AlertDescription className={getAlertTextStyle(alert.type)}>
+                      {alert.message}
+                    </AlertDescription>
                   </div>
-                  <p className="text-sm">{alert.message}</p>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    💡 {alert.suggestion}
-                  </p>
-                </AlertDescription>
+                </div>
               </Alert>
             );
           })
         )}
+
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <h4 className="text-sm font-medium text-gray-800 mb-2">Dicas Gerais:</h4>
+          <ul className="text-sm text-gray-600 space-y-1">
+            <li>• Monitore custos semanalmente para ajustes rápidos</li>
+            <li>• Teste preços gradualmente para medir impacto na demanda</li>
+            <li>• Considere ofertas especiais para aumentar volume</li>
+            <li>• Analise concorrência regularmente</li>
+          </ul>
+        </div>
       </CardContent>
     </Card>
   );

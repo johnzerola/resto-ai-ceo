@@ -1,9 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface SensitivityAnalysisProps {
   basePrice: number;
@@ -22,60 +21,43 @@ export function SensitivityAnalysis({
   baseMargin,
   monthlySales
 }: SensitivityAnalysisProps) {
-  
   const scenarios = [
-    {
-      name: "Pessimista",
-      costVariation: 20,
-      demandVariation: -15,
-      color: "destructive"
-    },
-    {
-      name: "Realista",
-      costVariation: 0,
-      demandVariation: 0,
-      color: "secondary"
-    },
-    {
-      name: "Otimista",
-      costVariation: -10,
-      demandVariation: 10,
-      color: "default"
-    }
+    { name: "Custo +10%", costChange: 0.1, priceChange: 0 },
+    { name: "Custo +20%", costChange: 0.2, priceChange: 0 },
+    { name: "Preço +5%", costChange: 0, priceChange: 0.05 },
+    { name: "Preço +10%", costChange: 0, priceChange: 0.1 },
+    { name: "Vendas -20%", costChange: 0, priceChange: 0, salesChange: -0.2 },
+    { name: "Vendas +20%", costChange: 0, priceChange: 0, salesChange: 0.2 },
   ];
 
-  const calculateScenario = (costVar: number, demandVar: number) => {
-    const adjustedCost = baseCost * (1 + costVar / 100);
-    const adjustedSales = monthlySales * (1 + demandVar / 100);
-    const adjustedRevenue = basePrice * adjustedSales;
-    const totalCosts = adjustedCost * adjustedSales;
-    const profit = adjustedRevenue - totalCosts;
-    const margin = adjustedRevenue > 0 ? (profit / adjustedRevenue) * 100 : 0;
+  const calculateScenario = (scenario: any) => {
+    const newCost = baseCost * (1 + scenario.costChange);
+    const newPrice = basePrice * (1 + scenario.priceChange);
+    const newSales = monthlySales * (1 + (scenario.salesChange || 0));
+    const newRevenue = newPrice * newSales;
+    const newTotalCost = newCost * newSales;
+    const newProfit = newRevenue - newTotalCost;
+    const newMargin = newRevenue > 0 ? (newProfit / newRevenue) * 100 : 0;
     
     return {
-      revenue: adjustedRevenue,
-      costs: totalCosts,
-      profit,
-      margin,
-      sales: adjustedSales
+      price: newPrice,
+      revenue: newRevenue,
+      profit: newProfit,
+      margin: newMargin,
+      profitChange: newProfit - baseProfit,
+      marginChange: newMargin - baseMargin
     };
-  };
-
-  const getVariationIcon = (value: number, baseValue: number) => {
-    if (value > baseValue) return <TrendingUp className="h-4 w-4 text-green-600" />;
-    if (value < baseValue) return <TrendingDown className="h-4 w-4 text-red-600" />;
-    return null;
   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-orange-600" />
+          <TrendingUp className="h-5 w-5" />
           Análise de Sensibilidade
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Veja como diferentes cenários afetam sua rentabilidade
+          Impacto de diferentes cenários no resultado financeiro
         </p>
       </CardHeader>
       <CardContent>
@@ -83,58 +65,48 @@ export function SensitivityAnalysis({
           <TableHeader>
             <TableRow>
               <TableHead>Cenário</TableHead>
-              <TableHead>Vendas Mensais</TableHead>
+              <TableHead>Preço</TableHead>
               <TableHead>Receita</TableHead>
-              <TableHead>Custos</TableHead>
               <TableHead>Lucro</TableHead>
               <TableHead>Margem</TableHead>
+              <TableHead>Variação Lucro</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {scenarios.map((scenario) => {
-              const result = calculateScenario(scenario.costVariation, scenario.demandVariation);
+            <TableRow className="bg-blue-50">
+              <TableCell className="font-medium">Base (Atual)</TableCell>
+              <TableCell>{formatCurrency(basePrice)}</TableCell>
+              <TableCell>{formatCurrency(baseRevenue)}</TableCell>
+              <TableCell>{formatCurrency(baseProfit)}</TableCell>
+              <TableCell>{baseMargin.toFixed(1)}%</TableCell>
+              <TableCell>-</TableCell>
+            </TableRow>
+            {scenarios.map((scenario, index) => {
+              const result = calculateScenario(scenario);
               return (
-                <TableRow key={scenario.name}>
-                  <TableCell>
-                    <Badge variant={scenario.color as any}>
-                      {scenario.name}
-                    </Badge>
+                <TableRow key={index}>
+                  <TableCell>{scenario.name}</TableCell>
+                  <TableCell>{formatCurrency(result.price)}</TableCell>
+                  <TableCell>{formatCurrency(result.revenue)}</TableCell>
+                  <TableCell className={result.profit >= 0 ? "text-green-600" : "text-red-600"}>
+                    {formatCurrency(result.profit)}
                   </TableCell>
+                  <TableCell>{result.margin.toFixed(1)}%</TableCell>
                   <TableCell className="flex items-center gap-1">
-                    {Math.round(result.sales)}
-                    {getVariationIcon(result.sales, monthlySales)}
-                  </TableCell>
-                  <TableCell className="flex items-center gap-1">
-                    {formatCurrency(result.revenue)}
-                    {getVariationIcon(result.revenue, baseRevenue)}
-                  </TableCell>
-                  <TableCell className="flex items-center gap-1">
-                    {formatCurrency(result.costs)}
-                    {getVariationIcon(result.costs, baseCost * monthlySales)}
-                  </TableCell>
-                  <TableCell className="flex items-center gap-1">
-                    <span className={result.profit >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      {formatCurrency(result.profit)}
+                    {result.profitChange >= 0 ? (
+                      <TrendingUp className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 text-red-600" />
+                    )}
+                    <span className={result.profitChange >= 0 ? "text-green-600" : "text-red-600"}>
+                      {formatCurrency(Math.abs(result.profitChange))}
                     </span>
-                    {getVariationIcon(result.profit, baseProfit)}
-                  </TableCell>
-                  <TableCell className="flex items-center gap-1">
-                    <span className={result.margin >= 15 ? 'text-green-600' : result.margin >= 10 ? 'text-yellow-600' : 'text-red-600'}>
-                      {result.margin.toFixed(1)}%
-                    </span>
-                    {getVariationIcon(result.margin, baseMargin)}
                   </TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
         </Table>
-        
-        <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-          <p><strong>Pessimista:</strong> +20% custos, -15% demanda</p>
-          <p><strong>Realista:</strong> Cenário base atual</p>
-          <p><strong>Otimista:</strong> -10% custos, +10% demanda</p>
-        </div>
       </CardContent>
     </Card>
   );
