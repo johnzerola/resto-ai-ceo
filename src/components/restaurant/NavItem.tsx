@@ -15,6 +15,12 @@ export function NavItem({ title, icon: Icon, href, description, isCollapsed }: N
   const location = useLocation();
   const isActive = location.pathname === href;
 
+  const handleClick = () => {
+    // Close mobile menu when navigating
+    const event = new CustomEvent('closeMobileMenu');
+    window.dispatchEvent(event);
+  };
+
   return (
     <Link
       to={href}
@@ -24,6 +30,7 @@ export function NavItem({ title, icon: Icon, href, description, isCollapsed }: N
         isCollapsed && "justify-center px-2"
       )}
       title={isCollapsed ? title : undefined}
+      onClick={handleClick}
     >
       <Icon className="h-5 w-5 shrink-0" />
       {!isCollapsed && (

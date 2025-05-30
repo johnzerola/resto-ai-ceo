@@ -21,6 +21,9 @@ const mockGoals = [
     deadline: "2024-12-31",
     completed: false,
     reward: "Bônus para equipe",
+    category: "financial",
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-15",
     linkedTo: {
       source: "dre" as const,
       metric: "revenue_growth"
@@ -36,6 +39,9 @@ const mockGoals = [
     deadline: "2024-12-31",
     completed: false,
     reward: null,
+    category: "operational",
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-10",
     linkedTo: {
       source: "cmv" as const,
       metric: "reduction"
@@ -51,6 +57,9 @@ const mockGoals = [
     deadline: "2024-12-31", 
     completed: true,
     reward: "Meta alcançada!",
+    category: "financial",
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-20",
     linkedTo: null
   }
 ];

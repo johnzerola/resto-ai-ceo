@@ -86,6 +86,16 @@ export function Sidebar() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Listen for close mobile menu event
+  useEffect(() => {
+    const handleCloseMobileMenu = () => {
+      setIsMobileOpen(false);
+    };
+    
+    window.addEventListener('closeMobileMenu' as any, handleCloseMobileMenu);
+    return () => window.removeEventListener('closeMobileMenu' as any, handleCloseMobileMenu);
+  }, []);
+
   // Dispatch custom event when sidebar state changes
   useEffect(() => {
     const event = new CustomEvent('sidebarToggle', {
@@ -160,7 +170,6 @@ export function Sidebar() {
                 title={item.title}
                 description={item.description}
                 isCollapsed={isCollapsed}
-                onClick={() => setIsMobileOpen(false)}
               />
             ))}
           </nav>
