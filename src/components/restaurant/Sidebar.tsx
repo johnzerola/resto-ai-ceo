@@ -24,41 +24,49 @@ const navigation = [
     title: "Dashboard",
     href: "/",
     icon: LayoutDashboard,
+    description: "Visão geral do negócio"
   },
   {
     title: "Fluxo de Caixa",
     href: "/fluxo-de-caixa",
     icon: DollarSign,
+    description: "Controle financeiro"
   },
   {
     title: "DRE",
     href: "/dre",
     icon: TrendingUp,
+    description: "Demonstração de resultados"
   },
   {
     title: "CMV",
     href: "/cmv",
     icon: Calculator,
+    description: "Custo da mercadoria vendida"
   },
   {
     title: "Metas",
     href: "/metas",
     icon: Target,
+    description: "Sistema de metas e objetivos"
   },
   {
     title: "Estoque",
     href: "/estoque",
     icon: Package,
+    description: "Gestão de inventário"
   },
   {
     title: "Cardápio",
     href: "/cardapio",
     icon: Utensils,
+    description: "Gestão do cardápio"
   },
   {
     title: "Simulador",
     href: "/simulador",
     icon: Calculator,
+    description: "Simulador de preços"
   },
 ];
 
@@ -149,11 +157,11 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 icon={item.icon}
+                title={item.title}
+                description={item.description}
                 isCollapsed={isCollapsed}
                 onClick={() => setIsMobileOpen(false)}
-              >
-                {item.title}
-              </NavItem>
+              />
             ))}
           </nav>
         </ScrollArea>
