@@ -21,7 +21,7 @@ const mockGoals = [
     deadline: "2024-12-31",
     completed: false,
     reward: "Bônus para equipe",
-    category: "financial",
+    category: "financial" as const,
     createdAt: "2024-01-01",
     updatedAt: "2024-01-15",
     linkedTo: {
@@ -39,7 +39,7 @@ const mockGoals = [
     deadline: "2024-12-31",
     completed: false,
     reward: null,
-    category: "operational",
+    category: "operational" as const,
     createdAt: "2024-01-01",
     updatedAt: "2024-01-10",
     linkedTo: {
@@ -57,7 +57,7 @@ const mockGoals = [
     deadline: "2024-12-31", 
     completed: true,
     reward: "Meta alcançada!",
-    category: "financial",
+    category: "financial" as const,
     createdAt: "2024-01-01",
     updatedAt: "2024-01-20",
     linkedTo: null
