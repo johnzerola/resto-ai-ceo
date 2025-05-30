@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, AlertTriangle, Wifi, Database, Sync } from "lucide-react";
+import { CheckCircle, AlertTriangle, Wifi, Database, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function SystemStatus() {
@@ -82,7 +82,7 @@ export function SystemStatus() {
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sync className="h-4 w-4 text-muted-foreground" />
+            <RefreshCw className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">Sincronização</span>
           </div>
           <Badge className={`${getStatusColor(systemHealth.sync)} text-white text-xs`}>
