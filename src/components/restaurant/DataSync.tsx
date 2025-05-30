@@ -11,85 +11,90 @@ interface DataSyncProps {
 export function DataSync({ children }: DataSyncProps) {
   const { user, isLoading } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const initializeUserData = async () => {
       if (isLoading) return;
       
-      if (user) {
-        try {
+      try {
+        if (user) {
           console.log('Inicializando dados para usuário:', user.id);
           
-          // Migrar dados financeiros para o formato específico do usuário
-          await migrateUserFinancialData();
+          // Verificar se já foi inicializado para evitar re-execução
+          const initKey = `initialized_${user.id}`;
+          const alreadyInitialized = localStorage.getItem(initKey);
           
-          // Verificar e migrar outros dados se necessário
-          const userKeys = [
-            'cashFlow',
-            'goals', 
-            'inventory',
-            'recipes',
-            'restaurantData'
-          ];
-          
-          userKeys.forEach(key => {
-            const userKey = `${key}_${user.id}`;
-            const oldData = localStorage.getItem(key);
+          if (!alreadyInitialized) {
+            // Migrar dados financeiros para o formato específico do usuário
+            await migrateUserFinancialData();
             
-            // Se não existem dados específicos do usuário mas existem dados antigos
-            if (!localStorage.getItem(userKey) && oldData) {
-              try {
-                localStorage.setItem(userKey, oldData);
-                console.log(`Dados ${key} migrados para usuário:`, user.id);
-              } catch (error) {
-                console.error(`Erro ao migrar ${key}:`, error);
-                // Criar dados vazios em caso de erro
-                localStorage.setItem(userKey, JSON.stringify([]));
+            // Inicializar outros dados se necessário
+            const userKeys = [
+              'cashFlow',
+              'goals', 
+              'inventory',
+              'recipes',
+              'restaurantData'
+            ];
+            
+            userKeys.forEach(key => {
+              const userKey = `${key}_${user.id}`;
+              
+              // Se não existem dados específicos do usuário, criar dados vazios
+              if (!localStorage.getItem(userKey)) {
+                const defaultValue = key === 'restaurantData' ? {} : [];
+                localStorage.setItem(userKey, JSON.stringify(defaultValue));
               }
-            } else if (!localStorage.getItem(userKey)) {
-              // Criar dados vazios se não existir nada
-              const defaultValue = key === 'restaurantData' ? {} : [];
-              localStorage.setItem(userKey, JSON.stringify(defaultValue));
-            }
-          });
-          
-          console.log('Inicialização de dados completada para usuário:', user.id);
-        } catch (error) {
-          console.error('Erro na inicialização de dados:', error);
-          toast.error('Erro ao inicializar dados do usuário');
+            });
+            
+            // Marcar como inicializado
+            localStorage.setItem(initKey, 'true');
+            console.log('Inicialização de dados completada para usuário:', user.id);
+          } else {
+            console.log('Dados já inicializados para usuário:', user.id);
+          }
+        } else {
+          console.log('Usuário não autenticado');
         }
-      } else {
-        console.log('Usuário não autenticado, limpando dados locais');
-        // Limpar quaisquer dados de usuário se não estiver autenticado
-        const keysToClean = [
-          'financialData',
-          'cashFlow',
-          'goals',
-          'inventory', 
-          'recipes',
-          'restaurantData'
-        ];
         
-        keysToClean.forEach(key => {
-          // Manter apenas dados que não são específicos de usuário
-          const allKeys = Object.keys(localStorage);
-          allKeys.forEach(storageKey => {
-            if (storageKey.startsWith(key + '_')) {
-              // Não limpar dados específicos de outros usuários
-              return;
-            }
-            if (storageKey === key) {
-              localStorage.removeItem(storageKey);
-            }
-          });
-        });
+        if (isMounted) {
+          setIsInitialized(true);
+          setHasError(false);
+        }
+      } catch (error) {
+        console.error('Erro na inicialização de dados:', error);
+        if (isMounted) {
+          setHasError(true);
+          setIsInitialized(true); // Permitir que o app continue mesmo com erro
+          toast.error('Erro ao inicializar dados, mas você pode continuar usando o sistema');
+        }
       }
-      
-      setIsInitialized(true);
     };
 
-    initializeUserData();
+    // Pequeno delay para evitar execução imediata
+    const timeoutId = setTimeout(initializeUserData, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, [user, isLoading]);
+
+  // Timeout de segurança para evitar travamento infinito
+  useEffect(() => {
+    const safetyTimeout = setTimeout(() => {
+      if (!isInitialized) {
+        console.warn('Inicialização demorou muito, forçando continuação');
+        setIsInitialized(true);
+        toast.warning('Inicialização demorou mais que o esperado, continuando...');
+      }
+    }, 5000); // 5 segundos
+
+    return () => clearTimeout(safetyTimeout);
+  }, [isInitialized]);
 
   // Não renderizar até que a inicialização esteja completa
   if (!isInitialized || isLoading) {
@@ -98,6 +103,11 @@ export function DataSync({ children }: DataSyncProps) {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Inicializando dados...</p>
+          {hasError && (
+            <p className="text-sm text-yellow-600 mt-2">
+              Houve um problema, mas você pode continuar
+            </p>
+          )}
         </div>
       </div>
     );

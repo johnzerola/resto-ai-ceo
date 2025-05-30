@@ -21,9 +21,16 @@ export async function getFinancialData(): Promise<FinancialData> {
     const savedData = localStorage.getItem(userKey);
     
     if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      console.log('Dados financeiros carregados para usuário:', session.user.id);
-      return parsedData;
+      try {
+        const parsedData = JSON.parse(savedData);
+        console.log('Dados financeiros carregados para usuário:', session.user.id);
+        return parsedData;
+      } catch (parseError) {
+        console.warn('Erro ao fazer parse dos dados financeiros, criando novos:', parseError);
+        const emptyData = createEmptyFinancialData();
+        localStorage.setItem(userKey, JSON.stringify(emptyData));
+        return emptyData;
+      }
     } else {
       console.log('Criando novos dados financeiros para usuário:', session.user.id);
       const emptyData = createEmptyFinancialData();
@@ -32,7 +39,6 @@ export async function getFinancialData(): Promise<FinancialData> {
     }
   } catch (error) {
     console.error("Erro ao obter dados financeiros:", error);
-    toast.error("Erro ao carregar dados financeiros");
     return createEmptyFinancialData();
   }
 }
@@ -46,7 +52,6 @@ export async function saveFinancialData(data: FinancialData): Promise<void> {
     
     if (!session?.user) {
       console.error('Usuário não autenticado, não é possível salvar dados');
-      toast.error("Você precisa estar logado para salvar dados");
       return;
     }
 
@@ -68,7 +73,6 @@ export async function saveFinancialData(data: FinancialData): Promise<void> {
     
   } catch (error) {
     console.error("Erro ao salvar dados financeiros:", error);
-    toast.error("Erro ao salvar dados financeiros");
   }
 }
 
@@ -86,14 +90,18 @@ export async function syncFinancialWithConfig(): Promise<void> {
     const financialData = await getFinancialData();
     
     if (restaurantDataStr) {
-      const restaurantData = JSON.parse(restaurantDataStr);
-      
-      // Atualizar dados do restaurante com informações financeiras
-      restaurantData.lastFinancialUpdate = new Date().toISOString();
-      restaurantData.cmvPercentage = financialData.cmvPercentage || 0;
-      restaurantData.profitMargin = financialData.profitMargin || 0;
-      
-      localStorage.setItem(userRestaurantKey, JSON.stringify(restaurantData));
+      try {
+        const restaurantData = JSON.parse(restaurantDataStr);
+        
+        // Atualizar dados do restaurante com informações financeiras
+        restaurantData.lastFinancialUpdate = new Date().toISOString();
+        restaurantData.cmvPercentage = financialData.cmvPercentage || 0;
+        restaurantData.profitMargin = financialData.profitMargin || 0;
+        
+        localStorage.setItem(userRestaurantKey, JSON.stringify(restaurantData));
+      } catch (error) {
+        console.error("Erro ao processar dados do restaurante:", error);
+      }
     }
   } catch (error) {
     console.error("Erro ao sincronizar dados financeiros com configurações:", error);
@@ -113,14 +121,18 @@ async function syncWithRestaurantData(financialData: FinancialData): Promise<voi
     const restaurantDataStr = localStorage.getItem(userRestaurantKey);
     
     if (restaurantDataStr) {
-      const restaurantData = JSON.parse(restaurantDataStr);
-      
-      // Atualizar dados do restaurante com informações financeiras
-      restaurantData.lastFinancialUpdate = new Date().toISOString();
-      restaurantData.cmvPercentage = financialData.cmvPercentage || 0;
-      restaurantData.profitMargin = financialData.profitMargin || 0;
-      
-      localStorage.setItem(userRestaurantKey, JSON.stringify(restaurantData));
+      try {
+        const restaurantData = JSON.parse(restaurantDataStr);
+        
+        // Atualizar dados do restaurante com informações financeiras
+        restaurantData.lastFinancialUpdate = new Date().toISOString();
+        restaurantData.cmvPercentage = financialData.cmvPercentage || 0;
+        restaurantData.profitMargin = financialData.profitMargin || 0;
+        
+        localStorage.setItem(userRestaurantKey, JSON.stringify(restaurantData));
+      } catch (error) {
+        console.error("Erro ao processar dados do restaurante para sincronização:", error);
+      }
     }
   } catch (error) {
     console.error("Erro ao sincronizar dados financeiros com restaurante:", error);
@@ -149,7 +161,6 @@ export async function clearFinancialData(): Promise<void> {
     toast.success("Dados financeiros reiniciados");
   } catch (error) {
     console.error("Erro ao limpar dados financeiros:", error);
-    toast.error("Erro ao limpar dados financeiros");
   }
 }
 
@@ -163,29 +174,16 @@ export async function migrateUserFinancialData(): Promise<void> {
     if (!session?.user) return;
 
     const userKey = `financialData_${session.user.id}`;
-    const oldKey = 'financialData';
     
     // Verificar se já existem dados específicos do usuário
     if (localStorage.getItem(userKey)) {
       return; // Já migrado
     }
     
-    // Verificar se existem dados antigos
-    const oldData = localStorage.getItem(oldKey);
-    if (oldData) {
-      try {
-        const parsedOldData = JSON.parse(oldData);
-        localStorage.setItem(userKey, JSON.stringify(parsedOldData));
-        console.log('Dados financeiros migrados para usuário:', session.user.id);
-      } catch (error) {
-        console.error('Erro ao migrar dados antigos:', error);
-        // Se houver erro, criar dados vazios
-        localStorage.setItem(userKey, JSON.stringify(createEmptyFinancialData()));
-      }
-    } else {
-      // Criar dados vazios se não houver dados antigos
-      localStorage.setItem(userKey, JSON.stringify(createEmptyFinancialData()));
-    }
+    // Criar dados vazios para novos usuários
+    const emptyData = createEmptyFinancialData();
+    localStorage.setItem(userKey, JSON.stringify(emptyData));
+    console.log('Dados financeiros inicializados para usuário:', session.user.id);
   } catch (error) {
     console.error("Erro na migração de dados financeiros:", error);
   }
