@@ -9,90 +9,75 @@ interface DataSyncProps {
 }
 
 export function DataSync({ children }: DataSyncProps) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
 
-    const initializeUserData = async () => {
-      // Don't wait for auth loading to complete - handle both states
-      if (isLoading) {
-        // If still loading auth, wait a bit but don't block indefinitely
-        setTimeout(() => {
-          if (isMounted && isLoading) {
-            console.log('Auth still loading, proceeding anyway');
-            setIsInitialized(true);
-          }
-        }, 2000);
-        return;
-      }
-      
+    const initializeData = async () => {
       try {
+        // Se ainda está carregando auth, aguardar um pouco mas não indefinidamente
+        if (authLoading) {
+          const timeout = setTimeout(() => {
+            if (mounted) {
+              console.log('Auth timeout - prosseguindo com inicialização');
+              setIsInitialized(true);
+            }
+          }, 2000);
+          return () => clearTimeout(timeout);
+        }
+
+        // Inicializar dados se houver usuário
         if (user) {
           console.log('Inicializando dados para usuário:', user.id);
-          
-          // Quick initialization without complex checks
           await migrateUserFinancialData();
           
-          // Ensure basic data structure exists
-          const userKeys = [
-            'cashFlow',
-            'goals', 
-            'inventory',
-            'recipes',
-            'restaurantData'
-          ];
-          
-          userKeys.forEach(key => {
+          // Garantir estrutura básica de dados
+          const dataKeys = ['cashFlow', 'goals', 'inventory', 'recipes', 'restaurantData'];
+          dataKeys.forEach(key => {
             const userKey = `${key}_${user.id}`;
             if (!localStorage.getItem(userKey)) {
               const defaultValue = key === 'restaurantData' ? {} : [];
               localStorage.setItem(userKey, JSON.stringify(defaultValue));
             }
           });
-          
-          console.log('Inicialização completada para usuário:', user.id);
-        } else {
-          console.log('Usuário não autenticado - prosseguindo sem dados específicos');
         }
-        
-        if (isMounted) {
+
+        if (mounted) {
           setIsInitialized(true);
         }
       } catch (error) {
         console.error('Erro na inicialização:', error);
-        // Don't block the app even if initialization fails
-        if (isMounted) {
-          setIsInitialized(true);
-          toast.error('Erro na inicialização, mas você pode continuar usando o sistema');
+        if (mounted) {
+          setIsInitialized(true); // Permitir que o app continue mesmo com erro
         }
       }
     };
 
-    initializeUserData();
+    initializeData();
 
-    // Safety timeout - always allow the app to proceed after 3 seconds
+    // Timeout de segurança - sempre permitir que o app continue após 3 segundos
     const safetyTimeout = setTimeout(() => {
-      if (isMounted && !isInitialized) {
-        console.log('Timeout de segurança ativado - prosseguindo');
+      if (mounted && !isInitialized) {
+        console.log('Safety timeout - forçando inicialização');
         setIsInitialized(true);
       }
     }, 3000);
 
     return () => {
-      isMounted = false;
+      mounted = false;
       clearTimeout(safetyTimeout);
     };
-  }, [user, isLoading]);
+  }, [user, authLoading, isInitialized]);
 
-  // Show loading only briefly, then always proceed
-  if (!isInitialized) {
+  // Mostrar loading apenas brevemente
+  if (!isInitialized && authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Inicializando sistema...</p>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );

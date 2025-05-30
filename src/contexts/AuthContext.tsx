@@ -226,7 +226,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string): Promise<boolean> => {
     try {
-      setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -248,14 +247,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Erro no login:', error);
       toast.error('Erro no login. Verifique suas credenciais.');
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
-      setIsLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -282,8 +278,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Erro no cadastro:', error);
       toast.error('Erro no cadastro. Tente novamente.');
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -380,38 +374,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    let mounted = true;
+
     const initializeAuth = async () => {
       try {
-        // Verificar sessão existente
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
-        if (currentSession?.user) {
+        if (currentSession?.user && mounted) {
           setSession(currentSession);
           setUser(currentSession.user);
+          setUserRole(UserRole.OWNER); // Define role padrão
           
-          // Verificar se é um usuário novo (criado há menos de 1 hora)
-          const userCreatedAt = new Date(currentSession.user.created_at);
-          const now = new Date();
-          const hoursDiff = (now.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60);
-          
-          if (hoursDiff < 1) {
-            console.log('Novo usuário detectado, inicializando dados...');
-            await initializeNewUserData(currentSession.user.id);
-          }
+          // Setup restaurante padrão
+          const defaultRestaurant: Restaurant = {
+            id: 'default',
+            name: 'Meu Restaurante',
+            user_id: currentSession.user.id,
+            created_at: new Date().toISOString(),
+          };
+          setUserRestaurants([defaultRestaurant]);
+          setCurrentRestaurant(defaultRestaurant);
         }
       } catch (error) {
-        console.error('Erro na inicialização da autenticação:', error);
+        console.error('Erro na inicialização:', error);
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initializeAuth();
 
-    // Configurar listener de mudanças de autenticação
+    // Auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log('AuthContext: Auth state changed:', event, currentSession?.user?.email);
+      console.log('Auth state changed:', event, currentSession?.user?.email);
       
+      if (!mounted) return;
+
       if (event === 'SIGNED_OUT') {
         clearUserData();
         setIsLoading(false);
@@ -421,64 +421,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (currentSession?.user) {
         setSession(currentSession);
         setUser(currentSession.user);
+        setUserRole(UserRole.OWNER);
         
-        // Se for um novo login, verificar se precisa inicializar dados
-        if (event === 'SIGNED_IN') {
-          const userCreatedAt = new Date(currentSession.user.created_at);
-          const now = new Date();
-          const hoursDiff = (now.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60);
-          
-          if (hoursDiff < 1) {
-            console.log('Novo usuário logado, inicializando dados...');
-            await initializeNewUserData(currentSession.user.id);
-          }
-        }
-        
-        setIsLoading(true);
-        try {
-          // Buscar perfil do usuário
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', currentSession.user.id)
-            .single();
-          
-          if (profile) {
-            console.log('AuthContext: Perfil encontrado:', profile);
-            setUserRole(profile.role as UserRole);
-          } else {
-            console.log('AuthContext: Criando perfil padrão');
-            setUserRole(UserRole.OWNER);
-          }
-
-          // Configurar restaurante padrão
-          const defaultRestaurant: Restaurant = {
-            id: 'default',
-            name: 'Meu Restaurante',
-            user_id: currentSession.user.id,
-            created_at: new Date().toISOString(),
-          };
-          setUserRestaurants([defaultRestaurant]);
-          setCurrentRestaurant(defaultRestaurant);
-        } catch (error) {
-          console.error('AuthContext: Erro ao buscar perfil:', error);
-          setUserRole(UserRole.OWNER);
-        } finally {
-          setIsLoading(false);
-        }
+        const defaultRestaurant: Restaurant = {
+          id: 'default',
+          name: 'Meu Restaurante',
+          user_id: currentSession.user.id,
+          created_at: new Date().toISOString(),
+        };
+        setUserRestaurants([defaultRestaurant]);
+        setCurrentRestaurant(defaultRestaurant);
       } else {
         clearUserData();
-        setIsLoading(false);
       }
+      
+      setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Verificar assinatura quando a sessão mudar
+  // Check subscription when session changes
   useEffect(() => {
     if (session?.access_token) {
-      // Usar setTimeout para evitar problemas de concorrência
       setTimeout(() => {
         checkSubscription();
       }, 1000);

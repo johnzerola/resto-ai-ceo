@@ -1,12 +1,8 @@
-
 import { toast } from "sonner";
 import { FinancialData } from "@/types/financial-data";
 import { supabase } from "@/integrations/supabase/client";
 import { createEmptyFinancialData, dispatchFinancialDataEvent } from "@/utils/financial-utils";
 
-/**
- * Obter dados financeiros específicos do usuário autenticado
- */
 export async function getFinancialData(): Promise<FinancialData> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -42,15 +38,12 @@ export async function getFinancialData(): Promise<FinancialData> {
   }
 }
 
-/**
- * Salvar dados financeiros específicos do usuário autenticado
- */
 export async function saveFinancialData(data: FinancialData): Promise<void> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user) {
-      console.error('Usuário não autenticado, não é possível salvar dados');
+      console.warn('Usuário não autenticado, não é possível salvar dados');
       return;
     }
 
@@ -157,22 +150,17 @@ export async function clearFinancialData(): Promise<void> {
   }
 }
 
-/**
- * Migrar dados antigos para o novo formato com isolamento por usuário
- */
 export async function migrateUserFinancialData(): Promise<void> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user) {
-      // If no user, just return without error
       console.log('Nenhum usuário autenticado para migração');
       return;
     }
 
     const userKey = `financialData_${session.user.id}`;
     
-    // Verificar se já existem dados específicos do usuário
     if (localStorage.getItem(userKey)) {
       return; // Já migrado
     }
@@ -183,6 +171,6 @@ export async function migrateUserFinancialData(): Promise<void> {
     console.log('Dados financeiros inicializados para usuário:', session.user.id);
   } catch (error) {
     console.error("Erro na migração de dados financeiros:", error);
-    // Don't throw error, just log it
+    // Não lançar erro, apenas logar
   }
 }
