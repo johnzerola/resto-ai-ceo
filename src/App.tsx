@@ -1,4 +1,3 @@
-
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -10,6 +9,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 
 // Components
 import { DataSync } from "@/components/restaurant/DataSync";
+
+// Modern Layout
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 
 // Pages
 import { Dashboard } from "@/pages/Dashboard";
@@ -56,52 +58,52 @@ function App() {
                   {/* Public sales page */}
                   <Route path="/vendas" element={<PaginaVendas />} />
                   
-                  {/* Main routes */}
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  
                   {/* Auth routes */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="/access-denied" element={<AccessDenied />} />
                   
+                  {/* Protected routes with modern layout */}
+                  <Route path="/" element={<ModernLayout><Dashboard /></ModernLayout>} />
+                  <Route path="/dashboard" element={<ModernLayout><Dashboard /></ModernLayout>} />
+                  
                   {/* Financial routes */}
-                  <Route path="/fluxo-de-caixa" element={<FluxoCaixa />} />
-                  <Route path="/fluxo-caixa" element={<FluxoCaixa />} />
-                  <Route path="/cash-flow" element={<FluxoCaixa />} />
-                  <Route path="/dre" element={<DRE />} />
-                  <Route path="/cmv" element={<CMV />} />
+                  <Route path="/fluxo-de-caixa" element={<ModernLayout><FluxoCaixa /></ModernLayout>} />
+                  <Route path="/fluxo-caixa" element={<ModernLayout><FluxoCaixa /></ModernLayout>} />
+                  <Route path="/cash-flow" element={<ModernLayout><FluxoCaixa /></ModernLayout>} />
+                  <Route path="/dre" element={<ModernLayout><DRE /></ModernLayout>} />
+                  <Route path="/cmv" element={<ModernLayout><CMV /></ModernLayout>} />
                   
                   {/* Projections and forecasting */}
-                  <Route path="/projecoes" element={<ProjecoesPagina />} />
-                  <Route path="/projections" element={<ProjecoesPagina />} />
-                  <Route path="/forecasting" element={<ProjecoesPagina />} />
+                  <Route path="/projecoes" element={<ModernLayout><ProjecoesPagina /></ModernLayout>} />
+                  <Route path="/projections" element={<ModernLayout><ProjecoesPagina /></ModernLayout>} />
+                  <Route path="/forecasting" element={<ModernLayout><ProjecoesPagina /></ModernLayout>} />
                   
                   {/* Management routes */}
-                  <Route path="/metas" element={<Metas />} />
-                  <Route path="/goals" element={<Metas />} />
-                  <Route path="/estoque" element={<Estoque />} />
-                  <Route path="/inventory" element={<Estoque />} />
+                  <Route path="/metas" element={<ModernLayout><Metas /></ModernLayout>} />
+                  <Route path="/goals" element={<ModernLayout><Metas /></ModernLayout>} />
+                  <Route path="/estoque" element={<ModernLayout><Estoque /></ModernLayout>} />
+                  <Route path="/inventory" element={<ModernLayout><Estoque /></ModernLayout>} />
                   
                   {/* Menu and recipes */}
-                  <Route path="/fichas-tecnicas" element={<FichaTecnica />} />
-                  <Route path="/recipes" element={<FichaTecnica />} />
-                  <Route path="/cardapio" element={<FichaTecnica />} />
-                  <Route path="/menu" element={<FichaTecnica />} />
+                  <Route path="/fichas-tecnicas" element={<ModernLayout><FichaTecnica /></ModernLayout>} />
+                  <Route path="/recipes" element={<ModernLayout><FichaTecnica /></ModernLayout>} />
+                  <Route path="/cardapio" element={<ModernLayout><FichaTecnica /></ModernLayout>} />
+                  <Route path="/menu" element={<ModernLayout><FichaTecnica /></ModernLayout>} />
                   
                   {/* Simulator routes */}
-                  <Route path="/simulador" element={<Simulador />} />
-                  <Route path="/simulator" element={<Simulador />} />
-                  <Route path="/price-simulator" element={<Simulador />} />
+                  <Route path="/simulador" element={<ModernLayout><Simulador /></ModernLayout>} />
+                  <Route path="/simulator" element={<ModernLayout><Simulador /></ModernLayout>} />
+                  <Route path="/price-simulator" element={<ModernLayout><Simulador /></ModernLayout>} />
                   
                   {/* Other features */}
-                  <Route path="/ai-assistant" element={<AIAssistantPage />} />
-                  <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
-                  <Route path="/privacidade" element={<Privacidade />} />
-                  <Route path="/documentacao" element={<Documentacao />} />
-                  <Route path="/configuracoes" element={<Configuracoes />} />
-                  <Route path="/assinatura" element={<Assinatura />} />
+                  <Route path="/ai-assistant" element={<ModernLayout><AIAssistantPage /></ModernLayout>} />
+                  <Route path="/gerenciar-usuarios" element={<ModernLayout><GerenciarUsuarios /></ModernLayout>} />
+                  <Route path="/privacidade" element={<ModernLayout><Privacidade /></ModernLayout>} />
+                  <Route path="/documentacao" element={<ModernLayout><Documentacao /></ModernLayout>} />
+                  <Route path="/configuracoes" element={<ModernLayout><Configuracoes /></ModernLayout>} />
+                  <Route path="/assinatura" element={<ModernLayout><Assinatura /></ModernLayout>} />
                   
                   {/* 404 route */}
                   <Route path="*" element={<NotFound />} />
@@ -112,6 +114,7 @@ function App() {
                 expand={false}
                 richColors
                 closeButton
+                className="z-[100]"
               />
             </Router>
           </DataSync>
