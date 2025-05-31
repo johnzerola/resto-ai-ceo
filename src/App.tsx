@@ -12,7 +12,7 @@ import { UserRole } from "./services/AuthService";
 const Dashboard = React.lazy(() => import("./pages/Dashboard").then(module => ({ default: module.Dashboard })));
 const Index = React.lazy(() => import("./pages/Index"));
 const Login = React.lazy(() => import("./pages/Login"));
-const Register = React.lazy(() => import("./pages/Register"));
+const Register = React.lazy(() => import("./pages/Register").then(module => ({ default: module.Register })));
 const DreCmv = React.lazy(() => import("./pages/DreCmv"));
 const FluxoCaixa = React.lazy(() => import("./pages/FluxoCaixa"));
 const Estoque = React.lazy(() => import("./pages/Estoque"));
@@ -36,7 +36,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (substituiu cacheTime)
       retry: 1,
       refetchOnWindowFocus: false,
     },
