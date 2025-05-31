@@ -137,8 +137,10 @@ export class SupabaseDataService {
   static async savePricingModel(pricingData: Omit<PricingModel, 'id' | 'created_at' | 'updated_at'>) {
     try {
       const { data, error } = await supabase
-        .from('pricing_models')
-        .upsert(pricingData)
+        .from('pricing_models' as any)
+        .upsert(pricingData, {
+          onConflict: 'restaurant_id,channel'
+        })
         .select()
         .single();
 
@@ -161,7 +163,7 @@ export class SupabaseDataService {
   static async getPricingModels(restaurantId: string): Promise<PricingModel[]> {
     try {
       const { data, error } = await supabase
-        .from('pricing_models')
+        .from('pricing_models' as any)
         .select('*')
         .eq('restaurant_id', restaurantId);
 
@@ -170,7 +172,7 @@ export class SupabaseDataService {
         return [];
       }
 
-      return data || [];
+      return (data || []) as PricingModel[];
     } catch (error) {
       console.error('Erro na consulta de precificação:', error);
       return [];

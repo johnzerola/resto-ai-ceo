@@ -265,6 +265,50 @@ export type Database = {
           },
         ]
       }
+      pricing_models: {
+        Row: {
+          channel: string
+          created_at: string | null
+          delivery_fee: number | null
+          id: string
+          is_active: boolean | null
+          markup_percentage: number
+          platform_commission: number | null
+          restaurant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string | null
+          delivery_fee?: number | null
+          id?: string
+          is_active?: boolean | null
+          markup_percentage?: number
+          platform_commission?: number | null
+          restaurant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          delivery_fee?: number | null
+          id?: string
+          is_active?: boolean | null
+          markup_percentage?: number
+          platform_commission?: number | null
+          restaurant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_models_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
