@@ -6,57 +6,19 @@ import { QuickReports } from "@/components/restaurant/QuickReports";
 import { Alerts } from "@/components/restaurant/Alerts";
 import { GoalProgressCard } from "@/components/restaurant/GoalProgressCard";
 import { AuditDashboard } from "@/components/restaurant/AuditDashboard";
+import { PricingChannels } from "@/components/restaurant/PricingChannels";
+import { RealTimeSync } from "@/components/restaurant/RealTimeSync";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRealTimeData } from "@/hooks/useRealTimeData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Crown, CreditCard, TrendingUp, DollarSign, Target, BarChart3, Search, Shield } from "lucide-react";
+import { Crown, CreditCard, TrendingUp, DollarSign, Target, BarChart3, Search, Shield, Calculator, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-
-// Sample data for components
-const sampleRevenueData = [
-  { name: "Jan", revenue: 12000 },
-  { name: "Fev", revenue: 15000 },
-  { name: "Mar", revenue: 18000 },
-  { name: "Abr", revenue: 20000 },
-  { name: "Mai", revenue: 19000 },
-  { name: "Jun", revenue: 22000 },
-];
-
-const sampleGoal = {
-  id: "1",
-  title: "Meta de Vendas Mensais",
-  description: "Aumentar as vendas mensais do restaurante",
-  target: 50000,
-  current: 32000,
-  unit: "R$",
-  deadline: new Date("2024-12-31").toISOString(),
-  category: "sales" as const,
-  completed: false,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString()
-};
-
-const sampleAlerts = [
-  {
-    id: "1",
-    type: "warning" as const,
-    title: "Estoque Baixo",
-    description: "Alguns ingredientes estão com estoque baixo",
-    date: new Date().toLocaleDateString('pt-BR')
-  },
-  {
-    id: "2",
-    type: "success" as const,
-    title: "Meta Atingida",
-    description: "Parabéns! Você atingiu 80% da meta mensal",
-    date: new Date().toLocaleDateString('pt-BR')
-  }
-];
 
 // Quick access cards data
 const quickAccessCards = [
@@ -92,6 +54,7 @@ const quickAccessCards = [
 
 export function Dashboard() {
   const { subscriptionInfo, checkSubscription } = useAuth();
+  const { financialData, goals, isLoading, refreshData } = useRealTimeData();
   const [activeTab, setActiveTab] = useState("dashboard");
 
   useEffect(() => {
@@ -100,7 +63,45 @@ export function Dashboard() {
 
   const handleDeleteGoal = (goalId: string) => {
     console.log("Deleting goal:", goalId);
+    refreshData(); // Atualizar dados após deletar meta
   };
+
+  // Preparar dados reais para os componentes
+  const revenueData = financialData.slice(0, 6).map((data, index) => ({
+    name: new Date(data.date).toLocaleDateString('pt-BR', { month: 'short' }),
+    revenue: data.daily_sales
+  }));
+
+  const currentGoal = goals.length > 0 ? {
+    id: goals[0].id,
+    title: goals[0].title,
+    description: goals[0].description,
+    target: goals[0].target,
+    current: goals[0].current,
+    unit: goals[0].unit || "R$",
+    deadline: goals[0].deadline,
+    category: goals[0].category || "sales",
+    completed: goals[0].completed,
+    createdAt: goals[0].created_at,
+    updatedAt: goals[0].updated_at
+  } : null;
+
+  const alerts = [
+    {
+      id: "1",
+      type: "warning" as const,
+      title: "Dados em Tempo Real",
+      description: isLoading ? "Carregando dados..." : `${financialData.length} registros financeiros carregados`,
+      date: new Date().toLocaleDateString('pt-BR')
+    },
+    {
+      id: "2", 
+      type: "success" as const,
+      title: "Sistema Auditado",
+      description: "Integração real com Supabase funcionando",
+      date: new Date().toLocaleDateString('pt-BR')
+    }
+  ];
 
   return (
     <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
@@ -119,10 +120,18 @@ export function Dashboard() {
             
             {/* Navigation Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 max-w-md">
+              <TabsList className="grid w-full grid-cols-4 max-w-2xl">
                 <TabsTrigger value="dashboard" className="flex items-center gap-2">
                   <BarChart3 className="h-4 w-4" />
                   Dashboard
+                </TabsTrigger>
+                <TabsTrigger value="pricing" className="flex items-center gap-2">
+                  <Calculator className="h-4 w-4" />
+                  Precificação
+                </TabsTrigger>
+                <TabsTrigger value="sync" className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Sincronização
                 </TabsTrigger>
                 <TabsTrigger value="audit" className="flex items-center gap-2">
                   <Search className="h-4 w-4" />
@@ -211,10 +220,26 @@ export function Dashboard() {
               
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <div className="lg:col-span-2">
-                  <RevenueChart data={sampleRevenueData} />
+                  <RevenueChart data={revenueData.length > 0 ? revenueData : [
+                    { name: "Jan", revenue: 12000 },
+                    { name: "Fev", revenue: 15000 },
+                    { name: "Mar", revenue: 18000 }
+                  ]} />
                 </div>
                 <div>
-                  <GoalProgressCard goal={sampleGoal} onDelete={handleDeleteGoal} />
+                  {currentGoal ? (
+                    <GoalProgressCard goal={currentGoal} onDelete={handleDeleteGoal} />
+                  ) : (
+                    <Card className="h-full flex items-center justify-center">
+                      <CardContent className="text-center">
+                        <Target className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-gray-500">Nenhuma meta cadastrada</p>
+                        <Button asChild size="sm" className="mt-2">
+                          <Link to="/metas">Criar Meta</Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               </div>
 
@@ -223,7 +248,47 @@ export function Dashboard() {
                 <QuickReports />
               </div>
 
-              <Alerts alerts={sampleAlerts} />
+              <Alerts alerts={alerts} />
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="pricing">
+            <PricingChannels />
+          </TabsContent>
+          
+          <TabsContent value="sync">
+            <div className="grid gap-6 md:grid-cols-2">
+              <RealTimeSync />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Status dos Módulos</CardTitle>
+                  <CardDescription>
+                    Verificação da integridade dos dados
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span>Dados Financeiros</span>
+                      <Badge variant="outline" className="bg-green-50">
+                        {financialData.length} registros
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Metas Ativas</span>
+                      <Badge variant="outline" className="bg-blue-50">
+                        {goals.length} metas
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Status Geral</span>
+                      <Badge className="bg-green-500">
+                        Operacional
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
           

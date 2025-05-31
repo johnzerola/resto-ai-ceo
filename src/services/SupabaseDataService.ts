@@ -1,207 +1,225 @@
 
-import { supabase, isValidTableName } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Tables, TableName } from "@/integrations/supabase/client";
 
-// Error handling function for Supabase operations
-function handleSupabaseError(operation: string, error: any) {
-  console.error(`Error ${operation}:`, error);
-  toast.error(`Error ${operation}: ${error.message || 'Unknown error'}`);
-  return null;
-}
-
-// Define interfaces for reusable SupabaseDataService operations
-export interface Entity {
+export interface RestaurantFinancialData {
   id?: string;
-  [key: string]: any;
+  restaurant_id: string;
+  daily_sales: number;
+  monthly_sales: number;
+  dishes_sold: number;
+  average_ticket: number;
+  cmv_percentage: number;
+  profit_margin: number;
+  labor_cost_percentage: number;
+  fixed_costs: number;
+  date: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Service for basic CRUD operations with Supabase
-export const SupabaseDataService = {
-  /**
-   * Fetches all records from a table
-   * @param tableName The name of the table
-   * @param options Query options like filters
-   * @returns Array of records or empty array on error
-   */
-  async getAll<T extends TableName>(
-    tableName: T, 
-    options: {
-      filters?: Array<{column: string; value: any}>;
-      orderBy?: {column: string; ascending?: boolean};
-    } = {}
-  ): Promise<Array<Tables[T]['Row']>> {
+export interface PricingModel {
+  id?: string;
+  restaurant_id: string;
+  channel: 'salon' | 'delivery' | 'buffet' | 'rodizio' | 'ifood';
+  markup_percentage: number;
+  delivery_fee?: number;
+  platform_commission?: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Serviço para dados financeiros reais
+export class SupabaseDataService {
+  
+  // Obter dados financeiros do restaurante
+  static async getRestaurantFinancialData(restaurantId: string): Promise<RestaurantFinancialData[]> {
     try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Invalid table name: ${tableName}`);
+      const { data, error } = await supabase
+        .from('cash_flow')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .order('date', { ascending: false })
+        .limit(30);
+
+      if (error) {
+        console.error('Erro ao carregar dados financeiros:', error);
+        return [];
       }
 
-      let query = supabase
-        .from(tableName)
-        .select('*');
-
-      // Apply filters if provided
-      if (options.filters && options.filters.length > 0) {
-        options.filters.forEach(filter => {
-          query = query.eq(filter.column, filter.value);
-        });
-      }
-
-      // Apply ordering if provided
-      if (options.orderBy) {
-        query = query.order(options.orderBy.column, {
-          ascending: options.orderBy.ascending ?? true
-        });
-      }
-
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      // Use type assertion with unknown as intermediate step to satisfy TypeScript
-      return (data as unknown) as Array<Tables[T]['Row']>;
-    } catch (error: any) {
-      console.error(`Error fetching records from ${tableName}:`, error);
+      // Transformar dados do cash_flow em métricas financeiras
+      return this.transformCashFlowToFinancialData(data || []);
+    } catch (error) {
+      console.error('Erro na consulta financeira:', error);
       return [];
     }
-  },
+  }
 
-  /**
-   * Fetches a single record by ID
-   * @param tableName The name of the table
-   * @param id The ID of the record
-   * @returns The record or null on error
-   */
-  async getById<T extends TableName>(
-    tableName: T, 
-    id: string
-  ): Promise<Tables[T]['Row'] | null> {
-    try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Invalid table name: ${tableName}`);
+  // Transformar dados de cash flow em métricas
+  private static transformCashFlowToFinancialData(cashFlowData: any[]): RestaurantFinancialData[] {
+    const groupedByDate = cashFlowData.reduce((acc, transaction) => {
+      const date = transaction.date;
+      if (!acc[date]) {
+        acc[date] = {
+          revenue: 0,
+          costs: 0,
+          transactions: 0
+        };
       }
 
+      if (transaction.type === 'income') {
+        acc[date].revenue += Number(transaction.amount);
+      } else {
+        acc[date].costs += Number(transaction.amount);
+      }
+      acc[date].transactions++;
+
+      return acc;
+    }, {});
+
+    return Object.entries(groupedByDate).map(([date, data]: [string, any]) => ({
+      restaurant_id: cashFlowData[0]?.restaurant_id || '',
+      daily_sales: data.revenue,
+      monthly_sales: data.revenue * 30, // Estimativa
+      dishes_sold: Math.floor(data.transactions * 2.5), // Estimativa
+      average_ticket: data.transactions > 0 ? data.revenue / data.transactions : 0,
+      cmv_percentage: data.revenue > 0 ? (data.costs / data.revenue) * 100 : 0,
+      profit_margin: data.revenue > 0 ? ((data.revenue - data.costs) / data.revenue) * 100 : 0,
+      labor_cost_percentage: 25, // Valor padrão, deve ser configurável
+      fixed_costs: data.costs,
+      date: date
+    }));
+  }
+
+  // Obter dados de estoque
+  static async getInventoryData(restaurantId: string) {
+    try {
       const { data, error } = await supabase
-        .from(tableName)
+        .from('inventory')
         .select('*')
-        .eq('id', id as any) // Use type assertion to fix the string assignment error
-        .maybeSingle();
-      
-      if (error) throw error;
-      
-      // Use type assertion with unknown as intermediate step to satisfy TypeScript
-      return (data as unknown) as Tables[T]['Row'] | null;
-    } catch (error: any) {
-      return handleSupabaseError(`fetching record from ${tableName}`, error);
-    }
-  },
+        .eq('restaurant_id', restaurantId);
 
-  /**
-   * Creates a new record
-   * @param tableName The name of the table
-   * @param record The record to create
-   * @returns The created record or null on error
-   */
-  async create<T extends TableName>(
-    tableName: T, 
-    record: Tables[T]['Insert']
-  ): Promise<Tables[T]['Row'] | null> {
-    try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Invalid table name: ${tableName}`);
+      if (error) {
+        console.error('Erro ao carregar estoque:', error);
+        return [];
       }
 
-      // Force any type here to handle complex nested typings
+      return data || [];
+    } catch (error) {
+      console.error('Erro na consulta de estoque:', error);
+      return [];
+    }
+  }
+
+  // Obter metas do restaurante
+  static async getRestaurantGoals(restaurantId: string) {
+    try {
       const { data, error } = await supabase
-        .from(tableName)
-        .insert([record as any])
-        .select()
-        .maybeSingle();
-      
-      if (error) throw error;
-      
-      toast.success('Record created successfully');
-      // Use type assertion with unknown as intermediate step to satisfy TypeScript
-      return (data as unknown) as Tables[T]['Row'] | null;
-    } catch (error: any) {
-      return handleSupabaseError(`creating record in ${tableName}`, error);
-    }
-  },
+        .from('goals')
+        .select('*')
+        .eq('restaurant_id', restaurantId)
+        .order('created_at', { ascending: false });
 
-  /**
-   * Updates an existing record
-   * @param tableName The name of the table
-   * @param id The ID of the record to update
-   * @param updates The updates to apply
-   * @returns The updated record or null on error
-   */
-  async update<T extends TableName>(
-    tableName: T, 
-    id: string, 
-    updates: Tables[T]['Update']
-  ): Promise<Tables[T]['Row'] | null> {
-    try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Invalid table name: ${tableName}`);
+      if (error) {
+        console.error('Erro ao carregar metas:', error);
+        return [];
       }
 
+      return data || [];
+    } catch (error) {
+      console.error('Erro na consulta de metas:', error);
+      return [];
+    }
+  }
+
+  // Salvar modelo de precificação
+  static async savePricingModel(pricingData: Omit<PricingModel, 'id' | 'created_at' | 'updated_at'>) {
+    try {
       const { data, error } = await supabase
-        .from(tableName)
-        .update(updates as any) // Use type assertion to fix complex type issues
-        .eq('id', id as any) // Use type assertion to fix the string assignment error
+        .from('pricing_models')
+        .upsert(pricingData)
         .select()
-        .maybeSingle();
-      
-      if (error) throw error;
-      
-      toast.success('Record updated successfully');
-      // Use type assertion with unknown as intermediate step to satisfy TypeScript
-      return (data as unknown) as Tables[T]['Row'] | null;
-    } catch (error: any) {
-      return handleSupabaseError(`updating record in ${tableName}`, error);
-    }
-  },
+        .single();
 
-  /**
-   * Deletes a record
-   * @param tableName The name of the table
-   * @param id The ID of the record to delete
-   * @returns True on success, false on error
-   */
-  async delete(tableName: TableName, id: string): Promise<boolean> {
-    try {
-      if (!isValidTableName(tableName)) {
-        throw new Error(`Invalid table name: ${tableName}`);
+      if (error) {
+        console.error('Erro ao salvar modelo de precificação:', error);
+        toast.error('Erro ao salvar modelo de precificação');
+        return null;
       }
 
-      const { error } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('id', id as any); // Use type assertion to fix the string assignment error
-      
-      if (error) throw error;
-      
-      toast.success('Record deleted successfully');
-      return true;
-    } catch (error: any) {
-      console.error(`Error deleting record from ${tableName}:`, error);
-      toast.error(`Error deleting record: ${error.message || 'Unknown error'}`);
-      return false;
-    }
-  },
-
-  /**
-   * Custom query for more complex operations
-   * @param callback Function that performs the query
-   * @returns Result of the callback or null on error
-   */
-  async customQuery<T>(callback: () => Promise<T>): Promise<T | null> {
-    try {
-      return await callback();
-    } catch (error: any) {
-      console.error('Error in custom query:', error);
-      toast.error(`Error: ${error.message || 'Unknown error'}`);
+      toast.success('Modelo de precificação salvo com sucesso');
+      return data;
+    } catch (error) {
+      console.error('Erro ao salvar precificação:', error);
+      toast.error('Erro interno ao salvar precificação');
       return null;
     }
   }
-};
+
+  // Obter modelos de precificação
+  static async getPricingModels(restaurantId: string): Promise<PricingModel[]> {
+    try {
+      const { data, error } = await supabase
+        .from('pricing_models')
+        .select('*')
+        .eq('restaurant_id', restaurantId);
+
+      if (error) {
+        console.error('Erro ao carregar modelos de precificação:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Erro na consulta de precificação:', error);
+      return [];
+    }
+  }
+
+  // Calcular precificação inteligente baseada no canal
+  static calculateChannelPricing(baseCost: number, channel: PricingModel['channel'], pricingModel?: PricingModel) {
+    const defaultMarkups = {
+      salon: 250,      // 250% markup para salão
+      delivery: 280,   // 280% markup para delivery (custos maiores)
+      buffet: 200,     // 200% markup para buffet por kg
+      rodizio: 300,    // 300% markup para rodízio (valor fixo)
+      ifood: 320       // 320% markup para iFood (comissão da plataforma)
+    };
+
+    const markup = pricingModel?.markup_percentage || defaultMarkups[channel];
+    const basePrice = baseCost * (markup / 100);
+    
+    // Adicionar taxa de entrega se for delivery
+    const deliveryFee = channel === 'delivery' ? (pricingModel?.delivery_fee || 5.00) : 0;
+    
+    // Considerar comissão da plataforma (iFood, por exemplo)
+    const platformCommission = pricingModel?.platform_commission || 0;
+    const finalPrice = basePrice + deliveryFee;
+    
+    return {
+      basePrice,
+      deliveryFee,
+      platformCommission,
+      finalPrice: finalPrice * (1 + platformCommission / 100),
+      markup
+    };
+  }
+
+  // Sincronizar dados entre módulos
+  static async syncModuleData(restaurantId: string) {
+    try {
+      console.log('Iniciando sincronização de dados para restaurante:', restaurantId);
+      
+      // Disparar evento de sincronização
+      window.dispatchEvent(new CustomEvent('dataSync', { 
+        detail: { restaurantId, timestamp: new Date().toISOString() }
+      }));
+
+      return true;
+    } catch (error) {
+      console.error('Erro na sincronização:', error);
+      return false;
+    }
+  }
+}
