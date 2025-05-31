@@ -220,7 +220,7 @@ export function ModernSidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full bg-white/95 backdrop-blur-xl border-r border-gray-200/60 transition-all duration-300 ease-out shadow-xl",
+          "fixed left-0 top-0 z-40 h-full bg-white border-r border-gray-200/60 transition-all duration-300 ease-out shadow-lg",
           isCollapsed ? "w-20" : "w-72",
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
