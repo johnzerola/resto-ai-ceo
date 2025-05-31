@@ -5,15 +5,17 @@ import { RevenueChart } from "@/components/restaurant/RevenueChart";
 import { QuickReports } from "@/components/restaurant/QuickReports";
 import { Alerts } from "@/components/restaurant/Alerts";
 import { GoalProgressCard } from "@/components/restaurant/GoalProgressCard";
+import { AuditDashboard } from "@/components/restaurant/AuditDashboard";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Crown, CreditCard, TrendingUp, DollarSign, Target, BarChart3 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Crown, CreditCard, TrendingUp, DollarSign, Target, BarChart3, Search, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 // Sample data for components
 const sampleRevenueData = [
@@ -90,9 +92,9 @@ const quickAccessCards = [
 
 export function Dashboard() {
   const { subscriptionInfo, checkSubscription } = useAuth();
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   useEffect(() => {
-    // Check subscription status when dashboard loads
     checkSubscription();
   }, []);
 
@@ -103,15 +105,31 @@ export function Dashboard() {
   return (
     <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
       <div className="space-y-8">
-        {/* Header Section */}
+        {/* Header Section with Tabs */}
         <div className="flex flex-col lg:flex-row justify-between items-start gap-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#1B2C4F] to-[#00D887] bg-clip-text text-transparent">
-              Dashboard
-            </h1>
-            <p className="text-gray-600">
-              Visão geral do seu negócio e métricas importantes
-            </p>
+          <div className="space-y-4 flex-1">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#1B2C4F] to-[#00D887] bg-clip-text text-transparent">
+                RestaurIA CEO
+              </h1>
+              <p className="text-gray-600">
+                Sistema inteligente de gestão para restaurantes
+              </p>
+            </div>
+            
+            {/* Navigation Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-2 max-w-md">
+                <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Dashboard
+                </TabsTrigger>
+                <TabsTrigger value="audit" className="flex items-center gap-2">
+                  <Search className="h-4 w-4" />
+                  Auditoria CEO
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
           
           {/* Subscription Status Card */}
@@ -159,51 +177,60 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Quick Access Section */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {quickAccessCards.map((card) => (
-            <Link key={card.href} to={card.href}>
-              <Card className="group hover:shadow-lg transition-all duration-300 transform hover:scale-105 cursor-pointer bg-white/80 backdrop-blur-sm border-gray-200/60">
-                <CardContent className="p-6">
-                  <div className="flex items-center space-x-4">
-                    <div className={`p-3 rounded-xl bg-gradient-to-r ${card.color} text-white`}>
-                      <card.icon className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 group-hover:text-[#1B2C4F] transition-colors">
-                        {card.title}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {card.description}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+        {/* Tab Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsContent value="dashboard" className="space-y-8">
+            {/* Quick Access Section */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {quickAccessCards.map((card) => (
+                <Link key={card.href} to={card.href}>
+                  <Card className="group hover:shadow-lg transition-all duration-300 transform hover:scale-105 cursor-pointer bg-white/80 backdrop-blur-sm border-gray-200/60">
+                    <CardContent className="p-6">
+                      <div className="flex items-center space-x-4">
+                        <div className={`p-3 rounded-xl bg-gradient-to-r ${card.color} text-white`}>
+                          <card.icon className="h-6 w-6" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 group-hover:text-[#1B2C4F] transition-colors">
+                            {card.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {card.description}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
 
-        {/* Main Dashboard Content */}
-        <div className="grid gap-6">
-          <DailySnapshot />
+            {/* Main Dashboard Content */}
+            <div className="grid gap-6">
+              <DailySnapshot />
+              
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  <RevenueChart data={sampleRevenueData} />
+                </div>
+                <div>
+                  <GoalProgressCard goal={sampleGoal} onDelete={handleDeleteGoal} />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-6">
+                <PerformanceCharts />
+                <QuickReports />
+              </div>
+
+              <Alerts alerts={sampleAlerts} />
+            </div>
+          </TabsContent>
           
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <RevenueChart data={sampleRevenueData} />
-            </div>
-            <div>
-              <GoalProgressCard goal={sampleGoal} onDelete={handleDeleteGoal} />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-6">
-            <PerformanceCharts />
-            <QuickReports />
-          </div>
-
-          <Alerts alerts={sampleAlerts} />
-        </div>
+          <TabsContent value="audit">
+            <AuditDashboard />
+          </TabsContent>
+        </Tabs>
       </div>
     </ProtectedRoute>
   );
