@@ -21,6 +21,7 @@ import { useGlobalSync } from "@/hooks/useGlobalSync";
 const QuickAccessGrid = React.lazy(() => import('./QuickAccessGrid'));
 const MetricsGrid = React.lazy(() => import('./MetricsGrid'));
 const StatusSection = React.lazy(() => import('./StatusSection'));
+const AuditPanel = React.lazy(() => import('../audit/AuditPanel'));
 
 // Loading fallback component
 const DashboardSkeleton = memo(() => (
@@ -56,7 +57,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
   }, [syncState]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dashboard-unificado">
       {/* Optimized Header */}
       <div className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
         <div className="px-6 py-4">
@@ -117,16 +118,29 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
           ) : (
             <div className="space-y-6">
               {/* Quick Access */}
-              <QuickAccessGrid />
+              <div data-testid="quick-access">
+                <QuickAccessGrid />
+              </div>
               
               {/* Key Metrics */}
-              <MetricsGrid stats={dashboardStats} />
+              <div data-testid="dashboard-metrics">
+                <MetricsGrid stats={dashboardStats} />
+              </div>
               
               {/* System Status */}
-              <StatusSection 
-                subscriptionInfo={subscriptionInfo}
-                syncState={syncState}
-              />
+              <div data-testid="system-status" className="grid gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  <StatusSection 
+                    subscriptionInfo={subscriptionInfo}
+                    syncState={syncState}
+                  />
+                </div>
+                
+                {/* Audit Panel */}
+                <div className="lg:col-span-1">
+                  <AuditPanel />
+                </div>
+              </div>
             </div>
           )}
         </Suspense>
