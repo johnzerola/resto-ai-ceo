@@ -13,11 +13,16 @@ export function useDashboardPerformance() {
   const dashboardStats = useMemo(() => {
     const startTime = performance.now();
     
+    const totalGoals = goals.length;
+    const completedGoals = goals.filter(goal => goal.completed).length;
+    const goalCompletionRate = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
+    
     const stats = {
       todaysSales: financialData.length > 0 ? financialData[0]?.daily_sales || 0 : 0,
       averageTicket: financialData.length > 0 ? financialData[0]?.average_ticket || 0 : 0,
-      totalGoals: goals.length,
-      completedGoals: goals.filter(goal => goal.completed).length,
+      totalGoals,
+      completedGoals,
+      goalCompletionRate,
       cmvPercentage: financialData.length > 0 ? financialData[0]?.cmv_percentage || 0 : 0,
       profitMargin: financialData.length > 0 ? financialData[0]?.profit_margin || 0 : 0
     };
