@@ -17,6 +17,7 @@ const DreCmv = React.lazy(() => import("./pages/DreCmv"));
 const FluxoCaixa = React.lazy(() => import("./pages/FluxoCaixa"));
 const Estoque = React.lazy(() => import("./pages/Estoque"));
 const Configuracoes = React.lazy(() => import("./pages/Configuracoes"));
+const AkgunsAbasPage = React.lazy(() => import("./pages/AkgunsAbasPage"));
 
 // Loading component otimizado
 const LoadingFallback = () => (
@@ -67,6 +68,7 @@ function App() {
                         <Route path="/fluxo-de-caixa" element={<FluxoCaixa />} />
                         <Route path="/estoque" element={<Estoque />} />
                         <Route path="/configuracoes" element={<Configuracoes />} />
+                        <Route path="/akguns-abas" element={<AkgunsAbasPage />} />
                         {/* Fallback para rotas não encontradas */}
                         <Route path="*" element={<Dashboard />} />
                       </Routes>

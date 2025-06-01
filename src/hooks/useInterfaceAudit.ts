@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -36,6 +35,7 @@ export function useInterfaceAudit(config?: AuditConfig) {
       '/metas',
       '/estoque',
       '/cardapio',
+      '/akguns-abas',
       '/ai-assistant',
       '/gerenciar-usuarios',
       '/assinatura',

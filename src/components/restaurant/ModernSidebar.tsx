@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,8 @@ import {
   Bot,
   HelpCircle,
   Shield,
-  CreditCard
+  CreditCard,
+  FolderOpen
 } from "lucide-react";
 import { ModernNavItem } from "./ModernNavItem";
 
@@ -88,6 +88,13 @@ const navigation = [
     icon: Utensils,
     description: "Gestão do cardápio",
     category: "operations"
+  },
+  {
+    title: "Akguns Abas",
+    href: "/akguns-abas",
+    icon: FolderOpen,
+    description: "Gerenciamento de abas",
+    category: "tools"
   },
   {
     title: "Assistente IA",
