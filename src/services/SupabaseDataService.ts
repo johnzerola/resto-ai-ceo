@@ -136,37 +136,59 @@ export class SupabaseDataService {
   // Salvar modelo de precificação
   static async savePricingModel(pricingData: Omit<PricingModel, 'id' | 'created_at' | 'updated_at'>) {
     try {
-      // Usar o client do Supabase diretamente para evitar problemas de tipagem
-      const { data, error } = await supabase.rpc('upsert_pricing_model', {
-        p_restaurant_id: pricingData.restaurant_id,
-        p_channel: pricingData.channel,
-        p_markup_percentage: pricingData.markup_percentage,
-        p_delivery_fee: pricingData.delivery_fee || 0,
-        p_platform_commission: pricingData.platform_commission || 0,
-        p_is_active: pricingData.is_active
-      });
+      // Primeiro, tentar atualizar um registro existente
+      const { data: existingData, error: selectError } = await supabase
+        .from('pricing_models')
+        .select('id')
+        .eq('restaurant_id', pricingData.restaurant_id)
+        .eq('channel', pricingData.channel)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Erro ao salvar modelo de precificação:', error);
-        // Fallback para insert direto se a função não existir
-        const { data: fallbackData, error: fallbackError } = await supabase
+      if (selectError && selectError.code !== 'PGRST116') {
+        console.error('Erro ao verificar modelo existente:', selectError);
+        toast.error('Erro ao verificar modelo de precificação');
+        return null;
+      }
+
+      let result;
+      if (existingData) {
+        // Atualizar registro existente
+        const { data, error } = await supabase
+          .from('pricing_models')
+          .update({
+            markup_percentage: pricingData.markup_percentage,
+            delivery_fee: pricingData.delivery_fee || 0,
+            platform_commission: pricingData.platform_commission || 0,
+            is_active: pricingData.is_active
+          })
+          .eq('id', existingData.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Erro ao atualizar modelo de precificação:', error);
+          toast.error('Erro ao atualizar modelo de precificação');
+          return null;
+        }
+        result = data;
+      } else {
+        // Inserir novo registro
+        const { data, error } = await supabase
           .from('pricing_models')
           .insert([pricingData])
           .select()
           .single();
 
-        if (fallbackError) {
-          console.error('Erro no fallback:', fallbackError);
+        if (error) {
+          console.error('Erro ao inserir modelo de precificação:', error);
           toast.error('Erro ao salvar modelo de precificação');
           return null;
         }
-
-        toast.success('Modelo de precificação salvo com sucesso');
-        return fallbackData;
+        result = data;
       }
 
       toast.success('Modelo de precificação salvo com sucesso');
-      return data;
+      return result;
     } catch (error) {
       console.error('Erro ao salvar precificação:', error);
       toast.error('Erro interno ao salvar precificação');
