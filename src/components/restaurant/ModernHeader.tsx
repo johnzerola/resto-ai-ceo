@@ -1,22 +1,22 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { RestaurantSelector } from "./RestaurantSelector";
 import { UserMenu } from "./UserMenu";
 import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function ModernHeader() {
+export const ModernHeader = memo(function ModernHeader() {
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-b border-gray-200/60 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
       <div className="flex items-center justify-between h-16 px-4 md:px-8">
         {/* Left side - Search on desktop */}
         <div className="hidden md:flex items-center flex-1 max-w-md">
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Pesquisar..."
-              className="pl-10 pr-4 py-2 bg-gray-50/80 border-gray-200 rounded-xl focus:border-[#00D887] focus:ring-2 focus:ring-[#00D887]/20 transition-all duration-200"
+              className="pl-10 pr-4 py-2 bg-slate-50/80 border-slate-200 rounded-xl focus:border-[#00D887] focus:ring-2 focus:ring-[#00D887]/20 transition-all duration-200"
             />
           </div>
         </div>
@@ -50,4 +50,4 @@ export function ModernHeader() {
       </div>
     </header>
   );
-}
+});
