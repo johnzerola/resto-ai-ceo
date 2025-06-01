@@ -136,18 +136,33 @@ export class SupabaseDataService {
   // Salvar modelo de precificação
   static async savePricingModel(pricingData: Omit<PricingModel, 'id' | 'created_at' | 'updated_at'>) {
     try {
-      const { data, error } = await supabase
-        .from('pricing_models' as any)
-        .upsert(pricingData, {
-          onConflict: 'restaurant_id,channel'
-        })
-        .select()
-        .single();
+      // Usar o client do Supabase diretamente para evitar problemas de tipagem
+      const { data, error } = await supabase.rpc('upsert_pricing_model', {
+        p_restaurant_id: pricingData.restaurant_id,
+        p_channel: pricingData.channel,
+        p_markup_percentage: pricingData.markup_percentage,
+        p_delivery_fee: pricingData.delivery_fee || 0,
+        p_platform_commission: pricingData.platform_commission || 0,
+        p_is_active: pricingData.is_active
+      });
 
       if (error) {
         console.error('Erro ao salvar modelo de precificação:', error);
-        toast.error('Erro ao salvar modelo de precificação');
-        return null;
+        // Fallback para insert direto se a função não existir
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('pricing_models')
+          .insert([pricingData])
+          .select()
+          .single();
+
+        if (fallbackError) {
+          console.error('Erro no fallback:', fallbackError);
+          toast.error('Erro ao salvar modelo de precificação');
+          return null;
+        }
+
+        toast.success('Modelo de precificação salvo com sucesso');
+        return fallbackData;
       }
 
       toast.success('Modelo de precificação salvo com sucesso');
@@ -163,8 +178,18 @@ export class SupabaseDataService {
   static async getPricingModels(restaurantId: string): Promise<PricingModel[]> {
     try {
       const { data, error } = await supabase
-        .from('pricing_models' as any)
-        .select('*')
+        .from('pricing_models')
+        .select(`
+          id,
+          restaurant_id,
+          channel,
+          markup_percentage,
+          delivery_fee,
+          platform_commission,
+          is_active,
+          created_at,
+          updated_at
+        `)
         .eq('restaurant_id', restaurantId);
 
       if (error) {
@@ -172,7 +197,18 @@ export class SupabaseDataService {
         return [];
       }
 
-      return (data || []) as PricingModel[];
+      // Mapear os dados para o tipo PricingModel
+      return (data || []).map(item => ({
+        id: item.id,
+        restaurant_id: item.restaurant_id,
+        channel: item.channel as PricingModel['channel'],
+        markup_percentage: item.markup_percentage,
+        delivery_fee: item.delivery_fee,
+        platform_commission: item.platform_commission,
+        is_active: item.is_active,
+        created_at: item.created_at,
+        updated_at: item.updated_at
+      }));
     } catch (error) {
       console.error('Erro na consulta de precificação:', error);
       return [];
