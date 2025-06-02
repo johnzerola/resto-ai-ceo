@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { DREOverview } from "@/components/restaurant/DREOverview";
 import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -63,7 +62,7 @@ const DreCmv = () => {
   };
 
   return (
-    <Layout>
+    <ModernLayout>
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">DRE & CMV</h1>
         <p className="text-muted-foreground flex items-center gap-2">
@@ -108,7 +107,7 @@ const DreCmv = () => {
           <CMVAnalysis />
         </TabsContent>
       </Tabs>
-    </Layout>
+    </ModernLayout>
   );
 };
 

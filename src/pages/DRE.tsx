@@ -1,10 +1,10 @@
 
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { DREOverview } from "@/components/restaurant/DREOverview";
 
 export function DRE() {
   return (
-    <Layout>
+    <ModernLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
@@ -16,6 +16,6 @@ export function DRE() {
         </div>
         <DREOverview />
       </div>
-    </Layout>
+    </ModernLayout>
   );
 }

@@ -1,10 +1,10 @@
 
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
 
 export function CMV() {
   return (
-    <Layout>
+    <ModernLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
@@ -16,6 +16,6 @@ export function CMV() {
         </div>
         <CMVAnalysis />
       </div>
-    </Layout>
+    </ModernLayout>
   );
 }

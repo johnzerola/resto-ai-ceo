@@ -1,4 +1,4 @@
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,7 +82,7 @@ export function Assinatura() {
 
   return (
     <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-      <Layout>
+      <ModernLayout>
         <div className="space-y-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold tracking-tight">Planos de Assinatura</h1>
@@ -182,7 +182,7 @@ export function Assinatura() {
             </Button>
           </div>
         </div>
-      </Layout>
+      </ModernLayout>
     </ProtectedRoute>
   );
 }
