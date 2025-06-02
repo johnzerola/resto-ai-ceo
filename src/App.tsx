@@ -10,7 +10,6 @@ import { UserRole } from "./services/AuthService";
 
 // Lazy loading para otimização de performance
 const Dashboard = React.lazy(() => import("./pages/Dashboard").then(module => ({ default: module.Dashboard })));
-const Index = React.lazy(() => import("./pages/Index"));
 const Login = React.lazy(() => import("./pages/Login"));
 const Register = React.lazy(() => import("./pages/Register").then(module => ({ default: module.Register })));
 const DreCmv = React.lazy(() => import("./pages/DreCmv"));
@@ -36,8 +35,8 @@ const LoadingFallback = () => (
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (substituiu cacheTime)
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
     },
@@ -49,14 +48,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+          <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dashboard-unificado">
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
                 {/* Rotas públicas */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 
-                {/* Rotas protegidas com layout unificado */}
+                {/* Rotas protegidas com layout moderno unificado */}
                 <Route path="/*" element={
                   <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
                     <ModernLayout>

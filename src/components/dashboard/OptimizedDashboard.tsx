@@ -1,14 +1,9 @@
 
 import React, { memo, Suspense, useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  DollarSign, 
-  Target, 
-  BarChart3,
   RefreshCw,
   Wifi,
   WifiOff
@@ -17,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardPerformance } from "@/hooks/useDashboardPerformance";
 import { useGlobalSync } from "@/hooks/useGlobalSync";
 
-// Lazy load heavy components
+// Lazy load componentes pesados
 const QuickAccessGrid = React.lazy(() => import('./QuickAccessGrid'));
 const MetricsGrid = React.lazy(() => import('./MetricsGrid'));
 const StatusSection = React.lazy(() => import('./StatusSection'));
@@ -37,7 +32,7 @@ const DashboardSkeleton = memo(() => (
 ));
 
 export const OptimizedDashboard = memo(function OptimizedDashboard() {
-  const { subscriptionInfo, checkSubscription } = useAuth();
+  const { subscriptionInfo } = useAuth();
   const { dashboardStats, isLoading, performanceMetrics } = useDashboardPerformance();
   const { syncState, triggerGlobalSync } = useGlobalSync();
 
@@ -58,7 +53,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dashboard-unificado">
-      {/* Optimized Header */}
+      {/* Header moderno otimizado */}
       <div className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
         <div className="px-6 py-4">
           <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
@@ -71,7 +66,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
               </p>
             </div>
             
-            {/* Real-time Status */}
+            {/* Status em tempo real */}
             <div className="flex items-center gap-3">
               <Card className={`px-3 py-2 border-0 shadow-sm ${syncStatusDisplay.bgColor}`}>
                 <div className="flex items-center gap-2">
@@ -98,7 +93,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
             </div>
           </div>
 
-          {/* Performance Metrics */}
+          {/* Métricas de performance */}
           <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
             <span>Render: {performanceMetrics.renderTime.toFixed(2)}ms</span>
             <span>Última atualização: {new Date(performanceMetrics.lastUpdate).toLocaleTimeString()}</span>
@@ -110,24 +105,24 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
         </div>
       </div>
 
-      {/* Main Content with Suspense */}
+      {/* Conteúdo principal com Suspense */}
       <div className="px-6 py-6">
         <Suspense fallback={<DashboardSkeleton />}>
           {isLoading ? (
             <DashboardSkeleton />
           ) : (
             <div className="space-y-6">
-              {/* Quick Access */}
+              {/* Acesso rápido */}
               <div data-testid="quick-access">
                 <QuickAccessGrid />
               </div>
               
-              {/* Key Metrics */}
+              {/* Métricas principais */}
               <div data-testid="dashboard-metrics">
                 <MetricsGrid stats={dashboardStats} />
               </div>
               
-              {/* System Status */}
+              {/* Status do sistema */}
               <div data-testid="system-status" className="grid gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                   <StatusSection 
@@ -136,7 +131,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
                   />
                 </div>
                 
-                {/* Audit Panel */}
+                {/* Painel de auditoria */}
                 <div className="lg:col-span-1">
                   <AuditPanel />
                 </div>

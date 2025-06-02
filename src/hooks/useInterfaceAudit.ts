@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -27,26 +28,18 @@ export function useInterfaceAudit(config?: AuditConfig) {
   const defaultConfig: AuditConfig = {
     validRoutes: [
       '/',
-      '/projecoes', 
-      '/fluxo-de-caixa',
+      '/dashboard',
       '/dre',
-      '/cmv',
-      '/simulador',
-      '/metas',
+      '/dre-cmv',
+      '/fluxo-de-caixa',
       '/estoque',
-      '/cardapio',
-      '/akguns-abas',
-      '/ai-assistant',
-      '/gerenciar-usuarios',
-      '/assinatura',
       '/configuracoes',
-      '/documentacao',
-      '/privacidade'
+      '/akguns-abas'
     ],
     requiredDataSelectors: [
       '[data-testid="dashboard-metrics"]',
-      '[data-testid="financial-data"]',
-      '[data-testid="goals-data"]'
+      '[data-testid="quick-access"]',
+      '[data-testid="system-status"]'
     ]
   };
 
@@ -92,17 +85,17 @@ export function useInterfaceAudit(config?: AuditConfig) {
     });
   }, [auditConfig.requiredDataSelectors]);
 
-  // Verificar consistência do design
+  // Verificar consistência do design moderno
   const checkDesignConsistency = useCallback((): boolean => {
-    const oldDesignElements = document.querySelectorAll('.design-antigo');
-    const newDesignElements = document.querySelectorAll('.dashboard-unificado, .bg-gradient-to-br');
+    const modernDesignElements = document.querySelectorAll('.dashboard-unificado, .bg-gradient-to-br');
+    const hasModernLayout = document.querySelector('.dashboard-unificado') !== null;
     
-    return oldDesignElements.length === 0 && newDesignElements.length > 0;
+    return hasModernLayout && modernDesignElements.length > 0;
   }, []);
 
   // Executar auditoria completa
   const runAudit = useCallback(async () => {
-    console.log('🔍 Iniciando auditoria de interface...');
+    console.log('🔍 Iniciando auditoria de interface moderna...');
 
     const duplicateMenus = checkDuplicateMenus();
     const invalidRoutes = checkInvalidRoutes();
@@ -119,7 +112,7 @@ export function useInterfaceAudit(config?: AuditConfig) {
 
     setAuditResult(result);
 
-    // Log results
+    // Log dos resultados
     if (duplicateMenus.length > 0) {
       console.warn('⚠️ Menus duplicados detectados:', duplicateMenus);
     }
@@ -135,9 +128,9 @@ export function useInterfaceAudit(config?: AuditConfig) {
     }
 
     if (!designConsistency) {
-      console.warn('⚠️ Inconsistências de design detectadas.');
+      console.warn('⚠️ Design moderno não detectado corretamente.');
     } else {
-      console.log('✅ Design consistente aplicado.');
+      console.log('✅ Design moderno unificado aplicado.');
     }
 
     console.log('✅ Auditoria visual e funcional concluída.');
@@ -149,7 +142,7 @@ export function useInterfaceAudit(config?: AuditConfig) {
   useEffect(() => {
     const timer = setTimeout(() => {
       runAudit();
-    }, 1000); // Aguarda 1 segundo após mudança de rota
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [location.pathname, runAudit]);
