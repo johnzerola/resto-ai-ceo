@@ -6,6 +6,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 import { ModernLayout } from "./components/restaurant/ModernLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { ErrorBoundary } from "./components/error/ErrorBoundary";
 import { UserRole } from "./services/AuthService";
 
 // Lazy loading para otimização de performance
@@ -45,42 +46,49 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dashboard-unificado">
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                {/* Rotas públicas */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                
-                {/* Rotas protegidas com layout moderno unificado */}
-                <Route path="/*" element={
-                  <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                    <ModernLayout>
-                      <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/dre" element={<DreCmv />} />
-                        <Route path="/dre-cmv" element={<DreCmv />} />
-                        <Route path="/fluxo-de-caixa" element={<FluxoCaixa />} />
-                        <Route path="/estoque" element={<Estoque />} />
-                        <Route path="/configuracoes" element={<Configuracoes />} />
-                        <Route path="/akguns-abas" element={<AkgunsAbasPage />} />
-                        {/* Fallback para rotas não encontradas */}
-                        <Route path="*" element={<Dashboard />} />
-                      </Routes>
-                    </ModernLayout>
-                  </ProtectedRoute>
-                } />
-              </Routes>
-            </Suspense>
-            <Toaster />
-          </div>
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // Log errors to monitoring service in production
+        console.error('Global error:', error, errorInfo);
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dashboard-unificado">
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  {/* Rotas públicas */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  
+                  {/* Rotas protegidas com layout moderno unificado */}
+                  <Route path="/*" element={
+                    <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
+                      <ModernLayout>
+                        <Routes>
+                          <Route path="/" element={<Dashboard />} />
+                          <Route path="/dashboard" element={<Dashboard />} />
+                          <Route path="/dre" element={<DreCmv />} />
+                          <Route path="/dre-cmv" element={<DreCmv />} />
+                          <Route path="/fluxo-de-caixa" element={<FluxoCaixa />} />
+                          <Route path="/estoque" element={<Estoque />} />
+                          <Route path="/configuracoes" element={<Configuracoes />} />
+                          <Route path="/akguns-abas" element={<AkgunsAbasPage />} />
+                          {/* Fallback para rotas não encontradas */}
+                          <Route path="*" element={<Dashboard />} />
+                        </Routes>
+                      </ModernLayout>
+                    </ProtectedRoute>
+                  } />
+                </Routes>
+              </Suspense>
+              <Toaster />
+            </div>
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

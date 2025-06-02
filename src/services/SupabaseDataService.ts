@@ -30,12 +30,57 @@ export interface PricingModel {
   updated_at?: string;
 }
 
-// Serviço para dados financeiros reais
+// Enhanced error handling utility
+class SupabaseError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+    public details?: string,
+    public hint?: string
+  ) {
+    super(message);
+    this.name = 'SupabaseError';
+  }
+}
+
+// Serviço para dados financeiros reais com tratamento de erros aprimorado
 export class SupabaseDataService {
   
+  private static handleError(error: any, operation: string): never {
+    console.error(`Erro em ${operation}:`, error);
+    
+    let userMessage = 'Ocorreu um erro inesperado';
+    
+    if (error?.code === '22P02') {
+      userMessage = 'ID do restaurante inválido. Verifique se você está logado corretamente.';
+    } else if (error?.code === 'PGRST116') {
+      userMessage = 'Dados não encontrados para este restaurante.';
+    } else if (error?.message?.includes('network')) {
+      userMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+    } else if (error?.message) {
+      userMessage = error.message;
+    }
+
+    toast.error('Erro ao carregar dados', {
+      description: userMessage
+    });
+
+    throw new SupabaseError(
+      userMessage,
+      error?.code,
+      error?.details,
+      error?.hint
+    );
+  }
+
   // Obter dados financeiros do restaurante
   static async getRestaurantFinancialData(restaurantId: string): Promise<RestaurantFinancialData[]> {
     try {
+      if (!restaurantId || restaurantId === 'default') {
+        console.warn('ID do restaurante inválido:', restaurantId);
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('cash_flow')
         .select('*')
@@ -44,77 +89,98 @@ export class SupabaseDataService {
         .limit(30);
 
       if (error) {
-        console.error('Erro ao carregar dados financeiros:', error);
-        return [];
+        this.handleError(error, 'carregar dados financeiros');
       }
 
       // Transformar dados do cash_flow em métricas financeiras
       return this.transformCashFlowToFinancialData(data || []);
     } catch (error) {
-      console.error('Erro na consulta financeira:', error);
-      return [];
+      if (error instanceof SupabaseError) {
+        throw error;
+      }
+      this.handleError(error, 'consulta financeira');
     }
   }
 
   // Transformar dados de cash flow em métricas
   private static transformCashFlowToFinancialData(cashFlowData: any[]): RestaurantFinancialData[] {
-    const groupedByDate = cashFlowData.reduce((acc, transaction) => {
-      const date = transaction.date;
-      if (!acc[date]) {
-        acc[date] = {
-          revenue: 0,
-          costs: 0,
-          transactions: 0
-        };
+    try {
+      if (!Array.isArray(cashFlowData) || cashFlowData.length === 0) {
+        return [];
       }
 
-      if (transaction.type === 'income') {
-        acc[date].revenue += Number(transaction.amount);
-      } else {
-        acc[date].costs += Number(transaction.amount);
-      }
-      acc[date].transactions++;
+      const groupedByDate = cashFlowData.reduce((acc, transaction) => {
+        const date = transaction.date;
+        if (!acc[date]) {
+          acc[date] = {
+            revenue: 0,
+            costs: 0,
+            transactions: 0
+          };
+        }
 
-      return acc;
-    }, {});
+        if (transaction.type === 'income') {
+          acc[date].revenue += Number(transaction.amount) || 0;
+        } else {
+          acc[date].costs += Number(transaction.amount) || 0;
+        }
+        acc[date].transactions++;
 
-    return Object.entries(groupedByDate).map(([date, data]: [string, any]) => ({
-      restaurant_id: cashFlowData[0]?.restaurant_id || '',
-      daily_sales: data.revenue,
-      monthly_sales: data.revenue * 30, // Estimativa
-      dishes_sold: Math.floor(data.transactions * 2.5), // Estimativa
-      average_ticket: data.transactions > 0 ? data.revenue / data.transactions : 0,
-      cmv_percentage: data.revenue > 0 ? (data.costs / data.revenue) * 100 : 0,
-      profit_margin: data.revenue > 0 ? ((data.revenue - data.costs) / data.revenue) * 100 : 0,
-      labor_cost_percentage: 25, // Valor padrão, deve ser configurável
-      fixed_costs: data.costs,
-      date: date
-    }));
+        return acc;
+      }, {});
+
+      return Object.entries(groupedByDate).map(([date, data]: [string, any]) => ({
+        restaurant_id: cashFlowData[0]?.restaurant_id || '',
+        daily_sales: data.revenue,
+        monthly_sales: data.revenue * 30, // Estimativa
+        dishes_sold: Math.floor(data.transactions * 2.5), // Estimativa
+        average_ticket: data.transactions > 0 ? data.revenue / data.transactions : 0,
+        cmv_percentage: data.revenue > 0 ? (data.costs / data.revenue) * 100 : 0,
+        profit_margin: data.revenue > 0 ? ((data.revenue - data.costs) / data.revenue) * 100 : 0,
+        labor_cost_percentage: 25, // Valor padrão, deve ser configurável
+        fixed_costs: data.costs,
+        date: date
+      }));
+    } catch (error) {
+      console.error('Erro ao transformar dados financeiros:', error);
+      return [];
+    }
   }
 
   // Obter dados de estoque
   static async getInventoryData(restaurantId: string) {
     try {
+      if (!restaurantId || restaurantId === 'default') {
+        console.warn('ID do restaurante inválido para estoque:', restaurantId);
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('inventory')
         .select('*')
         .eq('restaurant_id', restaurantId);
 
       if (error) {
-        console.error('Erro ao carregar estoque:', error);
-        return [];
+        this.handleError(error, 'carregar estoque');
       }
 
       return data || [];
     } catch (error) {
-      console.error('Erro na consulta de estoque:', error);
-      return [];
+      if (error instanceof SupabaseError) {
+        throw error;
+      }
+      this.handleError(error, 'consulta de estoque');
     }
   }
 
   // Obter metas do restaurante
   static async getRestaurantGoals(restaurantId: string) {
     try {
+      if (!restaurantId || restaurantId === 'default') {
+        console.warn('ID do restaurante inválido para metas:', restaurantId);
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('goals')
         .select('*')
@@ -122,20 +188,25 @@ export class SupabaseDataService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Erro ao carregar metas:', error);
-        return [];
+        this.handleError(error, 'carregar metas');
       }
 
       return data || [];
     } catch (error) {
-      console.error('Erro na consulta de metas:', error);
-      return [];
+      if (error instanceof SupabaseError) {
+        throw error;
+      }
+      this.handleError(error, 'consulta de metas');
     }
   }
 
   // Salvar modelo de precificação
   static async savePricingModel(pricingData: Omit<PricingModel, 'id' | 'created_at' | 'updated_at'>) {
     try {
+      if (!pricingData.restaurant_id) {
+        throw new Error('ID do restaurante é obrigatório');
+      }
+
       // Primeiro, tentar atualizar um registro existente
       const { data: existingData, error: selectError } = await supabase
         .from('pricing_models')
@@ -145,9 +216,7 @@ export class SupabaseDataService {
         .maybeSingle();
 
       if (selectError && selectError.code !== 'PGRST116') {
-        console.error('Erro ao verificar modelo existente:', selectError);
-        toast.error('Erro ao verificar modelo de precificação');
-        return null;
+        this.handleError(selectError, 'verificar modelo existente');
       }
 
       let result;
@@ -166,9 +235,7 @@ export class SupabaseDataService {
           .single();
 
         if (error) {
-          console.error('Erro ao atualizar modelo de precificação:', error);
-          toast.error('Erro ao atualizar modelo de precificação');
-          return null;
+          this.handleError(error, 'atualizar modelo de precificação');
         }
         result = data;
       } else {
@@ -180,9 +247,7 @@ export class SupabaseDataService {
           .single();
 
         if (error) {
-          console.error('Erro ao inserir modelo de precificação:', error);
-          toast.error('Erro ao salvar modelo de precificação');
-          return null;
+          this.handleError(error, 'inserir modelo de precificação');
         }
         result = data;
       }
@@ -190,15 +255,21 @@ export class SupabaseDataService {
       toast.success('Modelo de precificação salvo com sucesso');
       return result;
     } catch (error) {
-      console.error('Erro ao salvar precificação:', error);
-      toast.error('Erro interno ao salvar precificação');
-      return null;
+      if (error instanceof SupabaseError) {
+        throw error;
+      }
+      this.handleError(error, 'salvar precificação');
     }
   }
 
   // Obter modelos de precificação
   static async getPricingModels(restaurantId: string): Promise<PricingModel[]> {
     try {
+      if (!restaurantId || restaurantId === 'default') {
+        console.warn('ID do restaurante inválido para modelos de precificação:', restaurantId);
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('pricing_models')
         .select(`
@@ -215,8 +286,7 @@ export class SupabaseDataService {
         .eq('restaurant_id', restaurantId);
 
       if (error) {
-        console.error('Erro ao carregar modelos de precificação:', error);
-        return [];
+        this.handleError(error, 'carregar modelos de precificação');
       }
 
       // Mapear os dados para o tipo PricingModel
@@ -232,43 +302,61 @@ export class SupabaseDataService {
         updated_at: item.updated_at
       }));
     } catch (error) {
-      console.error('Erro na consulta de precificação:', error);
-      return [];
+      if (error instanceof SupabaseError) {
+        throw error;
+      }
+      this.handleError(error, 'consulta de precificação');
     }
   }
 
   // Calcular precificação inteligente baseada no canal
   static calculateChannelPricing(baseCost: number, channel: PricingModel['channel'], pricingModel?: PricingModel) {
-    const defaultMarkups = {
-      salon: 250,      // 250% markup para salão
-      delivery: 280,   // 280% markup para delivery (custos maiores)
-      buffet: 200,     // 200% markup para buffet por kg
-      rodizio: 300,    // 300% markup para rodízio (valor fixo)
-      ifood: 320       // 320% markup para iFood (comissão da plataforma)
-    };
+    try {
+      if (typeof baseCost !== 'number' || baseCost < 0) {
+        throw new Error('Custo base deve ser um número positivo');
+      }
 
-    const markup = pricingModel?.markup_percentage || defaultMarkups[channel];
-    const basePrice = baseCost * (markup / 100);
-    
-    // Adicionar taxa de entrega se for delivery
-    const deliveryFee = channel === 'delivery' ? (pricingModel?.delivery_fee || 5.00) : 0;
-    
-    // Considerar comissão da plataforma (iFood, por exemplo)
-    const platformCommission = pricingModel?.platform_commission || 0;
-    const finalPrice = basePrice + deliveryFee;
-    
-    return {
-      basePrice,
-      deliveryFee,
-      platformCommission,
-      finalPrice: finalPrice * (1 + platformCommission / 100),
-      markup
-    };
+      const defaultMarkups = {
+        salon: 250,      // 250% markup para salão
+        delivery: 280,   // 280% markup para delivery (custos maiores)
+        buffet: 200,     // 200% markup para buffet por kg
+        rodizio: 300,    // 300% markup para rodízio (valor fixo)
+        ifood: 320       // 320% markup para iFood (comissão da plataforma)
+      };
+
+      const markup = pricingModel?.markup_percentage || defaultMarkups[channel];
+      const basePrice = baseCost * (markup / 100);
+      
+      // Adicionar taxa de entrega se for delivery
+      const deliveryFee = channel === 'delivery' ? (pricingModel?.delivery_fee || 5.00) : 0;
+      
+      // Considerar comissão da plataforma (iFood, por exemplo)
+      const platformCommission = pricingModel?.platform_commission || 0;
+      const finalPrice = basePrice + deliveryFee;
+      
+      return {
+        basePrice,
+        deliveryFee,
+        platformCommission,
+        finalPrice: finalPrice * (1 + platformCommission / 100),
+        markup
+      };
+    } catch (error) {
+      console.error('Erro no cálculo de precificação:', error);
+      toast.error('Erro no cálculo', {
+        description: 'Não foi possível calcular o preço. Verifique os dados informados.'
+      });
+      throw error;
+    }
   }
 
   // Sincronizar dados entre módulos
   static async syncModuleData(restaurantId: string) {
     try {
+      if (!restaurantId) {
+        throw new Error('ID do restaurante é obrigatório para sincronização');
+      }
+
       console.log('Iniciando sincronização de dados para restaurante:', restaurantId);
       
       // Disparar evento de sincronização
@@ -279,6 +367,9 @@ export class SupabaseDataService {
       return true;
     } catch (error) {
       console.error('Erro na sincronização:', error);
+      toast.error('Erro na sincronização', {
+        description: 'Não foi possível sincronizar os dados. Tente novamente.'
+      });
       return false;
     }
   }

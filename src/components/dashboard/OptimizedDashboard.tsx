@@ -1,7 +1,6 @@
 
 import React, { memo, Suspense, useMemo } from "react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   RefreshCw,
@@ -11,6 +10,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardPerformance } from "@/hooks/useDashboardPerformance";
 import { useGlobalSync } from "@/hooks/useGlobalSync";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 
 // Lazy load componentes pesados
 const QuickAccessGrid = React.lazy(() => import('./QuickAccessGrid'));
@@ -52,94 +52,120 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
   }, [syncState]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dashboard-unificado">
-      {/* Header moderno otimizado */}
-      <div className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="px-6 py-4">
-          <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                RestaurIA CEO
-              </h1>
-              <p className="text-slate-600 text-sm">
-                Dashboard otimizado para máxima performance
-              </p>
-            </div>
-            
-            {/* Status em tempo real */}
-            <div className="flex items-center gap-3">
-              <Card className={`px-3 py-2 border-0 shadow-sm ${syncStatusDisplay.bgColor}`}>
-                <div className="flex items-center gap-2">
-                  {syncStatusDisplay.icon}
-                  <span className={`text-sm font-medium ${syncStatusDisplay.color}`}>
-                    {syncStatusDisplay.status}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {syncStatusDisplay.lastUpdate}
-                  </span>
-                </div>
-              </Card>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dashboard-unificado">
+        {/* Header moderno otimizado */}
+        <div className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
+          <div className="px-6 py-4">
+            <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
+              <div className="space-y-1">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                  RestaurIA CEO
+                </h1>
+                <p className="text-slate-600 text-sm">
+                  Dashboard otimizado para máxima performance
+                </p>
+              </div>
               
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={triggerGlobalSync}
-                disabled={syncStatusDisplay.isSyncing}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${syncStatusDisplay.isSyncing ? 'animate-spin' : ''}`} />
-                Sincronizar
-              </Button>
+              {/* Status em tempo real */}
+              <div className="flex items-center gap-3">
+                <Card className={`px-3 py-2 border-0 shadow-sm ${syncStatusDisplay.bgColor}`}>
+                  <div className="flex items-center gap-2">
+                    {syncStatusDisplay.icon}
+                    <span className={`text-sm font-medium ${syncStatusDisplay.color}`}>
+                      {syncStatusDisplay.status}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      {syncStatusDisplay.lastUpdate}
+                    </span>
+                  </div>
+                </Card>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={triggerGlobalSync}
+                  disabled={syncStatusDisplay.isSyncing}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${syncStatusDisplay.isSyncing ? 'animate-spin' : ''}`} />
+                  Sincronizar
+                </Button>
+              </div>
             </div>
-          </div>
 
-          {/* Métricas de performance */}
-          <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
-            <span>Render: {performanceMetrics.renderTime.toFixed(2)}ms</span>
-            <span>Última atualização: {new Date(performanceMetrics.lastUpdate).toLocaleTimeString()}</span>
-            <span className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              Dados em tempo real
-            </span>
+            {/* Métricas de performance */}
+            <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+              <span>Render: {performanceMetrics.renderTime.toFixed(2)}ms</span>
+              <span>Última atualização: {new Date(performanceMetrics.lastUpdate).toLocaleTimeString()}</span>
+              <span className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Dados em tempo real
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Conteúdo principal com Suspense */}
-      <div className="px-6 py-6">
-        <Suspense fallback={<DashboardSkeleton />}>
-          {isLoading ? (
-            <DashboardSkeleton />
-          ) : (
-            <div className="space-y-6">
-              {/* Acesso rápido */}
-              <div data-testid="quick-access">
-                <QuickAccessGrid />
-              </div>
-              
-              {/* Métricas principais */}
-              <div data-testid="dashboard-metrics">
-                <MetricsGrid stats={dashboardStats} />
-              </div>
-              
-              {/* Status do sistema */}
-              <div data-testid="system-status" className="grid gap-6 lg:grid-cols-3">
-                <div className="lg:col-span-2">
-                  <StatusSection 
-                    subscriptionInfo={subscriptionInfo}
-                    syncState={syncState}
-                  />
-                </div>
+        {/* Conteúdo principal com Suspense e Error Boundaries */}
+        <div className="px-6 py-6">
+          <Suspense fallback={<DashboardSkeleton />}>
+            {isLoading ? (
+              <DashboardSkeleton />
+            ) : (
+              <div className="space-y-6">
+                {/* Acesso rápido */}
+                <ErrorBoundary fallback={
+                  <Card className="p-6 text-center">
+                    <p className="text-slate-600">Erro ao carregar acesso rápido</p>
+                  </Card>
+                }>
+                  <div data-testid="quick-access">
+                    <QuickAccessGrid />
+                  </div>
+                </ErrorBoundary>
                 
-                {/* Painel de auditoria */}
-                <div className="lg:col-span-1">
-                  <AuditPanel />
+                {/* Métricas principais */}
+                <ErrorBoundary fallback={
+                  <Card className="p-6 text-center">
+                    <p className="text-slate-600">Erro ao carregar métricas</p>
+                  </Card>
+                }>
+                  <div data-testid="dashboard-metrics">
+                    <MetricsGrid stats={dashboardStats} />
+                  </div>
+                </ErrorBoundary>
+                
+                {/* Status do sistema */}
+                <div data-testid="system-status" className="grid gap-6 lg:grid-cols-3">
+                  <div className="lg:col-span-2">
+                    <ErrorBoundary fallback={
+                      <Card className="p-6 text-center">
+                        <p className="text-slate-600">Erro ao carregar status do sistema</p>
+                      </Card>
+                    }>
+                      <StatusSection 
+                        subscriptionInfo={subscriptionInfo}
+                        syncState={syncState}
+                      />
+                    </ErrorBoundary>
+                  </div>
+                  
+                  {/* Painel de auditoria */}
+                  <div className="lg:col-span-1">
+                    <ErrorBoundary fallback={
+                      <Card className="p-6 text-center">
+                        <p className="text-slate-600">Erro ao carregar auditoria</p>
+                      </Card>
+                    }>
+                      <AuditPanel />
+                    </ErrorBoundary>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </Suspense>
+            )}
+          </Suspense>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 });

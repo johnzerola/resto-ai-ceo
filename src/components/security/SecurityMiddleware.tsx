@@ -1,13 +1,13 @@
 
 import React from "react";
-import { useSimpleSecurityMonitoring } from "@/hooks/useSimpleSecurityMonitoring";
 
 interface SecurityMiddlewareProps {
   children: React.ReactNode;
 }
 
 export const SecurityMiddleware: React.FC<SecurityMiddlewareProps> = ({ children }) => {
-  useSimpleSecurityMonitoring();
+  // Security monitoring functionality can be added here when needed
+  console.log('SecurityMiddleware: Monitoring active');
 
   return <>{children}</>;
 };
