@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/restaurant/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -11,11 +10,12 @@ import { SupportChat } from "@/components/security/SupportChat";
 import { Shield, FileCheck, HardDrive, Scale, Activity, MessageSquare, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 
 const SecurityCenter = () => {
   return (
     <ProtectedRoute requiredRole={UserRole.MANAGER}>
-      <Layout>
+      <ModernLayout>
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-blue-600" />
@@ -313,7 +313,7 @@ const SecurityCenter = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </Layout>
+      </ModernLayout>
     </ProtectedRoute>
   );
 };

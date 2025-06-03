@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,7 +94,7 @@ const GerenciarUsuarios = () => {
 
   return (
     <ProtectedRoute requiredRole={UserRole.OWNER}>
-      <Layout>
+      <ModernLayout>
         <div className="mb-6 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Gerenciar Usuários</h1>
@@ -259,7 +258,7 @@ const GerenciarUsuarios = () => {
             </Table>
           </CardContent>
         </Card>
-      </Layout>
+      </ModernLayout>
     </ProtectedRoute>
   );
 };

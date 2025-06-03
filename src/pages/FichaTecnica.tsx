@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { RecipeForm } from "@/components/restaurant/RecipeForm";
 import { RecipeList } from "@/components/restaurant/RecipeList";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ const FichaTecnica = () => {
   };
 
   return (
-    <Layout>
+    <ModernLayout>
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Ficha Técnica</h1>
@@ -99,7 +99,7 @@ const FichaTecnica = () => {
       ) : (
         <RecipeList onEdit={editRecipe} />
       )}
-    </Layout>
+    </ModernLayout>
   );
 };
 

@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { CashFlowOverview } from "@/components/restaurant/CashFlowOverview";
 import { CashFlowForm } from "@/components/restaurant/CashFlowForm";
 import { Button } from "@/components/ui/button";
@@ -63,7 +62,7 @@ const FluxoCaixa = () => {
   };
 
   return (
-    <Layout>
+    <ModernLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
@@ -131,7 +130,7 @@ const FluxoCaixa = () => {
           <CashFlowOverview onEdit={editEntry} />
         )}
       </div>
-    </Layout>
+    </ModernLayout>
   );
 };
 

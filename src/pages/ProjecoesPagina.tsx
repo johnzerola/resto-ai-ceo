@@ -1,12 +1,11 @@
-
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { ProfitForecasting } from "@/components/restaurant/ProfitForecasting";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Calculator, Target } from "lucide-react";
 
 export function ProjecoesPagina() {
   return (
-    <Layout>
+    <ModernLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Projeções e Cenários</h1>
@@ -108,6 +107,6 @@ export function ProjecoesPagina() {
           </CardContent>
         </Card>
       </div>
-    </Layout>
+    </ModernLayout>
   );
 }

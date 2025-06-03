@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -64,7 +63,7 @@ const SystemAdmin = () => {
 
   return (
     <ProtectedRoute requiredRole={UserRole.OWNER}>
-      <Layout>
+      <ModernLayout>
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">Administração do Sistema</h1>
           <p className="text-muted-foreground">
@@ -311,7 +310,7 @@ const SystemAdmin = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </Layout>
+      </ModernLayout>
     </ProtectedRoute>
   );
 };

@@ -1,11 +1,11 @@
 
 import { useState } from "react";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { MarketingAI } from "@/components/restaurant/MarketingAI";
 
 const Marketing = () => {
   return (
-    <Layout>
+    <ModernLayout>
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Marketing IA</h1>
         <p className="text-muted-foreground">
@@ -14,7 +14,7 @@ const Marketing = () => {
       </div>
 
       <MarketingAI />
-    </Layout>
+    </ModernLayout>
   );
 };
 

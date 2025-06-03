@@ -2,7 +2,7 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 
 const NotFound = () => {
   const location = useLocation();
@@ -15,7 +15,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <Layout>
+    <ModernLayout>
       <div className="flex flex-col items-center justify-center py-20">
         <h1 className="text-7xl font-bold text-resto-blue-500">404</h1>
         <p className="text-xl text-gray-600 mt-4 mb-6">Página não encontrada</p>
@@ -26,7 +26,7 @@ const NotFound = () => {
           <a href="/">Voltar para o Dashboard</a>
         </Button>
       </div>
-    </Layout>
+    </ModernLayout>
   );
 };
 

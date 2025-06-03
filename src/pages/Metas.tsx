@@ -1,5 +1,4 @@
-
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { GoalsManager } from "@/components/restaurant/GoalsManager";
 import { GoalProgressCard } from "@/components/restaurant/GoalProgressCard";
 import { AchievementsDisplay } from "@/components/restaurant/AchievementsDisplay";
@@ -78,7 +77,7 @@ export function Metas() {
   };
 
   return (
-    <Layout>
+    <ModernLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
@@ -190,6 +189,6 @@ export function Metas() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
+    </ModernLayout>
   );
 }

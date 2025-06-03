@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { PromotionsList } from "@/components/restaurant/PromotionsList";
 import { PromotionForm } from "@/components/restaurant/PromotionForm";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ const Promocoes = () => {
   };
 
   return (
-    <Layout>
+    <ModernLayout>
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Rodízios e Promoções</h1>
@@ -51,7 +50,7 @@ const Promocoes = () => {
       ) : (
         <PromotionsList onEdit={editPromotion} />
       )}
-    </Layout>
+    </ModernLayout>
   );
 };
 

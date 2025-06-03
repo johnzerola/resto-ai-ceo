@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -72,7 +71,7 @@ const IAConfiguracoes = () => {
   };
 
   return (
-    <Layout>
+    <ModernLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -212,7 +211,7 @@ const IAConfiguracoes = () => {
           </AlertDescription>
         </Alert>
       </div>
-    </Layout>
+    </ModernLayout>
   );
 };
 

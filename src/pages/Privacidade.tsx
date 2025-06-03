@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/restaurant/Layout";
 import { PrivacyDashboard } from "@/components/security/PrivacyDashboard";
 import { SecurityDashboard } from "@/components/security/SecurityDashboard";
@@ -6,11 +5,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
 import { Shield, Lock, FileText, Activity } from "lucide-react";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 
 const Privacidade = () => {
   return (
     <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-      <Layout>
+      <ModernLayout>
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-blue-600" />
@@ -43,7 +43,7 @@ const Privacidade = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </Layout>
+      </ModernLayout>
     </ProtectedRoute>
   );
 };

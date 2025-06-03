@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Layout } from "@/components/restaurant/Layout";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { InventoryOverview } from "@/components/restaurant/InventoryOverview";
 import { InventoryForm } from "@/components/restaurant/InventoryForm";
 import { ShoppingList } from "@/components/restaurant/ShoppingList";
@@ -50,7 +49,7 @@ const Estoque = () => {
   };
 
   return (
-    <Layout>
+    <ModernLayout>
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Controle de Estoque</h1>
@@ -210,7 +209,7 @@ const Estoque = () => {
           </TabsContent>
         </Tabs>
       )}
-    </Layout>
+    </ModernLayout>
   );
 };
 
