@@ -1,11 +1,11 @@
-import { Layout } from "@/components/restaurant/Layout";
+
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { PrivacyDashboard } from "@/components/security/PrivacyDashboard";
 import { SecurityDashboard } from "@/components/security/SecurityDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
 import { Shield, Lock, FileText, Activity } from "lucide-react";
-import { ModernLayout } from "@/components/restaurant/ModernLayout";
 
 const Privacidade = () => {
   return (

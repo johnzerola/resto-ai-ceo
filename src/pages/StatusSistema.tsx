@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -9,7 +10,6 @@ import {
   ServerCrash,
   ShieldAlert,
   Cpu,
-  Memory,
   Network,
   Database,
   FileText,
@@ -175,7 +175,7 @@ const StatusSistema = () => {
                     <span>CPU: {systemStatus.cpuUsage}%</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Memory className="h-4 w-4" />
+                    <Activity className="h-4 w-4" />
                     <span>Memória: {systemStatus.memoryUsage}%</span>
                   </div>
                   <div className="flex items-center space-x-2">
