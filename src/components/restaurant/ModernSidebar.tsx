@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,9 @@ import {
   HelpCircle,
   Shield,
   CreditCard,
-  FolderOpen
+  FolderOpen,
+  Server,
+  ShoppingCart
 } from "lucide-react";
 import { ModernNavItem } from "./ModernNavItem";
 
@@ -137,6 +140,20 @@ const navigation = [
     icon: Shield,
     description: "Política de privacidade",
     category: "support"
+  },
+  {
+    title: "Status Sistema",
+    href: "/status-sistema",
+    icon: Server,
+    description: "Monitoramento do sistema",
+    category: "support"
+  },
+  {
+    title: "Vendas",
+    href: "/vendas",
+    icon: ShoppingCart,
+    description: "Página de vendas",
+    category: "overview"
   }
 ];
 

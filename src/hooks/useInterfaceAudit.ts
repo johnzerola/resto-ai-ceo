@@ -8,6 +8,11 @@ interface AuditResult {
   dataIntegrity: boolean;
   designConsistency: boolean;
   lastAudit: string;
+  performanceMetrics: {
+    loadTime: number;
+    memoryUsage: number;
+    consoleErrors: number;
+  };
 }
 
 interface AuditConfig {
@@ -22,19 +27,38 @@ export function useInterfaceAudit(config?: AuditConfig) {
     invalidRoutes: [],
     dataIntegrity: false,
     designConsistency: false,
-    lastAudit: ''
+    lastAudit: '',
+    performanceMetrics: {
+      loadTime: 0,
+      memoryUsage: 0,
+      consoleErrors: 0
+    }
   });
 
   const defaultConfig: AuditConfig = {
     validRoutes: [
       '/',
       '/dashboard',
+      '/projecoes',
       '/dre',
+      '/cmv',
       '/dre-cmv',
       '/fluxo-de-caixa',
+      '/simulador',
+      '/metas',
       '/estoque',
+      '/cardapio',
+      '/akguns-abas',
+      '/ai-assistant',
+      '/gerenciar-usuarios',
+      '/assinatura',
       '/configuracoes',
-      '/akguns-abas'
+      '/documentacao',
+      '/privacidade',
+      '/status-sistema',
+      '/vendas',
+      '/security-center',
+      '/admin'
     ],
     requiredDataSelectors: [
       '[data-testid="dashboard-metrics"]',
@@ -93,20 +117,35 @@ export function useInterfaceAudit(config?: AuditConfig) {
     return hasModernLayout && modernDesignElements.length > 0;
   }, []);
 
+  // Métricas de performance
+  const checkPerformanceMetrics = useCallback(() => {
+    const loadTime = performance.now();
+    const memoryUsage = (performance as any).memory?.usedJSHeapSize || 0;
+    const consoleErrors = (console as any).errorCount || 0;
+
+    return {
+      loadTime,
+      memoryUsage,
+      consoleErrors
+    };
+  }, []);
+
   // Executar auditoria completa
   const runAudit = useCallback(async () => {
-    console.log('🔍 Iniciando auditoria de interface moderna...');
+    console.log('🔍 Iniciando auditoria completa de interface...');
 
     const duplicateMenus = checkDuplicateMenus();
     const invalidRoutes = checkInvalidRoutes();
     const dataIntegrity = checkDataIntegrity();
     const designConsistency = checkDesignConsistency();
+    const performanceMetrics = checkPerformanceMetrics();
 
     const result: AuditResult = {
       duplicateMenus,
       invalidRoutes,
       dataIntegrity,
       designConsistency,
+      performanceMetrics,
       lastAudit: new Date().toISOString()
     };
 
@@ -122,7 +161,7 @@ export function useInterfaceAudit(config?: AuditConfig) {
     }
 
     if (!dataIntegrity) {
-      console.error('❌ Alguns dados críticos não estão sendo carregados corretamente.');
+      console.error('❌ Alguns dados críticos não estão sendo carregados.');
     } else {
       console.log('✅ Dados operacionais carregados corretamente.');
     }
@@ -133,10 +172,11 @@ export function useInterfaceAudit(config?: AuditConfig) {
       console.log('✅ Design moderno unificado aplicado.');
     }
 
-    console.log('✅ Auditoria visual e funcional concluída.');
+    console.log('📊 Métricas de performance:', performanceMetrics);
+    console.log('✅ Auditoria completa concluída.');
 
     return result;
-  }, [checkDuplicateMenus, checkInvalidRoutes, checkDataIntegrity, checkDesignConsistency]);
+  }, [checkDuplicateMenus, checkInvalidRoutes, checkDataIntegrity, checkDesignConsistency, checkPerformanceMetrics]);
 
   // Auto-auditoria quando a rota muda
   useEffect(() => {
@@ -147,18 +187,13 @@ export function useInterfaceAudit(config?: AuditConfig) {
     return () => clearTimeout(timer);
   }, [location.pathname, runAudit]);
 
-  // Auditoria automática a cada 30 segundos
-  useEffect(() => {
-    const interval = setInterval(runAudit, 30000);
-    return () => clearInterval(interval);
-  }, [runAudit]);
-
   return {
     auditResult,
     runAudit,
     isHealthy: auditResult.duplicateMenus.length === 0 && 
                auditResult.invalidRoutes.length === 0 && 
                auditResult.dataIntegrity && 
-               auditResult.designConsistency
+               auditResult.designConsistency,
+    performanceScore: auditResult.performanceMetrics.loadTime < 2000 ? 'good' : 'needs-improvement'
   };
 }

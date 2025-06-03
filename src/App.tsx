@@ -9,15 +9,31 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
 import { UserRole } from "./services/AuthService";
 
-// Lazy loading para otimização de performance
+// Lazy loading otimizado para todas as páginas
 const Dashboard = React.lazy(() => import("./pages/Dashboard").then(module => ({ default: module.Dashboard })));
+const Index = React.lazy(() => import("./pages/Index"));
 const Login = React.lazy(() => import("./pages/Login"));
 const Register = React.lazy(() => import("./pages/Register").then(module => ({ default: module.Register })));
 const DreCmv = React.lazy(() => import("./pages/DreCmv"));
+const DRE = React.lazy(() => import("./pages/DRE").then(module => ({ default: module.DRE })));
+const CMV = React.lazy(() => import("./pages/CMV").then(module => ({ default: module.CMV })));
 const FluxoCaixa = React.lazy(() => import("./pages/FluxoCaixa"));
+const FluxoDeCaixa = React.lazy(() => import("./pages/FluxoDeCaixa").then(module => ({ default: module.FluxoDeCaixa })));
 const Estoque = React.lazy(() => import("./pages/Estoque"));
 const Configuracoes = React.lazy(() => import("./pages/Configuracoes"));
 const AkgunsAbasPage = React.lazy(() => import("./pages/AkgunsAbasPage"));
+const Metas = React.lazy(() => import("./pages/Metas"));
+const Simulador = React.lazy(() => import("./pages/Simulador"));
+const AIAssistantPage = React.lazy(() => import("./pages/AIAssistantPage").then(module => ({ default: module.AIAssistantPage })));
+const GerenciarUsuarios = React.lazy(() => import("./pages/GerenciarUsuarios"));
+const Assinatura = React.lazy(() => import("./pages/Assinatura"));
+const Documentacao = React.lazy(() => import("./pages/Documentacao"));
+const Privacidade = React.lazy(() => import("./pages/Privacidade"));
+const PaginaVendas = React.lazy(() => import("./pages/PaginaVendas"));
+const ProjecoesPagina = React.lazy(() => import("./pages/ProjecoesPagina"));
+const SecurityCenter = React.lazy(() => import("./pages/SecurityCenter"));
+const SystemAdmin = React.lazy(() => import("./pages/SystemAdmin"));
+const StatusSistema = React.lazy(() => import("./pages/StatusSistema"));
 
 // Loading component otimizado
 const LoadingFallback = () => (
@@ -32,7 +48,7 @@ const LoadingFallback = () => (
   </div>
 );
 
-// QueryClient otimizado para produção
+// QueryClient otimizado
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -48,7 +64,6 @@ function App() {
   return (
     <ErrorBoundary
       onError={(error, errorInfo) => {
-        // Log errors to monitoring service in production
         console.error('Global error:', error, errorInfo);
       }}
     >
@@ -61,22 +76,37 @@ function App() {
                   {/* Rotas públicas */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/vendas" element={<PaginaVendas />} />
                   
-                  {/* Rotas protegidas com layout moderno unificado */}
+                  {/* Rotas protegidas com layout moderno */}
                   <Route path="/*" element={
                     <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
                       <ModernLayout>
                         <Routes>
-                          <Route path="/" element={<Dashboard />} />
+                          <Route path="/" element={<Index />} />
                           <Route path="/dashboard" element={<Dashboard />} />
-                          <Route path="/dre" element={<DreCmv />} />
+                          <Route path="/projecoes" element={<ProjecoesPagina />} />
+                          <Route path="/dre" element={<DRE />} />
+                          <Route path="/cmv" element={<CMV />} />
                           <Route path="/dre-cmv" element={<DreCmv />} />
-                          <Route path="/fluxo-de-caixa" element={<FluxoCaixa />} />
+                          <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
+                          <Route path="/fluxo-caixa" element={<FluxoCaixa />} />
+                          <Route path="/simulador" element={<Simulador />} />
+                          <Route path="/metas" element={<Metas />} />
                           <Route path="/estoque" element={<Estoque />} />
-                          <Route path="/configuracoes" element={<Configuracoes />} />
+                          <Route path="/cardapio" element={<Estoque />} />
                           <Route path="/akguns-abas" element={<AkgunsAbasPage />} />
+                          <Route path="/ai-assistant" element={<AIAssistantPage />} />
+                          <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
+                          <Route path="/assinatura" element={<Assinatura />} />
+                          <Route path="/configuracoes" element={<Configuracoes />} />
+                          <Route path="/documentacao" element={<Documentacao />} />
+                          <Route path="/privacidade" element={<Privacidade />} />
+                          <Route path="/security-center" element={<SecurityCenter />} />
+                          <Route path="/admin" element={<SystemAdmin />} />
+                          <Route path="/status-sistema" element={<StatusSistema />} />
                           {/* Fallback para rotas não encontradas */}
-                          <Route path="*" element={<Dashboard />} />
+                          <Route path="*" element={<Index />} />
                         </Routes>
                       </ModernLayout>
                     </ProtectedRoute>
