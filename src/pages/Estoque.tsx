@@ -59,13 +59,19 @@ const Estoque = () => {
     setIsAddingItem(true);
   };
 
-  const handleItemSaved = (item: InventoryItem) => {
-    const updatedItems = selectedItemId 
-      ? inventoryItems.map(i => i.id === selectedItemId ? item : i)
-      : [...inventoryItems, { ...item, id: Date.now().toString() }];
+  const handleFormSuccess = () => {
+    // Reload inventory data from localStorage after successful save
+    const storedItems = localStorage.getItem("inventoryItems");
+    if (storedItems) {
+      try {
+        const parsedItems = JSON.parse(storedItems);
+        setInventoryItems(parsedItems);
+      } catch (error) {
+        console.error("Error parsing stored inventory items:", error);
+        setInventoryItems([]);
+      }
+    }
     
-    setInventoryItems(updatedItems);
-    localStorage.setItem("inventoryItems", JSON.stringify(updatedItems));
     setIsAddingItem(false);
     setSelectedItemId(null);
     
@@ -131,7 +137,7 @@ const Estoque = () => {
           <InventoryForm 
             itemId={selectedItemId} 
             onCancel={handleCancelForm} 
-            onSuccess={handleItemSaved}
+            onSuccess={handleFormSuccess}
           />
         ) : (
           <InventoryOverview 
