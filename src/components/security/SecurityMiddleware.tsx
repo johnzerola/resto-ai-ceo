@@ -1,13 +1,20 @@
 
-import React from "react";
+import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSecurityMonitoring } from '@/hooks/useSecurityMonitoring';
 
-interface SecurityMiddlewareProps {
-  children: React.ReactNode;
-}
+export const SecurityMiddleware = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  const { logSecurityEvent } = useSecurityMonitoring();
 
-export const SecurityMiddleware: React.FC<SecurityMiddlewareProps> = ({ children }) => {
-  // Security monitoring functionality can be added here when needed
-  console.log('SecurityMiddleware: Monitoring active');
+  React.useEffect(() => {
+    if (user) {
+      logSecurityEvent('user_access', {
+        userId: user.id,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [user, logSecurityEvent]);
 
   return <>{children}</>;
 };
