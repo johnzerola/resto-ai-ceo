@@ -1,4 +1,3 @@
-
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -22,18 +21,19 @@ const FluxoDeCaixa = React.lazy(() => import("./pages/FluxoDeCaixa").then(module
 const Estoque = React.lazy(() => import("./pages/Estoque"));
 const Configuracoes = React.lazy(() => import("./pages/Configuracoes"));
 const AkgunsAbasPage = React.lazy(() => import("./pages/AkgunsAbasPage"));
-const Metas = React.lazy(() => import("./pages/Metas"));
+const Metas = React.lazy(() => import("./pages/Metas").then(module => ({ default: module.Metas })));
 const Simulador = React.lazy(() => import("./pages/Simulador"));
 const AIAssistantPage = React.lazy(() => import("./pages/AIAssistantPage").then(module => ({ default: module.AIAssistantPage })));
 const GerenciarUsuarios = React.lazy(() => import("./pages/GerenciarUsuarios"));
-const Assinatura = React.lazy(() => import("./pages/Assinatura"));
+const Assinatura = React.lazy(() => import("./pages/Assinatura").then(module => ({ default: module.Assinatura })));
 const Documentacao = React.lazy(() => import("./pages/Documentacao"));
 const Privacidade = React.lazy(() => import("./pages/Privacidade"));
 const PaginaVendas = React.lazy(() => import("./pages/PaginaVendas"));
-const ProjecoesPagina = React.lazy(() => import("./pages/ProjecoesPagina"));
+const ProjecoesPagina = React.lazy(() => import("./pages/ProjecoesPagina").then(module => ({ default: module.ProjecoesPagina })));
 const SecurityCenter = React.lazy(() => import("./pages/SecurityCenter"));
 const SystemAdmin = React.lazy(() => import("./pages/SystemAdmin"));
 const StatusSistema = React.lazy(() => import("./pages/StatusSistema"));
+const Cardapio = React.lazy(() => import("./pages/Cardapio").then(module => ({ default: module.Cardapio })));
 
 // Loading component otimizado
 const LoadingFallback = () => (
@@ -94,7 +94,7 @@ function App() {
                           <Route path="/simulador" element={<Simulador />} />
                           <Route path="/metas" element={<Metas />} />
                           <Route path="/estoque" element={<Estoque />} />
-                          <Route path="/cardapio" element={<Estoque />} />
+                          <Route path="/cardapio" element={<Cardapio />} />
                           <Route path="/akguns-abas" element={<AkgunsAbasPage />} />
                           <Route path="/ai-assistant" element={<AIAssistantPage />} />
                           <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
