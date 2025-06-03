@@ -49,6 +49,11 @@ const Estoque = () => {
     setSelectedItemId(null);
   };
 
+  const handleCancelForm = () => {
+    setIsAddingItem(false);
+    setSelectedItemId(null);
+  };
+
   const editItem = (itemId: string) => {
     setSelectedItemId(itemId);
     setIsAddingItem(true);
@@ -125,13 +130,12 @@ const Estoque = () => {
         {isAddingItem ? (
           <InventoryForm 
             itemId={selectedItemId} 
-            onCancel={toggleAddItem} 
+            onCancel={handleCancelForm} 
             onSuccess={handleItemSaved}
           />
         ) : (
           <InventoryOverview 
-            onEdit={editItem} 
-            onDelete={handleItemDeleted}
+            onEdit={editItem}
           />
         )}
       </div>

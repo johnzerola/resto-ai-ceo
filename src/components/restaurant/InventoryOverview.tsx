@@ -53,41 +53,28 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
 
   // Load inventory data
   useEffect(() => {
-    const savedInventory = localStorage.getItem("inventory");
+    const savedInventory = localStorage.getItem("inventoryItems");
     if (savedInventory) {
-      const parsedInventory = JSON.parse(savedInventory);
-      setInventory(parsedInventory);
-      
-      // Calculate low stock items
-      const lowStock = parsedInventory.filter(
-        (item: InventoryItem) => item.quantity <= item.minStockLevel
-      );
-      setLowStockItems(lowStock);
-      
-      // Calculate total inventory cost
-      const totalCost = parsedInventory.reduce(
-        (sum: number, item: InventoryItem) => sum + item.totalCost,
-        0
-      );
-      setTotalInventoryCost(totalCost);
-    } else {
-      // Set sample data if no data in localStorage
-      const sampleInventory = generateSampleInventory();
-      localStorage.setItem("inventory", JSON.stringify(sampleInventory));
-      setInventory(sampleInventory);
-      
-      // Calculate low stock items
-      const lowStock = sampleInventory.filter(
-        (item: InventoryItem) => item.quantity <= item.minStockLevel
-      );
-      setLowStockItems(lowStock);
-      
-      // Calculate total inventory cost
-      const totalCost = sampleInventory.reduce(
-        (sum: number, item: InventoryItem) => sum + item.totalCost,
-        0
-      );
-      setTotalInventoryCost(totalCost);
+      try {
+        const parsedInventory = JSON.parse(savedInventory);
+        setInventory(parsedInventory);
+        
+        // Calculate low stock items
+        const lowStock = parsedInventory.filter(
+          (item: InventoryItem) => item.quantity <= item.minStockLevel
+        );
+        setLowStockItems(lowStock);
+        
+        // Calculate total inventory cost
+        const totalCost = parsedInventory.reduce(
+          (sum: number, item: InventoryItem) => sum + (item.totalCost || item.quantity * item.costPerUnit),
+          0
+        );
+        setTotalInventoryCost(totalCost);
+      } catch (error) {
+        console.error("Error parsing inventory:", error);
+        setInventory([]);
+      }
     }
   }, []);
 
@@ -115,7 +102,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
     });
     
     setInventory(updatedInventory);
-    localStorage.setItem("inventory", JSON.stringify(updatedInventory));
+    localStorage.setItem("inventoryItems", JSON.stringify(updatedInventory));
     
     // Update low stock items
     const lowStock = updatedInventory.filter(
@@ -125,7 +112,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
     
     // Update total inventory cost
     const totalCost = updatedInventory.reduce(
-      (sum: number, item: InventoryItem) => sum + item.totalCost,
+      (sum: number, item: InventoryItem) => sum + (item.totalCost || item.quantity * item.costPerUnit),
       0
     );
     setTotalInventoryCost(totalCost);
@@ -138,7 +125,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
     if (confirm("Tem certeza que deseja excluir este item?")) {
       const updatedInventory = inventory.filter((item) => item.id !== itemId);
       setInventory(updatedInventory);
-      localStorage.setItem("inventory", JSON.stringify(updatedInventory));
+      localStorage.setItem("inventoryItems", JSON.stringify(updatedInventory));
       
       // Update low stock items
       const lowStock = updatedInventory.filter(
@@ -148,7 +135,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
       
       // Update total inventory cost
       const totalCost = updatedInventory.reduce(
-        (sum: number, item: InventoryItem) => sum + item.totalCost,
+        (sum: number, item: InventoryItem) => sum + (item.totalCost || item.quantity * item.costPerUnit),
         0
       );
       setTotalInventoryCost(totalCost);
@@ -309,7 +296,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
                       </div>
                     </TableCell>
                     <TableCell>{formatCurrency(item.costPerUnit)}</TableCell>
-                    <TableCell>{formatCurrency(item.totalCost)}</TableCell>
+                    <TableCell>{formatCurrency(item.totalCost || item.quantity * item.costPerUnit)}</TableCell>
                     <TableCell>{formatDate(item.lastUpdated)}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button
@@ -344,87 +331,4 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
       </Card>
     </div>
   );
-}
-
-// Generate sample inventory data
-function generateSampleInventory(): InventoryItem[] {
-  return [
-    {
-      id: "1",
-      name: "Farinha de Trigo",
-      category: "Secos",
-      quantity: 15.5,
-      unit: "kg",
-      costPerUnit: 4.5,
-      totalCost: 69.75,
-      minStockLevel: 10,
-      lastUpdated: new Date().toISOString()
-    },
-    {
-      id: "2",
-      name: "Filé Mignon",
-      category: "Carnes",
-      quantity: 8.2,
-      unit: "kg",
-      costPerUnit: 72.9,
-      totalCost: 597.78,
-      minStockLevel: 10,
-      lastUpdated: new Date().toISOString()
-    },
-    {
-      id: "3",
-      name: "Queijo Mussarela",
-      category: "Laticínios",
-      quantity: 5.8,
-      unit: "kg",
-      costPerUnit: 39.9,
-      totalCost: 231.42,
-      minStockLevel: 8,
-      lastUpdated: new Date().toISOString()
-    },
-    {
-      id: "4",
-      name: "Tomate",
-      category: "Hortifruti",
-      quantity: 7,
-      unit: "kg",
-      costPerUnit: 7.5,
-      totalCost: 52.5,
-      minStockLevel: 10,
-      lastUpdated: new Date().toISOString()
-    },
-    {
-      id: "5",
-      name: "Azeite Extra Virgem",
-      category: "Óleos",
-      quantity: 3,
-      unit: "L",
-      costPerUnit: 32.9,
-      totalCost: 98.7,
-      minStockLevel: 5,
-      lastUpdated: new Date().toISOString()
-    },
-    {
-      id: "6",
-      name: "Camarão",
-      category: "Frutos do Mar",
-      quantity: 4.5,
-      unit: "kg",
-      costPerUnit: 85,
-      totalCost: 382.5,
-      minStockLevel: 5,
-      lastUpdated: new Date().toISOString()
-    },
-    {
-      id: "7",
-      name: "Vinho Tinto",
-      category: "Bebidas",
-      quantity: 12,
-      unit: "garrafas",
-      costPerUnit: 42.9,
-      totalCost: 514.8,
-      minStockLevel: 6,
-      lastUpdated: new Date().toISOString()
-    }
-  ];
 }
