@@ -5,7 +5,7 @@ import { SecurityDashboard } from "@/components/security/SecurityDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
-import { Shield, Lock, FileText, Activity } from "lucide-react";
+import { Shield, FileText, Activity } from "lucide-react";
 
 const Privacidade = () => {
   return (

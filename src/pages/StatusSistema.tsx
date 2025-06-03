@@ -5,14 +5,11 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import {
-  ServerCrash,
   ShieldAlert,
   Cpu,
   Network,
   Database,
-  FileText,
   BarChart3,
   AlertTriangle,
   Activity
