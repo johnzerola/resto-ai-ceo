@@ -6,7 +6,6 @@ import { Navigate } from "react-router-dom";
 import { EmailConfirmationBanner } from "../auth/EmailConfirmationBanner";
 import { cn } from "@/lib/utils";
 
-// Memoized loading component
 const LoadingSpinner = memo(({ message }: { message: string }) => (
   <div className="flex h-screen w-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
     <div className="text-center">
@@ -20,7 +19,6 @@ const LoadingSpinner = memo(({ message }: { message: string }) => (
   </div>
 ));
 
-// Memoized error boundary
 const ErrorFallback = memo(() => (
   <div className="flex items-center justify-center min-h-[400px] text-center bg-white rounded-2xl shadow-lg mx-4 my-8">
     <div className="space-y-6 p-8">
@@ -48,7 +46,6 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   const [sidebarState, setSidebarState] = useState<'open' | 'closed'>('open');
   const [isInitialized, setIsInitialized] = useState(false);
   
-  // Optimized sidebar state management
   useEffect(() => {
     const handleSidebarToggle = (e: CustomEvent) => {
       setSidebarState(e.detail.isCollapsed ? 'closed' : 'open');
@@ -62,7 +59,6 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
       setIsInitialized(true);
     };
     
-    // Use requestAnimationFrame for smoother initialization
     requestAnimationFrame(initializeSidebar);
     
     return () => {
@@ -70,24 +66,21 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
     };
   }, []);
   
-  // Safety timeout with improved error handling
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!isInitialized) {
         console.warn('Layout initialization timeout - forcing render');
         setIsInitialized(true);
       }
-    }, 2000); // Reduced timeout for better UX
+    }, 2000);
 
     return () => clearTimeout(timeout);
   }, [isInitialized]);
   
-  // Loading state optimization
   if (isLoading && !isInitialized) {
     return <LoadingSpinner message="Carregando RestaurIA..." />;
   }
   
-  // Authentication checks
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -101,31 +94,27 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      <div className="flex grow flex-col md:flex-row">
-        <ModernSidebar />
+    <div className="flex min-h-screen w-full">
+      <ModernSidebar />
+      
+      <main className={cn(
+        "flex-1 transition-all duration-300 ease-out min-h-screen",
+        sidebarState === 'open' ? "md:ml-72" : "md:ml-20"
+      )}>
+        <EmailConfirmationBanner />
         
-        {/* Optimized main content area */}
-        <main className={cn(
-          "grow transition-all duration-300 ease-out min-h-screen will-change-transform",
-          sidebarState === 'open' ? "md:ml-72" : "md:ml-20"
-        )}>
-          <EmailConfirmationBanner />
-          
-          <div className="min-h-screen">
-            <React.Suspense fallback={<LoadingSpinner message="Carregando conteúdo..." />}>
-              <ErrorBoundary>
-                {children}
-              </ErrorBoundary>
-            </React.Suspense>
-          </div>
-        </main>
-      </div>
+        <div className="min-h-screen">
+          <React.Suspense fallback={<LoadingSpinner message="Carregando conteúdo..." />}>
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+          </React.Suspense>
+        </div>
+      </main>
     </div>
   );
 }
 
-// Optimized Error Boundary
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error?: Error }
@@ -142,9 +131,7 @@ class ErrorBoundary extends React.Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Layout Error Boundary caught an error:', error, errorInfo);
     
-    // Send error to monitoring service in production
     if (process.env.NODE_ENV === 'production') {
-      // Add your error reporting service here
       console.error('Production error logged:', { error, errorInfo });
     }
   }

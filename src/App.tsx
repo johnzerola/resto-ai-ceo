@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
-import { ModernLayout } from "./components/restaurant/ModernLayout";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ErrorBoundary } from "./components/error/ErrorBoundary";
 import { UserRole } from "./services/AuthService";
@@ -59,7 +58,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <Router>
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dashboard-unificado">
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
               <Suspense fallback={<LoadingFallback />}>
                 <Routes>
                   <Route path="/login" element={<Login />} />
@@ -67,25 +66,23 @@ function App() {
                   
                   <Route path="/*" element={
                     <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
-                      <ModernLayout>
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/dashboard" element={<Dashboard />} />
-                          <Route path="/projecoes" element={<ProjecoesPagina />} />
-                          <Route path="/dre" element={<DRE />} />
-                          <Route path="/cmv" element={<CMV />} />
-                          <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
-                          <Route path="/simulador" element={<Simulador />} />
-                          <Route path="/metas" element={<Metas />} />
-                          <Route path="/estoque" element={<Estoque />} />
-                          <Route path="/cardapio" element={<Cardapio />} />
-                          <Route path="/ai-assistant" element={<AIAssistantPage />} />
-                          <Route path="/assinatura" element={<Assinatura />} />
-                          <Route path="/configuracoes" element={<Configuracoes />} />
-                          <Route path="/privacidade" element={<Privacidade />} />
-                          <Route path="*" element={<Index />} />
-                        </Routes>
-                      </ModernLayout>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/projecoes" element={<ProjecoesPagina />} />
+                        <Route path="/dre" element={<DRE />} />
+                        <Route path="/cmv" element={<CMV />} />
+                        <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
+                        <Route path="/simulador" element={<Simulador />} />
+                        <Route path="/metas" element={<Metas />} />
+                        <Route path="/estoque" element={<Estoque />} />
+                        <Route path="/cardapio" element={<Cardapio />} />
+                        <Route path="/ai-assistant" element={<AIAssistantPage />} />
+                        <Route path="/assinatura" element={<Assinatura />} />
+                        <Route path="/configuracoes" element={<Configuracoes />} />
+                        <Route path="/privacidade" element={<Privacidade />} />
+                        <Route path="*" element={<Index />} />
+                      </Routes>
                     </ProtectedRoute>
                   } />
                 </Routes>

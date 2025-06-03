@@ -27,18 +27,15 @@ const Estoque = () => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
 
   useEffect(() => {
-    // Inicia sempre vazio, sem dados pré-carregados
     const storedItems = localStorage.getItem("inventoryItems");
     if (storedItems) {
       try {
         const parsedItems = JSON.parse(storedItems);
-        // Only load if there are actual items, otherwise start empty
         if (Array.isArray(parsedItems) && parsedItems.length > 0) {
           setInventoryItems(parsedItems);
         }
       } catch (error) {
         console.error("Error parsing stored inventory items:", error);
-        // Start with empty array if parsing fails
         setInventoryItems([]);
       }
     }
@@ -60,7 +57,6 @@ const Estoque = () => {
   };
 
   const handleFormSuccess = () => {
-    // Reload inventory data from localStorage after successful save
     const storedItems = localStorage.getItem("inventoryItems");
     if (storedItems) {
       try {
@@ -76,13 +72,6 @@ const Estoque = () => {
     setSelectedItemId(null);
     
     toast.success(selectedItemId ? "Item atualizado com sucesso" : "Item adicionado com sucesso");
-  };
-
-  const handleItemDeleted = (itemId: string) => {
-    const updatedItems = inventoryItems.filter(item => item.id !== itemId);
-    setInventoryItems(updatedItems);
-    localStorage.setItem("inventoryItems", JSON.stringify(updatedItems));
-    toast.success("Item removido com sucesso");
   };
 
   const exportData = () => {
@@ -109,7 +98,7 @@ const Estoque = () => {
 
   return (
     <ModernLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Gestão de Estoque</h1>
