@@ -1,4 +1,3 @@
-
 import React, { memo, Suspense, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,9 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 const QuickAccessGrid = React.lazy(() => import('./QuickAccessGrid'));
 const MetricsGrid = React.lazy(() => import('./MetricsGrid'));
 const StatusSection = React.lazy(() => import('./StatusSection'));
-const SystemCompliancePanel = React.lazy(() => import('../audit/SystemCompliancePanel'));
+const SystemCompliancePanel = React.lazy(() => 
+  import('../audit/SystemCompliancePanel').then(module => ({ default: module.SystemCompliancePanel }))
+);
 
 // Loading fallback component
 const DashboardSkeleton = memo(() => (
