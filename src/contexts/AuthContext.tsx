@@ -8,6 +8,10 @@ interface SubscriptionInfo {
   subscribed: boolean;
   subscription_tier?: string | null;
   subscription_end?: string | null;
+  plan?: string | null;
+  status?: string | null;
+  nextBilling?: string | null;
+  amount?: string | null;
 }
 
 interface Restaurant {
@@ -53,6 +57,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     subscribed: false,
     subscription_tier: null,
     subscription_end: null,
+    plan: null,
+    status: null,
+    nextBilling: null,
+    amount: null,
   });
 
   // Função para limpar dados do usuário
@@ -66,6 +74,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscribed: false,
       subscription_tier: null,
       subscription_end: null,
+      plan: null,
+      status: null,
+      nextBilling: null,
+      amount: null,
     });
     
     // Limpar localStorage de dados específicos do usuário (mantendo configurações globais)
@@ -139,6 +151,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         subscribed: data.subscribed || false,
         subscription_tier: data.subscription_tier || null,
         subscription_end: data.subscription_end || null,
+        plan: data.subscription_tier || 'basic',
+        status: data.subscribed ? 'active' : 'inactive',
+        nextBilling: data.subscription_end || 'Não disponível',
+        amount: data.subscribed ? 'R$ 99,00' : 'Não disponível',
       });
     } catch (error) {
       console.error('Error checking subscription:', error);

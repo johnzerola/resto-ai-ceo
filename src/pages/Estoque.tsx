@@ -30,7 +30,17 @@ const Estoque = () => {
     // Inicia sempre vazio, sem dados pré-carregados
     const storedItems = localStorage.getItem("inventoryItems");
     if (storedItems) {
-      setInventoryItems(JSON.parse(storedItems));
+      try {
+        const parsedItems = JSON.parse(storedItems);
+        // Only load if there are actual items, otherwise start empty
+        if (Array.isArray(parsedItems) && parsedItems.length > 0) {
+          setInventoryItems(parsedItems);
+        }
+      } catch (error) {
+        console.error("Error parsing stored inventory items:", error);
+        // Start with empty array if parsing fails
+        setInventoryItems([]);
+      }
     }
   }, []);
 
@@ -120,7 +130,6 @@ const Estoque = () => {
           />
         ) : (
           <InventoryOverview 
-            items={inventoryItems}
             onEdit={editItem} 
             onDelete={handleItemDeleted}
           />
