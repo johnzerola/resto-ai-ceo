@@ -44,14 +44,14 @@ const QuickAccessGrid = memo(() => {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {quickAccessCards.map((card) => (
         <Link key={card.href} to={card.href} className="group">
-          <Card className="h-full border-0 shadow-sm hover:shadow-lg transition-all duration-300 transform group-hover:scale-[1.02] bg-white/70 backdrop-blur-sm">
+          <Card className="h-full stats-card hover:shadow-lg transition-all duration-300 transform group-hover:scale-[1.02] glass-card">
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
                 <div className={`p-2.5 rounded-xl ${card.iconBg}`}>
                   <card.icon className={`h-5 w-5 ${card.iconColor}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 group-hover:text-slate-700 transition-colors truncate">
+                  <h3 className="font-semibold text-slate-900 group-hover:text-restauria-blue-tech transition-colors truncate">
                     {card.title}
                   </h3>
                   <p className="text-sm text-slate-600 truncate">

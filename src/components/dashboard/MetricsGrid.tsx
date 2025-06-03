@@ -48,15 +48,15 @@ const MetricsGrid = memo(({ stats }: MetricsGridProps) => {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric) => (
-        <Card key={metric.label} className="border-0 shadow-sm bg-white/70 backdrop-blur-sm">
+        <Card key={metric.label} className="stats-card glass-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${metric.iconBg}`}>
                 <metric.icon className={`h-5 w-5 ${metric.iconColor}`} />
               </div>
               <div>
-                <p className="text-sm text-slate-600">{metric.label}</p>
-                <p className="text-lg font-bold text-slate-900">
+                <p className="stats-label">{metric.label}</p>
+                <p className="stats-value">
                   {metric.value}
                 </p>
               </div>

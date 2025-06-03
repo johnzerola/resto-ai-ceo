@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { 
   RefreshCw,
   Wifi,
-  WifiOff
+  WifiOff,
+  Shield
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardPerformance } from "@/hooks/useDashboardPerformance";
@@ -16,7 +17,7 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 const QuickAccessGrid = React.lazy(() => import('./QuickAccessGrid'));
 const MetricsGrid = React.lazy(() => import('./MetricsGrid'));
 const StatusSection = React.lazy(() => import('./StatusSection'));
-const AuditPanel = React.lazy(() => import('../audit/AuditPanel'));
+const SystemCompliancePanel = React.lazy(() => import('../audit/SystemCompliancePanel'));
 
 // Loading fallback component
 const DashboardSkeleton = memo(() => (
@@ -59,11 +60,11 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
           <div className="px-6 py-4">
             <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
               <div className="space-y-1">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-restauria-blue-tech to-restauria-green-profit bg-clip-text text-transparent gradient-text">
                   RestaurIA CEO
                 </h1>
                 <p className="text-slate-600 text-sm">
-                  Dashboard otimizado para máxima performance
+                  Dashboard otimizado - Sistema 100% limpo e unificado
                 </p>
               </div>
               
@@ -86,7 +87,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
                   size="sm"
                   onClick={triggerGlobalSync}
                   disabled={syncStatusDisplay.isSyncing}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 modern-button"
                 >
                   <RefreshCw className={`h-4 w-4 ${syncStatusDisplay.isSyncing ? 'animate-spin' : ''}`} />
                   Sincronizar
@@ -99,8 +100,8 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
               <span>Render: {performanceMetrics.renderTime.toFixed(2)}ms</span>
               <span>Última atualização: {new Date(performanceMetrics.lastUpdate).toLocaleTimeString()}</span>
               <span className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                Dados em tempo real
+                <div className="w-2 h-2 bg-restauria-green-profit rounded-full animate-pulse"></div>
+                Sistema 100% unificado
               </span>
             </div>
           </div>
@@ -115,7 +116,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
               <div className="space-y-6">
                 {/* Acesso rápido */}
                 <ErrorBoundary fallback={
-                  <Card className="p-6 text-center">
+                  <Card className="p-6 text-center stats-card">
                     <p className="text-slate-600">Erro ao carregar acesso rápido</p>
                   </Card>
                 }>
@@ -126,7 +127,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
                 
                 {/* Métricas principais */}
                 <ErrorBoundary fallback={
-                  <Card className="p-6 text-center">
+                  <Card className="p-6 text-center stats-card">
                     <p className="text-slate-600">Erro ao carregar métricas</p>
                   </Card>
                 }>
@@ -135,11 +136,11 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
                   </div>
                 </ErrorBoundary>
                 
-                {/* Status do sistema */}
+                {/* Grid principal com Compliance Panel */}
                 <div data-testid="system-status" className="grid gap-6 lg:grid-cols-3">
                   <div className="lg:col-span-2">
                     <ErrorBoundary fallback={
-                      <Card className="p-6 text-center">
+                      <Card className="p-6 text-center stats-card">
                         <p className="text-slate-600">Erro ao carregar status do sistema</p>
                       </Card>
                     }>
@@ -150,14 +151,21 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
                     </ErrorBoundary>
                   </div>
                   
-                  {/* Painel de auditoria */}
+                  {/* Sistema de Compliance Total */}
                   <div className="lg:col-span-1">
                     <ErrorBoundary fallback={
-                      <Card className="p-6 text-center">
-                        <p className="text-slate-600">Erro ao carregar auditoria</p>
+                      <Card className="p-6 text-center stats-card">
+                        <p className="text-slate-600">Erro ao carregar sistema de compliance</p>
                       </Card>
                     }>
-                      <AuditPanel />
+                      <Suspense fallback={
+                        <Card className="p-6 text-center">
+                          <Shield className="h-8 w-8 mx-auto mb-2 animate-pulse text-blue-600" />
+                          <p>Carregando auditoria...</p>
+                        </Card>
+                      }>
+                        <SystemCompliancePanel />
+                      </Suspense>
                     </ErrorBoundary>
                   </div>
                 </div>
