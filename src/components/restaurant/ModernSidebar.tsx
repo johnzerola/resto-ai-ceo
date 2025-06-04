@@ -205,11 +205,11 @@ export function ModernSidebar() {
         />
       )}
 
-      {/* Sidebar - Fixed solid background for both mobile and desktop */}
+      {/* Sidebar - Solid background with improved dark mode visibility */}
       <div
         className={cn(
           "fixed left-0 top-0 z-40 h-full border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
-          // Solid background for both mobile and desktop - no transparency
+          // Solid background with improved dark mode text visibility
           "bg-white dark:bg-gray-900",
           // Mobile: always show full width when open, hide when closed
           "md:translate-x-0", // Always visible on desktop
@@ -255,8 +255,10 @@ export function ModernSidebar() {
                     {(!isCollapsed || isMobileOpen) && (
                       <div className="px-2 sm:px-3 py-1 sm:py-2">
                         <h3 className={cn(
-                          "text-xs font-semibold uppercase tracking-wider",
-                          categoryInfo.color
+                          "text-xs font-semibold uppercase tracking-wider sidebar-category-label",
+                          categoryInfo.color,
+                          // Melhor visibilidade no dark mode
+                          "dark:text-gray-300"
                         )}>
                           {categoryInfo.label}
                         </h3>
@@ -285,7 +287,7 @@ export function ModernSidebar() {
         {/* Footer */}
         {(!isCollapsed || isMobileOpen) && (
           <div className="p-3 sm:p-4 border-t border-sidebar-border bg-gradient-to-r from-muted/50 to-card flex-shrink-0">
-            <div className="text-xs text-muted-foreground text-center">
+            <div className="text-xs text-muted-foreground text-center dark:text-gray-300">
               <p className="font-medium">RestaurIA v2.0</p>
               <p className="hidden sm:block">Inteligência para seu restaurante</p>
             </div>

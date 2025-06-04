@@ -1,59 +1,118 @@
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRealTimeData } from './useRealTimeData';
+import { useState, useEffect } from 'react';
+import { useRealTimeData } from '@/hooks/useRealTimeData';
+import { getFinancialData } from '@/services/FinancialStorageService';
+
+export interface DashboardStats {
+  todaysSales: number;
+  averageTicket: number;
+  totalGoals: number;
+  completedGoals: number;
+  goalCompletionRate: number;
+}
+
+export interface PerformanceMetrics {
+  renderTime: number;
+  dataLoadTime: number;
+}
 
 export function useDashboardPerformance() {
-  const { financialData, goals, isLoading } = useRealTimeData();
-  const [performanceMetrics, setPerformanceMetrics] = useState({
-    renderTime: 0,
-    lastUpdate: Date.now()
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+    todaysSales: 0,
+    averageTicket: 0,
+    totalGoals: 0,
+    completedGoals: 0,
+    goalCompletionRate: 0
   });
+  
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics>({
+    renderTime: 0,
+    dataLoadTime: 0
+  });
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const { financialData, goals, refreshData } = useRealTimeData();
 
-  // Memoized calculations to prevent unnecessary re-renders
-  const dashboardStats = useMemo(() => {
+  const calculateDashboardStats = async () => {
     const startTime = performance.now();
     
-    const totalGoals = goals.length;
-    const completedGoals = goals.filter(goal => goal.completed).length;
-    const goalCompletionRate = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
+    try {
+      // Buscar dados do fluxo de caixa do localStorage
+      const cashFlowData = localStorage.getItem('cashFlowEntries');
+      const cashFlowEntries = cashFlowData ? JSON.parse(cashFlowData) : [];
+      
+      // Calcular vendas de hoje baseado no fluxo de caixa
+      const today = new Date().toISOString().split('T')[0];
+      const todayEntries = cashFlowEntries.filter((entry: any) => 
+        entry.date === today && entry.type === 'income' && entry.status === 'completed'
+      );
+      
+      const todaysSales = todayEntries.reduce((total: number, entry: any) => total + entry.amount, 0);
+      
+      // Calcular ticket médio
+      const todayCustomers = todayEntries.length || 1; // Evitar divisão por zero
+      const averageTicket = todaysSales / todayCustomers;
+      
+      // Buscar metas
+      const goalsData = localStorage.getItem('goals');
+      const goalsArray = goalsData ? JSON.parse(goalsData) : [];
+      const totalGoals = goalsArray.length;
+      const completedGoals = goalsArray.filter((goal: any) => goal.isCompleted).length;
+      const goalCompletionRate = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
+      
+      const stats: DashboardStats = {
+        todaysSales,
+        averageTicket,
+        totalGoals,
+        completedGoals,
+        goalCompletionRate
+      };
+      
+      setDashboardStats(stats);
+      
+      const endTime = performance.now();
+      setPerformanceMetrics({
+        renderTime: endTime - startTime,
+        dataLoadTime: endTime - startTime
+      });
+      
+      console.log('Dashboard stats updated:', stats);
+    } catch (error) {
+      console.error('Erro ao calcular estatísticas do dashboard:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    calculateDashboardStats();
     
-    const stats = {
-      todaysSales: financialData.length > 0 ? financialData[0]?.daily_sales || 0 : 0,
-      averageTicket: financialData.length > 0 ? financialData[0]?.average_ticket || 0 : 0,
-      totalGoals,
-      completedGoals,
-      goalCompletionRate,
-      cmvPercentage: financialData.length > 0 ? financialData[0]?.cmv_percentage || 0 : 0,
-      profitMargin: financialData.length > 0 ? financialData[0]?.profit_margin || 0 : 0
+    // Escutar mudanças no fluxo de caixa e metas
+    const handleDataUpdate = () => {
+      console.log('Dados atualizados, recalculando dashboard...');
+      calculateDashboardStats();
     };
 
-    const endTime = performance.now();
-    setPerformanceMetrics(prev => ({
-      ...prev,
-      renderTime: endTime - startTime
-    }));
-
-    return stats;
-  }, [financialData, goals]);
-
-  // Optimized data refresh callback
-  const refreshDashboard = useCallback(() => {
-    setPerformanceMetrics(prev => ({
-      ...prev,
-      lastUpdate: Date.now()
-    }));
+    // Listeners para atualizações
+    window.addEventListener('cashFlowUpdated', handleDataUpdate);
+    window.addEventListener('goalsUpdated', handleDataUpdate);
+    window.addEventListener('financialDataUpdated', handleDataUpdate);
+    
+    // Atualizar a cada 30 segundos
+    const interval = setInterval(calculateDashboardStats, 30000);
+    
+    return () => {
+      window.removeEventListener('cashFlowUpdated', handleDataUpdate);
+      window.removeEventListener('goalsUpdated', handleDataUpdate);
+      window.removeEventListener('financialDataUpdated', handleDataUpdate);
+      clearInterval(interval);
+    };
   }, []);
-
-  // Auto-refresh every 5 minutes for better UX
-  useEffect(() => {
-    const interval = setInterval(refreshDashboard, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [refreshDashboard]);
 
   return {
     dashboardStats,
-    isLoading,
     performanceMetrics,
-    refreshDashboard
+    isLoading,
+    refreshData: calculateDashboardStats
   };
 }

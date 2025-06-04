@@ -1,357 +1,316 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, AlertCircle, DollarSign } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CashFlowEntry } from "./CashFlowOverview";
-import { updateFinancialData } from "@/services/FinancialDataService";
+import { Plus, X } from "lucide-react";
 
-interface CashFlowFormProps {
-  entryId: string | null;
-  onCancel: () => void;
-  onSuccess: () => void;
+export interface CashFlowEntry {
+  id: string;
+  date: string;
+  description: string;
+  category: string;
+  amount: number;
+  type: "income" | "expense";
+  status: "pending" | "completed" | "cancelled";
+  paymentMethod?: string;
+  recurring?: boolean;
 }
 
-export function CashFlowForm({ entryId, onCancel, onSuccess }: CashFlowFormProps) {
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<CashFlowEntry>();
-  const [isIncome, setIsIncome] = useState(true);
-  
-  // Watch the type value to update form fields
-  const typeValue = watch("type");
-  
-  useEffect(() => {
-    setIsIncome(typeValue === "income");
-  }, [typeValue]);
-  
-  // Categories based on type
-  const incomeCategories = [
-    "Vendas", 
-    "Delivery", 
-    "Eventos", 
-    "Aplicativos", 
-    "Outras receitas"
-  ];
-  
-  const expenseCategories = [
-    "Fornecedores", 
-    "Folha de pagamento", 
-    "Aluguel", 
-    "Utilidades", 
-    "Marketing", 
-    "Manutenção", 
-    "Impostos", 
-    "Outras despesas"
-  ];
-  
-  // Payment methods
-  const paymentMethods = [
-    "Dinheiro", 
-    "Cartão de crédito", 
-    "Cartão de débito", 
-    "Transferência", 
-    "PIX", 
-    "App", 
-    "Cheque", 
-    "Débito automático"
-  ];
-  
-  // Status options
-  const statusOptions = [
-    { value: "completed", label: "Concluído" },
-    { value: "pending", label: "Pendente" },
-    { value: "canceled", label: "Cancelado" }
-  ];
+interface CashFlowFormProps {
+  onEntryAdded: (entry: CashFlowEntry) => void;
+  editingEntry?: CashFlowEntry;
+  onEditComplete?: () => void;
+}
 
-  // Load entry data if in edit mode
-  useEffect(() => {
-    if (entryId) {
-      const loadEntry = async () => {
-        try {
-          const savedCashFlow = localStorage.getItem("cashFlow");
-          if (savedCashFlow) {
-            const entries = JSON.parse(savedCashFlow);
-            const entry = entries.find((e: CashFlowEntry) => e.id === entryId);
-            
-            if (entry) {
-              // Pre-fill form with entry data
-              Object.keys(entry).forEach((key) => {
-                setValue(key as keyof CashFlowEntry, entry[key as keyof CashFlowEntry]);
-              });
-              
-              // Format date for input field
-              if (entry.date) {
-                const date = new Date(entry.date);
-                const formattedDate = date.toISOString().split('T')[0];
-                setValue("date", formattedDate);
-              }
-              
-              setIsIncome(entry.type === "income");
-            }
-          }
-        } catch (error) {
-          console.error("Error loading cash flow entry:", error);
-          toast.error("Erro ao carregar dados da transação");
-        }
-      };
-      
-      loadEntry();
-    } else {
-      // Set default values for new entry
-      setValue("date", new Date().toISOString().split('T')[0]);
-      setValue("type", "income");
-      setValue("status", "completed");
-    }
-  }, [entryId, setValue]);
+const categories = {
+  income: [
+    { value: "sales", label: "Vendas" },
+    { value: "food", label: "Alimentação" },
+    { value: "beverage", label: "Bebidas" },
+    { value: "delivery", label: "Delivery" },
+    { value: "other_income", label: "Outras Receitas" }
+  ],
+  expense: [
+    { value: "food_supplies", label: "Insumos Alimentares" },
+    { value: "beverage_supplies", label: "Insumos Bebidas" },
+    { value: "supplies", label: "Suprimentos" },
+    { value: "rent", label: "Aluguel" },
+    { value: "utilities", label: "Utilidades" },
+    { value: "salaries", label: "Salários" },
+    { value: "marketing", label: "Marketing" },
+    { value: "maintenance", label: "Manutenção" },
+    { value: "other_expense", label: "Outras Despesas" }
+  ]
+};
 
-  
-  // Save cash flow entry
-  const onSubmit = async (data: CashFlowEntry) => {
-    const entryToSave: CashFlowEntry = {
-      ...data,
-      id: entryId || Date.now().toString(),
-      date: new Date(data.date).toISOString(),
-      amount: Number(data.amount)
-    };
+const paymentMethods = [
+  { value: "cash", label: "Dinheiro" },
+  { value: "credit_card", label: "Cartão de Crédito" },
+  { value: "debit_card", label: "Cartão de Débito" },
+  { value: "pix", label: "PIX" },
+  { value: "bank_transfer", label: "Transferência" },
+  { value: "other", label: "Outro" }
+];
+
+export const CashFlowForm: React.FC<CashFlowFormProps> = ({ 
+  onEntryAdded, 
+  editingEntry, 
+  onEditComplete 
+}) => {
+  const [formData, setFormData] = useState<Partial<CashFlowEntry>>({
+    date: editingEntry?.date || new Date().toISOString().split('T')[0],
+    description: editingEntry?.description || "",
+    category: editingEntry?.category || "",
+    amount: editingEntry?.amount || 0,
+    type: editingEntry?.type || "income",
+    status: editingEntry?.status || "completed",
+    paymentMethod: editingEntry?.paymentMethod || "",
+    recurring: editingEntry?.recurring || false
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
+    if (!formData.description || !formData.category || !formData.amount) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      // Save to localStorage
-      const savedCashFlow = localStorage.getItem("cashFlow") || "[]";
-      const entries = JSON.parse(savedCashFlow);
+      const entry: CashFlowEntry = {
+        id: editingEntry?.id || Date.now().toString(),
+        date: formData.date!,
+        description: formData.description!,
+        category: formData.category!,
+        amount: Number(formData.amount),
+        type: formData.type!,
+        status: formData.status!,
+        paymentMethod: formData.paymentMethod,
+        recurring: formData.recurring || false
+      };
+
+      // Salvar no localStorage
+      const existingEntries = JSON.parse(localStorage.getItem('cashFlowEntries') || '[]');
+      let updatedEntries;
       
-      if (entryId) {
-        // Update existing entry
-        const index = entries.findIndex((e: CashFlowEntry) => e.id === entryId);
-        if (index >= 0) {
-          entries[index] = entryToSave;
-        }
+      if (editingEntry) {
+        // Atualizar entrada existente
+        updatedEntries = existingEntries.map((item: CashFlowEntry) => 
+          item.id === editingEntry.id ? entry : item
+        );
+        toast.success("Entrada atualizada com sucesso!");
       } else {
-        // Add new entry
-        entries.push(entryToSave);
+        // Adicionar nova entrada
+        updatedEntries = [...existingEntries, entry];
+        toast.success("Entrada adicionada com sucesso!");
       }
       
-      localStorage.setItem("cashFlow", JSON.stringify(entries));
-      
-      // Atualizar dados financeiros baseados no fluxo de caixa
-      await updateFinancialData(entries);
-      
-      toast.success(entryId ? "Transação atualizada com sucesso!" : "Nova transação adicionada com sucesso!");
-      onSuccess();
+      localStorage.setItem('cashFlowEntries', JSON.stringify(updatedEntries));
+
+      // Disparar evento para atualização do dashboard
+      window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedEntries }));
+      window.dispatchEvent(new CustomEvent('financialDataUpdated'));
+
+      onEntryAdded(entry);
+
+      if (editingEntry && onEditComplete) {
+        onEditComplete();
+      } else {
+        // Limpar formulário para nova entrada
+        setFormData({
+          date: new Date().toISOString().split('T')[0],
+          description: "",
+          category: "",
+          amount: 0,
+          type: "income",
+          status: "completed",
+          paymentMethod: "",
+          recurring: false
+        });
+      }
+
     } catch (error) {
-      console.error("Error saving cash flow entry:", error);
-      toast.error("Erro ao salvar transação");
+      console.error("Erro ao salvar entrada:", error);
+      toast.error("Erro ao salvar entrada");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (onEditComplete) {
+      onEditComplete();
     }
   };
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="mb-4 flex items-center">
-          <Button variant="ghost" onClick={onCancel} className="mr-2">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <h2 className="text-xl font-semibold">
-            {entryId ? "Editar Transação" : "Nova Transação"}
-          </h2>
-        </div>
-        
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Type Selection */}
-          <div className="grid grid-cols-2 gap-4">
-            <div 
-              className={`p-4 border rounded-md cursor-pointer flex items-center ${isIncome ? "bg-green-50 border-green-200" : "bg-gray-50"}`}
-              onClick={() => {
-                setValue("type", "income");
-                setIsIncome(true);
-              }}
-            >
-              <div className={`h-10 w-10 rounded-full ${isIncome ? "bg-green-100" : "bg-gray-100"} flex items-center justify-center mr-4`}>
-                <TrendingUp className={`h-6 w-6 ${isIncome ? "text-green-600" : "text-gray-400"}`} />
-              </div>
-              <div>
-                <p className="font-medium">Entrada</p>
-                <p className="text-sm text-muted-foreground">Receitas, vendas, etc.</p>
-              </div>
-            </div>
-            
-            <div 
-              className={`p-4 border rounded-md cursor-pointer flex items-center ${!isIncome ? "bg-red-50 border-red-200" : "bg-gray-50"}`}
-              onClick={() => {
-                setValue("type", "expense");
-                setIsIncome(false);
-              }}
-            >
-              <div className={`h-10 w-10 rounded-full ${!isIncome ? "bg-red-100" : "bg-gray-100"} flex items-center justify-center mr-4`}>
-                <TrendingDown className={`h-6 w-6 ${!isIncome ? "text-red-600" : "text-gray-400"}`} />
-              </div>
-              <div>
-                <p className="font-medium">Saída</p>
-                <p className="text-sm text-muted-foreground">Despesas, pagamentos, etc.</p>
-              </div>
-            </div>
-            <input type="hidden" {...register("type")} />
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Plus className="h-5 w-5" />
+          {editingEntry ? "Editar Lançamento" : "Novo Lançamento"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Input
-                id="description"
-                placeholder="Ex: Vendas do dia"
-                {...register("description", { required: "Descrição é obrigatória" })}
-              />
-              {errors.description && (
-                <p className="text-sm text-red-500 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" /> 
-                  {errors.description.message}
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="date">Data</Label>
+              <Label htmlFor="date">Data *</Label>
               <Input
                 id="date"
                 type="date"
-                {...register("date", { required: "Data é obrigatória" })}
+                value={formData.date}
+                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                required
               />
-              {errors.date && (
-                <p className="text-sm text-red-500 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" /> 
-                  {errors.date.message}
-                </p>
-              )}
             </div>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
+
             <div className="space-y-2">
-              <Label htmlFor="amount">Valor (R$)</Label>
-              <div className="flex">
-                <span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-muted-foreground">
-                  <DollarSign className="h-4 w-4" />
-                </span>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  className="rounded-l-none"
-                  placeholder="0.00"
-                  {...register("amount", { 
-                    required: "Valor é obrigatório",
-                    min: { value: 0.01, message: "Valor deve ser maior que zero" }
-                  })}
-                />
-              </div>
-              {errors.amount && (
-                <p className="text-sm text-red-500 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" /> 
-                  {errors.amount.message}
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="category">Categoria</Label>
+              <Label htmlFor="type">Tipo *</Label>
               <Select 
-                onValueChange={(value) => setValue("category", value)}
-                defaultValue={watch("category")}
+                value={formData.type} 
+                onValueChange={(value: "income" | "expense") => 
+                  setFormData(prev => ({ ...prev, type: value, category: "" }))
+                }
               >
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Selecione uma categoria" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(isIncome ? incomeCategories : expenseCategories).map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
+                  <SelectItem value="income">
+                    <Badge className="bg-green-100 text-green-800">Receita</Badge>
+                  </SelectItem>
+                  <SelectItem value="expense">
+                    <Badge className="bg-red-100 text-red-800">Despesa</Badge>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoria *</Label>
+              <Select 
+                value={formData.category} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {formData.type && categories[formData.type].map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.category && (
-                <p className="text-sm text-red-500 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" /> 
-                  {errors.category.message}
-                </p>
-              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="amount">Valor (R$) *</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.amount}
+                onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                required
+              />
             </div>
           </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição *</Label>
+            <Textarea
+              id="description"
+              placeholder="Descreva o lançamento..."
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="paymentMethod">Método de Pagamento</Label>
+              <Label htmlFor="payment-method">Forma de Pagamento</Label>
               <Select 
-                onValueChange={(value) => setValue("paymentMethod", value)}
-                defaultValue={watch("paymentMethod")}
+                value={formData.paymentMethod} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, paymentMethod: value }))}
               >
-                <SelectTrigger id="paymentMethod">
-                  <SelectValue placeholder="Selecione um método" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a forma" />
                 </SelectTrigger>
                 <SelectContent>
                   {paymentMethods.map((method) => (
-                    <SelectItem key={method} value={method}>
-                      {method}
+                    <SelectItem key={method.value} value={method.value}>
+                      {method.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select 
-                onValueChange={(value: "completed" | "pending" | "canceled") => setValue("status", value)}
-                defaultValue={watch("status")}
+                value={formData.status} 
+                onValueChange={(value: "pending" | "completed" | "cancelled") => 
+                  setFormData(prev => ({ ...prev, status: value }))
+                }
               >
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Selecione um status" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="completed">
+                    <Badge className="bg-green-100 text-green-800">Concluído</Badge>
+                  </SelectItem>
+                  <SelectItem value="pending">
+                    <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>
+                  </SelectItem>
+                  <SelectItem value="cancelled">
+                    <Badge className="bg-red-100 text-red-800">Cancelado</Badge>
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="reference">Referência (opcional)</Label>
-            <Input
-              id="reference"
-              placeholder="Ex: Nota Fiscal 12345"
-              {...register("reference")}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações (opcional)</Label>
-            <textarea
-              id="notes"
-              className="w-full min-h-[80px] p-2 rounded-md border border-input bg-background text-sm"
-              placeholder="Informações adicionais sobre a transação"
-              {...register("notes")}
-            ></textarea>
-          </div>
-          
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancelar
-            </Button>
-            <Button type="submit" className={isIncome ? "bg-green-600 hover:bg-green-700" : ""}>
-              {entryId ? "Atualizar" : "Adicionar"} {isIncome ? "Entrada" : "Saída"}
+
+          <div className="flex justify-end gap-3 pt-4">
+            {editingEntry && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar
+              </Button>
+            )}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSubmitting ? "Salvando..." : editingEntry ? "Atualizar" : "Adicionar"}
             </Button>
           </div>
         </form>
       </CardContent>
     </Card>
   );
-}
-
-import { TrendingUp, TrendingDown } from "lucide-react";
+};

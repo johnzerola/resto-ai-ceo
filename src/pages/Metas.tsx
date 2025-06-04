@@ -52,8 +52,8 @@ export function Metas() {
           <div className="flex items-center gap-3">
             <Target className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Sistema de Metas</h1>
-              <p className="text-muted-foreground text-sm sm:text-base">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight page-title">Sistema de Metas</h1>
+              <p className="text-muted-foreground text-sm sm:text-base page-subtitle">
                 Defina e acompanhe seus objetivos de negócio
               </p>
             </div>
