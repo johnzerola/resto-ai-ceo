@@ -98,24 +98,26 @@ const Estoque = () => {
 
   return (
     <ModernLayout>
-      <div className="space-y-6 p-6">
-        <div className="flex justify-between items-center">
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
+        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Gestão de Estoque</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Gestão de Estoque</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">
               Controle completo do seu inventário
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {!isAddingItem && (
               <>
-                <Button variant="outline" size="sm" onClick={exportData}>
-                  <FileDown className="mr-2 h-4 w-4" />
-                  Exportar
+                <Button variant="outline" size="sm" onClick={exportData} className="text-xs sm:text-sm">
+                  <FileDown className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Exportar</span>
+                  <span className="sm:hidden">Export</span>
                 </Button>
-                <Button onClick={toggleAddItem}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Novo Item
+                <Button onClick={toggleAddItem} size="sm" className="text-xs sm:text-sm">
+                  <Plus className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Novo Item</span>
+                  <span className="sm:hidden">Novo</span>
                 </Button>
               </>
             )}

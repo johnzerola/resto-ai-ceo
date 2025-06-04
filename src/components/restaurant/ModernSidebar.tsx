@@ -139,8 +139,15 @@ export function ModernSidebar() {
       if (window.innerWidth >= 768) {
         setIsMobileOpen(false);
       }
+      // Auto-collapse on smaller screens
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
     };
     
+    handleResize(); // Set initial state
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -180,36 +187,40 @@ export function ModernSidebar() {
 
   return (
     <>
+      {/* Mobile Menu Button */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white/95 transition-all duration-200"
+        className="fixed top-3 left-3 z-50 md:hidden bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white/100 transition-all duration-200 border border-gray-200/50"
         onClick={toggleMobile}
       >
         {isMobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </Button>
 
+      {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/30 z-40 md:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-sm"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
+      {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full bg-white border-r border-gray-200/60 transition-all duration-300 ease-out shadow-lg",
-          isCollapsed ? "w-20" : "w-72",
+          "fixed left-0 top-0 z-40 h-full bg-white border-r border-gray-200/60 transition-all duration-300 ease-out shadow-lg flex flex-col",
+          isCollapsed ? "w-16" : "w-72",
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
-        <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200/60 bg-gradient-to-r from-[#1B2C4F] to-[#2D4A7A]">
+        {/* Header */}
+        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-gray-200/60 bg-gradient-to-r from-[#1B2C4F] to-[#2D4A7A] flex-shrink-0">
           {!isCollapsed && (
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-[#00D887] to-[#1B2C4F] rounded-lg flex items-center justify-center">
-                <Utensils className="h-4 w-4 text-white" />
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-[#00D887] to-[#1B2C4F] rounded-lg flex items-center justify-center flex-shrink-0">
+                <Utensils className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
               </div>
-              <h2 className="text-lg font-bold text-white">
+              <h2 className="text-sm sm:text-lg font-bold text-white truncate">
                 RestaurIA
               </h2>
             </div>
@@ -218,56 +229,60 @@ export function ModernSidebar() {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="hidden md:flex text-white hover:bg-white/10 transition-colors"
+            className="hidden md:flex text-white hover:bg-white/10 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
           >
             {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
             ) : (
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             )}
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 px-3 py-4">
-          <nav className="space-y-6">
-            {Object.entries(groupedNavigation).map(([categoryKey, items]) => {
-              const categoryInfo = categories[categoryKey as keyof typeof categories];
-              return (
-                <div key={categoryKey} className="space-y-2">
-                  {!isCollapsed && (
-                    <div className="px-3 py-2">
-                      <h3 className={cn(
-                        "text-xs font-semibold uppercase tracking-wider",
-                        categoryInfo.color
-                      )}>
-                        {categoryInfo.label}
-                      </h3>
+        {/* Scrollable Navigation Content */}
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full">
+            <nav className="px-2 sm:px-3 py-3 sm:py-4 space-y-4 sm:space-y-6">
+              {Object.entries(groupedNavigation).map(([categoryKey, items]) => {
+                const categoryInfo = categories[categoryKey as keyof typeof categories];
+                return (
+                  <div key={categoryKey} className="space-y-1 sm:space-y-2">
+                    {!isCollapsed && (
+                      <div className="px-2 sm:px-3 py-1 sm:py-2">
+                        <h3 className={cn(
+                          "text-xs font-semibold uppercase tracking-wider",
+                          categoryInfo.color
+                        )}>
+                          {categoryInfo.label}
+                        </h3>
+                      </div>
+                    )}
+                    <div className="space-y-0.5 sm:space-y-1">
+                      {items.map((item) => (
+                        <ModernNavItem
+                          key={item.href}
+                          href={item.href}
+                          icon={item.icon}
+                          title={item.title}
+                          description={item.description}
+                          isCollapsed={isCollapsed}
+                          category={categoryKey}
+                        />
+                      ))}
                     </div>
-                  )}
-                  <div className="space-y-1">
-                    {items.map((item) => (
-                      <ModernNavItem
-                        key={item.href}
-                        href={item.href}
-                        icon={item.icon}
-                        title={item.title}
-                        description={item.description}
-                        isCollapsed={isCollapsed}
-                        category={categoryKey}
-                      />
-                    ))}
                   </div>
-                </div>
-              );
-            })}
-          </nav>
-        </ScrollArea>
+                );
+              })}
+            </nav>
+          </ScrollArea>
+        </div>
 
+        {/* Footer */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-gray-200/60 bg-gradient-to-r from-gray-50 to-white">
+          <div className="p-3 sm:p-4 border-t border-gray-200/60 bg-gradient-to-r from-gray-50 to-white flex-shrink-0">
             <div className="text-xs text-gray-500 text-center">
               <p className="font-medium">RestaurIA v2.0</p>
-              <p>Inteligência para seu restaurante</p>
+              <p className="hidden sm:block">Inteligência para seu restaurante</p>
             </div>
           </div>
         )}
