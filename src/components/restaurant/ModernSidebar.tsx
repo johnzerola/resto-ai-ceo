@@ -200,12 +200,12 @@ export function ModernSidebar() {
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden backdrop-blur-sm"
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Fixed mobile background to match desktop */}
       <div
         className={cn(
           "fixed left-0 top-0 z-40 h-full bg-sidebar-background border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
