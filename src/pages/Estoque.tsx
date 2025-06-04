@@ -98,10 +98,12 @@ const Estoque = () => {
 
   return (
     <ModernLayout>
-      <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
         <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Gestão de Estoque</h1>
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground">
+              Gestão de Estoque
+            </h1>
             <p className="text-muted-foreground text-sm sm:text-base">
               Controle completo do seu inventário
             </p>
@@ -109,32 +111,32 @@ const Estoque = () => {
           <div className="flex gap-2 flex-wrap">
             {!isAddingItem && (
               <>
-                <Button variant="outline" size="sm" onClick={exportData} className="text-xs sm:text-sm">
+                <Button variant="outline" size="sm" onClick={exportData} className="text-xs sm:text-sm flex-1 sm:flex-none">
                   <FileDown className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Exportar</span>
-                  <span className="sm:hidden">Export</span>
+                  <span>Exportar</span>
                 </Button>
-                <Button onClick={toggleAddItem} size="sm" className="text-xs sm:text-sm">
+                <Button onClick={toggleAddItem} size="sm" className="text-xs sm:text-sm flex-1 sm:flex-none">
                   <Plus className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Novo Item</span>
-                  <span className="sm:hidden">Novo</span>
+                  <span>Novo Item</span>
                 </Button>
               </>
             )}
           </div>
         </div>
 
-        {isAddingItem ? (
-          <InventoryForm 
-            itemId={selectedItemId} 
-            onCancel={handleCancelForm} 
-            onSuccess={handleFormSuccess}
-          />
-        ) : (
-          <InventoryOverview 
-            onEdit={editItem}
-          />
-        )}
+        <div className="bg-card rounded-lg border border-border shadow-sm">
+          {isAddingItem ? (
+            <InventoryForm 
+              itemId={selectedItemId} 
+              onCancel={handleCancelForm} 
+              onSuccess={handleFormSuccess}
+            />
+          ) : (
+            <InventoryOverview 
+              onEdit={editItem}
+            />
+          )}
+        </div>
       </div>
     </ModernLayout>
   );

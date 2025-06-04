@@ -7,27 +7,27 @@ import { EmailConfirmationBanner } from "../auth/EmailConfirmationBanner";
 import { cn } from "@/lib/utils";
 
 const LoadingSpinner = memo(({ message }: { message: string }) => (
-  <div className="flex h-screen w-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+  <div className="flex h-screen w-screen items-center justify-center bg-gradient-to-br from-background to-muted/20">
     <div className="text-center">
-      <div className="relative">
-        <div className="w-12 h-12 rounded-full border-4 border-slate-200"></div>
+      <div className="relative mx-auto w-12 h-12 mb-6">
+        <div className="w-12 h-12 rounded-full border-4 border-muted"></div>
         <div className="w-12 h-12 rounded-full border-4 border-[#00D887] border-t-transparent absolute top-0 left-0 animate-spin"></div>
       </div>
-      <p className="mt-6 text-lg font-medium text-slate-700">{message}</p>
-      <p className="text-sm text-slate-500 mt-2">Preparando sua experiência inteligente</p>
+      <p className="text-lg font-medium text-foreground">{message}</p>
+      <p className="text-sm text-muted-foreground mt-2">Preparando sua experiência inteligente</p>
     </div>
   </div>
 ));
 
 const ErrorFallback = memo(() => (
-  <div className="flex items-center justify-center min-h-[400px] text-center bg-white rounded-2xl shadow-lg mx-4 my-8">
+  <div className="flex items-center justify-center min-h-[400px] text-center bg-card rounded-2xl shadow-lg mx-4 my-8">
     <div className="space-y-6 p-8">
       <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto">
         <span className="text-white text-2xl">⚠️</span>
       </div>
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Oops! Algo deu errado</h2>
-        <p className="text-slate-600 max-w-md">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Oops! Algo deu errado</h2>
+        <p className="text-muted-foreground max-w-md">
           Ocorreu um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver.
         </p>
       </div>
@@ -94,12 +94,14 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full bg-background">
       <ModernSidebar />
       
       <main className={cn(
         "flex-1 transition-all duration-300 ease-out min-h-screen",
-        sidebarState === 'open' ? "md:ml-72" : "md:ml-20"
+        // Add top margin on mobile to prevent overlap with menu button
+        "pt-16 md:pt-0",
+        sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
       )}>
         <EmailConfirmationBanner />
         
