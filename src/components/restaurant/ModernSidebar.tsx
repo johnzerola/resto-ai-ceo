@@ -205,10 +205,12 @@ export function ModernSidebar() {
         />
       )}
 
-      {/* Sidebar - Fixed mobile background to match desktop */}
+      {/* Sidebar - Fixed solid background for both mobile and desktop */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full bg-sidebar-background border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
+          "fixed left-0 top-0 z-40 h-full border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
+          // Solid background for both mobile and desktop - no transparency
+          "bg-white dark:bg-gray-900",
           // Mobile: always show full width when open, hide when closed
           "md:translate-x-0", // Always visible on desktop
           isMobileOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full", // Mobile behavior
@@ -268,7 +270,7 @@ export function ModernSidebar() {
                           icon={item.icon}
                           title={item.title}
                           description={item.description}
-                          isCollapsed={isCollapsed && !isMobileOpen} // Show text on mobile even when collapsed
+                          isCollapsed={isCollapsed && !isMobileOpen}
                           category={categoryKey}
                         />
                       ))}
