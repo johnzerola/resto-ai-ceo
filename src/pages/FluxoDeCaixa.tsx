@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { CashFlowOverview } from "@/components/restaurant/CashFlowOverview";
@@ -10,7 +9,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
 
-const FluxoDeCaixa = () => {
+const FluxoCaixa = () => {
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [showIntegrationInfo, setShowIntegrationInfo] = useState(false);
   const [editingEntry, setEditingEntry] = useState<any>(null);
@@ -119,7 +118,11 @@ const FluxoDeCaixa = () => {
 
         {isAddingEntry ? (
           <CashFlowForm 
-            onSuccess={() => {
+            editingEntry={editingEntry}
+            onEntryAdded={() => {
+              // This callback is required by the interface but we handle success differently
+            }}
+            onEditComplete={() => {
               setIsAddingEntry(false);
               setEditingEntry(null);
               toast.success("Transação salva com sucesso");
@@ -135,4 +138,4 @@ const FluxoDeCaixa = () => {
   );
 };
 
-export default FluxoDeCaixa;
+export default FluxoCaixa;
