@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -113,10 +112,12 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
           item.id === editingEntry.id ? entry : item
         );
         console.log("Atualizando entrada existente");
+        toast.success("Entrada atualizada com sucesso!");
       } else {
         // Adicionar nova entrada
         updatedEntries = [...existingEntries, entry];
         console.log("Adicionando nova entrada");
+        toast.success("Entrada adicionada com sucesso!");
       }
       
       localStorage.setItem('cashFlowEntries', JSON.stringify(updatedEntries));
@@ -142,7 +143,6 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
           paymentMethod: "",
           recurring: false
         });
-        toast.success("Entrada adicionada com sucesso!");
       }
 
     } catch (error) {

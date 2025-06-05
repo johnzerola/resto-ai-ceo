@@ -5,7 +5,7 @@ import { DREOverview } from "@/components/restaurant/DREOverview";
 export function DRE() {
   return (
     <ModernLayout>
-      <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
+      <div className="main-content-padding space-y-4 sm:space-y-6 bg-background min-h-screen">
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:justify-between sm:items-start">
           <div className="space-y-1">
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground">

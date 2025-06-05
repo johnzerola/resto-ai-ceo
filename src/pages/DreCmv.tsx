@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { DREOverview } from "@/components/restaurant/DREOverview";
@@ -63,50 +64,52 @@ const DreCmv = () => {
 
   return (
     <ModernLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">DRE & CMV</h1>
-        <p className="text-muted-foreground flex items-center gap-2">
-          Demonstrativo de Resultados e Custo de Mercadoria Vendida
-          <SyncIndicator />
-          {lastUpdate && (
-            <span className="text-xs text-muted-foreground ml-2">
-              Última atualização: {getFormattedDate()}
-            </span>
-          )}
-        </p>
-      </div>
-
-      {configData && (
-        <div className="mb-4 text-sm">
-          <p className="text-muted-foreground">
-            Utilizando configurações de: 
-            <span className="ml-1 font-medium">{configData.businessName || "Seu Restaurante"}</span>
-            {configData.targetFoodCost && (
-              <span className="ml-2 text-green-600">
-                • CMV Alvo (Alimentos): {configData.targetFoodCost}%
-              </span>
-            )}
-            {configData.targetBeverageCost && (
-              <span className="ml-2 text-green-600">
-                • CMV Alvo (Bebidas): {configData.targetBeverageCost}%
+      <div className="main-content-padding space-y-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">DRE & CMV</h1>
+          <p className="text-muted-foreground flex items-center gap-2">
+            Demonstrativo de Resultados e Custo de Mercadoria Vendida
+            <SyncIndicator />
+            {lastUpdate && (
+              <span className="text-xs text-muted-foreground ml-2">
+                Última atualização: {getFormattedDate()}
               </span>
             )}
           </p>
         </div>
-      )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="dre">DRE</TabsTrigger>
-          <TabsTrigger value="cmv">CMV</TabsTrigger>
-        </TabsList>
-        <TabsContent value="dre">
-          <DREOverview />
-        </TabsContent>
-        <TabsContent value="cmv">
-          <CMVAnalysis />
-        </TabsContent>
-      </Tabs>
+        {configData && (
+          <div className="mb-4 text-sm">
+            <p className="text-muted-foreground">
+              Utilizando configurações de: 
+              <span className="ml-1 font-medium">{configData.businessName || "Seu Restaurante"}</span>
+              {configData.targetFoodCost && (
+                <span className="ml-2 text-green-600">
+                  • CMV Alvo (Alimentos): {configData.targetFoodCost}%
+                </span>
+              )}
+              {configData.targetBeverageCost && (
+                <span className="ml-2 text-green-600">
+                  • CMV Alvo (Bebidas): {configData.targetBeverageCost}%
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="dre">DRE</TabsTrigger>
+            <TabsTrigger value="cmv">CMV</TabsTrigger>
+          </TabsList>
+          <TabsContent value="dre">
+            <DREOverview />
+          </TabsContent>
+          <TabsContent value="cmv">
+            <CMVAnalysis />
+          </TabsContent>
+        </Tabs>
+      </div>
     </ModernLayout>
   );
 };
