@@ -251,15 +251,15 @@ body {
   @apply transition-colors duration-200;
 }
 
-/* Override para melhor legibilidade no dark mode */
+/* Override para melhor legibilidade no dark mode - usando cores diretas para evitar circulares */
 .dark .text-gray-600 {
-  @apply text-gray-300;
+  color: #d1d5db;
 }
 
 .dark .text-gray-500 {
-  @apply text-gray-400;
+  color: #9ca3af;
 }
 
 .dark .text-gray-400 {
-  @apply text-gray-500;
+  color: #6b7280;
 }

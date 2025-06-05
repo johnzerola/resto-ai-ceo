@@ -13,6 +13,7 @@ import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
 const FluxoDeCaixa = () => {
   const [isAddingEntry, setIsAddingEntry] = useState(false);
   const [showIntegrationInfo, setShowIntegrationInfo] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<any>(null);
   const navigate = useNavigate();
 
   // Verificar se é a primeira visita à página
@@ -26,6 +27,12 @@ const FluxoDeCaixa = () => {
 
   const toggleAddEntry = () => {
     setIsAddingEntry(!isAddingEntry);
+    setEditingEntry(null);
+  };
+
+  const handleEditEntry = (entry: any) => {
+    setEditingEntry(entry);
+    setIsAddingEntry(true);
   };
 
   const goToDreCmv = () => {
@@ -112,14 +119,16 @@ const FluxoDeCaixa = () => {
 
         {isAddingEntry ? (
           <CashFlowForm 
-            onCancel={toggleAddEntry} 
             onSuccess={() => {
               setIsAddingEntry(false);
+              setEditingEntry(null);
               toast.success("Transação salva com sucesso");
             }}
           />
         ) : (
-          <CashFlowOverview />
+          <CashFlowOverview 
+            onEdit={handleEditEntry}
+          />
         )}
       </div>
     </ModernLayout>
