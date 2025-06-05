@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { CashFlowOverview } from "@/components/restaurant/CashFlowOverview";
@@ -29,9 +30,17 @@ const FluxoCaixa = () => {
     setEditingEntry(null);
   };
 
-  const handleEditEntry = (entry: any) => {
-    setEditingEntry(entry);
-    setIsAddingEntry(true);
+  const handleEditEntry = (entryId: string) => {
+    // Buscar a entrada pelo ID
+    const cashFlowData = localStorage.getItem('cashFlowEntries');
+    if (cashFlowData) {
+      const entries = JSON.parse(cashFlowData);
+      const entry = entries.find((e: any) => e.id === entryId);
+      if (entry) {
+        setEditingEntry(entry);
+        setIsAddingEntry(true);
+      }
+    }
   };
 
   const goToDreCmv = () => {
@@ -40,7 +49,7 @@ const FluxoCaixa = () => {
 
   const exportData = () => {
     try {
-      const cashFlowData = localStorage.getItem("cashFlow");
+      const cashFlowData = localStorage.getItem("cashFlowEntries");
       if (!cashFlowData) {
         toast.error("Nenhum dado disponível para exportar");
         return;
@@ -63,7 +72,7 @@ const FluxoCaixa = () => {
 
   return (
     <ModernLayout>
-      <div className="space-y-6">
+      <div className="main-content-padding space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
@@ -120,7 +129,7 @@ const FluxoCaixa = () => {
           <CashFlowForm 
             editingEntry={editingEntry}
             onEntryAdded={() => {
-              // This callback is required by the interface but we handle success differently
+              // Callback necessário mas manipulamos o sucesso de forma diferente
             }}
             onEditComplete={() => {
               setIsAddingEntry(false);

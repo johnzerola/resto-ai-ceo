@@ -106,8 +106,18 @@ body {
   color: hsl(var(--foreground));
 }
 
+/* Margem padrão para conteúdo principal das telas */
+.main-content-padding {
+  @apply p-6;
+}
+
 /* Padronização de títulos no mobile - APLICAÇÃO UNIVERSAL */
 @media (max-width: 768px) {
+  /* Margem adicional no mobile para afastar do menu lateral */
+  .main-content-padding {
+    @apply p-4 pl-6;
+  }
+  
   /* Classes específicas para títulos e subtítulos */
   .page-title {
     @apply ml-4;

@@ -79,8 +79,10 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.description || !formData.category || !formData.amount) {
-      toast.error("Preencha todos os campos obrigatórios");
+    console.log("Tentando salvar entrada:", formData);
+    
+    if (!formData.description || !formData.category || !formData.amount || formData.amount <= 0) {
+      toast.error("Preencha todos os campos obrigatórios e insira um valor válido");
       return;
     }
 
@@ -99,6 +101,8 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
         recurring: formData.recurring || false
       };
 
+      console.log("Entrada a ser salva:", entry);
+
       // Salvar no localStorage
       const existingEntries = JSON.parse(localStorage.getItem('cashFlowEntries') || '[]');
       let updatedEntries;
@@ -108,16 +112,19 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
         updatedEntries = existingEntries.map((item: CashFlowEntry) => 
           item.id === editingEntry.id ? entry : item
         );
+        console.log("Atualizando entrada existente");
         toast.success("Entrada atualizada com sucesso!");
       } else {
         // Adicionar nova entrada
         updatedEntries = [...existingEntries, entry];
+        console.log("Adicionando nova entrada");
         toast.success("Entrada adicionada com sucesso!");
       }
       
       localStorage.setItem('cashFlowEntries', JSON.stringify(updatedEntries));
+      console.log("Entradas salvas no localStorage:", updatedEntries);
 
-      // Disparar evento para atualização do dashboard
+      // Disparar eventos para atualização do dashboard
       window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedEntries }));
       window.dispatchEvent(new CustomEvent('financialDataUpdated'));
 
@@ -228,6 +235,8 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
                 value={formData.amount}
                 onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
                 required
+                className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                style={{ MozAppearance: 'textfield' }}
               />
             </div>
           </div>
