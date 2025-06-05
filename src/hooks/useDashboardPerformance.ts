@@ -37,7 +37,7 @@ export function useDashboardPerformance() {
     const startTime = performance.now();
     
     try {
-      // Buscar dados do fluxo de caixa do localStorage
+      // Buscar dados do fluxo de caixa do localStorage (key correta)
       const cashFlowData = localStorage.getItem('cashFlowEntries');
       const cashFlowEntries = cashFlowData ? JSON.parse(cashFlowData) : [];
       
@@ -77,6 +77,7 @@ export function useDashboardPerformance() {
       });
       
       console.log('Dashboard stats updated:', stats);
+      console.log('Today entries found:', todayEntries);
     } catch (error) {
       console.error('Erro ao calcular estatísticas do dashboard:', error);
     } finally {
@@ -93,10 +94,19 @@ export function useDashboardPerformance() {
       calculateDashboardStats();
     };
 
-    // Listeners para atualizações
+    // Listeners para atualizações (key correta para fluxo de caixa)
     window.addEventListener('cashFlowUpdated', handleDataUpdate);
     window.addEventListener('goalsUpdated', handleDataUpdate);
     window.addEventListener('financialDataUpdated', handleDataUpdate);
+    
+    // Listener para mudanças no localStorage
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cashFlowEntries' || e.key === 'goals') {
+        handleDataUpdate();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
     
     // Atualizar a cada 30 segundos
     const interval = setInterval(calculateDashboardStats, 30000);
@@ -105,6 +115,7 @@ export function useDashboardPerformance() {
       window.removeEventListener('cashFlowUpdated', handleDataUpdate);
       window.removeEventListener('goalsUpdated', handleDataUpdate);
       window.removeEventListener('financialDataUpdated', handleDataUpdate);
+      window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
   }, []);

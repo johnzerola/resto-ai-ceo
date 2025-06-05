@@ -49,11 +49,11 @@ export function Metas() {
     <ModernLayout>
       <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Target className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-            <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight page-title">Sistema de Metas</h1>
-              <p className="text-muted-foreground text-sm sm:text-base page-subtitle">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Target className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 ml-4 sm:ml-0" />
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Sistema de Metas</h1>
+              <p className="text-muted-foreground text-sm sm:text-base">
                 Defina e acompanhe seus objetivos de negócio
               </p>
             </div>

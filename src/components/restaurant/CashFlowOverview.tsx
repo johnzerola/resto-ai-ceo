@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -62,17 +63,15 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
 
   // Load cash flow data
   useEffect(() => {
-    const savedCashFlow = localStorage.getItem("cashFlow");
+    const savedCashFlow = localStorage.getItem("cashFlowEntries");
     if (savedCashFlow) {
       const parsedCashFlow = JSON.parse(savedCashFlow);
       setCashFlow(parsedCashFlow);
       calculateSummary(parsedCashFlow);
     } else {
-      // Set sample data if no data in localStorage
-      const sampleCashFlow = generateSampleCashFlow();
-      localStorage.setItem("cashFlow", JSON.stringify(sampleCashFlow));
-      setCashFlow(sampleCashFlow);
-      calculateSummary(sampleCashFlow);
+      // Iniciar com array vazio - sem dados pré-preenchidos
+      setCashFlow([]);
+      calculateSummary([]);
     }
   }, []);
 
@@ -150,11 +149,14 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
     if (confirm("Tem certeza que deseja excluir esta transação?")) {
       const updatedCashFlow = cashFlow.filter((entry) => entry.id !== entryId);
       setCashFlow(updatedCashFlow);
-      localStorage.setItem("cashFlow", JSON.stringify(updatedCashFlow));
+      localStorage.setItem("cashFlowEntries", JSON.stringify(updatedCashFlow));
       calculateSummary(updatedCashFlow);
       
       // Atualizar dados financeiros após exclusão de transação
       updateFinancialData(updatedCashFlow);
+      
+      // Disparar evento para atualização do dashboard
+      window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedCashFlow }));
       
       toast.success("Transação excluída com sucesso!");
     }
@@ -316,21 +318,21 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
           {/* Transactions Table */}
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCashFlow.length > 0 ? (
-                    filteredCashFlow.map((entry) => (
+              {filteredCashFlow.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Categoria</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCashFlow.map((entry) => (
                       <TableRow key={entry.id}>
                         <TableCell>{formatDate(entry.date)}</TableCell>
                         <TableCell className="font-medium">{entry.description}</TableCell>
@@ -376,16 +378,18 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-10">
-                        <p className="text-muted-foreground">Nenhuma transação encontrada</p>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="p-10 text-center">
+                  <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-muted-foreground">Nenhuma transação cadastrada ainda</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Clique em "Nova Transação" para começar
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -448,7 +452,7 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Saldo Período</p>
-                  <p className={`text-lg font-medium ${monthlyData[5].balance >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  <p className={`text-lg font-medium ${monthlyData[5]?.balance >= 0 ? "text-green-600" : "text-red-600"}`}>
                     {formatCurrency(monthlyData.reduce((sum, month) => sum + month.balance, 0))}
                   </p>
                 </div>
@@ -459,110 +463,4 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
       </Tabs>
     </div>
   );
-}
-
-// Generate sample cash flow data
-function generateSampleCashFlow(): CashFlowEntry[] {
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  const lastWeek = new Date(today);
-  lastWeek.setDate(today.getDate() - 7);
-  const lastMonth = new Date(today);
-  lastMonth.setMonth(today.getMonth() - 1);
-  
-  return [
-    {
-      id: "1",
-      date: today.toISOString(),
-      description: "Vendas do dia",
-      amount: 3500,
-      type: "income",
-      category: "Vendas",
-      paymentMethod: "Diversos",
-      notes: "Faturamento total do restaurante",
-      status: "completed"
-    },
-    {
-      id: "2",
-      date: today.toISOString(),
-      description: "Pagamento fornecedor",
-      amount: 1250,
-      type: "expense",
-      category: "Fornecedores",
-      paymentMethod: "Transferência",
-      reference: "NF 12345",
-      status: "completed"
-    },
-    {
-      id: "3",
-      date: yesterday.toISOString(),
-      description: "Vendas delivery",
-      amount: 850,
-      type: "income",
-      category: "Vendas",
-      paymentMethod: "App",
-      status: "completed"
-    },
-    {
-      id: "4",
-      date: yesterday.toISOString(),
-      description: "Pagamento funcionários",
-      amount: 4800,
-      type: "expense",
-      category: "Folha de pagamento",
-      paymentMethod: "Transferência",
-      status: "completed"
-    },
-    {
-      id: "5",
-      date: lastWeek.toISOString(),
-      description: "Aluguel",
-      amount: 3000,
-      type: "expense",
-      category: "Aluguel",
-      paymentMethod: "Transferência",
-      status: "completed"
-    },
-    {
-      id: "6",
-      date: lastWeek.toISOString(),
-      description: "Vendas final de semana",
-      amount: 8500,
-      type: "income",
-      category: "Vendas",
-      paymentMethod: "Diversos",
-      status: "completed"
-    },
-    {
-      id: "7",
-      date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 5).toISOString(),
-      description: "Pagamento evento corporativo",
-      amount: 6000,
-      type: "income",
-      category: "Eventos",
-      paymentMethod: "Transferência",
-      status: "pending"
-    },
-    {
-      id: "8",
-      date: lastMonth.toISOString(),
-      description: "Conta de luz",
-      amount: 850,
-      type: "expense",
-      category: "Utilidades",
-      paymentMethod: "Débito automático",
-      status: "completed"
-    },
-    {
-      id: "9",
-      date: lastMonth.toISOString(),
-      description: "Conta de água",
-      amount: 350,
-      type: "expense",
-      category: "Utilidades",
-      paymentMethod: "Débito automático",
-      status: "completed"
-    }
-  ];
 }

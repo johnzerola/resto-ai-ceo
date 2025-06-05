@@ -106,8 +106,9 @@ body {
   color: hsl(var(--foreground));
 }
 
-/* Padronização de títulos no mobile */
+/* Padronização de títulos no mobile - APLICAÇÃO UNIVERSAL */
 @media (max-width: 768px) {
+  /* Classes específicas para títulos e subtítulos */
   .page-title {
     @apply ml-4;
   }
@@ -124,6 +125,54 @@ body {
   
   .space-y-4 > div:first-child p,
   .space-y-6 > div:first-child p {
+    @apply ml-4;
+  }
+  
+  /* Títulos específicos por nível hierárquico */
+  h1, h2 {
+    @apply ml-4;
+  }
+  
+  /* Div que contém títulos principais */
+  .flex.justify-between.items-center h1,
+  .flex.justify-between.items-start h1,
+  .flex.items-center h1,
+  .flex.items-start h1 {
+    @apply ml-4;
+  }
+  
+  /* Subtítulos e descrições */
+  .flex.justify-between.items-center p,
+  .flex.justify-between.items-start p,
+  .flex.items-center p,
+  .flex.items-start p {
+    @apply ml-4;
+  }
+  
+  /* Container de header específico */
+  .flex.justify-between > div:first-child h1,
+  .flex.justify-between > div:first-child p {
+    @apply ml-4;
+  }
+  
+  /* Títulos dentro de cards ou containers principais */
+  .space-y-4 h1, .space-y-6 h1,
+  .space-y-4 h2, .space-y-6 h2 {
+    @apply ml-4;
+  }
+  
+  /* Descrições e textos secundários */
+  .text-muted-foreground {
+    @apply ml-4;
+  }
+  
+  /* Aplicar a todos os elementos de header das páginas principais */
+  main > div:first-child h1,
+  main > div:first-child h2,
+  main > div:first-child p,
+  [data-page] h1,
+  [data-page] h2,
+  [data-page] p.text-muted-foreground {
     @apply ml-4;
   }
 }
