@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, X } from "lucide-react";
+import { Plus, X, ArrowLeft } from "lucide-react";
 
 export interface CashFlowEntry {
   id: string;
@@ -67,7 +67,7 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
     date: editingEntry?.date || new Date().toISOString().split('T')[0],
     description: editingEntry?.description || "",
     category: editingEntry?.category || "",
-    amount: editingEntry?.amount || 0,
+    amount: editingEntry?.amount || undefined,
     type: editingEntry?.type || "income",
     status: editingEntry?.status || "completed",
     paymentMethod: editingEntry?.paymentMethod || "",
@@ -113,12 +113,10 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
           item.id === editingEntry.id ? entry : item
         );
         console.log("Atualizando entrada existente");
-        toast.success("Entrada atualizada com sucesso!");
       } else {
         // Adicionar nova entrada
         updatedEntries = [...existingEntries, entry];
         console.log("Adicionando nova entrada");
-        toast.success("Entrada adicionada com sucesso!");
       }
       
       localStorage.setItem('cashFlowEntries', JSON.stringify(updatedEntries));
@@ -138,12 +136,13 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
           date: new Date().toISOString().split('T')[0],
           description: "",
           category: "",
-          amount: 0,
+          amount: undefined,
           type: "income",
           status: "completed",
           paymentMethod: "",
           recurring: false
         });
+        toast.success("Entrada adicionada com sucesso!");
       }
 
     } catch (error) {
@@ -155,6 +154,12 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
   };
 
   const handleCancel = () => {
+    if (onEditComplete) {
+      onEditComplete();
+    }
+  };
+
+  const handleBack = () => {
     if (onEditComplete) {
       onEditComplete();
     }
@@ -232,9 +237,10 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                value={formData.amount || ""}
+                onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || undefined }))}
                 required
+                placeholder="0,00"
                 className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 style={{ MozAppearance: 'textfield' }}
               />
@@ -298,25 +304,38 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
-            {editingEntry && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleCancel}
-                disabled={isSubmitting}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancelar
-              </Button>
-            )}
+          <div className="flex justify-between pt-4">
             <Button 
-              type="submit" 
+              type="button" 
+              variant="outline" 
+              onClick={handleBack}
               disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="flex items-center gap-2"
             >
-              {isSubmitting ? "Salvando..." : editingEntry ? "Atualizar" : "Adicionar"}
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
             </Button>
+
+            <div className="flex gap-3">
+              {editingEntry && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar
+                </Button>
+              )}
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {isSubmitting ? "Salvando..." : editingEntry ? "Atualizar" : "Adicionar"}
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>

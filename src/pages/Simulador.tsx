@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +24,7 @@ const Simulador = () => {
 
   return (
     <ModernLayout>
-      <div className="space-y-6">
+      <div className="main-content-padding space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Simulador Financeiro</h1>
           <p className="text-muted-foreground">
