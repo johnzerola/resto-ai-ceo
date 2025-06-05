@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ interface CashFlowFormProps {
   onEntryAdded: (entry: CashFlowEntry) => void;
   editingEntry?: CashFlowEntry;
   onEditComplete?: () => void;
+  onCancel?: () => void;
 }
 
 const categories = {
@@ -60,7 +62,8 @@ const paymentMethods = [
 export const CashFlowForm: React.FC<CashFlowFormProps> = ({ 
   onEntryAdded, 
   editingEntry, 
-  onEditComplete 
+  onEditComplete,
+  onCancel
 }) => {
   const [formData, setFormData] = useState<Partial<CashFlowEntry>>({
     date: editingEntry?.date || new Date().toISOString().split('T')[0],
@@ -153,14 +156,18 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
     }
   };
 
-  const handleCancel = () => {
-    if (onEditComplete) {
+  const handleBack = () => {
+    if (onCancel) {
+      onCancel();
+    } else if (onEditComplete) {
       onEditComplete();
     }
   };
 
-  const handleBack = () => {
-    if (onEditComplete) {
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    } else if (onEditComplete) {
       onEditComplete();
     }
   };
@@ -237,8 +244,8 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.amount || ""}
-                onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || undefined }))}
+                value={formData.amount === undefined ? "" : formData.amount}
+                onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value ? parseFloat(e.target.value) : undefined }))}
                 required
                 placeholder="0,00"
                 className="[&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

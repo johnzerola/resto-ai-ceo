@@ -45,6 +45,24 @@ interface CashFlowOverviewProps {
   onEdit: (entryId: string) => void;
 }
 
+// Tradução das categorias
+const categoryTranslations: { [key: string]: string } = {
+  "sales": "Vendas",
+  "food": "Alimentação",
+  "beverage": "Bebidas",
+  "delivery": "Delivery",
+  "other_income": "Outras Receitas",
+  "food_supplies": "Insumos Alimentares",
+  "beverage_supplies": "Insumos Bebidas",
+  "supplies": "Suprimentos",
+  "rent": "Aluguel",
+  "utilities": "Utilidades",
+  "salaries": "Salários",
+  "marketing": "Marketing",
+  "maintenance": "Manutenção",
+  "other_expense": "Outras Despesas"
+};
+
 export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
   const [cashFlow, setCashFlow] = useState<CashFlowEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -110,7 +128,7 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
     return cashFlow.filter((entry) => {
       // Text search filter
       const matchesSearch = entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.category.toLowerCase().includes(searchTerm.toLowerCase());
+                         categoryTranslations[entry.category]?.toLowerCase().includes(searchTerm.toLowerCase());
       
       // Date filter
       let matchesDate = true;
@@ -141,7 +159,7 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
       }
       
       return matchesSearch && matchesDate && matchesType;
-    });
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Ordenar do mais recente para o mais antigo
   };
 
   // Delete cash flow entry
@@ -336,7 +354,7 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
                       <TableRow key={entry.id}>
                         <TableCell>{formatDate(entry.date)}</TableCell>
                         <TableCell className="font-medium">{entry.description}</TableCell>
-                        <TableCell>{entry.category}</TableCell>
+                        <TableCell>{categoryTranslations[entry.category] || entry.category}</TableCell>
                         <TableCell>
                           <div className="flex items-center">
                             {entry.type === "income" ? (
