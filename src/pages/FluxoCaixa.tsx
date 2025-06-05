@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { CashFlowOverview } from "@/components/restaurant/CashFlowOverview";
@@ -11,8 +12,8 @@ import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
 
 const FluxoCaixa = () => {
   const [isAddingEntry, setIsAddingEntry] = useState(false);
-  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [showIntegrationInfo, setShowIntegrationInfo] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<any>(null);
   const navigate = useNavigate();
 
   // Verificar se é a primeira visita à página
@@ -26,11 +27,11 @@ const FluxoCaixa = () => {
 
   const toggleAddEntry = () => {
     setIsAddingEntry(!isAddingEntry);
-    setSelectedEntryId(null);
+    setEditingEntry(null);
   };
 
-  const editEntry = (entryId: string) => {
-    setSelectedEntryId(entryId);
+  const handleEditEntry = (entry: any) => {
+    setEditingEntry(entry);
     setIsAddingEntry(true);
   };
 
@@ -118,16 +119,20 @@ const FluxoCaixa = () => {
 
         {isAddingEntry ? (
           <CashFlowForm 
-            entryId={selectedEntryId} 
-            onCancel={toggleAddEntry} 
-            onSuccess={() => {
+            editingEntry={editingEntry}
+            onEntryAdded={() => {
+              // This callback is required by the interface but we handle success differently
+            }}
+            onEditComplete={() => {
               setIsAddingEntry(false);
-              setSelectedEntryId(null);
+              setEditingEntry(null);
               toast.success("Transação salva com sucesso");
             }}
           />
         ) : (
-          <CashFlowOverview onEdit={editEntry} />
+          <CashFlowOverview 
+            onEdit={handleEditEntry}
+          />
         )}
       </div>
     </ModernLayout>
