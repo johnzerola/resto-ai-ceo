@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calculator, Users, Scale, Utensils, HelpCircle, TrendingUp, BookOpen, Sync } from "lucide-react";
+import { Calculator, Users, Scale, Utensils, HelpCircle, TrendingUp, BookOpen, RefreshCw } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { SensitivityAnalysis } from "./SensitivityAnalysis";
 import { CompetitiveBenchmark } from "./CompetitiveBenchmark";
@@ -173,7 +173,7 @@ export function PriceSimulator() {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={syncWithConfig}>
-              <Sync className="h-4 w-4 mr-1" />
+              <RefreshCw className="h-4 w-4 mr-1" />
               Sincronizar
             </Button>
             <Button variant="outline" size="sm" onClick={() => setShowTutorial(true)}>
