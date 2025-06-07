@@ -155,7 +155,7 @@ export function TechnicalSheetReport() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{stats.highFoodCostItems}</div>
-            <p className="text-xs text-muted-foreground">Food Cost > 30%</p>
+            <p className="text-xs text-muted-foreground">Food Cost &gt; 30%</p>
           </CardContent>
         </Card>
 
