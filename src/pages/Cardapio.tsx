@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Utensils, Plus, Edit, Trash2, DollarSign, Clock, Users } from "lucide-react";
+import { Utensils, Plus, Edit, Trash2, DollarSign, Clock, Users, FileText } from "lucide-react";
+import { TechnicalSheet } from "@/components/restaurant/TechnicalSheet";
 import { 
   Dialog, 
   DialogContent, 
@@ -219,6 +219,61 @@ export function Cardapio() {
     return categories.find(cat => cat.value === categoryValue)?.label || categoryValue;
   };
 
+  const [showTechnicalSheet, setShowTechnicalSheet] = useState(false);
+  const [selectedItemForSheet, setSelectedItemForSheet] = useState<string | null>(null);
+
+  // Nova função para abrir ficha técnica
+  const openTechnicalSheet = (itemId: string) => {
+    setSelectedItemForSheet(itemId);
+    setShowTechnicalSheet(true);
+  };
+
+  // Nova função para salvar ficha técnica
+  const saveTechnicalSheet = (technicalData: any) => {
+    // Salvar dados da ficha técnica no localStorage
+    const storedSheets = localStorage.getItem("technicalSheets") || "{}";
+    const sheets = JSON.parse(storedSheets);
+    
+    if (selectedItemForSheet) {
+      sheets[selectedItemForSheet] = {
+        ...technicalData,
+        id: selectedItemForSheet,
+        updatedAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem("technicalSheets", JSON.stringify(sheets));
+      toast.success("Ficha técnica salva com sucesso!");
+    }
+    
+    setShowTechnicalSheet(false);
+    setSelectedItemForSheet(null);
+  };
+
+  // Verificar se item tem ficha técnica
+  const hasSheetData = (itemId: string) => {
+    const storedSheets = localStorage.getItem("technicalSheets");
+    if (!storedSheets) return false;
+    const sheets = JSON.parse(storedSheets);
+    return !!sheets[itemId];
+  };
+
+  if (showTechnicalSheet) {
+    return (
+      <ModernLayout>
+        <div className="p-6">
+          <TechnicalSheet
+            menuItemId={selectedItemForSheet || undefined}
+            onSave={saveTechnicalSheet}
+            onCancel={() => {
+              setShowTechnicalSheet(false);
+              setSelectedItemForSheet(null);
+            }}
+          />
+        </div>
+      </ModernLayout>
+    );
+  }
+
   return (
     <ModernLayout>
       <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
@@ -231,7 +286,7 @@ export function Cardapio() {
                 Gestão de Cardápio
               </h1>
               <p className="text-muted-foreground text-sm sm:text-base page-subtitle">
-                Gerencie os itens do seu cardápio
+                Gerencie os itens do seu cardápio e suas fichas técnicas
               </p>
             </div>
           </div>
@@ -250,15 +305,6 @@ export function Cardapio() {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingItem ? "Editar Item" : "Novo Item do Cardápio"}
-                </DialogTitle>
-                <DialogDescription>
-                  {editingItem ? "Edite as informações do item" : "Adicione um novo item ao seu cardápio"}
-                </DialogDescription>
-              </DialogHeader>
-              
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -453,6 +499,12 @@ export function Cardapio() {
                         >
                           {item.isAvailable ? "Disponível" : "Indisponível"}
                         </Badge>
+                        {hasSheetData(item.id) && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                            <FileText className="h-3 w-3 mr-1" />
+                            Ficha
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -497,6 +549,16 @@ export function Cardapio() {
                     >
                       <Edit className="h-3 w-3 mr-1" />
                       Editar
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openTechnicalSheet(item.id)}
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-700"
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      Ficha
                     </Button>
                     
                     <Button
