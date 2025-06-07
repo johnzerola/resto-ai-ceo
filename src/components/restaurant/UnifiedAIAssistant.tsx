@@ -1,456 +1,517 @@
 
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { 
-  MessageSquare, 
-  Image as ImageIcon, 
-  BarChart3, 
-  Share2, 
+  Brain, 
+  Megaphone, 
   Send, 
+  Bot, 
+  User, 
   Download,
-  Loader2,
-  Bot,
-  Sparkles
+  Star,
+  MessageCircle,
+  Image as ImageIcon,
+  TrendingUp,
+  Settings,
+  RefreshCw
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
-  sender: 'user' | 'ai';
+  type: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'image' | 'analytics' | 'social';
-  metadata?: any;
+  aiType: 'manager' | 'social';
+  imageUrl?: string;
+}
+
+interface ChatHistory {
+  manager: Message[];
+  social: Message[];
+}
+
+interface RestaurantContext {
+  restaurantData: any;
+  menuData: any;
+  financialData: any;
+  simulatorData: any;
 }
 
 export function UnifiedAIAssistant() {
-  const [activeTab, setActiveTab] = useState("chat");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [activeTab, setActiveTab] = useState<'manager' | 'social'>('manager');
+  const [messages, setMessages] = useState<ChatHistory>({
+    manager: [],
+    social: []
+  });
+  const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<any[]>([]);
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
-  const { toast } = useToast();
+  const [context, setContext] = useState<RestaurantContext | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Estados para geração de imagem
-  const [imagePrompt, setImagePrompt] = useState("");
-  const [imageProvider, setImageProvider] = useState("dalle");
-  const [generatedImage, setGeneratedImage] = useState<string>("");
-
-  // Estados para analytics
-  const [analyticsData, setAnalyticsData] = useState<any>(null);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
-
-  // Estados para redes sociais
-  const [socialContent, setSocialContent] = useState("");
-  const [socialPlatform, setSocialPlatform] = useState("facebook");
-  const [socialImageUrl, setSocialImageUrl] = useState("");
-  const [socialHashtags, setSocialHashtags] = useState("");
-  const [publishLoading, setPublishLoading] = useState(false);
-
+  // Carregar contexto do restaurante
   useEffect(() => {
-    scrollToBottom();
+    loadRestaurantContext();
+  }, []);
+
+  // Auto scroll para última mensagem
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const loadRestaurantContext = () => {
+    try {
+      // Carregar dados do localStorage (ou integrar com API do Supabase)
+      const restaurantData = JSON.parse(localStorage.getItem('restaurantData') || '{}');
+      const menuData = JSON.parse(localStorage.getItem('menuItems') || '[]');
+      const financialData = JSON.parse(localStorage.getItem('cashFlowData') || '[]');
+      const simulatorData = JSON.parse(localStorage.getItem('simulatorData') || '{}');
+
+      setContext({
+        restaurantData,
+        menuData,
+        financialData,
+        simulatorData
+      });
+    } catch (error) {
+      console.error('Erro ao carregar contexto do restaurante:', error);
+    }
   };
 
-  const addMessage = (content: string, sender: 'user' | 'ai', type: 'text' | 'image' | 'analytics' | 'social' = 'text', metadata?: any) => {
-    const message: Message = {
-      id: Date.now().toString() + Math.random(),
-      sender,
-      content,
+  const sendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: inputMessage,
       timestamp: new Date(),
-      type,
-      metadata
+      aiType: activeTab
     };
-    setMessages(prev => [...prev, message]);
-    return message;
-  };
 
-  const handleChatMessage = async () => {
-    if (!newMessage.trim() || isLoading) return;
+    setMessages(prev => ({
+      ...prev,
+      [activeTab]: [...prev[activeTab], userMessage]
+    }));
 
-    const userMessage = newMessage;
-    setNewMessage("");
-    addMessage(userMessage, 'user');
+    setInputMessage('');
     setIsLoading(true);
 
     try {
-      // Obter contexto do restaurante
-      const restaurantData = localStorage.getItem('restaurantData');
-      const context = restaurantData ? JSON.parse(restaurantData) : null;
-
-      const { data, error } = await supabase.functions.invoke('openai-chat', {
-        body: {
-          message: userMessage,
-          context: context ? `Restaurante: ${context.businessName}. Dados disponíveis: ${JSON.stringify(context)}` : '',
-          conversationHistory: conversationHistory.slice(-10) // Últimas 10 mensagens
-        }
+      const response = await fetch('/api/chat-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: inputMessage,
+          aiType: activeTab,
+          context: context,
+          conversationHistory: messages[activeTab].slice(-10) // Últimas 10 mensagens para contexto
+        })
       });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Erro na comunicação com a IA');
 
-      const aiResponse = data.reply;
-      addMessage(aiResponse, 'ai');
-      
-      // Atualizar histórico da conversa
-      setConversationHistory(prev => [
+      const data = await response.json();
+
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: data.reply || 'Desculpe, não consegui processar sua mensagem.',
+        timestamp: new Date(),
+        aiType: activeTab,
+        imageUrl: data.imageUrl // Para imagens do Social Media IA
+      };
+
+      setMessages(prev => ({
         ...prev,
-        { role: 'user', content: userMessage },
-        { role: 'assistant', content: aiResponse }
-      ]);
+        [activeTab]: [...prev[activeTab], aiMessage]
+      }));
 
-      toast({
-        title: "Resposta gerada",
-        description: "O assistente IA respondeu sua pergunta.",
-      });
-    } catch (error: any) {
-      console.error('Erro no chat:', error);
-      addMessage("Desculpe, ocorreu um erro ao processar sua mensagem. Verifique se a API do OpenAI está configurada.", 'ai');
-      toast({
-        title: "Erro no chat",
-        description: error.message || "Erro ao conectar com o assistente IA",
-        variant: "destructive"
-      });
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+      toast.error('Erro ao comunicar com a IA. Tente novamente.');
+      
+      // Mensagem de erro da IA
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: 'Desculpe, estou enfrentando dificuldades técnicas. Pode tentar novamente em alguns instantes?',
+        timestamp: new Date(),
+        aiType: activeTab
+      };
+
+      setMessages(prev => ({
+        ...prev,
+        [activeTab]: [...prev[activeTab], errorMessage]
+      }));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleImageGeneration = async () => {
-    if (!imagePrompt.trim() || isLoading) return;
-
-    setIsLoading(true);
-    setGeneratedImage("");
-
-    try {
-      const functionName = imageProvider === 'dalle' ? 'dalle-image-generator' : 'stability-ai-generator';
-      
-      const { data, error } = await supabase.functions.invoke(functionName, {
-        body: {
-          prompt: imagePrompt,
-          size: "1024x1024",
-          style: "vivid",
-          quality: "standard"
-        }
-      });
-
-      if (error) throw error;
-
-      const imageUrl = data.imageUrl || data.imageBase64;
-      setGeneratedImage(imageUrl);
-      
-      addMessage(`Imagem gerada: ${imagePrompt}`, 'ai', 'image', { imageUrl, provider: imageProvider });
-
-      toast({
-        title: "Imagem gerada",
-        description: "Sua imagem foi criada com sucesso!",
-      });
-    } catch (error: any) {
-      console.error('Erro na geração de imagem:', error);
-      toast({
-        title: "Erro na geração",
-        description: error.message || "Erro ao gerar imagem",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
-  const handleAnalytics = async () => {
-    setAnalyticsLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('google-analytics', {
-        body: {
-          startDate: '30daysAgo',
-          endDate: 'today',
-          metrics: ['sessions', 'users', 'pageviews', 'bounceRate'],
-          dimensions: ['date', 'country']
-        }
-      });
-
-      if (error) throw error;
-
-      setAnalyticsData(data.data);
-      addMessage("Relatório do Google Analytics gerado", 'ai', 'analytics', data.data);
-
-      toast({
-        title: "Analytics carregado",
-        description: "Dados do Google Analytics foram obtidos com sucesso.",
-      });
-    } catch (error: any) {
-      console.error('Erro no analytics:', error);
-      toast({
-        title: "Erro no Analytics",
-        description: error.message || "Erro ao obter dados do Google Analytics",
-        variant: "destructive"
-      });
-    } finally {
-      setAnalyticsLoading(false);
-    }
+  const clearHistory = () => {
+    setMessages(prev => ({
+      ...prev,
+      [activeTab]: []
+    }));
+    toast.success(`Histórico do ${activeTab === 'manager' ? 'Gerente Virtual' : 'Social Media'} limpo!`);
   };
 
-  const handleSocialPublish = async () => {
-    if (!socialContent.trim() || publishLoading) return;
+  const exportHistory = () => {
+    const historyData = messages[activeTab];
+    const dataStr = JSON.stringify(historyData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `historico-${activeTab}-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    
+    URL.revokeObjectURL(url);
+    toast.success('Histórico exportado com sucesso!');
+  };
 
-    setPublishLoading(true);
+  const currentMessages = messages[activeTab];
 
-    try {
-      const hashtags = socialHashtags.split(',').map(tag => tag.trim()).filter(tag => tag);
-
-      const { data, error } = await supabase.functions.invoke('social-media-publisher', {
-        body: {
-          platform: socialPlatform,
-          content: socialContent,
-          imageUrl: socialImageUrl || undefined,
-          hashtags
-        }
-      });
-
-      if (error) throw error;
-
-      addMessage(`Publicado no ${socialPlatform}: ${socialContent}`, 'ai', 'social', data.result);
-
-      toast({
-        title: "Publicação realizada",
-        description: `Conteúdo publicado no ${socialPlatform} com sucesso!`,
-      });
-
-      // Limpar campos
-      setSocialContent("");
-      setSocialImageUrl("");
-      setSocialHashtags("");
-    } catch (error: any) {
-      console.error('Erro na publicação:', error);
-      toast({
-        title: "Erro na publicação",
-        description: error.message || "Erro ao publicar nas redes sociais",
-        variant: "destructive"
-      });
-    } finally {
-      setPublishLoading(false);
+  const getPlaceholderText = () => {
+    if (activeTab === 'manager') {
+      return 'Ex: "Como calcular a margem ideal para o meu prato principal?" ou "Preciso de ajuda com gestão de equipe"';
     }
+    return 'Ex: "Crie uma imagem promocional para pizza" ou "Que hashtags usar para posts de sobremesas?"';
+  };
+
+  const getQuickActions = () => {
+    if (activeTab === 'manager') {
+      return [
+        "Analisar meu cardápio atual",
+        "Calcular ponto de equilíbrio",
+        "Dicas para reduzir custos",
+        "Como treinar minha equipe",
+        "Estratégias de precificação"
+      ];
+    }
+    return [
+      "Criar post para nova promoção",
+      "Gerar imagem de prato especial",
+      "Sugerir hashtags populares",
+      "Planejar calendário editorial",
+      "Analisar melhor horário para posts"
+    ];
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bot className="h-6 w-6 text-blue-600" />
-          Assistente IA Unificado
-          <Badge variant="outline" className="ml-auto">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Powered by AI
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="chat" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Chat IA
-            </TabsTrigger>
-            <TabsTrigger value="images" className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
-              Imagens
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="social" className="flex items-center gap-2">
-              <Share2 className="h-4 w-4" />
-              Social Media
-            </TabsTrigger>
-          </TabsList>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Assistentes IA</h2>
+          <p className="text-muted-foreground">
+            Dois assistentes especializados para gestão e marketing do seu restaurante
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={loadRestaurantContext}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Atualizar Contexto
+          </Button>
+          <Button variant="outline" onClick={exportHistory}>
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </Button>
+        </div>
+      </div>
 
-          <TabsContent value="chat" className="space-y-4">
-            <div className="h-96 overflow-y-auto border rounded-lg p-4 bg-gray-50">
-              {messages.filter(m => m.type === 'text').map((message) => (
-                <div key={message.id} className={`mb-4 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
-                  <div className={`inline-block p-3 rounded-lg max-w-[80%] ${
-                    message.sender === 'user' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-white border'
-                  }`}>
-                    <p className="text-sm">{message.content}</p>
-                    <p className="text-xs opacity-70 mt-1">
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'manager' | 'social')}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="manager" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            Gerente Virtual
+          </TabsTrigger>
+          <TabsTrigger value="social" className="flex items-center gap-2">
+            <Megaphone className="h-4 w-4" />
+            Social Media IA
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="manager">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-blue-600" />
+                Gerente Virtual - Assistente de Gestão
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Especialista em administração, finanças, operação e gestão de equipe. 
+                Integrado com todos os dados do seu restaurante.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Chat Area */}
+              <div className="border rounded-lg h-96">
+                <ScrollArea className="h-80 p-4">
+                  {currentMessages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                      <Brain className="h-12 w-12 text-blue-600 mb-4" />
+                      <h3 className="font-medium mb-2">Olá! Sou seu Gerente Virtual</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Estou aqui para ajudar com gestão, finanças, operação e estratégias do seu restaurante.
+                      </p>
+                      <div className="flex flex-wrap gap-2 max-w-md">
+                        {getQuickActions().map((action, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setInputMessage(action)}
+                          >
+                            {action}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {currentMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-lg p-3 ${
+                              message.type === 'user'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-muted'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              {message.type === 'assistant' && (
+                                <Brain className="h-4 w-4 mt-1 text-blue-600" />
+                              )}
+                              {message.type === 'user' && (
+                                <User className="h-4 w-4 mt-1" />
+                              )}
+                              <div className="flex-1">
+                                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                {message.imageUrl && (
+                                  <img
+                                    src={message.imageUrl}
+                                    alt="Imagem gerada pela IA"
+                                    className="mt-2 rounded-lg max-w-full"
+                                  />
+                                )}
+                                <p className="text-xs opacity-70 mt-1">
+                                  {message.timestamp.toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </ScrollArea>
+
+                <Separator />
+
+                {/* Input Area */}
+                <div className="p-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={getPlaceholderText()}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      disabled={isLoading}
+                    />
+                    <Button 
+                      onClick={sendMessage} 
+                      disabled={isLoading || !inputMessage.trim()}
+                    >
+                      {isLoading ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
                 </div>
-              ))}
-              {isLoading && (
-                <div className="text-left mb-4">
-                  <div className="inline-block p-3 rounded-lg bg-white border">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+
+              {/* Stats */}
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  {currentMessages.length} mensagens nesta conversa
+                </span>
+                <Button variant="ghost" size="sm" onClick={clearHistory}>
+                  Limpar histórico
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="social">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Megaphone className="h-5 w-5 text-pink-600" />
+                Social Media IA - Marketing Digital
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Especialista em redes sociais, criação de conteúdo, imagens e campanhas. 
+                Gera posts e visuais personalizados para seu restaurante.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Chat Area */}
+              <div className="border rounded-lg h-96">
+                <ScrollArea className="h-80 p-4">
+                  {currentMessages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center">
+                      <Megaphone className="h-12 w-12 text-pink-600 mb-4" />
+                      <h3 className="font-medium mb-2">Olá! Sou sua Social Media IA</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Estou aqui para criar conteúdo, imagens e estratégias de marketing para suas redes sociais.
+                      </p>
+                      <div className="flex flex-wrap gap-2 max-w-md">
+                        {getQuickActions().map((action, index) => (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setInputMessage(action)}
+                          >
+                            {action}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {currentMessages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-lg p-3 ${
+                              message.type === 'user'
+                                ? 'bg-pink-600 text-white'
+                                : 'bg-muted'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2">
+                              {message.type === 'assistant' && (
+                                <Megaphone className="h-4 w-4 mt-1 text-pink-600" />
+                              )}
+                              {message.type === 'user' && (
+                                <User className="h-4 w-4 mt-1" />
+                              )}
+                              <div className="flex-1">
+                                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                {message.imageUrl && (
+                                  <img
+                                    src={message.imageUrl}
+                                    alt="Imagem gerada pela IA"
+                                    className="mt-2 rounded-lg max-w-full"
+                                  />
+                                )}
+                                <p className="text-xs opacity-70 mt-1">
+                                  {message.timestamp.toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </ScrollArea>
+
+                <Separator />
+
+                {/* Input Area */}
+                <div className="p-4">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={getPlaceholderText()}
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      disabled={isLoading}
+                    />
+                    <Button 
+                      onClick={sendMessage} 
+                      disabled={isLoading || !inputMessage.trim()}
+                    >
+                      {isLoading ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
                 </div>
-              )}
-              <div ref={messagesEndRef} />
+              </div>
+
+              {/* Stats */}
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  {currentMessages.length} mensagens nesta conversa
+                </span>
+                <Button variant="ghost" size="sm" onClick={clearHistory}>
+                  Limpar histórico
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Context Info */}
+      {context && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Contexto do Restaurante Carregado</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <Badge variant="outline">Restaurante</Badge>
+                <p className="mt-1">{context.restaurantData.name || 'Não configurado'}</p>
+              </div>
+              <div>
+                <Badge variant="outline">Itens do Menu</Badge>
+                <p className="mt-1">{context.menuData.length || 0} itens</p>
+              </div>
+              <div>
+                <Badge variant="outline">Registros Financeiros</Badge>
+                <p className="mt-1">{context.financialData.length || 0} registros</p>
+              </div>
+              <div>
+                <Badge variant="outline">Dados do Simulador</Badge>
+                <p className="mt-1">{Object.keys(context.simulatorData).length > 0 ? 'Configurado' : 'Pendente'}</p>
+              </div>
             </div>
-            
-            <div className="flex gap-2">
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Digite sua pergunta sobre gestão do restaurante..."
-                onKeyDown={(e) => e.key === 'Enter' && handleChatMessage()}
-                disabled={isLoading}
-              />
-              <Button onClick={handleChatMessage} disabled={isLoading || !newMessage.trim()}>
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="images" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Provedor de IA</label>
-                <Select value={imageProvider} onValueChange={setImageProvider}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o provedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dalle">DALL-E 3 (OpenAI)</SelectItem>
-                    <SelectItem value="stability">Stability AI</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Descrição da Imagem</label>
-                <Textarea
-                  value={imagePrompt}
-                  onChange={(e) => setImagePrompt(e.target.value)}
-                  placeholder="Descreva a imagem que você quer gerar para seu restaurante..."
-                  className="min-h-20"
-                />
-              </div>
-
-              <Button onClick={handleImageGeneration} disabled={isLoading || !imagePrompt.trim()}>
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ImageIcon className="h-4 w-4 mr-2" />}
-                Gerar Imagem
-              </Button>
-
-              {generatedImage && (
-                <div className="space-y-2">
-                  <img src={generatedImage} alt="Imagem gerada" className="max-w-full rounded-lg border" />
-                  <Button variant="outline" size="sm" onClick={() => setSocialImageUrl(generatedImage)}>
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Usar nas Redes Sociais
-                  </Button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-4">
-            <div className="space-y-4">
-              <Button onClick={handleAnalytics} disabled={analyticsLoading}>
-                {analyticsLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <BarChart3 className="h-4 w-4 mr-2" />}
-                Carregar Dados do Google Analytics
-              </Button>
-
-              {analyticsData && (
-                <div className="border rounded-lg p-4 bg-gray-50">
-                  <h3 className="font-medium mb-2">Resumo dos Últimos 30 Dias</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-600">
-                        {analyticsData.totals?.[0]?.metricValues?.[0]?.value || 'N/A'}
-                      </p>
-                      <p className="text-sm text-gray-600">Sessões</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-green-600">
-                        {analyticsData.totals?.[0]?.metricValues?.[1]?.value || 'N/A'}
-                      </p>
-                      <p className="text-sm text-gray-600">Usuários</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-purple-600">
-                        {analyticsData.totals?.[0]?.metricValues?.[2]?.value || 'N/A'}
-                      </p>
-                      <p className="text-sm text-gray-600">Páginas Vistas</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-orange-600">
-                        {(parseFloat(analyticsData.totals?.[0]?.metricValues?.[3]?.value || '0') * 100).toFixed(1)}%
-                      </p>
-                      <p className="text-sm text-gray-600">Taxa de Rejeição</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="social" className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Plataforma</label>
-                <Select value={socialPlatform} onValueChange={setSocialPlatform}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a plataforma" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="facebook">Facebook</SelectItem>
-                    <SelectItem value="instagram">Instagram</SelectItem>
-                    <SelectItem value="both">Ambos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Conteúdo da Publicação</label>
-                <Textarea
-                  value={socialContent}
-                  onChange={(e) => setSocialContent(e.target.value)}
-                  placeholder="Escreva o conteúdo da sua publicação..."
-                  className="min-h-20"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">URL da Imagem (opcional)</label>
-                <Input
-                  value={socialImageUrl}
-                  onChange={(e) => setSocialImageUrl(e.target.value)}
-                  placeholder="https://exemplo.com/imagem.jpg"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Hashtags (separadas por vírgula)</label>
-                <Input
-                  value={socialHashtags}
-                  onChange={(e) => setSocialHashtags(e.target.value)}
-                  placeholder="#restaurante, #gastronomia, #food"
-                />
-              </div>
-
-              <Button onClick={handleSocialPublish} disabled={publishLoading || !socialContent.trim()}>
-                {publishLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Share2 className="h-4 w-4 mr-2" />}
-                Publicar
-              </Button>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
