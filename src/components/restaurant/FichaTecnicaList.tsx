@@ -23,15 +23,15 @@ import { useAuth } from "@/contexts/AuthContext";
 interface Prato {
   id: string;
   nome_prato: string;
-  categoria: string;
-  rendimento_porcoes: number;
-  custo_total: number;
-  custo_por_porcao: number;
-  preco_sugerido: number;
-  preco_praticado: number;
-  lucro_estimado: number;
-  margem_percentual: number;
-  status_viabilidade: 'prejuizo' | 'margem_baixa' | 'saudavel';
+  categoria: string | null;
+  rendimento_porcoes: number | null;
+  custo_total: number | null;
+  custo_por_porcao: number | null;
+  preco_sugerido: number | null;
+  preco_praticado: number | null;
+  lucro_estimado: number | null;
+  margem_percentual: number | null;
+  status_viabilidade: 'prejuizo' | 'margem_baixa' | 'saudavel' | null;
   created_at: string;
   updated_at: string;
 }
@@ -64,7 +64,22 @@ export function FichaTecnicaList() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPratos(data || []);
+      
+      // Garantir que os dados estão no formato correto
+      const pratosFormatados = (data || []).map(prato => ({
+        ...prato,
+        categoria: prato.categoria || '',
+        rendimento_porcoes: prato.rendimento_porcoes || 0,
+        custo_total: prato.custo_total || 0,
+        custo_por_porcao: prato.custo_por_porcao || 0,
+        preco_sugerido: prato.preco_sugerido || 0,
+        preco_praticado: prato.preco_praticado || 0,
+        lucro_estimado: prato.lucro_estimado || 0,
+        margem_percentual: prato.margem_percentual || 0,
+        status_viabilidade: prato.status_viabilidade as 'prejuizo' | 'margem_baixa' | 'saudavel' | null
+      }));
+      
+      setPratos(pratosFormatados);
     } catch (error) {
       console.error('Erro ao carregar pratos:', error);
       toast.error('Erro ao carregar fichas técnicas');
@@ -80,7 +95,7 @@ export function FichaTecnicaList() {
     if (searchTerm) {
       filtered = filtered.filter(prato => 
         prato.nome_prato.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prato.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
+        (prato.categoria && prato.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -111,7 +126,7 @@ export function FichaTecnicaList() {
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string | null) => {
     switch (status) {
       case 'prejuizo':
         return <XCircle className="h-4 w-4 text-red-500" />;
@@ -124,7 +139,7 @@ export function FichaTecnicaList() {
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: string | null) => {
     switch (status) {
       case 'prejuizo':
         return 'Prejuízo';
@@ -133,11 +148,11 @@ export function FichaTecnicaList() {
       case 'saudavel':
         return 'Saudável';
       default:
-        return status;
+        return 'Não calculado';
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'prejuizo':
         return 'bg-red-100 text-red-800 border-red-200';
@@ -269,22 +284,22 @@ export function FichaTecnicaList() {
                     <div className="grid grid-cols-4 gap-4 text-sm">
                       <div>
                         <span className="text-muted-foreground">Custo/Porção:</span>
-                        <p className="font-medium">R$ {prato.custo_por_porcao?.toFixed(2) || '0,00'}</p>
+                        <p className="font-medium">R$ {(prato.custo_por_porcao || 0).toFixed(2)}</p>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Preço Sugerido:</span>
-                        <p className="font-medium text-blue-600">R$ {prato.preco_sugerido?.toFixed(2) || '0,00'}</p>
+                        <p className="font-medium text-blue-600">R$ {(prato.preco_sugerido || 0).toFixed(2)}</p>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Lucro:</span>
                         <p className={`font-medium ${(prato.lucro_estimado || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          R$ {prato.lucro_estimado?.toFixed(2) || '0,00'}
+                          R$ {(prato.lucro_estimado || 0).toFixed(2)}
                         </p>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Margem:</span>
                         <p className={`font-medium ${(prato.margem_percentual || 0) >= 20 ? 'text-green-600' : (prato.margem_percentual || 0) >= 0 ? 'text-yellow-600' : 'text-red-600'}`}>
-                          {prato.margem_percentual?.toFixed(1) || '0,0'}%
+                          {(prato.margem_percentual || 0).toFixed(1)}%
                         </p>
                       </div>
                     </div>

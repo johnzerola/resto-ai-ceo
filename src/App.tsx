@@ -14,7 +14,7 @@ import { DRE } from "./pages/DRE";
 import { CMV } from "./pages/CMV";
 import { Metas } from "./pages/Metas";
 import Estoque from "./pages/Estoque";
-import { Cardapio } from "./pages/Cardapio";
+import Cardapio from "./pages/Cardapio";
 import { AIAssistantPage } from "./pages/AIAssistantPage";
 import { Assinatura } from "./pages/Assinatura";
 import Configuracoes from "./pages/Configuracoes";
