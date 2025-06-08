@@ -103,6 +103,53 @@ export type Database = {
           },
         ]
       }
+      configuracoes_precificacao: {
+        Row: {
+          created_at: string | null
+          despesa_fixa_mensal: number | null
+          despesa_variavel_percentual: number | null
+          id: string
+          imposto_percentual: number | null
+          margem_seguranca_padrao: number | null
+          markup_padrao: number | null
+          restaurant_id: string | null
+          total_pratos_vendidos_mensal: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          despesa_fixa_mensal?: number | null
+          despesa_variavel_percentual?: number | null
+          id?: string
+          imposto_percentual?: number | null
+          margem_seguranca_padrao?: number | null
+          markup_padrao?: number | null
+          restaurant_id?: string | null
+          total_pratos_vendidos_mensal?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          despesa_fixa_mensal?: number | null
+          despesa_variavel_percentual?: number | null
+          id?: string
+          imposto_percentual?: number | null
+          margem_seguranca_padrao?: number | null
+          markup_padrao?: number | null
+          restaurant_id?: string | null
+          total_pratos_vendidos_mensal?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_precificacao_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           category: string | null
@@ -155,6 +202,139 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "goals_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historico_fichas: {
+        Row: {
+          created_at: string | null
+          dados_json: Json | null
+          data_geracao: string | null
+          id: string
+          pdf_url: string | null
+          prato_id: string | null
+          versao: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          dados_json?: Json | null
+          data_geracao?: string | null
+          id?: string
+          pdf_url?: string | null
+          prato_id?: string | null
+          versao?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          dados_json?: Json | null
+          data_geracao?: string | null
+          id?: string
+          pdf_url?: string | null
+          prato_id?: string | null
+          versao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_fichas_prato_id_fkey"
+            columns: ["prato_id"]
+            isOneToOne: false
+            referencedRelation: "pratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ingredientes_por_prato: {
+        Row: {
+          created_at: string | null
+          custo_total: number | null
+          fator_correcao: number | null
+          id: string
+          insumo_id: string | null
+          prato_id: string | null
+          quantidade_bruta: number
+          quantidade_liquida: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          custo_total?: number | null
+          fator_correcao?: number | null
+          id?: string
+          insumo_id?: string | null
+          prato_id?: string | null
+          quantidade_bruta: number
+          quantidade_liquida?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          custo_total?: number | null
+          fator_correcao?: number | null
+          id?: string
+          insumo_id?: string | null
+          prato_id?: string | null
+          quantidade_bruta?: number
+          quantidade_liquida?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ingredientes_por_prato_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ingredientes_por_prato_prato_id_fkey"
+            columns: ["prato_id"]
+            isOneToOne: false
+            referencedRelation: "pratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insumos: {
+        Row: {
+          codigo: number | null
+          created_at: string | null
+          id: string
+          nome: string
+          preco_pago: number
+          preco_unitario: number | null
+          restaurant_id: string | null
+          unidade_medida: string
+          updated_at: string | null
+          volume_embalagem: number
+        }
+        Insert: {
+          codigo?: number | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          preco_pago: number
+          preco_unitario?: number | null
+          restaurant_id?: string | null
+          unidade_medida: string
+          updated_at?: string | null
+          volume_embalagem: number
+        }
+        Update: {
+          codigo?: number | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          preco_pago?: number
+          preco_unitario?: number | null
+          restaurant_id?: string | null
+          unidade_medida?: string
+          updated_at?: string | null
+          volume_embalagem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insumos_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -258,6 +438,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "payments_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pratos: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          custo_por_porcao: number | null
+          custo_total: number | null
+          id: string
+          lucro_estimado: number | null
+          margem_percentual: number | null
+          margem_seguranca: number | null
+          nome_prato: string
+          observacoes: string | null
+          preco_praticado: number | null
+          preco_sugerido: number | null
+          rendimento_porcoes: number | null
+          restaurant_id: string | null
+          status_viabilidade: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string | null
+          custo_por_porcao?: number | null
+          custo_total?: number | null
+          id?: string
+          lucro_estimado?: number | null
+          margem_percentual?: number | null
+          margem_seguranca?: number | null
+          nome_prato: string
+          observacoes?: string | null
+          preco_praticado?: number | null
+          preco_sugerido?: number | null
+          rendimento_porcoes?: number | null
+          restaurant_id?: string | null
+          status_viabilidade?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string | null
+          custo_por_porcao?: number | null
+          custo_total?: number | null
+          id?: string
+          lucro_estimado?: number | null
+          margem_percentual?: number | null
+          margem_seguranca?: number | null
+          nome_prato?: string
+          observacoes?: string | null
+          preco_praticado?: number | null
+          preco_sugerido?: number | null
+          rendimento_porcoes?: number | null
+          restaurant_id?: string | null
+          status_viabilidade?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pratos_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -545,7 +790,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calcular_custos_prato: {
+        Args: { prato_uuid: string }
+        Returns: {
+          custo_total: number
+          custo_por_porcao: number
+          preco_sugerido: number
+          lucro_estimado: number
+          margem_percentual: number
+          status_viabilidade: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
