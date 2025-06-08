@@ -288,17 +288,48 @@ export function FichaTecnicaForm() {
 
       if (ingredientesError) throw ingredientesError;
 
-      // Salvar no histórico
+      // Salvar no histórico - convertendo para JSON compatível
+      const dadosHistorico = {
+        prato: {
+          nome_prato: prato.nome_prato,
+          categoria: prato.categoria,
+          rendimento_porcoes: prato.rendimento_porcoes,
+          observacoes: prato.observacoes,
+          margem_seguranca: prato.margem_seguranca
+        },
+        ingredientes: ingredientes.map(ing => ({
+          insumo_id: ing.insumo_id,
+          nome_insumo: ing.nome_insumo,
+          quantidade_bruta: ing.quantidade_bruta,
+          quantidade_liquida: ing.quantidade_liquida,
+          fator_correcao: ing.fator_correcao,
+          preco_unitario: ing.preco_unitario,
+          custo_total: ing.custo_total,
+          unidade_medida: ing.unidade_medida
+        })),
+        calculos: {
+          custo_ingredientes: calculos.custo_ingredientes,
+          custo_total: calculos.custo_total,
+          custo_por_porcao: calculos.custo_por_porcao,
+          preco_sugerido: calculos.preco_sugerido,
+          lucro_estimado: calculos.lucro_estimado,
+          margem_percentual: calculos.margem_percentual,
+          status_viabilidade: calculos.status_viabilidade
+        },
+        configuracoes: {
+          markup_padrao: configuracoes.markup_padrao,
+          despesa_fixa_mensal: configuracoes.despesa_fixa_mensal,
+          despesa_variavel_percentual: configuracoes.despesa_variavel_percentual,
+          imposto_percentual: configuracoes.imposto_percentual,
+          total_pratos_vendidos_mensal: configuracoes.total_pratos_vendidos_mensal
+        }
+      };
+
       const { error: historicoError } = await supabase
         .from('historico_fichas')
         .insert({
           prato_id: pratoData.id,
-          dados_json: {
-            prato,
-            ingredientes,
-            calculos,
-            configuracoes
-          }
+          dados_json: dadosHistorico
         });
 
       if (historicoError) throw historicoError;
