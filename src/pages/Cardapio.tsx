@@ -14,7 +14,10 @@ import {
   List,
   Calculator,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  Lightbulb,
+  Target,
+  DollarSign
 } from "lucide-react";
 
 const Cardapio = () => {
@@ -28,19 +31,19 @@ const Cardapio = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Ficha Técnica Inteligente</h1>
             <p className="text-muted-foreground">
-              Sistema completo de precificação automática e gestão de custos
+              Sistema completo de precificação automática e gestão de custos baseado na sua realidade
             </p>
           </div>
         </div>
 
-        {/* Alerta Informativo */}
+        {/* Alerta Informativo Principal */}
         <Alert className="border-blue-200 bg-blue-50">
           <Calculator className="h-4 w-4" />
-          <AlertTitle className="text-blue-800">Ficha Técnica Automatizada</AlertTitle>
+          <AlertTitle className="text-blue-800">Sistema de Precificação Profissional</AlertTitle>
           <AlertDescription className="text-blue-700">
-            O sistema calcula automaticamente o <strong>CMV</strong>, aplica margem de segurança, 
-            calcula o <strong>preço sugerido</strong> e determina a <strong>viabilidade</strong> do prato. 
-            Configure seus insumos e comece a criar fichas técnicas profissionais agora mesmo!
+            Nossa IA calcula automaticamente o <strong>CMV</strong>, aplica margem de segurança personalizada, 
+            calcula o <strong>preço sugerido</strong> e determina a <strong>viabilidade</strong> do prato baseado 
+            nas configurações do SEU restaurante. Cada negócio tem sua realidade!
           </AlertDescription>
         </Alert>
 
@@ -61,15 +64,40 @@ const Cardapio = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="nova-ficha" className="space-y-4">
+          <TabsContent value="nova-ficha" className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-semibold">Criar Nova Ficha Técnica</h2>
                 <p className="text-sm text-muted-foreground">
-                  Preencha os dados do prato e adicione os ingredientes para calcular automaticamente o custo e preço sugerido
+                  Preencha os dados do prato conforme a realidade do seu restaurante
                 </p>
               </div>
             </div>
+
+            {/* Guia Rápido */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Alert className="border-green-200 bg-green-50">
+                <Target className="h-4 w-4" />
+                <AlertDescription className="text-green-700">
+                  <strong>Passo 1:</strong> Preencha os dados básicos do prato (nome, categoria, rendimento)
+                </AlertDescription>
+              </Alert>
+              
+              <Alert className="border-orange-200 bg-orange-50">
+                <Package className="h-4 w-4" />
+                <AlertDescription className="text-orange-700">
+                  <strong>Passo 2:</strong> Adicione ingredientes e suas quantidades exatas
+                </AlertDescription>
+              </Alert>
+              
+              <Alert className="border-purple-200 bg-purple-50">
+                <DollarSign className="h-4 w-4" />
+                <AlertDescription className="text-purple-700">
+                  <strong>Passo 3:</strong> Analise os cálculos automáticos e viabilidade
+                </AlertDescription>
+              </Alert>
+            </div>
+
             <FichaTecnicaForm />
           </TabsContent>
 
@@ -90,15 +118,26 @@ const Cardapio = () => {
               <div>
                 <h2 className="text-xl font-semibold">Gestão de Insumos</h2>
                 <p className="text-sm text-muted-foreground">
-                  Cadastre e gerencie todos os ingredientes e insumos utilizados nas suas receitas
+                  Cadastre os insumos com os preços que você realmente paga - base para cálculos precisos
                 </p>
               </div>
             </div>
+
+            {/* Dica sobre Insumos */}
+            <Alert className="border-yellow-200 bg-yellow-50">
+              <Lightbulb className="h-4 w-4" />
+              <AlertTitle className="text-yellow-800">Dica Importante</AlertTitle>
+              <AlertDescription className="text-yellow-700">
+                Mantenha os preços dos insumos sempre atualizados conforme suas compras reais. 
+                Isso garante cálculos precisos de custos e margens. Cada fornecedor tem preços diferentes!
+              </AlertDescription>
+            </Alert>
+
             <InsumosManager />
           </TabsContent>
         </Tabs>
 
-        {/* Cards de Ajuda */}
+        {/* Cards de Orientação sobre Status */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
           <div className="p-4 border rounded-lg bg-green-50 border-green-200">
             <div className="flex items-center gap-2 mb-2">
@@ -107,6 +146,7 @@ const Cardapio = () => {
             </div>
             <p className="text-sm text-green-700">
               Margem de lucro ≥ 20%. Prato com boa rentabilidade e viabilidade comercial.
+              Continue assim!
             </p>
           </div>
 
@@ -116,7 +156,8 @@ const Cardapio = () => {
               <h3 className="font-medium text-yellow-800">Margem Baixa</h3>
             </div>
             <p className="text-sm text-yellow-700">
-              Margem entre 0% e 20%. Considere otimizar ingredientes ou ajustar preço.
+              Margem entre 0% e 20%. Considere otimizar ingredientes, revisar fornecedores 
+              ou ajustar preço de venda.
             </p>
           </div>
 
@@ -126,10 +167,22 @@ const Cardapio = () => {
               <h3 className="font-medium text-red-800">Prejuízo</h3>
             </div>
             <p className="text-sm text-red-700">
-              Margem negativa. Revisar receita urgentemente ou descartar do cardápio.
+              Margem negativa. Revisar receita urgentemente, trocar ingredientes por mais 
+              baratos ou descartar do cardápio.
             </p>
           </div>
         </div>
+
+        {/* Dicas Finais */}
+        <Alert className="border-indigo-200 bg-indigo-50">
+          <Calculator className="h-4 w-4" />
+          <AlertTitle className="text-indigo-800">Sistema Personalizado</AlertTitle>
+          <AlertDescription className="text-indigo-700">
+            Todos os cálculos são baseados nas <strong>configurações do seu restaurante</strong> na aba /configurações. 
+            Markup, despesas fixas, impostos - tudo conforme sua realidade específica. 
+            Não trabalhamos com valores fixos!
+          </AlertDescription>
+        </Alert>
       </div>
     </ModernLayout>
   );
