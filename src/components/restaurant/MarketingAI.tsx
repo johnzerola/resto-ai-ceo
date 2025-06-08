@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ import {
   Instagram,
   Facebook,
   Calendar,
-  Hashtag
+  Hash
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -292,7 +291,7 @@ export function MarketingAI() {
                       size="sm"
                       onClick={() => copyToClipboard(generatedContent.hashtags.map(h => `#${h}`).join(' '))}
                     >
-                      <Hashtag className="h-4 w-4 mr-2" />
+                      <Hash className="h-4 w-4 mr-2" />
                       Copiar Hashtags
                     </Button>
                   </div>
