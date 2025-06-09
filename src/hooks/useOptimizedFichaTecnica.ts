@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebounce } from './useDebounce';
 import { useMemoizedCalculations } from './useMemoizedCalculations';
-import { ValidationService, RateLimiter } from '@/services/ValidationService';
+import ValidationService, { RateLimiter } from '@/services/ValidationService';
 import { toast } from 'sonner';
 
 interface Ingrediente {
