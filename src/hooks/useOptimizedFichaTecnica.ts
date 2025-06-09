@@ -1,10 +1,12 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDebounce } from './useDebounce';
 import { useMemoizedCalculations } from './useMemoizedCalculations';
-import ValidationService, { RateLimiter } from '@/services/ValidationService';
+import { useSecureValidation } from './useSecureValidation';
+import { useDataSync } from './useDataSync';
+import { useOptimizedQuery } from './useQueryCache';
 import { toast } from 'sonner';
 
 interface Ingrediente {
@@ -26,6 +28,36 @@ interface PratoForm {
   margem_seguranca: number;
 }
 
+const RATE_LIMITS = {
+  UPDATE_INGREDIENT: { max: 10, window: 1000 },
+  SAVE_FICHA: { max: 5, window: 60000 }
+};
+
+class RateLimiter {
+  private static actions: Map<string, number[]> = new Map();
+
+  static canPerformAction(action: string, maxRequests: number, windowMs: number): boolean {
+    const now = Date.now();
+    const key = action;
+    
+    if (!this.actions.has(key)) {
+      this.actions.set(key, [now]);
+      return true;
+    }
+
+    const timestamps = this.actions.get(key)!;
+    const validTimestamps = timestamps.filter(ts => now - ts < windowMs);
+    
+    if (validTimestamps.length < maxRequests) {
+      validTimestamps.push(now);
+      this.actions.set(key, validTimestamps);
+      return true;
+    }
+    
+    return false;
+  }
+}
+
 export function useOptimizedFichaTecnica() {
   const { currentRestaurant } = useAuth();
   const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
@@ -36,68 +68,98 @@ export function useOptimizedFichaTecnica() {
     observacoes: '',
     margem_seguranca: 10
   });
-  const [configuracoes] = useState({
-    markup_padrao: 250,
-    despesa_fixa_mensal: 0,
-    total_pratos_vendidos_mensal: 1000
-  });
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Debounce para cálculos automáticos
+  const { validateField, sanitizeInput, errors } = useSecureValidation();
+
+  // Configurações com cache otimizado
+  const { data: configuracoes } = useOptimizedQuery(
+    ['configuracoes', currentRestaurant?.id],
+    async () => {
+      if (!currentRestaurant?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('configuracoes_precificacao')
+        .select('*')
+        .eq('restaurant_id', currentRestaurant.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    {
+      staleTime: 1000 * 60 * 10, // 10 minutos
+      enabled: !!currentRestaurant?.id
+    }
+  );
+
+  // Debounce otimizado com diferentes tempos
   const debouncedIngredientes = useDebounce(ingredientes, 300);
-  const debouncedRendimento = useDebounce(prato.rendimento_porcoes, 300);
-  const debouncedMargem = useDebounce(prato.margem_seguranca, 300);
+  const debouncedRendimento = useDebounce(prato.rendimento_porcoes, 500);
+  const debouncedMargem = useDebounce(prato.margem_seguranca, 500);
 
-  // Cálculos memoizados
+  // Cálculos memoizados com configurações dinâmicas
+  const configCalculo = useMemo(() => ({
+    markup_padrao: configuracoes?.markup_padrao || 250,
+    despesa_fixa_mensal: configuracoes?.despesa_fixa_mensal || 0,
+    total_pratos_vendidos_mensal: configuracoes?.total_pratos_vendidos_mensal || 1000
+  }), [configuracoes]);
+
   const calculos = useMemoizedCalculations(
     debouncedIngredientes,
     debouncedRendimento,
     debouncedMargem,
-    configuracoes
+    configCalculo
   );
 
-  // Atualizar ingrediente com validação
-  const atualizarIngrediente = useCallback((index: number, campo: keyof Ingrediente, valor: any) => {
-    try {
-      // Rate limiting para evitar spam
-      if (!RateLimiter.canPerformAction('update_ingredient', 10, 1000)) {
-        toast.error('Muitas atualizações. Aguarde um momento.');
-        return;
-      }
-
-      const novosIngredientes = [...ingredientes];
-      const ingrediente = novosIngredientes[index];
-      
-      // Validação de entrada
-      if (campo === 'quantidade_bruta' || campo === 'fator_correcao') {
-        if (!ValidationService.validateFinancialValue(Number(valor))) {
-          toast.error('Valor inválido');
-          return;
-        }
-      }
-
-      // Atualizar valor
-      novosIngredientes[index] = { ...ingrediente, [campo]: valor };
-
-      // Recalcular campos dependentes
-      if (campo === 'quantidade_bruta' || campo === 'fator_correcao') {
-        const ing = novosIngredientes[index];
-        ing.quantidade_liquida = ing.quantidade_bruta * ing.fator_correcao;
-        ing.custo_total = ing.quantidade_liquida * ing.preco_unitario;
-      }
-
-      if (campo === 'quantidade_liquida') {
-        novosIngredientes[index].custo_total = Number(valor) * ingrediente.preco_unitario;
-      }
-
-      setIngredientes(novosIngredientes);
-    } catch (error) {
-      console.error('Erro ao atualizar ingrediente:', error);
-      toast.error('Erro ao atualizar ingrediente');
+  // Função otimizada para atualizar ingredientes
+  const atualizarIngrediente = useCallback((
+    index: number, 
+    campo: keyof Ingrediente, 
+    valor: any
+  ) => {
+    // Rate limiting
+    if (!RateLimiter.canPerformAction(
+      'UPDATE_INGREDIENT', 
+      RATE_LIMITS.UPDATE_INGREDIENT.max,
+      RATE_LIMITS.UPDATE_INGREDIENT.window
+    )) {
+      toast.error('Muitas atualizações. Aguarde um momento.');
+      return;
     }
-  }, [ingredientes]);
 
-  // Salvar com validação completa
+    // Validação antes da atualização
+    if (campo === 'nome_insumo' && typeof valor === 'string') {
+      if (!validateField(campo, valor)) return;
+      valor = sanitizeInput(valor);
+    }
+
+    if (['quantidade_bruta', 'fator_correcao', 'preco_unitario'].includes(campo)) {
+      if (!validateField(campo, Number(valor))) return;
+    }
+
+    setIngredientes(prev => {
+      const novosIngredientes = [...prev];
+      const ingrediente = { ...novosIngredientes[index] };
+      
+      // Atualizar valor
+      (ingrediente as any)[campo] = valor;
+
+      // Recalcular campos dependentes de forma otimizada
+      if (campo === 'quantidade_bruta' || campo === 'fator_correcao') {
+        ingrediente.quantidade_liquida = ingrediente.quantidade_bruta * ingrediente.fator_correcao;
+        ingrediente.custo_total = ingrediente.quantidade_liquida * ingrediente.preco_unitario;
+      } else if (campo === 'preco_unitario') {
+        ingrediente.custo_total = ingrediente.quantidade_liquida * Number(valor);
+      } else if (campo === 'quantidade_liquida') {
+        ingrediente.custo_total = Number(valor) * ingrediente.preco_unitario;
+      }
+
+      novosIngredientes[index] = ingrediente;
+      return novosIngredientes;
+    });
+  }, [validateField, sanitizeInput]);
+
+  // Salvar com sincronização otimizada
   const salvarFichaTecnica = useCallback(async () => {
     if (!currentRestaurant?.id) {
       toast.error('Restaurante não selecionado');
@@ -105,59 +167,37 @@ export function useOptimizedFichaTecnica() {
     }
 
     // Rate limiting para salvamento
-    if (!RateLimiter.canPerformAction('save_ficha', 5, 60000)) {
+    if (!RateLimiter.canPerformAction(
+      'SAVE_FICHA',
+      RATE_LIMITS.SAVE_FICHA.max,
+      RATE_LIMITS.SAVE_FICHA.window
+    )) {
       toast.error('Limite de salvamentos excedido. Aguarde 1 minuto.');
       return false;
     }
 
-    // Validação do prato
-    try {
-      ValidationService.PratoSchema.parse({
-        ...prato,
-        restaurant_id: currentRestaurant.id
-      });
-    } catch (error) {
-      toast.error('Dados do prato inválidos');
+    // Validação completa antes de salvar
+    const pratoValidado = {
+      ...prato,
+      nome_prato: sanitizeInput(prato.nome_prato),
+      categoria: sanitizeInput(prato.categoria || ''),
+      observacoes: sanitizeInput(prato.observacoes || '')
+    };
+
+    if (!validateField('nome_prato', pratoValidado.nome_prato) ||
+        !validateField('rendimento_porcoes', prato.rendimento_porcoes) ||
+        ingredientes.length === 0) {
+      toast.error('Dados inválidos ou incompletos');
       return false;
     }
 
-    // Validação dos ingredientes
-    if (ingredientes.length === 0) {
-      toast.error('Adicione pelo menos um ingrediente');
-      return false;
-    }
-
-    for (const ing of ingredientes) {
-      try {
-        ValidationService.IngredienteSchema.parse({
-          quantidade_bruta: ing.quantidade_bruta,
-          fator_correcao: ing.fator_correcao,
-          insumo_id: ing.insumo_id,
-          prato_id: 'temp' // Será substituído
-        });
-      } catch (error) {
-        toast.error('Dados de ingrediente inválidos');
-        return false;
-      }
-    }
-
-    setIsLoading(true);
-
     try {
-      // Sanitizar dados de entrada
-      const pratoLimpo = {
-        ...prato,
-        nome_prato: ValidationService.sanitizeInput(prato.nome_prato),
-        categoria: ValidationService.sanitizeInput(prato.categoria || ''),
-        observacoes: ValidationService.sanitizeInput(prato.observacoes || ''),
-        restaurant_id: currentRestaurant.id
-      };
-
-      // Salvar usando transaction para garantir consistência
+      // Usar transaction para garantir consistência
       const { data: pratoData, error: pratoError } = await supabase
         .from('pratos')
         .insert({
-          ...pratoLimpo,
+          ...pratoValidado,
+          restaurant_id: currentRestaurant.id,
           custo_total: calculos.custo_total,
           custo_por_porcao: calculos.custo_por_porcao,
           preco_sugerido: calculos.preco_sugerido,
@@ -170,7 +210,7 @@ export function useOptimizedFichaTecnica() {
 
       if (pratoError) throw pratoError;
 
-      // Salvar ingredientes
+      // Salvar ingredientes em batch
       const ingredientesData = ingredientes.map(ing => ({
         prato_id: pratoData.id,
         insumo_id: ing.insumo_id,
@@ -188,7 +228,7 @@ export function useOptimizedFichaTecnica() {
 
       toast.success('Ficha técnica salva com sucesso!');
       
-      // Limpar formulário
+      // Reset otimizado
       setPrato({
         nome_prato: '',
         categoria: '',
@@ -198,15 +238,18 @@ export function useOptimizedFichaTecnica() {
       });
       setIngredientes([]);
 
+      // Invalidar cache
+      window.dispatchEvent(new CustomEvent('dataSync', {
+        detail: { type: 'ficha_salva', data: pratoData }
+      }));
+
       return true;
     } catch (error) {
       console.error('Erro ao salvar:', error);
       toast.error('Erro ao salvar ficha técnica');
       return false;
-    } finally {
-      setIsLoading(false);
     }
-  }, [currentRestaurant, prato, ingredientes, calculos]);
+  }, [currentRestaurant, prato, ingredientes, calculos, validateField, sanitizeInput]);
 
   return {
     ingredientes,
@@ -214,7 +257,8 @@ export function useOptimizedFichaTecnica() {
     prato,
     setPrato,
     calculos,
-    isLoading,
+    configuracoes,
+    errors,
     atualizarIngrediente,
     salvarFichaTecnica
   };
