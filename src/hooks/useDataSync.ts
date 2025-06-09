@@ -37,7 +37,7 @@ export function useDataSync<T>(
     
     try {
       // Verificar cache primeiro
-      const cachedData = getCachedData(queryKey);
+      const cachedData = getCachedData(queryKey) as T | undefined;
       if (cachedData) {
         setData(cachedData);
       }

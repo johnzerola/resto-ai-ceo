@@ -37,8 +37,14 @@ export function withLazyLoading<P extends object>(
   };
 }
 
-// Lazy components para módulos principais
+// Lazy components para módulos principais - usando named exports
 export const LazyFichaTecnica = lazy(() => import('@/pages/FichaTecnica'));
-export const LazyRecipeForm = lazy(() => import('@/components/restaurant/RecipeForm'));
-export const LazyRecipeList = lazy(() => import('@/components/restaurant/RecipeList'));
-export const LazyFichaTecnicaList = lazy(() => import('@/components/restaurant/FichaTecnicaList'));
+export const LazyRecipeForm = lazy(() => 
+  import('@/components/restaurant/RecipeForm').then(module => ({ default: module.RecipeForm }))
+);
+export const LazyRecipeList = lazy(() => 
+  import('@/components/restaurant/RecipeList').then(module => ({ default: module.RecipeList }))
+);
+export const LazyFichaTecnicaList = lazy(() => 
+  import('@/components/restaurant/FichaTecnicaList').then(module => ({ default: module.FichaTecnicaList }))
+);

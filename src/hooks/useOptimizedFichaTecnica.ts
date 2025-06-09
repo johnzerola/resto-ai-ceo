@@ -87,8 +87,7 @@ export function useOptimizedFichaTecnica() {
       return data;
     },
     {
-      staleTime: 1000 * 60 * 10, // 10 minutos
-      enabled: !!currentRestaurant?.id
+      staleTime: 1000 * 60 * 10 // 10 minutos
     }
   );
 
