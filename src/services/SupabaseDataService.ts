@@ -1,11 +1,21 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface RestaurantFinancialData {
   date: string;
-  revenue: number;
-  expenses: number;
-  profit: number;
+  amount: number;
+  type: string;
+  category: string;
+  description?: string;
+  payment_method?: string;
+  status?: string;
+  // Campos calculados para compatibilidade
+  revenue?: number;
+  expenses?: number;
+  profit?: number;
+  daily_sales?: number;
+  average_ticket?: number;
 }
 
 export interface InventoryItem {
@@ -31,7 +41,7 @@ export interface Goal {
 export interface PricingModel {
   id?: string;
   restaurant_id: string;
-  channel: 'salon' | 'delivery' | 'buffet' | 'rodizio' | 'ifood';
+  channel: string; // Alterado para string genérico
   markup_percentage: number;
   delivery_fee?: number;
   platform_commission?: number;
@@ -55,7 +65,15 @@ export class SupabaseDataService {
         return [];
       }
 
-      return data || [];
+      // Transformar dados para adicionar campos calculados
+      return (data || []).map(item => ({
+        ...item,
+        revenue: item.type === 'income' ? item.amount : 0,
+        expenses: item.type === 'expense' ? item.amount : 0,
+        profit: item.type === 'income' ? item.amount : -item.amount,
+        daily_sales: item.type === 'income' ? item.amount : 0,
+        average_ticket: item.type === 'income' ? item.amount : 0
+      }));
     } catch (error) {
       console.error('Erro ao buscar dados financeiros:', error);
       toast.error('Erro ao carregar dados financeiros');
@@ -176,9 +194,29 @@ export class SupabaseDataService {
     }
   }
 
+  // Adicionar método syncModuleData que estava sendo chamado
+  static async syncModuleData(restaurantId: string): Promise<void> {
+    try {
+      console.log('Sincronizando dados dos módulos para restaurante:', restaurantId);
+      
+      // Sincronizar dados de diferentes módulos
+      await Promise.all([
+        this.getRestaurantFinancialData(restaurantId),
+        this.getInventoryData(restaurantId),
+        this.getRestaurantGoals(restaurantId),
+        this.getPricingModels(restaurantId)
+      ]);
+
+      console.log('Sincronização de módulos concluída');
+    } catch (error) {
+      console.error('Erro ao sincronizar dados dos módulos:', error);
+      toast.error('Erro ao sincronizar dados');
+    }
+  }
+
   static calculateChannelPricing(
     baseCost: number, 
-    channel: PricingModel['channel'], 
+    channel: string, 
     model?: PricingModel
   ): {
     basePrice: number;
