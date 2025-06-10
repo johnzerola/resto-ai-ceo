@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { addSystemAlert } from "./ModuleIntegrationService";
 
@@ -114,7 +113,7 @@ export const registerUser = (userData: RegistrationData): User | null => {
     saveUsers(users);
 
     addSystemAlert({
-      type: "success", // Alterado de "info" para "success" para corresponder ao tipo esperado
+      type: "success",
       title: "Novo usuário criado",
       description: `${newUser.name} foi adicionado como ${newUser.role}`,
       date: new Date().toLocaleString()
