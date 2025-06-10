@@ -3,6 +3,7 @@ import { dataService } from './DataService';
 import { financialValueSchema } from '@/utils/validation';
 
 export interface RestaurantFinancialData {
+  id?: string;
   date: string;
   amount: number;
   type: string;
@@ -10,6 +11,8 @@ export interface RestaurantFinancialData {
   description?: string;
   payment_method?: string;
   status?: string;
+  restaurant_id?: string;
+  created_at?: string;
   // Campos calculados para compatibilidade
   revenue?: number;
   expenses?: number;
@@ -102,5 +105,27 @@ export class FinancialDataService {
       netProfit,
       averageDailyRevenue
     };
+  }
+
+  // Backward compatibility functions for existing components
+  static getFinancialData(): any {
+    // Return mock data structure for compatibility
+    return {
+      cashFlow: [],
+      totalRevenue: 0,
+      totalExpenses: 0,
+      netProfit: 0,
+      cmvCategories: []
+    };
+  }
+
+  static updateFinancialData(data: any): void {
+    // Dispatch event for backward compatibility
+    window.dispatchEvent(new CustomEvent('financialDataUpdated', { detail: data }));
+  }
+
+  static dispatchFinancialDataEvent(data: any): void {
+    // Dispatch event for module integration
+    window.dispatchEvent(new CustomEvent('financialDataUpdated', { detail: data }));
   }
 }

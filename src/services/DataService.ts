@@ -69,7 +69,8 @@ export class DataService {
     }
 
     try {
-      let query = supabase.from(table).select(select);
+      // Use dynamic table access with type assertion
+      let query = (supabase as any).from(table).select(select);
       
       // Apply filters
       Object.entries(filters).forEach(([key, value]) => {
@@ -107,7 +108,7 @@ export class DataService {
 
   async insert<T>(table: string, data: Partial<T>): Promise<T | null> {
     try {
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from(table)
         .insert([data])
         .select()
@@ -132,7 +133,7 @@ export class DataService {
     data: Partial<T>
   ): Promise<T | null> {
     try {
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from(table)
         .update(data)
         .eq('id', id)
@@ -154,7 +155,7 @@ export class DataService {
 
   async delete(table: string, id: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from(table)
         .delete()
         .eq('id', id);

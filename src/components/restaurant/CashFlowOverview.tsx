@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import { updateFinancialData } from "@/services/FinancialDataService";
+import { FinancialDataService } from "@/services/FinancialDataService";
 
 // Interface for cash flow entry
 export interface CashFlowEntry {
@@ -171,7 +170,7 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
       calculateSummary(updatedCashFlow);
       
       // Atualizar dados financeiros após exclusão de transação
-      updateFinancialData(updatedCashFlow);
+      FinancialDataService.updateFinancialData(updatedCashFlow);
       
       // Disparar evento para atualização do dashboard
       window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedCashFlow }));

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileDown, PieChart } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { getFinancialData } from "@/services/FinancialDataService";
+import { FinancialDataService } from "@/services/FinancialDataService";
 
 // Interface para dados de CMV
 interface CMVCategory {
@@ -39,8 +39,8 @@ export function CMVAnalysis() {
   useEffect(() => {
     // Carregar dados do CMV
     const loadCMVData = () => {
-      // Obter dados financeiros atualizados
-      const financialData = getFinancialData();
+      // Obter dados financeiros atualizados usando nova estrutura
+      const financialData = FinancialDataService.getFinancialData();
       
       // Gerar dados de CMV com base nos dados financeiros
       const data = generateCMVData(financialData);

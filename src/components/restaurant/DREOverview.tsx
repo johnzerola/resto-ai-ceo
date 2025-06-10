@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileDown, Calendar } from "lucide-react";
-import { getFinancialData } from "@/services/FinancialDataService";
+import { FinancialDataService } from "@/services/FinancialDataService";
 
 // Interface para dados do DRE
 interface DREData {
@@ -56,8 +56,8 @@ export function DREOverview() {
   // Carregar dados financeiros e atualizar o DRE quando houver alterações
   useEffect(() => {
     const loadDREData = () => {
-      // Obter dados financeiros atualizados
-      const financialData = getFinancialData();
+      // Obter dados financeiros atualizados usando nova estrutura
+      const financialData = FinancialDataService.getFinancialData();
       
       // Verificar se há dados reais no sistema
       const cashFlowData = localStorage.getItem("cashFlow");
