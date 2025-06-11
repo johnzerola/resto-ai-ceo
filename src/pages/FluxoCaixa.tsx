@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { CashFlowOverview } from "@/components/restaurant/CashFlowOverview";
@@ -122,7 +123,7 @@ const FluxoCaixa = () => {
       yPosition += 8;
       
       pdf.setTextColor(balance >= 0 ? 0 : 255, balance >= 0 ? 0 : 0, 0); // Verde se positivo, vermelho se negativo
-      pdf.text(`Saldo: R$ ${balance.toLocaleString('pt-BR', { minimumFraction Digits: 2 })}`, 20, yPosition);
+      pdf.text(`Saldo: R$ ${balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, yPosition);
       yPosition += 15;
       
       // Reset cor do texto
