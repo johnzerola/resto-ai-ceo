@@ -229,29 +229,29 @@ const Privacidade = () => {
     <ProtectedRoute requiredRole={UserRole.EMPLOYEE}>
       <ModernLayout>
         <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
-          <div className="flex items-center gap-3">
-            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             <div>
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight">Privacidade & Segurança</h1>
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight">Privacidade & Segurança</h1>
               <p className="text-muted-foreground text-xs sm:text-sm">
-                Gerencie seus dados pessoais e monitore a segurança da sua conta
+                Gerencie seus dados pessoais
               </p>
             </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+          <Card className="overflow-hidden">
+            <CardHeader className="p-3 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                 Exportar Dados Pessoais
               </CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Baixe um relatório completo com todos os seus dados armazenados na plataforma
+              <CardDescription className="text-xs">
+                Baixe um relatório com seus dados
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button onClick={generatePDF} className="flex items-center gap-2 text-xs sm:text-sm">
-                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+            <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+              <Button onClick={generatePDF} className="flex items-center gap-1 text-xs h-8 w-full sm:w-auto">
+                <Download className="h-3 w-3" />
                 Gerar Relatório PDF
               </Button>
             </CardContent>
@@ -260,27 +260,31 @@ const Privacidade = () => {
           <div className="w-full overflow-hidden">
             <Tabs defaultValue="privacy" className="w-full">
               <div className="w-full overflow-x-auto">
-                <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto sm:mx-0">
-                  <TabsTrigger value="privacy" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                    <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                <TabsList className="grid w-full grid-cols-2 max-w-xs mx-auto sm:mx-0">
+                  <TabsTrigger value="privacy" className="flex items-center gap-1 text-xs">
+                    <FileText className="h-3 w-3" />
                     <span className="hidden sm:inline">Privacidade &</span> LGPD
                   </TabsTrigger>
-                  <TabsTrigger value="security" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                    <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <TabsTrigger value="security" className="flex items-center gap-1 text-xs">
+                    <Activity className="h-3 w-3" />
                     Segurança
                   </TabsTrigger>
                 </TabsList>
               </div>
 
-              <TabsContent value="privacy" className="mt-4 sm:mt-6">
-                <div className="w-full overflow-hidden">
-                  <PrivacyDashboard />
+              <TabsContent value="privacy" className="mt-4">
+                <div className="w-full overflow-x-auto">
+                  <div className="min-w-full w-fit">
+                    <PrivacyDashboard />
+                  </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="security" className="mt-4 sm:mt-6">
-                <div className="w-full overflow-hidden">
-                  <SecurityDashboard />
+              <TabsContent value="security" className="mt-4">
+                <div className="w-full overflow-x-auto">
+                  <div className="min-w-full w-fit">
+                    <SecurityDashboard />
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>

@@ -25,10 +25,10 @@ const Simulador = () => {
   return (
     <ModernLayout>
       <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
-        <div className="space-y-2">
+        <div className="space-y-1">
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight">Simulador Financeiro</h1>
           <p className="text-muted-foreground text-xs sm:text-sm">
-            Ferramentas de simulação para otimizar a gestão financeira do seu restaurante
+            Ferramentas de simulação para otimizar a gestão financeira
           </p>
         </div>
 
@@ -49,16 +49,16 @@ const Simulador = () => {
 
             <TabsContent value="price" className="space-y-4">
               <Card>
-                <CardHeader>
+                <CardHeader className="p-3 sm:p-6">
                   <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <Calculator className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                     Simulador de Preços Inteligente
                   </CardTitle>
                   <p className="text-muted-foreground text-xs sm:text-sm">
-                    Calcule o preço ideal para maximizar seus lucros considerando todos os custos operacionais
+                    Calcule o preço ideal considerando todos os custos operacionais
                   </p>
                 </CardHeader>
-                <CardContent className="w-full overflow-hidden">
+                <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0 w-full overflow-hidden">
                   <PriceSimulator />
                 </CardContent>
               </Card>
@@ -67,7 +67,7 @@ const Simulador = () => {
             <TabsContent value="scenario" className="space-y-4">
               {!showResults ? (
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="p-3 sm:p-6">
                     <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                       <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                       Simulador de Cenários Financeiros
@@ -76,7 +76,7 @@ const Simulador = () => {
                       Simule diferentes cenários de negócio e veja o impacto nas suas finanças
                     </p>
                   </CardHeader>
-                  <CardContent className="w-full overflow-hidden">
+                  <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0 w-full overflow-hidden">
                     <SimulatorForm onSimulate={handleSimulate} />
                   </CardContent>
                 </Card>

@@ -206,24 +206,24 @@ const Estoque = () => {
   return (
     <ModernLayout>
       <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
-        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
+        <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
           <div className="space-y-1">
-            <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold tracking-tight text-foreground">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
               Gestão de Estoque
             </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm lg:text-base">
+            <p className="text-muted-foreground text-xs sm:text-sm">
               Controle completo do seu inventário
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
             {!isAddingItem && (
               <>
-                <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs sm:text-sm flex-1 sm:flex-none">
-                  <FileDown className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Exportar PDF</span>
+                <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs py-1 h-8 sm:text-sm flex-1 sm:flex-none">
+                  <FileDown className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>Exportar</span>
                 </Button>
-                <Button onClick={toggleAddItem} size="sm" className="text-xs sm:text-sm flex-1 sm:flex-none">
-                  <Plus className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <Button onClick={toggleAddItem} size="sm" className="text-xs py-1 h-8 sm:text-sm flex-1 sm:flex-none">
+                  <Plus className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
                   <span>Novo Item</span>
                 </Button>
               </>
@@ -231,18 +231,20 @@ const Estoque = () => {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg border border-border shadow-sm w-full overflow-hidden">
-          {isAddingItem ? (
-            <InventoryForm 
-              itemId={selectedItemId} 
-              onCancel={handleCancelForm} 
-              onSuccess={handleFormSuccess}
-            />
-          ) : (
-            <InventoryOverview 
-              onEdit={editItem}
-            />
-          )}
+        <div className="bg-card rounded-lg border border-border shadow-sm w-full overflow-x-auto">
+          <div className="min-w-full w-fit">
+            {isAddingItem ? (
+              <InventoryForm 
+                itemId={selectedItemId} 
+                onCancel={handleCancelForm} 
+                onSuccess={handleFormSuccess}
+              />
+            ) : (
+              <InventoryOverview 
+                onEdit={editItem}
+              />
+            )}
+          </div>
         </div>
       </div>
     </ModernLayout>
