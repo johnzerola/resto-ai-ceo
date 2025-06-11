@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Calculator, Package, FileDown } from "lucide-react";
-import { getFinancialData } from "@/services/FinancialDataService";
 import jsPDF from 'jspdf';
 import { toast } from "sonner";
 
@@ -175,7 +174,7 @@ export function CMVAnalysis() {
       
       cmvData.categoryData.forEach((category: any) => {
         const status = category.percentual <= category.meta ? 'Dentro da Meta' : 'Acima da Meta';
-        const color = category.percentual <= category.meta ? [0, 128, 0] : [255, 0, 0];
+        const colorRGB: [number, number, number] = category.percentual <= category.meta ? [0, 128, 0] : [255, 0, 0];
         
         pdf.text(`${category.name}:`, 20, yPosition);
         yPosition += 8;
@@ -183,7 +182,7 @@ export function CMVAnalysis() {
         yPosition += 8;
         pdf.text(`  Percentual: ${category.percentual.toFixed(2)}% (Meta: ${category.meta}%)`, 25, yPosition);
         yPosition += 8;
-        pdf.setTextColor(...color);
+        pdf.setTextColor(colorRGB[0], colorRGB[1], colorRGB[2]);
         pdf.text(`  Status: ${status}`, 25, yPosition);
         pdf.setTextColor(0, 0, 0);
         yPosition += 12;

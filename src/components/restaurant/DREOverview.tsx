@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Calendar, TrendingUp, TrendingDown, DollarSign, FileDown } from "lucide-react";
-import { getFinancialData } from "@/services/FinancialDataService";
 import jsPDF from 'jspdf';
 import { toast } from "sonner";
 
