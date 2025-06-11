@@ -205,25 +205,26 @@ const Estoque = () => {
 
   return (
     <ModernLayout>
-      <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
-        <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
-          <div className="space-y-1">
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
+      <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-2 sm:p-4 lg:p-6 bg-background min-h-screen max-w-full overflow-hidden">
+        <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start">
+          <div className="space-y-1 min-w-0 flex-1">
+            <h1 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight text-foreground truncate">
               Gestão de Estoque
             </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm">
+            <p className="text-muted-foreground text-xs sm:text-sm truncate">
               Controle completo do seu inventário
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-1 sm:gap-2 flex-wrap w-full sm:w-auto">
             {!isAddingItem && (
               <>
-                <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs py-1 h-8 sm:text-sm flex-1 sm:flex-none">
-                  <FileDown className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Exportar</span>
+                <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs h-7 sm:h-8 flex-1 sm:flex-none min-w-0">
+                  <FileDown className="mr-1 h-3 w-3" />
+                  <span className="hidden sm:inline">Exportar</span>
+                  <span className="sm:hidden">PDF</span>
                 </Button>
-                <Button onClick={toggleAddItem} size="sm" className="text-xs py-1 h-8 sm:text-sm flex-1 sm:flex-none">
-                  <Plus className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
+                <Button onClick={toggleAddItem} size="sm" className="text-xs h-7 sm:h-8 flex-1 sm:flex-none min-w-0">
+                  <Plus className="mr-1 h-3 w-3" />
                   <span>Novo Item</span>
                 </Button>
               </>
@@ -231,19 +232,21 @@ const Estoque = () => {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg border border-border shadow-sm w-full overflow-x-auto">
-          <div className="min-w-full w-fit">
-            {isAddingItem ? (
-              <InventoryForm 
-                itemId={selectedItemId} 
-                onCancel={handleCancelForm} 
-                onSuccess={handleFormSuccess}
-              />
-            ) : (
-              <InventoryOverview 
-                onEdit={editItem}
-              />
-            )}
+        <div className="bg-card rounded-lg border border-border shadow-sm w-full min-w-0 overflow-hidden">
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[280px] w-full">
+              {isAddingItem ? (
+                <InventoryForm 
+                  itemId={selectedItemId} 
+                  onCancel={handleCancelForm} 
+                  onSuccess={handleFormSuccess}
+                />
+              ) : (
+                <InventoryOverview 
+                  onEdit={editItem}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

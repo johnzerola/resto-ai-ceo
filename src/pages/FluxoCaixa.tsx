@@ -240,28 +240,30 @@ const FluxoCaixa = () => {
 
   return (
     <ModernLayout>
-      <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 bg-background min-h-screen max-w-full overflow-hidden">
-        <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
-          <div className="w-full sm:w-auto">
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight">Fluxo de Caixa</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm flex items-center gap-2">
-              Controle de entradas e saídas financeiras
+      <div className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6 bg-background min-h-screen max-w-full overflow-hidden">
+        <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start">
+          <div className="w-full sm:w-auto min-w-0">
+            <h1 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight truncate">Fluxo de Caixa</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm flex items-center gap-1 sm:gap-2 truncate">
+              <span className="truncate">Controle de entradas e saídas</span>
               <SyncIndicator />
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+          <div className="flex gap-1 sm:gap-2 flex-wrap w-full sm:w-auto">
             {!isAddingEntry && (
               <>
-                <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs py-1 h-8 sm:text-sm flex-1 sm:flex-none">
-                  <FileDown className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Exportar</span>
+                <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs h-7 sm:h-8 flex-1 sm:flex-none min-w-0">
+                  <FileDown className="mr-1 h-3 w-3" />
+                  <span className="hidden sm:inline">Exportar</span>
+                  <span className="sm:hidden">PDF</span>
                 </Button>
-                <Button variant="outline" size="sm" onClick={goToDreCmv} className="text-xs py-1 h-8 sm:text-sm flex-1 sm:flex-none">
-                  <BarChart className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>Ver DRE</span>
+                <Button variant="outline" size="sm" onClick={goToDreCmv} className="text-xs h-7 sm:h-8 flex-1 sm:flex-none min-w-0">
+                  <BarChart className="mr-1 h-3 w-3" />
+                  <span className="hidden sm:inline">Ver</span>
+                  <span>DRE</span>
                 </Button>
-                <Button onClick={toggleAddEntry} size="sm" className="text-xs py-1 h-8 sm:text-sm flex-1 sm:flex-none">
-                  <Plus className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
+                <Button onClick={toggleAddEntry} size="sm" className="text-xs h-7 sm:h-8 flex-1 sm:flex-none min-w-0">
+                  <Plus className="mr-1 h-3 w-3" />
                   <span>Nova</span>
                 </Button>
               </>
@@ -270,17 +272,17 @@ const FluxoCaixa = () => {
         </div>
 
         {showIntegrationInfo && (
-          <Alert className="border-blue-500 bg-blue-50 p-3">
+          <Alert className="border-blue-500 bg-blue-50 p-2 sm:p-3">
             <AlertTitle className="text-blue-800 text-xs sm:text-sm">Integração Automática</AlertTitle>
             <AlertDescription className="text-blue-700 text-xs">
-              <p>Todas as transações registradas são automaticamente sincronizadas com:</p>
-              <ul className="list-disc ml-4 mt-1 space-y-0.5">
-                <li>DRE</li>
-                <li>CMV</li>
-                <li>Dashboard</li>
-                <li>Metas</li>
-              </ul>
-              <div className="mt-1 flex justify-end">
+              <p className="mb-1">Todas as transações são sincronizadas com:</p>
+              <div className="grid grid-cols-2 gap-1 text-xs">
+                <span>• DRE</span>
+                <span>• CMV</span>
+                <span>• Dashboard</span>
+                <span>• Metas</span>
+              </div>
+              <div className="mt-2 flex justify-end">
                 <Button 
                   variant="link" 
                   className="text-blue-800 p-0 h-auto font-semibold text-xs" 
@@ -293,7 +295,7 @@ const FluxoCaixa = () => {
           </Alert>
         )}
 
-        <div className="w-full overflow-hidden">
+        <div className="w-full min-w-0 overflow-hidden">
           {isAddingEntry ? (
             <CashFlowForm 
               editingEntry={editingEntry}
