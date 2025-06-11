@@ -207,12 +207,12 @@ export function CMVAnalysis() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-3 sm:space-y-4 lg:space-y-6">
         <div className="animate-pulse">
-          <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="h-6 sm:h-8 bg-muted rounded w-1/3 mb-3 sm:mb-4"></div>
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-24 bg-muted rounded"></div>
+              <div key={i} className="h-20 sm:h-24 bg-muted rounded"></div>
             ))}
           </div>
         </div>
@@ -222,9 +222,9 @@ export function CMVAnalysis() {
 
   if (!cmvData) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">Nenhum dado de CMV encontrado</p>
+      <Card className="w-full">
+        <CardContent className="p-4 sm:p-6 text-center">
+          <p className="text-muted-foreground text-sm">Nenhum dado de CMV encontrado</p>
         </CardContent>
       </Card>
     );
@@ -233,29 +233,30 @@ export function CMVAnalysis() {
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
   return (
-    <div className="space-y-4 sm:space-y-6 w-full overflow-hidden">
-      <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
-        <div>
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Análise CMV</h2>
-          <p className="text-muted-foreground text-sm">
+    <div className="space-y-3 sm:space-y-4 lg:space-y-6 w-full overflow-hidden p-2 sm:p-4 lg:p-6">
+      <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base sm:text-lg lg:text-xl font-bold truncate">Análise CMV</h2>
+          <p className="text-muted-foreground text-xs sm:text-sm truncate">
             Custo da Mercadoria Vendida atualizado automaticamente
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={exportToPDF}>
-          <FileDown className="mr-2 h-4 w-4" />
-          Exportar PDF
+        <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs h-7 sm:h-8 whitespace-nowrap">
+          <FileDown className="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline">Exportar</span>
+          <span className="sm:hidden">PDF</span>
         </Button>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">CMV Total</CardTitle>
-            <Calculator className="h-4 w-4 text-blue-600" />
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-3">
+        <Card className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">CMV Total</CardTitle>
+            <Calculator className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">
               {formatCurrency(cmvData.totalCMV)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -264,40 +265,40 @@ export function CMVAnalysis() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Custo Alimentos</CardTitle>
-            <Package className="h-4 w-4 text-green-600" />
+        <Card className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Custo Alimentos</CardTitle>
+            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">
               {formatCurrency(cmvData.totalFoodCost)}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
               <p className="text-xs text-muted-foreground">
                 {cmvData.foodCostPercentage.toFixed(1)}%
               </p>
-              <Badge variant={cmvData.foodCostPercentage <= cmvData.targetFoodCost ? "default" : "destructive"}>
+              <Badge variant={cmvData.foodCostPercentage <= cmvData.targetFoodCost ? "default" : "destructive"} className="text-xs">
                 Meta: {cmvData.targetFoodCost}%
               </Badge>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Custo Bebidas</CardTitle>
-            <Package className="h-4 w-4 text-orange-600" />
+        <Card className="w-full">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium">Custo Bebidas</CardTitle>
+            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-lg sm:text-xl lg:text-2xl font-bold">
               {formatCurrency(cmvData.totalBeverageCost)}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
               <p className="text-xs text-muted-foreground">
                 {cmvData.beverageCostPercentage.toFixed(1)}%
               </p>
-              <Badge variant={cmvData.beverageCostPercentage <= cmvData.targetBeverageCost ? "default" : "destructive"}>
+              <Badge variant={cmvData.beverageCostPercentage <= cmvData.targetBeverageCost ? "default" : "destructive"} className="text-xs">
                 Meta: {cmvData.targetBeverageCost}%
               </Badge>
             </div>
@@ -305,119 +306,65 @@ export function CMVAnalysis() {
         </Card>
       </div>
 
-      {/* Charts Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 text-xs sm:text-sm">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="categories">Por Categorias</TabsTrigger>
-          <TabsTrigger value="trend">Tendência Mensal</TabsTrigger>
-        </TabsList>
+      {/* Charts */}
+      <Tabs defaultValue="categorias" className="w-full">
+        <div className="w-full overflow-x-auto mb-3 sm:mb-4">
+          <TabsList className="grid w-full grid-cols-2 min-w-[200px] h-8 sm:h-10">
+            <TabsTrigger value="categorias" className="text-xs sm:text-sm px-1 sm:px-2">
+              Por Categorias
+            </TabsTrigger>
+            <TabsTrigger value="tendencia" className="text-xs sm:text-sm px-1 sm:px-2">
+              Tendência Mensal
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base sm:text-lg">CMV vs Vendas (Últimos 6 Meses)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[250px] sm:h-[300px] w-full">
+        <TabsContent value="categorias" className="w-full overflow-hidden">
+          <Card className="w-full">
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="text-sm sm:text-base lg:text-lg">Distribuição de Custos</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0 w-full overflow-hidden">
+              <div className="w-full overflow-x-auto">
+                <div className="min-w-[280px] w-full h-[200px] sm:h-[250px] lg:h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={cmvData.monthlyData}>
+                    <BarChart data={cmvData.categoryData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" fontSize={12} />
-                      <YAxis fontSize={12} />
-                      <Tooltip />
+                      <XAxis dataKey="name" fontSize={10} />
+                      <YAxis fontSize={10} />
+                      <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
                       <Legend />
-                      <Bar dataKey="vendas" fill="#10b981" name="Vendas" />
-                      <Bar dataKey="custoAlimentos" fill="#3b82f6" name="Custo Alimentos" />
-                      <Bar dataKey="custoBebidas" fill="#f59e0b" name="Custo Bebidas" />
+                      <Bar dataKey="valor" fill="#3b82f6" name="Custo Real" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base sm:text-lg">Distribuição de Custos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[250px] sm:h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={cmvData.categoryData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        dataKey="valor"
-                        label={(entry) => `${entry.name}: ${formatCurrency(entry.valor)}`}
-                      >
-                        {cmvData.categoryData.map((entry: any, index: number) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="categories" className="space-y-4">
-          <div className="w-full overflow-x-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base sm:text-lg">Análise Detalhada por Categoria</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {cmvData.categoryData.map((category: any, index: number) => (
-                    <div key={category.name} className="p-4 border rounded-lg">
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                        <h4 className="font-semibold">{category.name}</h4>
-                        <Badge variant={category.percentual <= category.meta ? "default" : "destructive"}>
-                          {category.percentual <= category.meta ? "Dentro da Meta" : "Acima da Meta"}
-                        </Badge>
-                      </div>
-                      <div className="mt-2 space-y-1 text-sm">
-                        <p>Custo Total: {formatCurrency(category.valor)}</p>
-                        <p>Percentual: {category.percentual.toFixed(2)}%</p>
-                        <p>Meta: {category.meta}%</p>
-                        <p>Diferença: {(category.percentual - category.meta).toFixed(2)} pontos percentuais</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="trend" className="space-y-4">
-          <div className="w-full overflow-x-auto">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base sm:text-lg">Tendência CMV Mensal</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[250px] sm:h-[300px] w-full">
+        <TabsContent value="tendencia" className="w-full overflow-hidden">
+          <Card className="w-full">
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="text-sm sm:text-base lg:text-lg">Evolução CMV - Últimos 6 Meses</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-0 w-full overflow-hidden">
+              <div className="w-full overflow-x-auto">
+                <div className="min-w-[280px] w-full h-[200px] sm:h-[250px] lg:h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={cmvData.monthlyData}>
+                    <LineChart data={cmvData.monthlyData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" fontSize={12} />
-                      <YAxis fontSize={12} />
+                      <XAxis dataKey="month" fontSize={10} />
+                      <YAxis fontSize={10} />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="cmv" stroke="#ef4444" strokeWidth={2} name="CMV %" />
+                      <Line type="monotone" dataKey="cmv" stroke="#ef4444" name="CMV %" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -1,608 +1,271 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calculator, Users, Scale, Utensils, HelpCircle, TrendingUp, BookOpen, RefreshCw } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
-import { SensitivityAnalysis } from "./SensitivityAnalysis";
-import { CompetitiveBenchmark } from "./CompetitiveBenchmark";
-import { PricingTutorial } from "./PricingTutorial";
-import { PricingAlerts } from "./PricingAlerts";
-import { BreakEvenAnalysis } from "./BreakEvenAnalysis";
-import { 
-  calculateAdvancedPricing, 
-  loadRestaurantConfig, 
-  type TaxRegime, 
-  type PricingResult 
-} from "@/utils/pricing-calculations";
-import { useToast } from "@/components/ui/use-toast";
-
-interface SimulationData {
-  model: "rodizio" | "buffet_peso" | "traditional";
-  costPerKg: number;
-  averageConsumptionPerPerson: number;
-  wastePercentage: number;
-  operationalCostPercentage: number;
-  desiredMarginPercentage: number;
-  fixedCosts: number;
-  expectedMonthlySales: number;
-  marketPositioning: "economy" | "standard" | "premium";
-  taxRegime: TaxRegime;
-}
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Calculator, DollarSign, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 
 export function PriceSimulator() {
-  const { toast } = useToast();
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [config, setConfig] = useState(loadRestaurantConfig());
-  
-  const [simulationData, setSimulationData] = useState<SimulationData>(() => {
-    // Sincronizar com dados de configuração
-    return {
-      model: "rodizio",
-      costPerKg: 25,
-      averageConsumptionPerPerson: 0.8,
-      wastePercentage: 12,
-      operationalCostPercentage: 30,
-      desiredMarginPercentage: config.desiredProfitMargin,
-      fixedCosts: config.fixedExpenses,
-      expectedMonthlySales: 800,
-      marketPositioning: "standard",
-      taxRegime: "simples_nacional"
-    };
+  const [formData, setFormData] = useState({
+    productName: '',
+    directCost: 0,
+    laborCost: 0,
+    overheadCost: 0,
+    desiredMargin: 30,
+    competitors: [0, 0, 0]
   });
 
-  // Listener para sincronização em tempo real com configurações
+  const [results, setResults] = useState<any>(null);
+
   useEffect(() => {
-    const handleConfigUpdate = () => {
-      const newConfig = loadRestaurantConfig();
-      setConfig(newConfig);
-      setSimulationData(prev => ({
-        ...prev,
-        desiredMarginPercentage: newConfig.desiredProfitMargin,
-        fixedCosts: newConfig.fixedExpenses
-      }));
-      toast({
-        title: "Configurações Sincronizadas",
-        description: "Dados atualizados automaticamente com as configurações do restaurante",
-      });
-    };
-
-    window.addEventListener('configUpdated', handleConfigUpdate);
-    return () => window.removeEventListener('configUpdated', handleConfigUpdate);
-  }, [toast]);
-
-  // Verificar se é primeira visita
-  useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem("hasSeenPricingTutorial");
-    if (!hasSeenTutorial) {
-      setShowTutorial(true);
-      localStorage.setItem("hasSeenPricingTutorial", "true");
+    if (formData.directCost > 0) {
+      calculatePrice();
     }
-  }, []);
+  }, [formData]);
 
-  // Calcular resultados usando a nova engine de precificação
-  const calculateResults = (): PricingResult => {
-    let portionSize = 0.3; // Default para tradicional
+  const calculatePrice = () => {
+    const totalCost = formData.directCost + formData.laborCost + formData.overheadCost;
+    const markupMultiplier = 1 + (formData.desiredMargin / 100);
+    const suggestedPrice = totalCost * markupMultiplier;
     
-    if (simulationData.model === "rodizio") {
-      portionSize = simulationData.averageConsumptionPerPerson;
-    } else if (simulationData.model === "buffet_peso") {
-      portionSize = 1.0; // 1kg
-    }
+    const competitorPrices = formData.competitors.filter(price => price > 0);
+    const avgCompetitorPrice = competitorPrices.length > 0 
+      ? competitorPrices.reduce((sum, price) => sum + price, 0) / competitorPrices.length 
+      : 0;
 
-    return calculateAdvancedPricing(
-      simulationData.costPerKg,
-      portionSize,
-      simulationData.wastePercentage,
-      simulationData.operationalCostPercentage,
-      simulationData.desiredMarginPercentage,
-      simulationData.expectedMonthlySales,
-      simulationData.taxRegime,
-      simulationData.model
-    );
-  };
+    const priceComparison = avgCompetitorPrice > 0 
+      ? ((suggestedPrice - avgCompetitorPrice) / avgCompetitorPrice * 100)
+      : 0;
 
-  const results = calculateResults();
-
-  // Market positioning com base no preço calculado
-  const getMarketPositioning = () => {
-    const price = results.suggestedPrice;
+    let recommendation = '';
+    let status = 'neutral';
     
-    if (simulationData.model === "rodizio") {
-      if (price <= 45) return { level: "Econômico", color: "bg-blue-500", description: "Foco em volume e acessibilidade" };
-      if (price <= 65) return { level: "Padrão", color: "bg-green-500", description: "Equilibrio entre qualidade e preço" };
-      if (price <= 85) return { level: "Premium", color: "bg-yellow-500", description: "Experiência diferenciada" };
-      return { level: "Luxo", color: "bg-purple-500", description: "Público seleto e alta qualidade" };
-    } else if (simulationData.model === "buffet_peso") {
-      if (price <= 35) return { level: "Econômico", color: "bg-blue-500", description: "Foco em volume e acessibilidade" };
-      if (price <= 50) return { level: "Padrão", color: "bg-green-500", description: "Equilibrio entre qualidade e preço" };
-      if (price <= 70) return { level: "Premium", color: "bg-yellow-500", description: "Experiência diferenciada" };
-      return { level: "Luxo", color: "bg-purple-500", description: "Público seleto e alta qualidade" };
+    if (priceComparison > 10) {
+      recommendation = 'Preço acima do mercado. Considere reduzir custos ou margem.';
+      status = 'warning';
+    } else if (priceComparison < -10) {
+      recommendation = 'Preço competitivo. Boa oportunidade de mercado.';
+      status = 'success';
     } else {
-      if (price <= 25) return { level: "Econômico", color: "bg-blue-500", description: "Foco em volume e acessibilidade" };
-      if (price <= 40) return { level: "Padrão", color: "bg-green-500", description: "Equilibrio entre qualidade e preço" };
-      if (price <= 60) return { level: "Premium", color: "bg-yellow-500", description: "Experiência diferenciada" };
-      return { level: "Luxo", color: "bg-purple-500", description: "Público seleto e alta qualidade" };
+      recommendation = 'Preço alinhado com o mercado.';
+      status = 'neutral';
     }
-  };
 
-  const positioning = getMarketPositioning();
-
-  const handleApplyExample = (example: any) => {
-    setSimulationData(prev => ({
-      ...prev,
-      ...example.data
-    }));
-    toast({
-      title: "Exemplo Aplicado",
-      description: `Configuração para ${example.name} foi carregada com sucesso!`,
+    setResults({
+      totalCost,
+      suggestedPrice,
+      actualMargin: formData.desiredMargin,
+      competitorAvg: avgCompetitorPrice,
+      priceComparison,
+      recommendation,
+      status
     });
   };
 
-  const syncWithConfig = () => {
-    const newConfig = loadRestaurantConfig();
-    setConfig(newConfig);
-    setSimulationData(prev => ({
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
       ...prev,
-      desiredMarginPercentage: newConfig.desiredProfitMargin,
-      fixedCosts: newConfig.fixedExpenses
+      [field]: value
     }));
-    toast({
-      title: "Dados Sincronizados",
-      description: "Simulador atualizado com as configurações mais recentes",
-    });
+  };
+
+  const handleCompetitorChange = (index: number, value: number) => {
+    const newCompetitors = [...formData.competitors];
+    newCompetitors[index] = value;
+    setFormData(prev => ({
+      ...prev,
+      competitors: newCompetitors
+    }));
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
 
   return (
-    <TooltipProvider>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">Simulador Avançado de Precificação</h2>
-            <p className="text-sm text-muted-foreground">
-              Sincronizado com: {config.businessName}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={syncWithConfig}>
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Sincronizar
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowTutorial(true)}>
-              <BookOpen className="h-4 w-4 mr-1" />
-              Tutorial
-            </Button>
-          </div>
-        </div>
+    <div className="w-full space-y-3 sm:space-y-4 overflow-hidden">
+      <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+        {/* Formulário */}
+        <Card className="w-full">
+          <CardHeader className="p-3 sm:p-4">
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              <Calculator className="h-4 w-4 text-green-600" />
+              Dados do Produto
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Preencha os custos para calcular o preço ideal
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-3 sm:p-4 pt-0 space-y-3 sm:space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="productName" className="text-xs sm:text-sm">Nome do Produto</Label>
+              <Input
+                id="productName"
+                value={formData.productName}
+                onChange={(e) => handleInputChange('productName', e.target.value)}
+                placeholder="Ex: Hambúrguer Artesanal"
+                className="h-8 sm:h-10 text-xs sm:text-sm"
+              />
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Configuration Panel */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-blue-600" />
-                Configuração do Simulador
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="directCost" className="text-xs sm:text-sm">Custo Direto (R$)</Label>
+                <Input
+                  id="directCost"
+                  type="number"
+                  step="0.01"
+                  value={formData.directCost}
+                  onChange={(e) => handleInputChange('directCost', Number(e.target.value))}
+                  placeholder="0,00"
+                  className="h-8 sm:h-10 text-xs sm:text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="laborCost" className="text-xs sm:text-sm">Custo Mão de Obra (R$)</Label>
+                <Input
+                  id="laborCost"
+                  type="number"
+                  step="0.01"
+                  value={formData.laborCost}
+                  onChange={(e) => handleInputChange('laborCost', Number(e.target.value))}
+                  placeholder="0,00"
+                  className="h-8 sm:h-10 text-xs sm:text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="overheadCost" className="text-xs sm:text-sm">Custos Fixos (R$)</Label>
+                <Input
+                  id="overheadCost"
+                  type="number"
+                  step="0.01"
+                  value={formData.overheadCost}
+                  onChange={(e) => handleInputChange('overheadCost', Number(e.target.value))}
+                  placeholder="0,00"
+                  className="h-8 sm:h-10 text-xs sm:text-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="desiredMargin" className="text-xs sm:text-sm">Margem Desejada (%)</Label>
+                <Input
+                  id="desiredMargin"
+                  type="number"
+                  value={formData.desiredMargin}
+                  onChange={(e) => handleInputChange('desiredMargin', Number(e.target.value))}
+                  placeholder="30"
+                  className="h-8 sm:h-10 text-xs sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs sm:text-sm">Preços da Concorrência (R$)</Label>
+              <div className="grid gap-2 grid-cols-3">
+                {formData.competitors.map((price, index) => (
+                  <Input
+                    key={index}
+                    type="number"
+                    step="0.01"
+                    value={price || ''}
+                    onChange={(e) => handleCompetitorChange(index, Number(e.target.value))}
+                    placeholder={`Concorrente ${index + 1}`}
+                    className="h-8 sm:h-10 text-xs"
+                  />
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Resultados */}
+        {results && (
+          <Card className="w-full">
+            <CardHeader className="p-3 sm:p-4">
+              <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                <DollarSign className="h-4 w-4 text-blue-600" />
+                Análise de Preços
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="basic" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="basic">Básico</TabsTrigger>
-                  <TabsTrigger value="advanced">Avançado</TabsTrigger>
-                  <TabsTrigger value="taxes">Impostos</TabsTrigger>
-                </TabsList>
+            <CardContent className="p-3 sm:p-4 pt-0 space-y-3 sm:space-y-4">
+              <div className="grid gap-3 grid-cols-2">
+                <div className="text-center p-3 border rounded-lg">
+                  <p className="text-xs text-muted-foreground">Custo Total</p>
+                  <p className="text-lg sm:text-xl font-bold text-red-600">
+                    {formatCurrency(results.totalCost)}
+                  </p>
+                </div>
+                <div className="text-center p-3 border rounded-lg">
+                  <p className="text-xs text-muted-foreground">Preço Sugerido</p>
+                  <p className="text-lg sm:text-xl font-bold text-green-600">
+                    {formatCurrency(results.suggestedPrice)}
+                  </p>
+                </div>
+              </div>
 
-                <TabsContent value="basic" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="model" className="flex items-center gap-1">
-                        Modelo de Negócio
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-3 w-3" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Escolha o modelo que melhor representa seu restaurante</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </Label>
-                      <Select 
-                        value={simulationData.model} 
-                        onValueChange={(value: "rodizio" | "buffet_peso" | "traditional") => 
-                          setSimulationData({...simulationData, model: value})
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="rodizio">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4" />
-                              Rodízio
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="buffet_peso">
-                            <div className="flex items-center gap-2">
-                              <Scale className="h-4 w-4" />
-                              Buffet por Peso
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="traditional">
-                            <div className="flex items-center gap-2">
-                              <Utensils className="h-4 w-4" />
-                              Tradicional
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="costPerKg" className="flex items-center gap-1">
-                        Custo por Kg
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-3 w-3" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Custo médio dos ingredientes por quilograma</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </Label>
-                      <Input
-                        id="costPerKg"
-                        type="number"
-                        value={simulationData.costPerKg}
-                        onChange={(e) => setSimulationData({
-                          ...simulationData,
-                          costPerKg: Number(e.target.value)
-                        })}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    {simulationData.model === "rodizio" && (
-                      <div>
-                        <Label htmlFor="consumption" className="flex items-center gap-1">
-                          Consumo Médio por Pessoa (kg)
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <HelpCircle className="h-3 w-3" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Quantidade média consumida por cliente em rodízios (normalmente 0.7-1.0kg)</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </Label>
-                        <Input
-                          id="consumption"
-                          type="number"
-                          step="0.1"
-                          value={simulationData.averageConsumptionPerPerson}
-                          onChange={(e) => setSimulationData({
-                            ...simulationData,
-                            averageConsumptionPerPerson: Number(e.target.value)
-                          })}
-                          className="mt-1"
-                        />
-                      </div>
-                    )}
-
-                    <div>
-                      <Label htmlFor="sales">Vendas Mensais Estimadas</Label>
-                      <Input
-                        id="sales"
-                        type="number"
-                        value={simulationData.expectedMonthlySales}
-                        onChange={(e) => setSimulationData({
-                          ...simulationData,
-                          expectedMonthlySales: Number(e.target.value)
-                        })}
-                        className="mt-1"
-                      />
-                    </div>
+              {results.competitorAvg > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs sm:text-sm text-muted-foreground">Média Concorrentes:</span>
+                    <span className="text-xs sm:text-sm font-medium">
+                      {formatCurrency(results.competitorAvg)}
+                    </span>
                   </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="flex items-center gap-1">
-                        Margem Desejada: {simulationData.desiredMarginPercentage}%
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-3 w-3" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Margem de lucro desejada sobre os custos (recomendado: mínimo 25%)</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </Label>
-                      <Slider
-                        value={[simulationData.desiredMarginPercentage]}
-                        onValueChange={(value) => setSimulationData({
-                          ...simulationData,
-                          desiredMarginPercentage: value[0]
-                        })}
-                        max={50}
-                        min={10}
-                        step={1}
-                        className="mt-2"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="flex items-center gap-1">
-                        Desperdício: {simulationData.wastePercentage}%
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-3 w-3" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Percentual de desperdício de alimentos (típico: 8-15%)</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </Label>
-                      <Slider
-                        value={[simulationData.wastePercentage]}
-                        onValueChange={(value) => setSimulationData({
-                          ...simulationData,
-                          wastePercentage: value[0]
-                        })}
-                        max={25}
-                        min={5}
-                        step={1}
-                        className="mt-2"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="flex items-center gap-1">
-                        Custos Operacionais: {simulationData.operationalCostPercentage}%
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-3 w-3" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Custos variáveis como mão de obra direta, energia, etc. (típico: 25-35%)</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </Label>
-                      <Slider
-                        value={[simulationData.operationalCostPercentage]}
-                        onValueChange={(value) => setSimulationData({
-                          ...simulationData,
-                          operationalCostPercentage: value[0]
-                        })}
-                        max={50}
-                        min={20}
-                        step={1}
-                        className="mt-2"
-                      />
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs sm:text-sm text-muted-foreground">Diferença:</span>
+                    <Badge variant={results.priceComparison > 0 ? "destructive" : "default"} className="text-xs">
+                      {results.priceComparison > 0 ? '+' : ''}{results.priceComparison.toFixed(1)}%
+                    </Badge>
                   </div>
-                </TabsContent>
+                </div>
+              )}
 
-                <TabsContent value="advanced" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="fixedCosts" className="flex items-center gap-1">
-                        Custos Fixos Mensais
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-3 w-3" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Sincronizado com configurações: aluguel, seguros, etc.</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </Label>
-                      <Input
-                        id="fixedCosts"
-                        type="number"
-                        value={simulationData.fixedCosts}
-                        onChange={(e) => setSimulationData({
-                          ...simulationData,
-                          fixedCosts: Number(e.target.value)
-                        })}
-                        className="mt-1"
-                      />
-                    </div>
+              <Alert className={`${
+                results.status === 'success' ? 'border-green-200 bg-green-50' : 
+                results.status === 'warning' ? 'border-yellow-200 bg-yellow-50' : 
+                'border-blue-200 bg-blue-50'
+              }`}>
+                {results.status === 'success' && <CheckCircle className="h-4 w-4" />}
+                {results.status === 'warning' && <AlertTriangle className="h-4 w-4" />}
+                {results.status === 'neutral' && <TrendingUp className="h-4 w-4" />}
+                <AlertDescription className="text-xs sm:text-sm">
+                  {results.recommendation}
+                </AlertDescription>
+              </Alert>
 
-                    <div>
-                      <Label htmlFor="positioning">Posicionamento de Mercado</Label>
-                      <Select 
-                        value={simulationData.marketPositioning} 
-                        onValueChange={(value: "economy" | "standard" | "premium") => 
-                          setSimulationData({...simulationData, marketPositioning: value})
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="economy">Econômico</SelectItem>
-                          <SelectItem value="standard">Padrão</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+              <div className="pt-2 border-t">
+                <h4 className="text-xs sm:text-sm font-medium mb-2">Detalhamento:</h4>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span>Custo Direto:</span>
+                    <span>{formatCurrency(formData.directCost)}</span>
                   </div>
-                </TabsContent>
-
-                <TabsContent value="taxes" className="space-y-4">
-                  <div>
-                    <Label htmlFor="taxRegime" className="flex items-center gap-1">
-                      Regime Tributário
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <HelpCircle className="h-3 w-3" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Define como os impostos são calculados</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </Label>
-                    <Select 
-                      value={simulationData.taxRegime} 
-                      onValueChange={(value: TaxRegime) => 
-                        setSimulationData({...simulationData, taxRegime: value})
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="simples_nacional">Simples Nacional</SelectItem>
-                        <SelectItem value="lucro_presumido">Lucro Presumido</SelectItem>
-                        <SelectItem value="lucro_real">Lucro Real</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex justify-between">
+                    <span>Mão de Obra:</span>
+                    <span>{formatCurrency(formData.laborCost)}</span>
                   </div>
-
-                  <div className="bg-blue-50 p-4 rounded-lg space-y-2">
-                    <h4 className="font-medium text-blue-900">Impostos Calculados</h4>
-                    <div className="text-sm text-blue-800 space-y-1">
-                      <p>• ISS: {formatCurrency(results.taxes.iss)}</p>
-                      <p>• ICMS: {formatCurrency(results.taxes.icms)}</p>
-                      {results.taxes.pis > 0 && <p>• PIS: {formatCurrency(results.taxes.pis)}</p>}
-                      {results.taxes.cofins > 0 && <p>• COFINS: {formatCurrency(results.taxes.cofins)}</p>}
-                      <p className="font-medium">• Total: {formatCurrency(results.taxes.total)}</p>
-                    </div>
+                  <div className="flex justify-between">
+                    <span>Custos Fixos:</span>
+                    <span>{formatCurrency(formData.overheadCost)}</span>
                   </div>
-                </TabsContent>
-              </Tabs>
+                  <div className="flex justify-between font-medium pt-1 border-t">
+                    <span>Margem de Lucro:</span>
+                    <span>{formatCurrency(results.suggestedPrice - results.totalCost)}</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-
-          {/* Results Panel */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-                Resultado da Simulação
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">Preço Sugerido</p>
-                <p className="text-3xl font-bold text-green-600">
-                  {formatCurrency(results.suggestedPrice)}
-                  {simulationData.model === "buffet_peso" && <span className="text-lg">/kg</span>}
-                </p>
-                <Badge className={`${positioning.color} text-white mt-2`}>
-                  {positioning.level}
-                </Badge>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>Custo Base:</span>
-                  <span className="font-medium">{formatCurrency(results.baseCost)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>+ Desperdício:</span>
-                  <span className="font-medium">{formatCurrency(results.costWithWaste - results.baseCost)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>+ Operacional:</span>
-                  <span className="font-medium">{formatCurrency(results.operationalCost)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>+ Custo Fixo/Unid:</span>
-                  <span className="font-medium">{formatCurrency(results.fixedCostPerUnit)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>+ Impostos:</span>
-                  <span className="font-medium">{formatCurrency(results.taxes.total)}</span>
-                </div>
-                <div className="border-t pt-2">
-                  <div className="flex justify-between font-medium">
-                    <span>Custo Total:</span>
-                    <span>{formatCurrency(results.totalCost)}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between text-green-600 font-medium">
-                  <span>Margem Líquida:</span>
-                  <span>{results.netMargin.toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Food Cost:</span>
-                  <span className={`font-medium ${results.foodCostPercentage > 30 ? 'text-red-600' : 'text-green-600'}`}>
-                    {results.foodCostPercentage.toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-
-              <div className="border-t pt-4 space-y-2">
-                <h4 className="font-medium text-sm">Projeção Mensal</h4>
-                <div className="flex justify-between text-sm">
-                  <span>Receita:</span>
-                  <span className="font-medium">{formatCurrency(results.monthlyRevenue)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Lucro Líquido:</span>
-                  <span className="font-medium text-green-600">{formatCurrency(results.monthlyProfit)}</span>
-                </div>
-              </div>
-
-              <p className="text-xs text-muted-foreground mt-4">
-                {positioning.description}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Smart Alerts */}
-        <PricingAlerts
-          foodCostPercentage={results.foodCostPercentage}
-          profitMargin={results.netMargin}
-          suggestedPrice={results.suggestedPrice}
-          model={simulationData.model}
-          breakEvenPrice={results.breakEvenPrice}
-        />
-
-        {/* Break-even Analysis */}
-        <BreakEvenAnalysis
-          breakEvenPrice={results.breakEvenPrice}
-          suggestedPrice={results.suggestedPrice}
-          monthlySales={simulationData.expectedMonthlySales}
-          fixedCosts={simulationData.fixedCosts}
-          variableCostPerUnit={results.costWithWaste + results.operationalCost}
-          model={simulationData.model}
-        />
-
-        {/* Analysis Components */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SensitivityAnalysis
-            basePrice={results.suggestedPrice}
-            baseCost={results.totalCost}
-            baseRevenue={results.monthlyRevenue}
-            baseProfit={results.monthlyProfit}
-            baseMargin={results.netMargin}
-            monthlySales={simulationData.expectedMonthlySales}
-          />
-          
-          <CompetitiveBenchmark
-            suggestedPrice={results.suggestedPrice}
-            priceType={simulationData.model === "buffet_peso" ? "kg" : "pessoa"}
-          />
-        </div>
-
-        {/* Tutorial Modal */}
-        <PricingTutorial
-          isOpen={showTutorial}
-          onClose={() => setShowTutorial(false)}
-          onApplyExample={handleApplyExample}
-        />
+        )}
       </div>
-    </TooltipProvider>
+    </div>
   );
 }

@@ -1,302 +1,293 @@
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Save, X, Package } from "lucide-react";
 import { toast } from "sonner";
 
-// Interface for inventory item
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  quantity: number;
-  unit: string;
-  costPerUnit: number;
-  totalCost: number;
-  minStockLevel: number;
-  lastUpdated: string;
-  supplier?: string;
-  location?: string;
-  notes?: string;
-}
-
 interface InventoryFormProps {
-  itemId: string | null;
+  itemId?: string | null;
   onCancel: () => void;
   onSuccess: () => void;
 }
 
 export function InventoryForm({ itemId, onCancel, onSuccess }: InventoryFormProps) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<InventoryItem>();
-  
-  // Watch values for real-time calculations
-  const quantity = watch("quantity") || 0;
-  const costPerUnit = watch("costPerUnit") || 0;
-  
-  // Categories of inventory items
-  const categories = [
-    "Carnes", 
-    "Aves", 
-    "Frutos do Mar", 
-    "Hortifruti",
-    "Laticínios",
-    "Secos",
-    "Conservas",
-    "Refrigerantes",
-    "Alcoólicos",
-    "Descartáveis",
-    "Limpeza",
-    "Outros"
-  ];
+  const [formData, setFormData] = useState({
+    name: '',
+    category: '',
+    quantity: 0,
+    unit: '',
+    cost: 0,
+    supplier: '',
+    expiryDate: '',
+    minStock: 0,
+    location: ''
+  });
 
-  // Units of measurement
-  const units = [
-    "g", "kg", "ml", "L", "unidade", "caixa", "dúzia", "pacote", "garrafas"
-  ];
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Calculate total cost whenever quantity or cost changes
-  useEffect(() => {
-    const total = quantity * costPerUnit;
-    setValue("totalCost", total);
-  }, [quantity, costPerUnit, setValue]);
-
-  // Load item data if in edit mode
   useEffect(() => {
     if (itemId) {
-      const loadItem = async () => {
-        try {
-          const savedInventory = localStorage.getItem("inventory");
-          if (savedInventory) {
-            const items = JSON.parse(savedInventory);
-            const item = items.find((i: InventoryItem) => i.id === itemId);
-            
-            if (item) {
-              // Pre-fill form with item data
-              Object.keys(item).forEach((key) => {
-                setValue(key as keyof InventoryItem, item[key as keyof InventoryItem]);
-              });
-            }
-          }
-        } catch (error) {
-          console.error("Error loading inventory item:", error);
-          toast.error("Erro ao carregar dados do item");
-        }
-      };
-      
-      loadItem();
+      loadItemData();
     }
-  }, [itemId, setValue]);
+  }, [itemId]);
 
-  // Save inventory item
-  const onSubmit = (data: InventoryItem) => {
-    // Calculate total cost
-    const totalCost = data.quantity * data.costPerUnit;
-    
-    const itemToSave: InventoryItem = {
-      ...data,
-      id: itemId || Date.now().toString(),
-      totalCost,
-      lastUpdated: new Date().toISOString()
-    };
-    
+  const loadItemData = () => {
     try {
-      // Save to localStorage
-      const savedInventory = localStorage.getItem("inventory") || "[]";
-      const items = JSON.parse(savedInventory);
-      
-      if (itemId) {
-        // Update existing item
-        const index = items.findIndex((i: InventoryItem) => i.id === itemId);
-        if (index >= 0) {
-          items[index] = itemToSave;
+      const storedItems = localStorage.getItem('inventoryItems');
+      if (storedItems) {
+        const items = JSON.parse(storedItems);
+        const item = items.find((i: any) => i.id === itemId);
+        if (item) {
+          setFormData({
+            name: item.name || '',
+            category: item.category || '',
+            quantity: item.quantity || 0,
+            unit: item.unit || '',
+            cost: item.cost || 0,
+            supplier: item.supplier || '',
+            expiryDate: item.expiryDate || '',
+            minStock: item.minStock || 0,
+            location: item.location || ''
+          });
         }
-      } else {
-        // Add new item
-        items.push(itemToSave);
       }
-      
-      localStorage.setItem("inventory", JSON.stringify(items));
-      
-      toast.success(itemId ? "Item atualizado com sucesso!" : "Novo item adicionado com sucesso!");
-      onSuccess();
     } catch (error) {
-      console.error("Error saving inventory item:", error);
-      toast.error("Erro ao salvar item de estoque");
+      console.error('Error loading item data:', error);
+      toast.error('Erro ao carregar dados do item');
     }
   };
 
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim() || !formData.category || formData.quantity < 0 || formData.cost < 0) {
+      toast.error('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const storedItems = localStorage.getItem('inventoryItems');
+      let items = storedItems ? JSON.parse(storedItems) : [];
+
+      const newItem = {
+        id: itemId || Date.now().toString(),
+        ...formData,
+        lastUpdated: new Date().toISOString()
+      };
+
+      if (itemId) {
+        // Update existing item
+        items = items.map((item: any) => item.id === itemId ? newItem : item);
+      } else {
+        // Add new item
+        items.push(newItem);
+      }
+
+      localStorage.setItem('inventoryItems', JSON.stringify(items));
+      
+      // Dispatch event for other components to update
+      window.dispatchEvent(new CustomEvent('inventoryUpdated'));
+      
+      onSuccess();
+    } catch (error) {
+      console.error('Error saving item:', error);
+      toast.error('Erro ao salvar item');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const categories = [
+    'Carnes',
+    'Peixes',
+    'Aves',
+    'Vegetais',
+    'Frutas',
+    'Grãos',
+    'Laticínios',
+    'Bebidas',
+    'Temperos',
+    'Outros'
+  ];
+
+  const units = [
+    'kg',
+    'g',
+    'L',
+    'ml',
+    'unidade',
+    'pacote',
+    'caixa',
+    'saco',
+    'lata',
+    'garrafa'
+  ];
+
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="mb-4 flex items-center">
-          <Button variant="ghost" onClick={onCancel} className="mr-2">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <h2 className="text-xl font-semibold">
-            {itemId ? "Editar Item de Estoque" : "Novo Item de Estoque"}
-          </h2>
-        </div>
-        
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+    <Card className="w-full">
+      <CardHeader className="p-3 sm:p-4">
+        <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+          <Package className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+          {itemId ? 'Editar Item' : 'Novo Item no Estoque'}
+        </CardTitle>
+        <CardDescription className="text-xs sm:text-sm">
+          {itemId ? 'Atualize as informações do item' : 'Adicione um novo item ao seu estoque'}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="p-3 sm:p-4 pt-0">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome do Item</Label>
+              <Label htmlFor="name" className="text-xs sm:text-sm">Nome do Item *</Label>
               <Input
                 id="name"
-                placeholder="Ex: Farinha de Trigo"
-                {...register("name", { required: "Nome é obrigatório" })}
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Ex: Filé de Frango"
+                required
+                className="h-8 sm:h-10 text-xs sm:text-sm"
               />
-              {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="category">Categoria</Label>
-              <Select 
-                onValueChange={(value) => setValue("category", value)}
-                defaultValue={watch("category")}
-              >
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Selecione uma categoria" />
+              <Label htmlFor="category" className="text-xs sm:text-sm">Categoria *</Label>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
+                  <SelectValue placeholder="Selecione a categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category} className="text-xs sm:text-sm">
                       {category}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.category && <p className="text-sm text-red-500">{errors.category.message}</p>}
             </div>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-3">
+
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantidade</Label>
+              <Label htmlFor="quantity" className="text-xs sm:text-sm">Quantidade *</Label>
               <Input
                 id="quantity"
                 type="number"
+                min="0"
                 step="0.01"
-                placeholder="Ex: 10"
-                {...register("quantity", { 
-                  required: "Quantidade é obrigatória",
-                  min: { value: 0, message: "Quantidade deve ser maior ou igual a 0" }
-                })}
+                value={formData.quantity}
+                onChange={(e) => handleInputChange('quantity', Number(e.target.value))}
+                required
+                className="h-8 sm:h-10 text-xs sm:text-sm"
               />
-              {errors.quantity && <p className="text-sm text-red-500">{errors.quantity.message}</p>}
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="unit">Unidade</Label>
-              <Select 
-                onValueChange={(value) => setValue("unit", value)}
-                defaultValue={watch("unit")}
-              >
-                <SelectTrigger id="unit">
-                  <SelectValue placeholder="Selecione uma unidade" />
+              <Label htmlFor="unit" className="text-xs sm:text-sm">Unidade *</Label>
+              <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
+                <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
+                  <SelectValue placeholder="Selecione a unidade" />
                 </SelectTrigger>
                 <SelectContent>
-                  {units.map((unit) => (
-                    <SelectItem key={unit} value={unit}>
+                  {units.map(unit => (
+                    <SelectItem key={unit} value={unit} className="text-xs sm:text-sm">
                       {unit}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.unit && <p className="text-sm text-red-500">{errors.unit.message}</p>}
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="minStockLevel">Estoque Mínimo</Label>
+              <Label htmlFor="cost" className="text-xs sm:text-sm">Custo Unitário (R$) *</Label>
               <Input
-                id="minStockLevel"
+                id="cost"
                 type="number"
+                min="0"
                 step="0.01"
-                placeholder="Ex: 5"
-                {...register("minStockLevel", { 
-                  required: "Estoque mínimo é obrigatório",
-                  min: { value: 0, message: "Estoque mínimo deve ser maior ou igual a 0" }
-                })}
+                value={formData.cost}
+                onChange={(e) => handleInputChange('cost', Number(e.target.value))}
+                required
+                className="h-8 sm:h-10 text-xs sm:text-sm"
               />
-              {errors.minStockLevel && <p className="text-sm text-red-500">{errors.minStockLevel.message}</p>}
             </div>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
+
             <div className="space-y-2">
-              <Label htmlFor="costPerUnit">Custo por Unidade (R$)</Label>
-              <div className="flex">
-                <span className="inline-flex h-10 items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-muted-foreground">
-                  R$
-                </span>
-                <Input
-                  id="costPerUnit"
-                  type="number"
-                  step="0.01"
-                  className="rounded-l-none"
-                  placeholder="0.00"
-                  {...register("costPerUnit", { 
-                    required: "Custo por unidade é obrigatório",
-                    min: { value: 0, message: "Custo deve ser maior ou igual a 0" }
-                  })}
-                />
-              </div>
-              {errors.costPerUnit && <p className="text-sm text-red-500">{errors.costPerUnit.message}</p>}
+              <Label htmlFor="minStock" className="text-xs sm:text-sm">Estoque Mínimo</Label>
+              <Input
+                id="minStock"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.minStock}
+                onChange={(e) => handleInputChange('minStock', Number(e.target.value))}
+                className="h-8 sm:h-10 text-xs sm:text-sm"
+              />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="totalCost">Custo Total (R$)</Label>
-              <div className="flex h-10 items-center rounded-md border bg-gray-50 px-3">
-                <span className="text-muted-foreground">R$</span>
-                <span className="ml-1 font-medium">
-                  {((quantity || 0) * (costPerUnit || 0)).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="supplier">Fornecedor (opcional)</Label>
+              <Label htmlFor="supplier" className="text-xs sm:text-sm">Fornecedor</Label>
               <Input
                 id="supplier"
-                placeholder="Ex: Distribuidora Alimentos SA"
-                {...register("supplier")}
+                value={formData.supplier}
+                onChange={(e) => handleInputChange('supplier', e.target.value)}
+                placeholder="Ex: Distribuidora XYZ"
+                className="h-8 sm:h-10 text-xs sm:text-sm"
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="location">Localização (opcional)</Label>
+              <Label htmlFor="location" className="text-xs sm:text-sm">Localização</Label>
               <Input
                 id="location"
-                placeholder="Ex: Estante 3, Prateleira 2"
-                {...register("location")}
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                placeholder="Ex: Geladeira A, Prateleira 2"
+                className="h-8 sm:h-10 text-xs sm:text-sm"
+              />
+            </div>
+
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="expiryDate" className="text-xs sm:text-sm">Data de Validade</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                className="h-8 sm:h-10 text-xs sm:text-sm"
               />
             </div>
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="notes">Observações (opcional)</Label>
-            <textarea
-              id="notes"
-              className="w-full min-h-[80px] p-2 rounded-md border border-input bg-background text-sm"
-              placeholder="Informações adicionais sobre o item"
-              {...register("notes")}
-            ></textarea>
-          </div>
-          
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
+
+          <div className="flex gap-2 pt-3 sm:pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+              className="flex-1 h-8 sm:h-10 text-xs sm:text-sm"
+            >
+              <X className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               Cancelar
             </Button>
-            <Button type="submit">
-              {itemId ? "Atualizar Item" : "Salvar Item"}
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="flex-1 h-8 sm:h-10 text-xs sm:text-sm"
+            >
+              <Save className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              {isLoading ? 'Salvando...' : 'Salvar'}
             </Button>
           </div>
         </form>
