@@ -240,28 +240,28 @@ const FluxoCaixa = () => {
 
   return (
     <ModernLayout>
-      <div className="main-content-padding space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="main-content-padding space-y-4 sm:space-y-6">
+        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
-            <p className="text-muted-foreground flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
+            <p className="text-muted-foreground flex items-center gap-2 text-sm sm:text-base">
               Controle de entradas e saídas financeiras
               <SyncIndicator />
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {!isAddingEntry && (
               <>
-                <Button variant="outline" size="sm" onClick={exportToPDF}>
-                  <FileDown className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs sm:text-sm">
+                  <FileDown className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Exportar PDF
                 </Button>
-                <Button variant="outline" size="sm" onClick={goToDreCmv}>
-                  <BarChart className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={goToDreCmv} className="text-xs sm:text-sm">
+                  <BarChart className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Ver DRE
                 </Button>
-                <Button onClick={toggleAddEntry}>
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button onClick={toggleAddEntry} size="sm" className="text-xs sm:text-sm">
+                  <Plus className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Nova Transação
                 </Button>
               </>
@@ -273,8 +273,8 @@ const FluxoCaixa = () => {
           <Alert className="border-blue-500 bg-blue-50">
             <AlertTitle className="text-blue-800">Integração Automática</AlertTitle>
             <AlertDescription className="text-blue-700">
-              <p>Todas as transações registradas no fluxo de caixa são automaticamente sincronizadas com:</p>
-              <ul className="list-disc ml-6 mt-2">
+              <p className="text-sm">Todas as transações registradas no fluxo de caixa são automaticamente sincronizadas com:</p>
+              <ul className="list-disc ml-6 mt-2 text-sm">
                 <li>Demonstrativo de Resultados (DRE)</li>
                 <li>Análise de Custo de Mercadoria Vendida (CMV)</li>
                 <li>Dashboard Financeiro</li>
@@ -283,7 +283,7 @@ const FluxoCaixa = () => {
               <div className="mt-2 flex justify-end">
                 <Button 
                   variant="link" 
-                  className="text-blue-800 p-0 h-auto font-semibold" 
+                  className="text-blue-800 p-0 h-auto font-semibold text-sm" 
                   onClick={() => setShowIntegrationInfo(false)}
                 >
                   Entendi
@@ -293,24 +293,26 @@ const FluxoCaixa = () => {
           </Alert>
         )}
 
-        {isAddingEntry ? (
-          <CashFlowForm 
-            editingEntry={editingEntry}
-            onEntryAdded={() => {
-              // Callback necessário mas manipulamos o sucesso de forma diferente
-            }}
-            onEditComplete={() => {
-              setIsAddingEntry(false);
-              setEditingEntry(null);
-              toast.success("Transação salva com sucesso");
-            }}
-            onCancel={handleBackToList}
-          />
-        ) : (
-          <CashFlowOverview 
-            onEdit={handleEditEntry}
-          />
-        )}
+        <div className="w-full overflow-hidden">
+          {isAddingEntry ? (
+            <CashFlowForm 
+              editingEntry={editingEntry}
+              onEntryAdded={() => {
+                // Callback necessário mas manipulamos o sucesso de forma diferente
+              }}
+              onEditComplete={() => {
+                setIsAddingEntry(false);
+                setEditingEntry(null);
+                toast.success("Transação salva com sucesso");
+              }}
+              onCancel={handleBackToList}
+            />
+          ) : (
+            <CashFlowOverview 
+              onEdit={handleEditEntry}
+            />
+          )}
+        </div>
       </div>
     </ModernLayout>
   );

@@ -1,180 +1,393 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, PieChart } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { FinancialDataService } from "@/services/FinancialDataService";
-
-// Interface para dados de CMV
-interface CMVCategory {
-  name: string;
-  sales: number;
-  cost: number;
-  cmvPercentage: number;
-  color: string;
-}
-
-interface CMVData {
-  period: string;
-  overallCMV: number;
-  categories: CMVCategory[];
-  benchmarks: {
-    industry: number;
-    target: number;
-    previous: number;
-  };
-}
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, Calculator, Package, FileDown } from "lucide-react";
+import { getFinancialData } from "@/services/FinancialDataService";
+import jsPDF from 'jspdf';
+import { toast } from "sonner";
 
 export function CMVAnalysis() {
-  const [cmvData, setCmvData] = useState<CMVData | null>(null);
-  const [selectedView, setSelectedView] = useState("overview");
-  
-  const viewOptions = [
-    { id: "overview", label: "Visão Geral" },
-    { id: "categories", label: "Por Categorias" },
-    { id: "trends", label: "Tendência Mensal" }
-  ];
+  const [cmvData, setCmvData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Carregar dados do CMV
-    const loadCMVData = () => {
-      // Obter dados financeiros atualizados usando nova estrutura
-      const financialData = FinancialDataService.getFinancialData();
-      
-      // Gerar dados de CMV com base nos dados financeiros
-      const data = generateCMVData(financialData);
-      setCmvData(data);
-    };
-
-    // Carregar dados iniciais
     loadCMVData();
-    
-    // Adicionar listener para atualizações nos dados financeiros
-    const handleFinancialDataUpdate = () => {
-      loadCMVData();
-    };
-    
-    window.addEventListener("financialDataUpdated", handleFinancialDataUpdate);
-    
-    return () => {
-      window.removeEventListener("financialDataUpdated", handleFinancialDataUpdate);
-    };
   }, []);
 
-  // Função para formatar moeda
+  const loadCMVData = () => {
+    setIsLoading(true);
+    try {
+      // Load cash flow data
+      const cashFlowData = localStorage.getItem('cashFlowEntries');
+      const entries = cashFlowData ? JSON.parse(cashFlowData) : [];
+      
+      // Load restaurant config
+      const restaurantData = localStorage.getItem('restaurantData');
+      const config = restaurantData ? JSON.parse(restaurantData) : {};
+      
+      // Filter food and beverage purchases
+      const foodPurchases = entries.filter((entry: any) => 
+        entry.type === 'expense' && 
+        (entry.category === 'food_supplies' || entry.category === 'beverage_supplies')
+      );
+      
+      // Filter sales
+      const salesEntries = entries.filter((entry: any) => entry.type === 'income');
+      
+      // Calculate totals
+      const totalFoodCost = foodPurchases
+        .filter((entry: any) => entry.category === 'food_supplies')
+        .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+        
+      const totalBeverageCost = foodPurchases
+        .filter((entry: any) => entry.category === 'beverage_supplies')
+        .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+        
+      const totalSales = salesEntries.reduce((sum: number, entry: any) => sum + entry.amount, 0);
+      
+      const totalCMV = totalFoodCost + totalBeverageCost;
+      const cmvPercentage = totalSales > 0 ? (totalCMV / totalSales) * 100 : 0;
+      const foodCostPercentage = totalSales > 0 ? (totalFoodCost / totalSales) * 100 : 0;
+      const beverageCostPercentage = totalSales > 0 ? (totalBeverageCost / totalSales) * 100 : 0;
+      
+      // Get targets from config
+      const targetFoodCost = config.targetFoodCost || 30;
+      const targetBeverageCost = config.targetBeverageCost || 25;
+      
+      // Create monthly trend data
+      const monthlyData = [];
+      const now = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        
+        const monthEntries = entries.filter((entry: any) => {
+          const entryDate = new Date(entry.date);
+          return entryDate.getMonth() + 1 === month && entryDate.getFullYear() === year;
+        });
+        
+        const monthSales = monthEntries
+          .filter((entry: any) => entry.type === 'income')
+          .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+          
+        const monthFoodCost = monthEntries
+          .filter((entry: any) => entry.type === 'expense' && entry.category === 'food_supplies')
+          .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+          
+        const monthBeverageCost = monthEntries
+          .filter((entry: any) => entry.type === 'expense' && entry.category === 'beverage_supplies')
+          .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+        
+        const monthCMV = monthSales > 0 ? ((monthFoodCost + monthBeverageCost) / monthSales) * 100 : 0;
+        
+        monthlyData.push({
+          month: date.toLocaleDateString('pt-BR', { month: 'short' }),
+          cmv: monthCMV,
+          vendas: monthSales,
+          custoAlimentos: monthFoodCost,
+          custoBebidas: monthBeverageCost
+        });
+      }
+      
+      // Category breakdown
+      const categoryData = [
+        { name: 'Alimentos', valor: totalFoodCost, percentual: foodCostPercentage, meta: targetFoodCost },
+        { name: 'Bebidas', valor: totalBeverageCost, percentual: beverageCostPercentage, meta: targetBeverageCost }
+      ];
+      
+      setCmvData({
+        totalCMV,
+        cmvPercentage,
+        totalFoodCost,
+        totalBeverageCost,
+        foodCostPercentage,
+        beverageCostPercentage,
+        totalSales,
+        targetFoodCost,
+        targetBeverageCost,
+        monthlyData,
+        categoryData,
+        foodPurchases
+      });
+      
+    } catch (error) {
+      console.error('Error loading CMV data:', error);
+      setCmvData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const exportToPDF = () => {
+    if (!cmvData) {
+      toast.error("Nenhum dado disponível para exportar");
+      return;
+    }
+
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let yPosition = 30;
+      
+      // Header
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Análise CMV - Custo da Mercadoria Vendida', pageWidth / 2, yPosition, { align: 'center' });
+      
+      yPosition += 15;
+      pdf.setFontSize(12);
+      const currentDate = new Date().toLocaleDateString('pt-BR');
+      pdf.text(`Gerado em: ${currentDate}`, pageWidth / 2, yPosition, { align: 'center' });
+      
+      yPosition += 20;
+      
+      // CMV Summary
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Resumo CMV', 20, yPosition);
+      yPosition += 15;
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      
+      pdf.text(`CMV Total: R$ ${cmvData.totalCMV.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.text(`Percentual CMV: ${cmvData.cmvPercentage.toFixed(2)}%`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.text(`Vendas Totais: R$ ${cmvData.totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, yPosition);
+      yPosition += 15;
+      
+      // Category breakdown
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Análise por Categoria', 20, yPosition);
+      yPosition += 15;
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      
+      cmvData.categoryData.forEach((category: any) => {
+        const status = category.percentual <= category.meta ? 'Dentro da Meta' : 'Acima da Meta';
+        const color = category.percentual <= category.meta ? [0, 128, 0] : [255, 0, 0];
+        
+        pdf.text(`${category.name}:`, 20, yPosition);
+        yPosition += 8;
+        pdf.text(`  Custo: R$ ${category.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 25, yPosition);
+        yPosition += 8;
+        pdf.text(`  Percentual: ${category.percentual.toFixed(2)}% (Meta: ${category.meta}%)`, 25, yPosition);
+        yPosition += 8;
+        pdf.setTextColor(...color);
+        pdf.text(`  Status: ${status}`, 25, yPosition);
+        pdf.setTextColor(0, 0, 0);
+        yPosition += 12;
+      });
+      
+      const fileName = `cmv-analise-${currentDate.replace(/\//g, '-')}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success("Relatório CMV exportado com sucesso!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Erro ao gerar PDF");
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL',
+      currency: 'BRL'
     }).format(value);
   };
 
-  // Função para determinar cor baseada no valor do CMV
-  const getCMVStatusColor = (cmvPercentage: number) => {
-    if (cmvPercentage <= 28) return "text-green-600";
-    if (cmvPercentage <= 32) return "text-yellow-600";
-    return "text-red-600";
-  };
-
-  if (!cmvData) {
-    return <div className="flex justify-center items-center h-64">Carregando dados...</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-24 bg-muted rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // Dados para o gráfico de tendência mensal
-  const trendData = [
-    { month: "Jan", cmv: 33.2 },
-    { month: "Fev", cmv: 32.8 },
-    { month: "Mar", cmv: 31.5 },
-    { month: "Abr", cmv: 30.9 },
-    { month: "Mai", cmv: 30.3 }
-  ];
+  if (!cmvData) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <p className="text-muted-foreground">Nenhum dado de CMV encontrado</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <PieChart className="h-5 w-5 text-muted-foreground" />
-          <Select value={selectedView} onValueChange={setSelectedView}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Selecione uma visualização" />
-            </SelectTrigger>
-            <SelectContent>
-              {viewOptions.map((option) => (
-                <SelectItem key={option.id} value={option.id}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="space-y-4 sm:space-y-6 w-full overflow-hidden">
+      <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
+        <div>
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Análise CMV</h2>
+          <p className="text-muted-foreground text-sm">
+            Custo da Mercadoria Vendida atualizado automaticamente
+          </p>
         </div>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={exportToPDF}>
           <FileDown className="mr-2 h-4 w-4" />
-          Exportar Relatório
+          Exportar PDF
         </Button>
       </div>
 
-      {selectedView === "overview" && (
-        <div className="space-y-6">
-          {/* CMV Geral */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="md:col-span-1">
+      {/* Key Metrics */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">CMV Total</CardTitle>
+            <Calculator className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl sm:text-2xl font-bold">
+              {formatCurrency(cmvData.totalCMV)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {cmvData.cmvPercentage.toFixed(1)}% das vendas
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Custo Alimentos</CardTitle>
+            <Package className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl sm:text-2xl font-bold">
+              {formatCurrency(cmvData.totalFoodCost)}
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground">
+                {cmvData.foodCostPercentage.toFixed(1)}%
+              </p>
+              <Badge variant={cmvData.foodCostPercentage <= cmvData.targetFoodCost ? "default" : "destructive"}>
+                Meta: {cmvData.targetFoodCost}%
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Custo Bebidas</CardTitle>
+            <Package className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl sm:text-2xl font-bold">
+              {formatCurrency(cmvData.totalBeverageCost)}
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground">
+                {cmvData.beverageCostPercentage.toFixed(1)}%
+              </p>
+              <Badge variant={cmvData.beverageCostPercentage <= cmvData.targetBeverageCost ? "default" : "destructive"}>
+                Meta: {cmvData.targetBeverageCost}%
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Tabs */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 text-xs sm:text-sm">
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="categories">Por Categorias</TabsTrigger>
+          <TabsTrigger value="trend">Tendência Mensal</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg">CMV Atual</CardTitle>
-                <CardDescription>Maio 2025</CardDescription>
+                <CardTitle className="text-base sm:text-lg">CMV vs Vendas (Últimos 6 Meses)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center">
-                  <div className={`text-4xl font-bold ${getCMVStatusColor(cmvData.overallCMV)}`}>
-                    {cmvData.overallCMV.toFixed(1)}%
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {cmvData.overallCMV <= cmvData.benchmarks.target
-                      ? "Abaixo da meta estabelecida"
-                      : "Acima da meta estabelecida"}
-                  </p>
-                </div>
-                
-                <div className="mt-6 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm">Meta</p>
-                    <p className="font-medium">{cmvData.benchmarks.target}%</p>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm">Média do Setor</p>
-                    <p className="font-medium">{cmvData.benchmarks.industry}%</p>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm">Mês Anterior</p>
-                    <p className="font-medium">{cmvData.benchmarks.previous}%</p>
-                  </div>
+                <div className="h-[250px] sm:h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={cmvData.monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" fontSize={12} />
+                      <YAxis fontSize={12} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="vendas" fill="#10b981" name="Vendas" />
+                      <Bar dataKey="custoAlimentos" fill="#3b82f6" name="Custo Alimentos" />
+                      <Bar dataKey="custoBebidas" fill="#f59e0b" name="Custo Bebidas" />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
-            
-            <Card className="md:col-span-2">
+
+            <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Análise por Categoria</CardTitle>
-                <CardDescription>CMV por tipo de produto</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Distribuição de Custos</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {cmvData.categories.map((category) => (
-                    <div key={category.name}>
-                      <div className="flex justify-between items-center mb-1">
-                        <p className="text-sm font-medium">{category.name}</p>
-                        <p className={`font-medium ${getCMVStatusColor(category.cmvPercentage)}`}>
-                          {category.cmvPercentage.toFixed(1)}%
-                        </p>
+                <div className="h-[250px] sm:h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={cmvData.categoryData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        dataKey="valor"
+                        label={(entry) => `${entry.name}: ${formatCurrency(entry.valor)}`}
+                      >
+                        {cmvData.categoryData.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="categories" className="space-y-4">
+          <div className="w-full overflow-x-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base sm:text-lg">Análise Detalhada por Categoria</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {cmvData.categoryData.map((category: any, index: number) => (
+                    <div key={category.name} className="p-4 border rounded-lg">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                        <h4 className="font-semibold">{category.name}</h4>
+                        <Badge variant={category.percentual <= category.meta ? "default" : "destructive"}>
+                          {category.percentual <= category.meta ? "Dentro da Meta" : "Acima da Meta"}
+                        </Badge>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div
-                          className="h-2.5 rounded-full"
-                          style={{
-                            width: `${Math.min(100, category.cmvPercentage * 2)}%`,
-                            backgroundColor: category.color
-                          }}
-                        ></div>
+                      <div className="mt-2 space-y-1 text-sm">
+                        <p>Custo Total: {formatCurrency(category.valor)}</p>
+                        <p>Percentual: {category.percentual.toFixed(2)}%</p>
+                        <p>Meta: {category.meta}%</p>
+                        <p>Diferença: {(category.percentual - category.meta).toFixed(2)} pontos percentuais</p>
                       </div>
                     </div>
                   ))}
@@ -182,195 +395,32 @@ export function CMVAnalysis() {
               </CardContent>
             </Card>
           </div>
-          
-          {/* Recomendações */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recomendações para Redução de CMV</CardTitle>
-              <CardDescription>Sugestões automáticas baseadas em seus dados</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 list-disc pl-5">
-                <li>A categoria <strong>Bebidas</strong> está com CMV acima da meta. Revise os preços de venda ou negocie melhores condições com fornecedores.</li>
-                <li>Existem <strong>3 itens</strong> no cardápio com CMV acima de 40%. Considere ajustar porções ou revisar receitas.</li>
-                <li>O desperdício estimado está impactando em aproximadamente <strong>2.5%</strong> no CMV total. Implemente controles mais rígidos na cozinha.</li>
-                <li>Registros incorretos de estoque podem estar causando distorções no cálculo do CMV. Reforce os procedimentos de entrada e saída de mercadorias.</li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        </TabsContent>
 
-      {selectedView === "categories" && (
-        <div className="space-y-6">
-          {/* Tabela detalhada por categoria */}
-          <Card>
-            <CardHeader>
-              <CardTitle>CMV Detalhado por Categoria</CardTitle>
-              <CardDescription>Análise de Custo vs. Venda</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4">Categoria</th>
-                      <th className="text-right py-3 px-4">Vendas (R$)</th>
-                      <th className="text-right py-3 px-4">Custo (R$)</th>
-                      <th className="text-right py-3 px-4">CMV (%)</th>
-                      <th className="text-right py-3 px-4">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cmvData.categories.map((category) => (
-                      <tr key={category.name} className="border-b">
-                        <td className="py-3 px-4">{category.name}</td>
-                        <td className="text-right py-3 px-4">{formatCurrency(category.sales)}</td>
-                        <td className="text-right py-3 px-4">{formatCurrency(category.cost)}</td>
-                        <td className={`text-right py-3 px-4 font-medium ${getCMVStatusColor(category.cmvPercentage)}`}>
-                          {category.cmvPercentage.toFixed(1)}%
-                        </td>
-                        <td className="text-right py-3 px-4">
-                          <span className={`inline-block px-2 py-1 rounded-full text-xs 
-                            ${category.cmvPercentage <= 28 ? 'bg-green-100 text-green-800' : 
-                              category.cmvPercentage <= 32 ? 'bg-yellow-100 text-yellow-800' : 
-                              'bg-red-100 text-red-800'}`}>
-                            {category.cmvPercentage <= 28 ? 'Ótimo' : 
-                             category.cmvPercentage <= 32 ? 'Aceitável' : 
-                             'Alto'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    <tr className="font-medium bg-muted/50">
-                      <td className="py-3 px-4">TOTAL / MÉDIA</td>
-                      <td className="text-right py-3 px-4">
-                        {formatCurrency(cmvData.categories.reduce((sum, cat) => sum + cat.sales, 0))}
-                      </td>
-                      <td className="text-right py-3 px-4">
-                        {formatCurrency(cmvData.categories.reduce((sum, cat) => sum + cat.cost, 0))}
-                      </td>
-                      <td className={`text-right py-3 px-4 ${getCMVStatusColor(cmvData.overallCMV)}`}>
-                        {cmvData.overallCMV.toFixed(1)}%
-                      </td>
-                      <td className="text-right py-3 px-4"></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {selectedView === "trends" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Evolução do CMV</CardTitle>
-            <CardDescription>Tendência dos últimos meses</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={trendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis domain={[25, 35]} tickFormatter={(value) => `${value}%`} />
-                  <Tooltip formatter={(value) => `${value}%`} />
-                  <Legend />
-                  <Bar 
-                    dataKey="cmv" 
-                    name="CMV %" 
-                    fill="#4f46e5" 
-                    radius={[4, 4, 0, 0]} 
-                  />
-                  {/* Reference Line for Target */}
-                  <svg>
-                    <defs>
-                      <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5"
-                              markerWidth="6" markerHeight="6" orient="auto">
-                        <path d="M 0 0 L 10 5 L 0 10 z" fill="green"/>
-                      </marker>
-                    </defs>
-                    <line x1="0%" y1="62%" x2="100%" y2="62%" stroke="green" 
-                          strokeWidth="2" strokeDasharray="5,5" />
-                    <text x="95%" y="60%" fill="green" fontSize="12">Meta: 30%</text>
-                  </svg>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 text-sm text-muted-foreground">
-              <p>A tendência mostra uma redução gradual no CMV ao longo dos últimos meses, indicando uma melhoria na gestão de custos.</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="trend" className="space-y-4">
+          <div className="w-full overflow-x-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base sm:text-lg">Tendência CMV Mensal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[250px] sm:h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={cmvData.monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" fontSize={12} />
+                      <YAxis fontSize={12} />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="cmv" stroke="#ef4444" strokeWidth={2} name="CMV %" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
-}
-
-// Função para gerar dados de CMV com base nos dados financeiros
-function generateCMVData(financialData: any): CMVData {
-  // Usar categorias de CMV dos dados financeiros se disponíveis
-  const cmvCategories = financialData?.cmvCategories?.length 
-    ? financialData.cmvCategories
-    : [
-        {
-          name: "Pratos Principais",
-          sales: 85000,
-          cost: 25500,
-          cmvPercentage: 30.0,
-          color: "#4f46e5"
-        },
-        {
-          name: "Entradas",
-          sales: 28000,
-          cost: 7280,
-          cmvPercentage: 26.0,
-          color: "#16a34a"
-        },
-        {
-          name: "Sobremesas",
-          sales: 18000,
-          cost: 4680,
-          cmvPercentage: 26.0,
-          color: "#ea580c"
-        },
-        {
-          name: "Bebidas Alcoólicas",
-          sales: 35000,
-          cost: 12600,
-          cmvPercentage: 36.0,
-          color: "#dc2626"
-        },
-        {
-          name: "Bebidas Não Alcoólicas",
-          sales: 14000,
-          cost: 3360,
-          cmvPercentage: 24.0,
-          color: "#0ea5e9"
-        }
-      ];
-
-  // Calcular CMV geral
-  let totalSales = 0;
-  let totalCosts = 0;
-  
-  cmvCategories.forEach(category => {
-    totalSales += category.sales;
-    totalCosts += category.cost;
-  });
-  
-  const overallCMV = totalSales > 0 ? (totalCosts / totalSales * 100) : 0;
-  
-  return {
-    period: "Maio 2025",
-    overallCMV,
-    categories: cmvCategories,
-    benchmarks: {
-      industry: 32.0,
-      target: 30.0,
-      previous: 30.9
-    }
-  };
 }

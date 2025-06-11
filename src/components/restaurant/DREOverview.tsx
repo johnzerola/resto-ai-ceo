@@ -1,505 +1,350 @@
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, Calendar } from "lucide-react";
-import { FinancialDataService } from "@/services/FinancialDataService";
 
-// Interface para dados do DRE
-interface DREData {
-  period: string;
-  revenue: {
-    foodSales: number;
-    beverageSales: number;
-    deliverySales: number;
-    otherSales: number;
-    total: number;
-  };
-  costs: {
-    foodCost: number;
-    beverageCost: number;
-    packagingCost: number;
-    otherCosts: number;
-    total: number;
-  };
-  grossProfit: number;
-  expenses: {
-    labor: number;
-    rent: number;
-    utilities: number;
-    marketing: number;
-    maintenance: number;
-    administrative: number;
-    depreciation: number;
-    otherExpenses: number;
-    total: number;
-  };
-  operatingProfit: number;
-  taxes: number;
-  netProfit: number;
-}
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Calendar, TrendingUp, TrendingDown, DollarSign, FileDown } from "lucide-react";
+import { getFinancialData } from "@/services/FinancialDataService";
+import jsPDF from 'jspdf';
+import { toast } from "sonner";
 
 export function DREOverview() {
-  const [dreData, setDreData] = useState<DREData | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState("current");
-  const [hasData, setHasData] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState("month");
+  const [dreData, setDreData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Períodos disponíveis
-  const periods = [
-    { id: "current", label: "Mês Atual (Maio 2025)" },
-    { id: "previous", label: "Mês Anterior (Abril 2025)" },
-    { id: "ytd", label: "Acumulado do Ano" },
-    { id: "q1", label: "1º Trimestre 2025" },
-    { id: "q2", label: "2º Trimestre 2025" }
-  ];
-
-  // Carregar dados financeiros e atualizar o DRE quando houver alterações
   useEffect(() => {
-    const loadDREData = () => {
-      // Obter dados financeiros atualizados usando nova estrutura
-      const financialData = FinancialDataService.getFinancialData();
-      
-      // Verificar se há dados reais no sistema
-      const cashFlowData = localStorage.getItem("cashFlow");
-      const hasCashFlowData = cashFlowData && JSON.parse(cashFlowData).length > 0;
-      
-      if (hasCashFlowData) {
-        // Gerar dados do DRE com base no período selecionado e nos dados financeiros
-        const data = generateDREData(selectedPeriod, financialData);
-        setDreData(data);
-        setHasData(true);
-      } else {
-        setDreData(null);
-        setHasData(false);
-      }
-    };
-
-    // Carregar dados iniciais
     loadDREData();
-    
-    // Adicionar listener para atualizações nos dados financeiros
-    const handleFinancialDataUpdate = () => {
-      loadDREData();
-    };
-    
-    window.addEventListener("financialDataUpdated", handleFinancialDataUpdate);
-    
-    return () => {
-      window.removeEventListener("financialDataUpdated", handleFinancialDataUpdate);
-    };
   }, [selectedPeriod]);
 
-  // Função para formatar moeda
+  const loadDREData = () => {
+    setIsLoading(true);
+    try {
+      // Get current month and year
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      
+      // Load cash flow data
+      const cashFlowData = localStorage.getItem('cashFlowEntries');
+      const entries = cashFlowData ? JSON.parse(cashFlowData) : [];
+      
+      // Filter entries for current period
+      const filteredEntries = entries.filter((entry: any) => {
+        const entryDate = new Date(entry.date);
+        const entryMonth = entryDate.getMonth() + 1;
+        const entryYear = entryDate.getFullYear();
+        
+        if (selectedPeriod === "month") {
+          return entryMonth === currentMonth && entryYear === currentYear;
+        } else if (selectedPeriod === "year") {
+          return entryYear === currentYear;
+        }
+        return true;
+      });
+
+      // Calculate totals
+      const totalRevenue = filteredEntries
+        .filter((entry: any) => entry.type === 'income')
+        .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+
+      const totalExpenses = filteredEntries
+        .filter((entry: any) => entry.type === 'expense')
+        .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+
+      const netProfit = totalRevenue - totalExpenses;
+      const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+      // Categorize expenses
+      const expensesByCategory = filteredEntries
+        .filter((entry: any) => entry.type === 'expense')
+        .reduce((acc: any, entry: any) => {
+          acc[entry.category] = (acc[entry.category] || 0) + entry.amount;
+          return acc;
+        }, {});
+
+      // Create monthly comparison data (last 6 months)
+      const monthlyData = [];
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(currentYear, currentMonth - 1 - i, 1);
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        
+        const monthEntries = entries.filter((entry: any) => {
+          const entryDate = new Date(entry.date);
+          return entryDate.getMonth() + 1 === month && entryDate.getFullYear() === year;
+        });
+
+        const monthRevenue = monthEntries
+          .filter((entry: any) => entry.type === 'income')
+          .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+
+        const monthExpenses = monthEntries
+          .filter((entry: any) => entry.type === 'expense')
+          .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+
+        monthlyData.push({
+          month: date.toLocaleDateString('pt-BR', { month: 'short' }),
+          receitas: monthRevenue,
+          despesas: monthExpenses,
+          lucro: monthRevenue - monthExpenses
+        });
+      }
+
+      setDreData({
+        period: selectedPeriod === "month" ? `${currentMonth}/${currentYear}` : currentYear.toString(),
+        totalRevenue,
+        totalExpenses,
+        netProfit,
+        profitMargin,
+        expensesByCategory,
+        monthlyData,
+        entries: filteredEntries
+      });
+
+    } catch (error) {
+      console.error('Error loading DRE data:', error);
+      setDreData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const exportToPDF = () => {
+    if (!dreData) {
+      toast.error("Nenhum dado disponível para exportar");
+      return;
+    }
+
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let yPosition = 30;
+      
+      // Header
+      pdf.setFontSize(20);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Demonstrativo de Resultados (DRE)', pageWidth / 2, yPosition, { align: 'center' });
+      
+      yPosition += 15;
+      pdf.setFontSize(12);
+      pdf.text(`Período: ${dreData.period}`, pageWidth / 2, yPosition, { align: 'center' });
+      
+      yPosition += 20;
+      
+      // Financial Summary
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Resumo Financeiro', 20, yPosition);
+      yPosition += 15;
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'normal');
+      
+      pdf.setTextColor(0, 128, 0);
+      pdf.text(`Receitas Totais: R$ ${dreData.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.setTextColor(255, 0, 0);
+      pdf.text(`Despesas Totais: R$ ${dreData.totalExpenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.setTextColor(dreData.netProfit >= 0 ? 0 : 255, dreData.netProfit >= 0 ? 0 : 0, 0);
+      pdf.text(`Lucro Líquido: R$ ${dreData.netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, yPosition);
+      yPosition += 10;
+      
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`Margem de Lucro: ${dreData.profitMargin.toFixed(2)}%`, 20, yPosition);
+      yPosition += 20;
+      
+      // Expenses by Category
+      if (Object.keys(dreData.expensesByCategory).length > 0) {
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Despesas por Categoria', 20, yPosition);
+        yPosition += 15;
+        
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        
+        Object.entries(dreData.expensesByCategory).forEach(([category, amount]) => {
+          pdf.text(`${category}: R$ ${(amount as number).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, yPosition);
+          yPosition += 8;
+        });
+      }
+      
+      const fileName = `dre-${dreData.period.replace('/', '-')}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success("DRE exportado com sucesso!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Erro ao gerar PDF");
+    }
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL',
+      currency: 'BRL'
     }).format(value);
   };
 
-  // Função para calcular porcentagem
-  const calculatePercentage = (value: number, total: number) => {
-    if (total === 0) return 0;
-    return (value / total) * 100;
-  };
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
-  // Função para determinar a cor baseada no valor (positivo/negativo)
-  const getValueColor = (value: number) => {
-    return value >= 0 ? "text-green-600" : "text-red-600";
-  };
-
-  if (!hasData) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-muted-foreground" />
-            <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="w-full sm:w-[250px]">
-                <SelectValue placeholder="Selecione um período" />
-              </SelectTrigger>
-              <SelectContent>
-                {periods.map((period) => (
-                  <SelectItem key={period.id} value={period.id}>
-                    {period.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-24 bg-muted rounded"></div>
+            ))}
           </div>
-          <Button variant="outline" size="sm" disabled>
-            <FileDown className="mr-2 h-4 w-4" />
-            Exportar DRE
-          </Button>
         </div>
-
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                <Calendar className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-lg font-semibold">Nenhum dado disponível</h3>
-                <p className="text-muted-foreground text-sm max-w-md">
-                  O DRE será preenchido automaticamente conforme você registrar transações no Fluxo de Caixa.
-                  Comece adicionando suas primeiras receitas e despesas.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
   if (!dreData) {
-    return <div className="flex justify-center items-center h-64">Carregando dados...</div>;
-  }
-
-  return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <Calendar className="h-5 w-5 text-muted-foreground" />
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-full sm:w-[250px]">
-              <SelectValue placeholder="Selecione um período" />
-            </SelectTrigger>
-            <SelectContent>
-              {periods.map((period) => (
-                <SelectItem key={period.id} value={period.id}>
-                  {period.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button variant="outline" size="sm" className="w-full sm:w-auto">
-          <FileDown className="mr-2 h-4 w-4" />
-          Exportar DRE
-        </Button>
-      </div>
-
+    return (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg sm:text-xl">Demonstrativo de Resultado do Exercício</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs sm:text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 sm:py-3 px-2 sm:px-4 min-w-[200px]">Categoria</th>
-                  <th className="text-right py-2 sm:py-3 px-2 sm:px-4 min-w-[120px]">Valor (R$)</th>
-                  <th className="text-right py-2 sm:py-3 px-2 sm:px-4 min-w-[100px]">% da Receita</th>
-                </tr>
-              </thead>
-              <tbody>
-                {/* Receitas */}
-                <tr className="font-medium bg-muted/50">
-                  <td colSpan={3} className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">1. RECEITA BRUTA OPERACIONAL</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Alimentos</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.revenue.foodSales)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.revenue.foodSales, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Bebidas</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.revenue.beverageSales)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.revenue.beverageSales, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Delivery</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.revenue.deliverySales)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.revenue.deliverySales, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Outros</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.revenue.otherSales)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.revenue.otherSales, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b font-medium">
-                  <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">RECEITA TOTAL</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.revenue.total)}</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">100%</td>
-                </tr>
-
-                {/* Custos de Mercadoria Vendida (CMV) */}
-                <tr className="font-medium bg-muted/50">
-                  <td colSpan={3} className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">2. CUSTO DE MERCADORIA VENDIDA (CMV)</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Custo de Alimentos</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.costs.foodCost)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.costs.foodCost, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Custo de Bebidas</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.costs.beverageCost)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.costs.beverageCost, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Embalagens</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.costs.packagingCost)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.costs.packagingCost, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Outros Custos</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.costs.otherCosts)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.costs.otherCosts, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b font-medium">
-                  <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">TOTAL CMV</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.costs.total)}</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.costs.total, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-
-                {/* Lucro Bruto */}
-                <tr className="border-b font-medium bg-green-50">
-                  <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">3. LUCRO BRUTO</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.grossProfit)}</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.grossProfit, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-
-                {/* Despesas Operacionais */}
-                <tr className="font-medium bg-muted/50">
-                  <td colSpan={3} className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">4. DESPESAS OPERACIONAIS</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Mão de Obra</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.expenses.labor)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.expenses.labor, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Aluguel</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.expenses.rent)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.expenses.rent, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Concessionárias (Água/Luz/Gás)</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.expenses.utilities)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.expenses.utilities, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Marketing</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.expenses.marketing)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.expenses.marketing, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Manutenção</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.expenses.maintenance)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.expenses.maintenance, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Administrativas</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.expenses.administrative)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.expenses.administrative, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Depreciação</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.expenses.depreciation)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.expenses.depreciation, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b">
-                  <td className="py-1.5 sm:py-2 px-2 sm:px-4 pl-4 sm:pl-8 text-xs sm:text-sm">Outras Despesas</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.expenses.otherExpenses)}</td>
-                  <td className="text-right py-1.5 sm:py-2 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.expenses.otherExpenses, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-                <tr className="border-b font-medium">
-                  <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">TOTAL DESPESAS OPERACIONAIS</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.expenses.total)}</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.expenses.total, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-
-                {/* Lucro Operacional */}
-                <tr className="border-b font-medium bg-green-50">
-                  <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">5. LUCRO OPERACIONAL</td>
-                  <td className={`text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm ${getValueColor(dreData.operatingProfit)}`}>
-                    {formatCurrency(dreData.operatingProfit)}
-                  </td>
-                  <td className={`text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm ${getValueColor(dreData.operatingProfit)}`}>
-                    {calculatePercentage(dreData.operatingProfit, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-
-                {/* Impostos */}
-                <tr className="border-b">
-                  <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">6. IMPOSTOS E TRIBUTOS</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">{formatCurrency(dreData.taxes)}</td>
-                  <td className="text-right py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
-                    {calculatePercentage(dreData.taxes, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-
-                {/* Lucro Líquido */}
-                <tr className="font-medium text-sm sm:text-lg bg-green-100">
-                  <td className="py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-base">7. LUCRO LÍQUIDO</td>
-                  <td className={`text-right py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-base ${getValueColor(dreData.netProfit)}`}>
-                    {formatCurrency(dreData.netProfit)}
-                  </td>
-                  <td className={`text-right py-3 sm:py-4 px-2 sm:px-4 text-xs sm:text-base ${getValueColor(dreData.netProfit)}`}>
-                    {calculatePercentage(dreData.netProfit, dreData.revenue.total).toFixed(1)}%
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <CardContent className="p-6 text-center">
+          <p className="text-muted-foreground">Nenhum dado financeiro encontrado</p>
         </CardContent>
       </Card>
+    );
+  }
+
+  const expensePieData = Object.entries(dreData.expensesByCategory).map(([name, value], index) => ({
+    name,
+    value: value as number,
+    fill: COLORS[index % COLORS.length]
+  }));
+
+  return (
+    <div className="space-y-4 sm:space-y-6 w-full overflow-hidden">
+      <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
+        <div>
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">DRE - {dreData.period}</h2>
+          <p className="text-muted-foreground text-sm">
+            Demonstrativo atualizado automaticamente com o fluxo de caixa
+          </p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={() => setSelectedPeriod("month")} 
+                  className={selectedPeriod === "month" ? "bg-primary text-primary-foreground" : ""}>
+            Mês Atual
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setSelectedPeriod("year")}
+                  className={selectedPeriod === "year" ? "bg-primary text-primary-foreground" : ""}>
+            Ano Atual
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportToPDF}>
+            <FileDown className="mr-2 h-4 w-4" />
+            Exportar PDF
+          </Button>
+        </div>
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Receitas Totais</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl sm:text-2xl font-bold text-green-600">
+              {formatCurrency(dreData.totalRevenue)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Despesas Totais</CardTitle>
+            <TrendingDown className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl sm:text-2xl font-bold text-red-600">
+              {formatCurrency(dreData.totalExpenses)}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Lucro Líquido</CardTitle>
+            <TrendingUp className={`h-4 w-4 ${dreData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-xl sm:text-2xl font-bold ${dreData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {formatCurrency(dreData.netProfit)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Margem: {dreData.profitMargin.toFixed(1)}%
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base sm:text-lg">Evolução Mensal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px] sm:h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dreData.monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" fontSize={12} />
+                  <YAxis fontSize={12} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="receitas" fill="#10b981" name="Receitas" />
+                  <Bar dataKey="despesas" fill="#ef4444" name="Despesas" />
+                  <Bar dataKey="lucro" fill="#3b82f6" name="Lucro" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {expensePieData.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base sm:text-lg">Despesas por Categoria</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px] sm:h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={expensePieData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={(entry) => `${entry.name}: ${formatCurrency(entry.value)}`}
+                    >
+                      {expensePieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
-}
-
-// Função para gerar dados do DRE com base no período e dados financeiros reais
-function generateDREData(periodId: string, financialData: any): DREData {
-  // Base values from actual financial data
-  let multiplier = 1;
-  let periodName = "Maio 2025";
-  
-  // Adjust values based on period
-  switch (periodId) {
-    case "previous":
-      multiplier = 0.92;
-      periodName = "Abril 2025";
-      break;
-    case "ytd":
-      multiplier = 5.2;
-      periodName = "Ano até Maio 2025";
-      break;
-    case "q1":
-      multiplier = 3;
-      periodName = "1º Trimestre 2025";
-      break;
-    case "q2":
-      multiplier = 2.1;
-      periodName = "2º Trimestre 2025";
-      break;
-  }
-  
-  // Use actual financial data from cash flow
-  const cashFlowData = localStorage.getItem("cashFlow");
-  let actualRevenue = 0;
-  let actualExpenses = 0;
-  
-  if (cashFlowData) {
-    const entries = JSON.parse(cashFlowData);
-    actualRevenue = entries
-      .filter((entry: any) => entry.type === 'entrada')
-      .reduce((sum: number, entry: any) => sum + (parseFloat(entry.amount) || 0), 0);
-    
-    actualExpenses = entries
-      .filter((entry: any) => entry.type === 'saida')
-      .reduce((sum: number, entry: any) => sum + (parseFloat(entry.amount) || 0), 0);
-  }
-  
-  // Generate DRE based on actual data
-  const foodSales = actualRevenue * 0.7 * multiplier;
-  const beverageSales = actualRevenue * 0.2 * multiplier;
-  const deliverySales = actualRevenue * 0.08 * multiplier;
-  const otherSales = actualRevenue * 0.02 * multiplier;
-  const totalRevenue = foodSales + beverageSales + deliverySales + otherSales;
-  
-  // Costs calculations based on actual expenses
-  const foodCost = actualExpenses * 0.4 * multiplier;
-  const beverageCost = actualExpenses * 0.15 * multiplier;
-  const packagingCost = actualExpenses * 0.05 * multiplier;
-  const otherCosts = actualExpenses * 0.1 * multiplier;
-  const totalCosts = foodCost + beverageCost + packagingCost + otherCosts;
-  
-  // Gross profit
-  const grossProfit = totalRevenue - totalCosts;
-  
-  // Operational expenses based on actual data
-  const labor = actualExpenses * 0.25 * multiplier;
-  const rent = actualExpenses * 0.08 * multiplier;
-  const utilities = actualExpenses * 0.05 * multiplier;
-  const marketing = actualExpenses * 0.03 * multiplier;
-  const maintenance = actualExpenses * 0.02 * multiplier;
-  const administrative = actualExpenses * 0.04 * multiplier;
-  const depreciation = actualExpenses * 0.01 * multiplier;
-  const otherExpenses = actualExpenses * 0.02 * multiplier;
-  const totalExpenses = labor + rent + utilities + marketing + maintenance + 
-                       administrative + depreciation + otherExpenses;
-  
-  // Operating profit
-  const operatingProfit = grossProfit - totalExpenses;
-  
-  // Taxes
-  const taxes = operatingProfit > 0 ? operatingProfit * 0.15 : 0;
-  
-  // Net profit
-  const netProfit = operatingProfit - taxes;
-  
-  return {
-    period: periodName,
-    revenue: {
-      foodSales,
-      beverageSales,
-      deliverySales,
-      otherSales,
-      total: totalRevenue
-    },
-    costs: {
-      foodCost,
-      beverageCost,
-      packagingCost,
-      otherCosts,
-      total: totalCosts
-    },
-    grossProfit,
-    expenses: {
-      labor,
-      rent,
-      utilities,
-      marketing,
-      maintenance,
-      administrative,
-      depreciation,
-      otherExpenses,
-      total: totalExpenses
-    },
-    operatingProfit,
-    taxes,
-    netProfit
-  };
 }

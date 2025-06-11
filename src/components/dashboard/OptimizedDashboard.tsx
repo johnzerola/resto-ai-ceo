@@ -84,16 +84,6 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
                 </Card>
               </div>
             </div>
-
-            <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-xs text-muted-foreground">
-              <span>Render: {performanceMetrics.renderTime.toFixed(2)}ms</span>
-              <span className="hidden sm:inline">Última atualização: {currentTime.toLocaleTimeString()}</span>
-              <span className="flex items-center gap-1">
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-restauria-green-profit rounded-full animate-pulse"></div>
-                <span className="hidden sm:inline">Sistema otimizado e unificado</span>
-                <span className="sm:hidden">Sistema OK</span>
-              </span>
-            </div>
           </div>
         </div>
 

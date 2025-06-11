@@ -1,129 +1,118 @@
-
 import { useState, useEffect } from 'react';
-import { useRealTimeData } from '@/hooks/useRealTimeData';
-import { getFinancialData } from '@/services/FinancialStorageService';
 
 export interface DashboardStats {
-  todaysSales: number;
-  averageTicket: number;
-  totalGoals: number;
+  totalRevenue: number;
+  totalExpenses: number;
+  netProfit: number;
+  activeGoals: number;
   completedGoals: number;
-  goalCompletionRate: number;
-}
-
-export interface PerformanceMetrics {
-  renderTime: number;
-  dataLoadTime: number;
+  inventoryItems: number;
+  todaySales: number;
+  averageTicket: number;
 }
 
 export function useDashboardPerformance() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
-    todaysSales: 0,
-    averageTicket: 0,
-    totalGoals: 0,
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netProfit: 0,
+    activeGoals: 0,
     completedGoals: 0,
-    goalCompletionRate: 0
+    inventoryItems: 0,
+    todaySales: 0,
+    averageTicket: 0
   });
-  
-  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics>({
-    renderTime: 0,
-    dataLoadTime: 0
-  });
-  
   const [isLoading, setIsLoading] = useState(true);
-  const { financialData, goals, refreshData } = useRealTimeData();
-
-  const calculateDashboardStats = async () => {
-    const startTime = performance.now();
-    
-    try {
-      // Buscar dados do fluxo de caixa do localStorage (key correta)
-      const cashFlowData = localStorage.getItem('cashFlowEntries');
-      const cashFlowEntries = cashFlowData ? JSON.parse(cashFlowData) : [];
-      
-      // Calcular vendas de hoje baseado no fluxo de caixa
-      const today = new Date().toISOString().split('T')[0];
-      const todayEntries = cashFlowEntries.filter((entry: any) => 
-        entry.date === today && entry.type === 'income' && entry.status === 'completed'
-      );
-      
-      const todaysSales = todayEntries.reduce((total: number, entry: any) => total + entry.amount, 0);
-      
-      // Calcular ticket médio
-      const todayCustomers = todayEntries.length || 1; // Evitar divisão por zero
-      const averageTicket = todaysSales / todayCustomers;
-      
-      // Buscar metas
-      const goalsData = localStorage.getItem('goals');
-      const goalsArray = goalsData ? JSON.parse(goalsData) : [];
-      const totalGoals = goalsArray.length;
-      const completedGoals = goalsArray.filter((goal: any) => goal.isCompleted).length;
-      const goalCompletionRate = totalGoals > 0 ? (completedGoals / totalGoals) * 100 : 0;
-      
-      const stats: DashboardStats = {
-        todaysSales,
-        averageTicket,
-        totalGoals,
-        completedGoals,
-        goalCompletionRate
-      };
-      
-      setDashboardStats(stats);
-      
-      const endTime = performance.now();
-      setPerformanceMetrics({
-        renderTime: endTime - startTime,
-        dataLoadTime: endTime - startTime
-      });
-      
-      console.log('Dashboard stats updated:', stats);
-      console.log('Today entries found:', todayEntries);
-    } catch (error) {
-      console.error('Erro ao calcular estatísticas do dashboard:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [performanceMetrics, setPerformanceMetrics] = useState({
+    renderTime: 0,
+    lastUpdate: new Date().toISOString()
+  });
 
   useEffect(() => {
-    calculateDashboardStats();
-    
-    // Escutar mudanças no fluxo de caixa e metas
-    const handleDataUpdate = () => {
-      console.log('Dados atualizados, recalculando dashboard...');
-      calculateDashboardStats();
-    };
+    const loadDashboardData = async () => {
+      const startTime = performance.now();
+      setIsLoading(true);
 
-    // Listeners para atualizações (key correta para fluxo de caixa)
-    window.addEventListener('cashFlowUpdated', handleDataUpdate);
-    window.addEventListener('goalsUpdated', handleDataUpdate);
-    window.addEventListener('financialDataUpdated', handleDataUpdate);
-    
-    // Listener para mudanças no localStorage
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'cashFlowEntries' || e.key === 'goals') {
-        handleDataUpdate();
+      try {
+        // Load financial data from localStorage
+        const cashFlowData = localStorage.getItem('cashFlowEntries');
+        const financialData = cashFlowData ? JSON.parse(cashFlowData) : [];
+
+        // Load goals data
+        const goalsData = localStorage.getItem('goals');
+        const goals = goalsData ? JSON.parse(goalsData) : [];
+
+        // Load inventory data
+        const inventoryData = localStorage.getItem('inventoryItems');
+        const inventory = inventoryData ? JSON.parse(inventoryData) : [];
+
+        // Calculate metrics
+        const totalRevenue = financialData
+          .filter((entry: any) => entry.type === 'income')
+          .reduce((sum: number, entry: any) => sum + (entry.amount || 0), 0);
+
+        const totalExpenses = financialData
+          .filter((entry: any) => entry.type === 'expense')
+          .reduce((sum: number, entry: any) => sum + (entry.amount || 0), 0);
+
+        const activeGoals = goals.filter((goal: any) => !goal.completed).length;
+        const completedGoals = goals.filter((goal: any) => goal.completed).length;
+
+        // Calculate today's sales
+        const today = new Date().toISOString().split('T')[0];
+        const todaySales = financialData
+          .filter((entry: any) => entry.type === 'income' && entry.date === today)
+          .reduce((sum: number, entry: any) => sum + (entry.amount || 0), 0);
+
+        // Calculate average ticket (simple estimation)
+        const totalSalesEntries = financialData.filter((entry: any) => entry.type === 'income').length;
+        const averageTicket = totalSalesEntries > 0 ? totalRevenue / totalSalesEntries : 0;
+
+        setDashboardStats({
+          totalRevenue,
+          totalExpenses,
+          netProfit: totalRevenue - totalExpenses,
+          activeGoals,
+          completedGoals,
+          inventoryItems: inventory.length,
+          todaySales,
+          averageTicket
+        });
+
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        // Keep default values on error
+      } finally {
+        const endTime = performance.now();
+        setPerformanceMetrics({
+          renderTime: endTime - startTime,
+          lastUpdate: new Date().toISOString()
+        });
+        setIsLoading(false);
       }
     };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Atualizar a cada 30 segundos
-    const interval = setInterval(calculateDashboardStats, 30000);
-    
+
+    loadDashboardData();
+
+    // Listen for data updates
+    const handleDataUpdate = () => {
+      loadDashboardData();
+    };
+
+    window.addEventListener('financialDataUpdated', handleDataUpdate);
+    window.addEventListener('goalsUpdated', handleDataUpdate);
+    window.addEventListener('inventoryUpdated', handleDataUpdate);
+
     return () => {
-      window.removeEventListener('cashFlowUpdated', handleDataUpdate);
-      window.removeEventListener('goalsUpdated', handleDataUpdate);
       window.removeEventListener('financialDataUpdated', handleDataUpdate);
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
+      window.removeEventListener('goalsUpdated', handleDataUpdate);
+      window.removeEventListener('inventoryUpdated', handleDataUpdate);
     };
   }, []);
 
   return {
     dashboardStats,
-    performanceMetrics,
     isLoading,
-    refreshData: calculateDashboardStats
+    performanceMetrics
   };
 }

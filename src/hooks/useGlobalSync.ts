@@ -1,70 +1,56 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRealTimeData } from './useRealTimeData';
+import { useState, useEffect } from 'react';
 
-interface GlobalSyncState {
-  lastUpdate: number;
+export interface SyncState {
   isOnline: boolean;
   syncStatus: 'idle' | 'syncing' | 'error';
-  pendingUpdates: number;
+  lastUpdate: string;
 }
 
 export function useGlobalSync() {
-  const { currentRestaurant } = useAuth();
-  const { refreshData } = useRealTimeData();
-  const [syncState, setSyncState] = useState<GlobalSyncState>({
-    lastUpdate: Date.now(),
+  const [syncState, setSyncState] = useState<SyncState>({
     isOnline: navigator.onLine,
     syncStatus: 'idle',
-    pendingUpdates: 0
+    lastUpdate: new Date().toISOString()
   });
 
-  // Monitor network status
   useEffect(() => {
-    const handleOnline = () => setSyncState(prev => ({ ...prev, isOnline: true }));
-    const handleOffline = () => setSyncState(prev => ({ ...prev, isOnline: false }));
+    const handleOnline = () => {
+      setSyncState(prev => ({
+        ...prev,
+        isOnline: true,
+        lastUpdate: new Date().toISOString()
+      }));
+    };
+
+    const handleOffline = () => {
+      setSyncState(prev => ({
+        ...prev,
+        isOnline: false
+      }));
+    };
+
+    const handleDataUpdate = () => {
+      setSyncState(prev => ({
+        ...prev,
+        lastUpdate: new Date().toISOString()
+      }));
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('financialDataUpdated', handleDataUpdate);
+    window.addEventListener('goalsUpdated', handleDataUpdate);
+    window.addEventListener('inventoryUpdated', handleDataUpdate);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('financialDataUpdated', handleDataUpdate);
+      window.removeEventListener('goalsUpdated', handleDataUpdate);
+      window.removeEventListener('inventoryUpdated', handleDataUpdate);
     };
   }, []);
 
-  // Global sync trigger
-  const triggerGlobalSync = useCallback(async () => {
-    if (!currentRestaurant?.id || !syncState.isOnline) return;
-
-    setSyncState(prev => ({ ...prev, syncStatus: 'syncing' }));
-    
-    try {
-      await refreshData();
-      setSyncState(prev => ({ 
-        ...prev, 
-        syncStatus: 'idle',
-        lastUpdate: Date.now(),
-        pendingUpdates: 0
-      }));
-      
-      // Notify all components of successful sync
-      window.dispatchEvent(new CustomEvent('globalSyncComplete'));
-    } catch (error) {
-      setSyncState(prev => ({ ...prev, syncStatus: 'error' }));
-      console.error('Global sync failed:', error);
-    }
-  }, [currentRestaurant?.id, syncState.isOnline, refreshData]);
-
-  // Auto-sync every 2 minutes
-  useEffect(() => {
-    const interval = setInterval(triggerGlobalSync, 2 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [triggerGlobalSync]);
-
-  return {
-    syncState,
-    triggerGlobalSync
-  };
+  return { syncState };
 }
