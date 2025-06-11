@@ -4,468 +4,331 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { TrendingUp, TrendingDown, Calculator, Target, AlertTriangle, CheckCircle } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
-
-interface ForecastData {
-  fixedCosts: number;
-  variableCostPercentage: number;
-  averageTicket: number;
-  estimatedMonthlyCustomers: number;
-  wastePercentage: number;
-  targetProfitMargin: number;
-}
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { TrendingUp, Calculator, Target, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 export function ProfitForecasting() {
-  const [forecastData, setForecastData] = useState<ForecastData>({
-    fixedCosts: 15000,
-    variableCostPercentage: 35,
-    averageTicket: 75,
-    estimatedMonthlyCustomers: 800,
-    wastePercentage: 8,
-    targetProfitMargin: 20
+  const [parameters, setParameters] = useState({
+    period: "6", // months
+    currentRevenue: 0,
+    growthRate: 5, // percentage
+    costReduction: 0, // percentage
+    marketingInvestment: 0,
+    expectedROI: 200 // percentage
   });
 
-  const [projectionPeriod, setProjectionPeriod] = useState<3 | 6 | 12>(6);
+  const [results, setResults] = useState<any>(null);
+  const [projectionData, setProjectionData] = useState<any[]>([]);
 
-  // Calculate key metrics
-  const grossRevenue = forecastData.averageTicket * forecastData.estimatedMonthlyCustomers;
-  const variableCosts = grossRevenue * (forecastData.variableCostPercentage / 100);
-  const wasteCosts = grossRevenue * (forecastData.wastePercentage / 100);
-  const totalCosts = forecastData.fixedCosts + variableCosts + wasteCosts;
-  const netProfit = grossRevenue - totalCosts;
-  const actualProfitMargin = grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0;
+  useEffect(() => {
+    // Load current financial data
+    loadCurrentData();
+  }, []);
 
-  // Generate projection data
-  const generateProjectionData = () => {
-    const months = [];
-    const growthRate = 0.05; // 5% monthly growth assumption
+  const loadCurrentData = () => {
+    const cashFlowData = localStorage.getItem('cashFlowEntries');
+    if (cashFlowData) {
+      try {
+        const entries = JSON.parse(cashFlowData);
+        const currentMonth = new Date().getMonth() + 1;
+        const currentYear = new Date().getFullYear();
+        
+        const currentMonthEntries = entries.filter((entry: any) => {
+          const entryDate = new Date(entry.date);
+          return entryDate.getMonth() + 1 === currentMonth && entryDate.getFullYear() === currentYear;
+        });
+
+        const revenue = currentMonthEntries
+          .filter((entry: any) => entry.type === 'income')
+          .reduce((sum: number, entry: any) => sum + entry.amount, 0);
+
+        setParameters(prev => ({ ...prev, currentRevenue: revenue }));
+      } catch (error) {
+        console.error('Error loading financial data:', error);
+      }
+    }
+  };
+
+  const calculateProjections = () => {
+    const periods = parseInt(parameters.period);
+    const monthlyGrowth = parameters.growthRate / 100 / 12;
+    const costReductionRate = parameters.costReduction / 100;
+    const marketingROI = parameters.expectedROI / 100;
     
-    for (let i = 1; i <= projectionPeriod; i++) {
-      const projectedCustomers = forecastData.estimatedMonthlyCustomers * Math.pow(1 + growthRate, i - 1);
-      const projectedRevenue = forecastData.averageTicket * projectedCustomers;
-      const projectedVariableCosts = projectedRevenue * (forecastData.variableCostPercentage / 100);
-      const projectedWasteCosts = projectedRevenue * (forecastData.wastePercentage / 100);
-      const projectedTotalCosts = forecastData.fixedCosts + projectedVariableCosts + projectedWasteCosts;
-      const projectedProfit = projectedRevenue - projectedTotalCosts;
+    const projections = [];
+    let currentRevenue = parameters.currentRevenue;
+    
+    for (let i = 1; i <= periods; i++) {
+      // Apply growth
+      currentRevenue = currentRevenue * (1 + monthlyGrowth);
       
-      months.push({
+      // Marketing impact
+      const marketingImpact = (parameters.marketingInvestment * marketingROI) / periods;
+      const adjustedRevenue = currentRevenue + marketingImpact;
+      
+      // Cost savings
+      const estimatedCosts = adjustedRevenue * 0.7; // Assuming 70% cost ratio
+      const savedCosts = estimatedCosts * costReductionRate;
+      const netProfit = adjustedRevenue - (estimatedCosts - savedCosts);
+      
+      projections.push({
         month: `Mês ${i}`,
-        revenue: projectedRevenue,
-        costs: projectedTotalCosts,
-        profit: projectedProfit,
-        customers: Math.round(projectedCustomers)
+        receita: Math.round(adjustedRevenue),
+        custos: Math.round(estimatedCosts - savedCosts),
+        lucro: Math.round(netProfit),
+        crescimento: ((adjustedRevenue / parameters.currentRevenue - 1) * 100).toFixed(1)
       });
     }
     
-    return months;
+    setProjectionData(projections);
+    
+    // Calculate summary results
+    const totalRevenue = projections.reduce((sum, p) => sum + p.receita, 0);
+    const totalProfit = projections.reduce((sum, p) => sum + p.lucro, 0);
+    const averageGrowth = projections[projections.length - 1]?.crescimento || 0;
+    
+    setResults({
+      totalRevenue,
+      totalProfit,
+      averageGrowth: parseFloat(averageGrowth),
+      ROI: parameters.marketingInvestment > 0 ? ((totalProfit / parameters.marketingInvestment) * 100).toFixed(1) : 0,
+      breakEvenMonth: projections.findIndex(p => p.lucro > 0) + 1 || "N/A"
+    });
+
+    toast.success("Projeções calculadas com sucesso!");
   };
 
-  const projectionData = generateProjectionData();
-
-  // Analysis and recommendations
-  const getRecommendations = () => {
-    const recommendations = [];
-    
-    if (actualProfitMargin < forecastData.targetProfitMargin) {
-      const deficit = forecastData.targetProfitMargin - actualProfitMargin;
-      recommendations.push({
-        type: "warning",
-        title: "Margem abaixo da meta",
-        description: `Você está ${deficit.toFixed(1)}% abaixo da margem desejada.`,
-        action: "Considere aumentar o ticket médio ou reduzir custos variáveis."
-      });
-    }
-    
-    if (forecastData.wastePercentage > 5) {
-      recommendations.push({
-        type: "error",
-        title: "Desperdício muito alto",
-        description: `${forecastData.wastePercentage}% de desperdício é acima do ideal (3-5%).`,
-        action: "Implemente controles de porcionamento e gestão de estoque."
-      });
-    }
-    
-    if (forecastData.variableCostPercentage > 40) {
-      recommendations.push({
-        type: "warning",
-        title: "Custos variáveis elevados",
-        description: `${forecastData.variableCostPercentage}% está acima do recomendado (30-35%).`,
-        action: "Revise fornecedores e negocie melhores preços."
-      });
-    }
-    
-    if (actualProfitMargin >= forecastData.targetProfitMargin) {
-      recommendations.push({
-        type: "success",
-        title: "Meta atingida!",
-        description: `Margem de ${actualProfitMargin.toFixed(1)}% está dentro do esperado.`,
-        action: "Continue monitorando e considere investir em crescimento."
-      });
-    }
-    
-    return recommendations;
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
-
-  const recommendations = getRecommendations();
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5 text-blue-600" />
-            Projeção Inteligente de Lucros
-          </CardTitle>
-          <p className="text-muted-foreground">
-            Simule diferentes cenários e projete a lucratividade do seu restaurante
-          </p>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="parameters" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="parameters">Parâmetros</TabsTrigger>
-              <TabsTrigger value="results">Resultados</TabsTrigger>
-              <TabsTrigger value="projections">Projeções</TabsTrigger>
-            </TabsList>
+    <div className="w-full overflow-hidden">
+      <Tabs defaultValue="parameters" className="space-y-4">
+        <div className="w-full overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-3 min-w-[300px]">
+            <TabsTrigger value="parameters" className="text-xs sm:text-sm">Parâmetros</TabsTrigger>
+            <TabsTrigger value="results" className="text-xs sm:text-sm">Resultados</TabsTrigger>
+            <TabsTrigger value="projections" className="text-xs sm:text-sm">Projeções</TabsTrigger>
+          </TabsList>
+        </div>
 
-            <TabsContent value="parameters" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="fixedCosts">Custos Fixos Mensais</Label>
-                    <Input
-                      id="fixedCosts"
-                      type="number"
-                      value={forecastData.fixedCosts}
-                      onChange={(e) => setForecastData({
-                        ...forecastData,
-                        fixedCosts: Number(e.target.value)
-                      })}
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="averageTicket">Ticket Médio</Label>
-                    <Input
-                      id="averageTicket"
-                      type="number"
-                      value={forecastData.averageTicket}
-                      onChange={(e) => setForecastData({
-                        ...forecastData,
-                        averageTicket: Number(e.target.value)
-                      })}
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="customers">Clientes Mensais Estimados</Label>
-                    <Input
-                      id="customers"
-                      type="number"
-                      value={forecastData.estimatedMonthlyCustomers}
-                      onChange={(e) => setForecastData({
-                        ...forecastData,
-                        estimatedMonthlyCustomers: Number(e.target.value)
-                      })}
-                      className="mt-1"
-                    />
-                  </div>
+        <TabsContent value="parameters" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Calculator className="h-4 w-4 sm:h-5 sm:w-5" />
+                Configurar Parâmetros da Projeção
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="period" className="text-sm">Período de Projeção</Label>
+                  <Select value={parameters.period} onValueChange={(value) => setParameters(prev => ({ ...prev, period: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">3 meses</SelectItem>
+                      <SelectItem value="6">6 meses</SelectItem>
+                      <SelectItem value="12">12 meses</SelectItem>
+                      <SelectItem value="24">24 meses</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label>Custos Variáveis: {forecastData.variableCostPercentage}%</Label>
-                    <Slider
-                      value={[forecastData.variableCostPercentage]}
-                      onValueChange={(value) => setForecastData({
-                        ...forecastData,
-                        variableCostPercentage: value[0]
-                      })}
-                      max={60}
-                      min={20}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currentRevenue" className="text-sm">Receita Atual Mensal (R$)</Label>
+                  <Input
+                    id="currentRevenue"
+                    type="number"
+                    value={parameters.currentRevenue}
+                    onChange={(e) => setParameters(prev => ({ ...prev, currentRevenue: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0"
+                  />
+                </div>
 
-                  <div>
-                    <Label>Desperdício: {forecastData.wastePercentage}%</Label>
-                    <Slider
-                      value={[forecastData.wastePercentage]}
-                      onValueChange={(value) => setForecastData({
-                        ...forecastData,
-                        wastePercentage: value[0]
-                      })}
-                      max={20}
-                      min={0}
-                      step={0.5}
-                      className="mt-2"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="growthRate" className="text-sm">Taxa de Crescimento Anual (%)</Label>
+                  <Input
+                    id="growthRate"
+                    type="number"
+                    value={parameters.growthRate}
+                    onChange={(e) => setParameters(prev => ({ ...prev, growthRate: parseFloat(e.target.value) || 0 }))}
+                    placeholder="5"
+                  />
+                </div>
 
-                  <div>
-                    <Label>Meta de Margem: {forecastData.targetProfitMargin}%</Label>
-                    <Slider
-                      value={[forecastData.targetProfitMargin]}
-                      onValueChange={(value) => setForecastData({
-                        ...forecastData,
-                        targetProfitMargin: value[0]
-                      })}
-                      max={40}
-                      min={5}
-                      step={1}
-                      className="mt-2"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="costReduction" className="text-sm">Redução de Custos (%)</Label>
+                  <Input
+                    id="costReduction"
+                    type="number"
+                    value={parameters.costReduction}
+                    onChange={(e) => setParameters(prev => ({ ...prev, costReduction: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="marketingInvestment" className="text-sm">Investimento em Marketing (R$)</Label>
+                  <Input
+                    id="marketingInvestment"
+                    type="number"
+                    value={parameters.marketingInvestment}
+                    onChange={(e) => setParameters(prev => ({ ...prev, marketingInvestment: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="expectedROI" className="text-sm">ROI Esperado do Marketing (%)</Label>
+                  <Input
+                    id="expectedROI"
+                    type="number"
+                    value={parameters.expectedROI}
+                    onChange={(e) => setParameters(prev => ({ ...prev, expectedROI: parseFloat(e.target.value) || 0 }))}
+                    placeholder="200"
+                  />
                 </div>
               </div>
-            </TabsContent>
 
-            <TabsContent value="results" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Receita Bruta</p>
-                        <p className="text-2xl font-bold text-green-600">
-                          {formatCurrency(grossRevenue)}
-                        </p>
-                      </div>
-                      <TrendingUp className="h-8 w-8 text-green-600" />
-                    </div>
-                  </CardContent>
-                </Card>
+              <Button onClick={calculateProjections} className="w-full text-sm">
+                <TrendingUp className="mr-2 h-4 w-4" />
+                Calcular Projeções
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Custos Totais</p>
-                        <p className="text-2xl font-bold text-red-600">
-                          {formatCurrency(totalCosts)}
-                        </p>
-                      </div>
-                      <TrendingDown className="h-8 w-8 text-red-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Lucro Líquido</p>
-                        <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(netProfit)}
-                        </p>
-                      </div>
-                      <div className={`p-2 rounded-full ${netProfit >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                        {netProfit >= 0 ? (
-                          <TrendingUp className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 text-red-600" />
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Análise de Margem</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span>Margem Atual:</span>
-                        <Badge className={actualProfitMargin >= forecastData.targetProfitMargin ? "bg-green-500" : "bg-red-500"}>
-                          {actualProfitMargin.toFixed(1)}%
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Meta de Margem:</span>
-                        <Badge variant="outline">{forecastData.targetProfitMargin}%</Badge>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Diferença:</span>
-                        <Badge className={actualProfitMargin >= forecastData.targetProfitMargin ? "bg-green-500" : "bg-red-500"}>
-                          {(actualProfitMargin - forecastData.targetProfitMargin).toFixed(1)}%
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Breakdown de Custos</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-sm">Custos Fixos:</span>
-                        <span className="text-sm font-medium">{formatCurrency(forecastData.fixedCosts)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Custos Variáveis:</span>
-                        <span className="text-sm font-medium">{formatCurrency(variableCosts)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm">Desperdício:</span>
-                        <span className="text-sm font-medium">{formatCurrency(wasteCosts)}</span>
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between font-medium">
-                          <span>Total:</span>
-                          <span>{formatCurrency(totalCosts)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Recommendations */}
+        <TabsContent value="results" className="space-y-4">
+          {results ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Recomendações Inteligentes</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Receita Total Projetada</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {recommendations.map((rec, index) => (
-                      <div key={index} className={`p-4 rounded-lg border ${
-                        rec.type === 'success' ? 'bg-green-50 border-green-200' :
-                        rec.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
-                        'bg-red-50 border-red-200'
-                      }`}>
-                        <div className="flex items-start gap-3">
-                          {rec.type === 'success' ? (
-                            <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                          ) : (
-                            <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                          )}
-                          <div>
-                            <h4 className="font-medium">{rec.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1">{rec.description}</p>
-                            <p className="text-sm font-medium mt-2">{rec.action}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="text-lg sm:text-2xl font-bold text-green-600">
+                    {formatCurrency(results.totalRevenue)}
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            <TabsContent value="projections" className="space-y-6">
-              <div className="flex items-center gap-4 mb-6">
-                <Label>Período de Projeção:</Label>
-                <div className="flex gap-2">
-                  <Button
-                    variant={projectionPeriod === 3 ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setProjectionPeriod(3)}
-                  >
-                    3 meses
-                  </Button>
-                  <Button
-                    variant={projectionPeriod === 6 ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setProjectionPeriod(6)}
-                  >
-                    6 meses
-                  </Button>
-                  <Button
-                    variant={projectionPeriod === 12 ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setProjectionPeriod(12)}
-                  >
-                    12 meses
-                  </Button>
-                </div>
-              </div>
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Projeção de Receita vs Lucro</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Lucro Total Projetado</CardTitle>
+                  <Target className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={projectionData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip formatter={(value: any) => formatCurrency(value)} />
-                      <Line type="monotone" dataKey="revenue" stroke="#3b82f6" name="Receita" strokeWidth={2} />
-                      <Line type="monotone" dataKey="profit" stroke="#10b981" name="Lucro" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  <div className="text-lg sm:text-2xl font-bold text-blue-600">
+                    {formatCurrency(results.totalProfit)}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Crescimento Médio</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg sm:text-2xl font-bold text-purple-600">
+                    {results.averageGrowth}%
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">ROI Marketing</CardTitle>
+                  <Calculator className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg sm:text-2xl font-bold text-orange-600">
+                    {results.ROI}%
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
+                <AlertTriangle className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground text-center text-sm">
+                  Configure os parâmetros e clique em "Calcular Projeções" para ver os resultados
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="projections" className="space-y-4">
+          {projectionData.length > 0 ? (
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg">Projeção de Crescimento</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[250px] sm:h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={projectionData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" fontSize={12} />
+                        <YAxis fontSize={12} />
+                        <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                        <Legend />
+                        <Line type="monotone" dataKey="receita" stroke="#10b981" strokeWidth={2} name="Receita" />
+                        <Line type="monotone" dataKey="lucro" stroke="#3b82f6" strokeWidth={2} name="Lucro" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Evolução de Clientes</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">Comparativo Mensal</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={projectionData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="customers" fill="#8884d8" name="Clientes" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div className="h-[250px] sm:h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={projectionData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" fontSize={12} />
+                        <YAxis fontSize={12} />
+                        <Tooltip formatter={(value: any) => formatCurrency(value)} />
+                        <Legend />
+                        <Bar dataKey="receita" fill="#10b981" name="Receita" />
+                        <Bar dataKey="custos" fill="#ef4444" name="Custos" />
+                        <Bar dataKey="lucro" fill="#3b82f6" name="Lucro" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </CardContent>
               </Card>
-
-              {/* Summary projections */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="pt-6 text-center">
-                    <p className="text-sm text-muted-foreground">Receita Total Projetada</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {formatCurrency(projectionData.reduce((sum, month) => sum + month.revenue, 0))}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{projectionPeriod} meses</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6 text-center">
-                    <p className="text-sm text-muted-foreground">Lucro Total Projetado</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(projectionData.reduce((sum, month) => sum + month.profit, 0))}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{projectionPeriod} meses</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6 text-center">
-                    <p className="text-sm text-muted-foreground">Clientes Total</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {projectionData.reduce((sum, month) => sum + month.customers, 0).toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">{projectionPeriod} meses</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
+                <TrendingUp className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground text-center text-sm">
+                  Nenhuma projeção calculada ainda. Configure os parâmetros e calcule as projeções.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -5,454 +5,391 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Package,
-  Save,
-  X
-} from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Edit, Trash2, Package, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface Insumo {
   id: string;
-  codigo: number | null;
   nome: string;
-  preco_pago: number;
-  volume_embalagem: number;
-  unidade_medida: string;
-  preco_unitario: number;
-  created_at: string;
-  updated_at: string;
+  categoria: string;
+  unidade: string;
+  precoPago: number;
+  volumeEmbalagem: number;
+  fornecedor: string;
+  observacoes?: string;
+  dataAtualizacao: string;
 }
 
-interface InsumoForm {
-  codigo: number | null;
-  nome: string;
-  preco_pago: number;
-  volume_embalagem: number;
-  unidade_medida: string;
-}
+const categorias = [
+  { value: "carnes", label: "Carnes" },
+  { value: "vegetais", label: "Vegetais" },
+  { value: "grãos", label: "Grãos e Cereais" },
+  { value: "laticínios", label: "Laticínios" },
+  { value: "temperos", label: "Temperos e Condimentos" },
+  { value: "bebidas", label: "Bebidas" },
+  { value: "outros", label: "Outros" }
+];
+
+const unidades = [
+  { value: "kg", label: "Quilograma (kg)" },
+  { value: "g", label: "Grama (g)" },
+  { value: "l", label: "Litro (l)" },
+  { value: "ml", label: "Mililitro (ml)" },
+  { value: "un", label: "Unidade" },
+  { value: "cx", label: "Caixa" },
+  { value: "pct", label: "Pacote" }
+];
 
 export function InsumosManager() {
-  const { currentRestaurant } = useAuth();
   const [insumos, setInsumos] = useState<Insumo[]>([]);
-  const [filteredInsumos, setFilteredInsumos] = useState<Insumo[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<InsumoForm>({
-    codigo: null,
-    nome: '',
-    preco_pago: 0,
-    volume_embalagem: 0,
-    unidade_medida: 'kg'
+  const [isAddingInsumo, setIsAddingInsumo] = useState(false);
+  const [editingInsumo, setEditingInsumo] = useState<Insumo | null>(null);
+  const [formData, setFormData] = useState({
+    nome: "",
+    categoria: "",
+    unidade: "",
+    precoPago: "",
+    volumeEmbalagem: "",
+    fornecedor: "",
+    observacoes: ""
   });
 
-  const unidadesMedida = [
-    { value: 'kg', label: 'Quilograma (kg)' },
-    { value: 'g', label: 'Grama (g)' },
-    { value: 'lt', label: 'Litro (lt)' },
-    { value: 'ml', label: 'Mililitro (ml)' },
-    { value: 'unidade', label: 'Unidade' },
-    { value: 'dz', label: 'Dúzia' },
-    { value: 'm', label: 'Metro' },
-    { value: 'cm', label: 'Centímetro' }
-  ];
-
   useEffect(() => {
-    carregarInsumos();
-  }, [currentRestaurant]);
+    loadInsumos();
+  }, []);
 
-  useEffect(() => {
-    filtrarInsumos();
-  }, [insumos, searchTerm]);
-
-  const carregarInsumos = async () => {
-    if (!currentRestaurant?.id) return;
-
-    setIsLoading(true);
+  const loadInsumos = () => {
     try {
-      const { data, error } = await supabase
-        .from('insumos')
-        .select('*')
-        .eq('restaurant_id', currentRestaurant.id)
-        .order('nome');
-
-      if (error) throw error;
-      setInsumos(data || []);
+      const stored = localStorage.getItem("insumos");
+      if (stored) {
+        const parsedInsumos = JSON.parse(stored);
+        setInsumos(Array.isArray(parsedInsumos) ? parsedInsumos : []);
+      }
     } catch (error) {
-      console.error('Erro ao carregar insumos:', error);
-      toast.error('Erro ao carregar insumos');
-    } finally {
-      setIsLoading(false);
+      console.error("Error loading insumos:", error);
+      setInsumos([]);
     }
   };
 
-  const filtrarInsumos = () => {
-    let filtered = insumos;
-
-    if (searchTerm) {
-      filtered = filtered.filter(insumo => 
-        insumo.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (insumo.codigo && insumo.codigo.toString().includes(searchTerm))
-      );
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.nome || !formData.categoria || !formData.unidade || !formData.precoPago || !formData.volumeEmbalagem) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
     }
 
-    setFilteredInsumos(filtered);
+    try {
+      const novoInsumo: Insumo = {
+        id: editingInsumo?.id || crypto.randomUUID(),
+        nome: formData.nome,
+        categoria: formData.categoria,
+        unidade: formData.unidade,
+        precoPago: parseFloat(formData.precoPago),
+        volumeEmbalagem: parseFloat(formData.volumeEmbalagem),
+        fornecedor: formData.fornecedor,
+        observacoes: formData.observacoes,
+        dataAtualizacao: new Date().toISOString()
+      };
+
+      let updatedInsumos;
+      if (editingInsumo) {
+        updatedInsumos = insumos.map(insumo => 
+          insumo.id === editingInsumo.id ? novoInsumo : insumo
+        );
+      } else {
+        updatedInsumos = [...insumos, novoInsumo];
+      }
+
+      localStorage.setItem("insumos", JSON.stringify(updatedInsumos));
+      setInsumos(updatedInsumos);
+      resetForm();
+      toast.success(editingInsumo ? "Insumo atualizado com sucesso!" : "Insumo adicionado com sucesso!");
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('insumosUpdated'));
+    } catch (error) {
+      console.error("Error saving insumo:", error);
+      toast.error("Erro ao salvar insumo");
+    }
   };
 
   const resetForm = () => {
-    setForm({
-      codigo: null,
-      nome: '',
-      preco_pago: 0,
-      volume_embalagem: 0,
-      unidade_medida: 'kg'
+    setFormData({
+      nome: "",
+      categoria: "",
+      unidade: "",
+      precoPago: "",
+      volumeEmbalagem: "",
+      fornecedor: "",
+      observacoes: ""
     });
-    setEditingId(null);
-    setShowForm(false);
+    setIsAddingInsumo(false);
+    setEditingInsumo(null);
   };
 
-  const editarInsumo = (insumo: Insumo) => {
-    setForm({
-      codigo: insumo.codigo,
+  const handleEdit = (insumo: Insumo) => {
+    setEditingInsumo(insumo);
+    setFormData({
       nome: insumo.nome,
-      preco_pago: insumo.preco_pago,
-      volume_embalagem: insumo.volume_embalagem,
-      unidade_medida: insumo.unidade_medida
+      categoria: insumo.categoria,
+      unidade: insumo.unidade,
+      precoPago: insumo.precoPago.toString(),
+      volumeEmbalagem: insumo.volumeEmbalagem.toString(),
+      fornecedor: insumo.fornecedor,
+      observacoes: insumo.observacoes || ""
     });
-    setEditingId(insumo.id);
-    setShowForm(true);
+    setIsAddingInsumo(true);
   };
 
-  const salvarInsumo = async () => {
-    if (!currentRestaurant?.id || !form.nome.trim()) {
-      toast.error('Preencha o nome do insumo');
-      return;
-    }
-
-    if (form.preco_pago <= 0 || form.volume_embalagem <= 0) {
-      toast.error('Preço pago e volume da embalagem devem ser maiores que zero');
-      return;
-    }
-
+  const handleDelete = (id: string) => {
     try {
-      const dadosInsumo = {
-        ...form,
-        restaurant_id: currentRestaurant.id
-      };
-
-      if (editingId) {
-        // Atualizar
-        const { error } = await supabase
-          .from('insumos')
-          .update(dadosInsumo)
-          .eq('id', editingId);
-
-        if (error) throw error;
-        toast.success('Insumo atualizado com sucesso!');
-      } else {
-        // Criar novo
-        const { error } = await supabase
-          .from('insumos')
-          .insert(dadosInsumo);
-
-        if (error) throw error;
-        toast.success('Insumo cadastrado com sucesso!');
-      }
-
-      resetForm();
-      carregarInsumos();
-    } catch (error) {
-      console.error('Erro ao salvar insumo:', error);
-      toast.error('Erro ao salvar insumo');
-    }
-  };
-
-  const excluirInsumo = async (id: string) => {
-    if (!confirm('Tem certeza que deseja excluir este insumo?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('insumos')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      const updatedInsumos = insumos.filter(insumo => insumo.id !== id);
+      localStorage.setItem("insumos", JSON.stringify(updatedInsumos));
+      setInsumos(updatedInsumos);
+      toast.success("Insumo removido com sucesso!");
       
-      toast.success('Insumo excluído com sucesso!');
-      carregarInsumos();
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('insumosUpdated'));
     } catch (error) {
-      console.error('Erro ao excluir insumo:', error);
-      toast.error('Erro ao excluir insumo');
+      console.error("Error deleting insumo:", error);
+      toast.error("Erro ao remover insumo");
     }
   };
 
-  const calcularPrecoUnitario = (preco_pago: number, volume_embalagem: number) => {
-    return volume_embalagem > 0 ? preco_pago / volume_embalagem : 0;
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Carregando insumos...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const getCostPerUnit = (insumo: Insumo) => {
+    return insumo.precoPago / insumo.volumeEmbalagem;
+  };
+
+  const getCategoriaLabel = (categoria: string) => {
+    return categorias.find(cat => cat.value === categoria)?.label || categoria;
+  };
+
+  const getUnidadeLabel = (unidade: string) => {
+    return unidades.find(un => un.value === unidade)?.label || unidade;
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Filtros e Ações */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Gestão de Insumos
-            </CardTitle>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Insumo
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 items-center">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por nome ou código..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Badge variant="secondary">
-              {filteredInsumos.length} insumo(s)
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-4 sm:space-y-6 w-full overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+        <div>
+          <h3 className="text-base sm:text-lg font-semibold">Insumos Cadastrados</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            {insumos.length} insumos cadastrados no sistema
+          </p>
+        </div>
+        <Button onClick={() => setIsAddingInsumo(true)} size="sm" className="text-xs sm:text-sm">
+          <Plus className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+          <span>Novo Insumo</span>
+        </Button>
+      </div>
 
-      {/* Formulário */}
-      {showForm && (
+      {/* Lista de Insumos */}
+      {insumos.length > 0 ? (
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>
-                {editingId ? 'Editar Insumo' : 'Novo Insumo'}
-              </CardTitle>
-              <Button variant="ghost" size="sm" onClick={resetForm}>
-                <X className="h-4 w-4" />
-              </Button>
+          <CardContent className="p-0">
+            <div className="w-full overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs sm:text-sm">Nome</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Categoria</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Preço Pago</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Volume</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Custo/Unidade</TableHead>
+                    <TableHead className="text-xs sm:text-sm">Fornecedor</TableHead>
+                    <TableHead className="text-xs sm:text-sm w-20">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {insumos.map((insumo) => (
+                    <TableRow key={insumo.id}>
+                      <TableCell className="text-xs sm:text-sm font-medium">{insumo.nome}</TableCell>
+                      <TableCell className="text-xs sm:text-sm">
+                        <Badge variant="outline">{getCategoriaLabel(insumo.categoria)}</Badge>
+                      </TableCell>
+                      <TableCell className="text-xs sm:text-sm">{formatCurrency(insumo.precoPago)}</TableCell>
+                      <TableCell className="text-xs sm:text-sm">
+                        {insumo.volumeEmbalagem} {insumo.unidade}
+                      </TableCell>
+                      <TableCell className="text-xs sm:text-sm font-medium text-green-600">
+                        {formatCurrency(getCostPerUnit(insumo))}
+                      </TableCell>
+                      <TableCell className="text-xs sm:text-sm">{insumo.fornecedor}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(insumo)}
+                            className="h-6 w-6 sm:h-8 sm:w-8 p-0"
+                          >
+                            <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(insumo.id)}
+                            className="h-6 w-6 sm:h-8 sm:w-8 p-0 text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="codigo">Código (opcional)</Label>
-                <Input
-                  id="codigo"
-                  type="number"
-                  placeholder="Ex: 001"
-                  value={form.codigo || ''}
-                  onChange={(e) => setForm({ ...form, codigo: e.target.value ? parseInt(e.target.value) : null })}
-                />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
+            <div className="text-center space-y-4 max-w-md mx-auto">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto">
+                <Package className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
               </div>
-              
-              <div className="md:col-span-2">
-                <Label htmlFor="nome">Nome do Insumo *</Label>
+              <div className="space-y-2">
+                <h3 className="text-base sm:text-lg font-semibold">Nenhum insumo cadastrado</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Comece cadastrando os insumos que você utiliza no seu restaurante.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Modal/Form para Adicionar/Editar Insumo */}
+      <Dialog open={isAddingInsumo} onOpenChange={(open) => {
+        if (!open) resetForm();
+      }}>
+        <DialogContent className="max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg">
+              {editingInsumo ? "Editar Insumo" : "Novo Insumo"}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <Label htmlFor="nome" className="text-xs sm:text-sm">Nome do Insumo *</Label>
                 <Input
                   id="nome"
-                  placeholder="Ex: Farinha de trigo"
-                  value={form.nome}
-                  onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                  value={formData.nome}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                  placeholder="Ex: Filé de Frango"
+                  required
+                  className="text-xs sm:text-sm"
                 />
               </div>
-              
+
               <div>
-                <Label htmlFor="preco_pago">Preço Pago (R$) *</Label>
-                <Input
-                  id="preco_pago"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="Ex: 25.50"
-                  value={form.preco_pago}
-                  onChange={(e) => setForm({ ...form, preco_pago: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="volume_embalagem">Volume da Embalagem *</Label>
-                <Input
-                  id="volume_embalagem"
-                  type="number"
-                  min="0"
-                  step="0.001"
-                  placeholder="Ex: 1.000"
-                  value={form.volume_embalagem}
-                  onChange={(e) => setForm({ ...form, volume_embalagem: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="unidade_medida">Unidade de Medida *</Label>
-                <Select value={form.unidade_medida} onValueChange={(value) => setForm({ ...form, unidade_medida: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
+                <Label htmlFor="categoria" className="text-xs sm:text-sm">Categoria *</Label>
+                <Select value={formData.categoria} onValueChange={(value) => setFormData(prev => ({ ...prev, categoria: value }))}>
+                  <SelectTrigger className="text-xs sm:text-sm">
+                    <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {unidadesMedida.map((unidade) => (
-                      <SelectItem key={unidade.value} value={unidade.value}>
+                    {categorias.map((categoria) => (
+                      <SelectItem key={categoria.value} value={categoria.value} className="text-xs sm:text-sm">
+                        {categoria.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="unidade" className="text-xs sm:text-sm">Unidade *</Label>
+                <Select value={formData.unidade} onValueChange={(value) => setFormData(prev => ({ ...prev, unidade: value }))}>
+                  <SelectTrigger className="text-xs sm:text-sm">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unidades.map((unidade) => (
+                      <SelectItem key={unidade.value} value={unidade.value} className="text-xs sm:text-sm">
                         {unidade.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            
-            {form.preco_pago > 0 && form.volume_embalagem > 0 && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-700">
-                  <strong>Preço Unitário Calculado:</strong> R$ {calcularPrecoUnitario(form.preco_pago, form.volume_embalagem).toFixed(3)} por {form.unidade_medida}
-                </p>
+
+              <div>
+                <Label htmlFor="precoPago" className="text-xs sm:text-sm">Preço Pago (R$) *</Label>
+                <Input
+                  id="precoPago"
+                  type="number"
+                  step="0.01"
+                  value={formData.precoPago}
+                  onChange={(e) => setFormData(prev => ({ ...prev, precoPago: e.target.value }))}
+                  placeholder="0.00"
+                  required
+                  className="text-xs sm:text-sm"
+                />
               </div>
-            )}
-            
-            <div className="flex gap-2 mt-6">
-              <Button onClick={salvarInsumo}>
-                <Save className="h-4 w-4 mr-2" />
-                {editingId ? 'Atualizar' : 'Salvar'}
-              </Button>
-              <Button variant="outline" onClick={resetForm}>
+
+              <div>
+                <Label htmlFor="volumeEmbalagem" className="text-xs sm:text-sm">Volume da Embalagem *</Label>
+                <Input
+                  id="volumeEmbalagem"
+                  type="number"
+                  step="0.01"
+                  value={formData.volumeEmbalagem}
+                  onChange={(e) => setFormData(prev => ({ ...prev, volumeEmbalagem: e.target.value }))}
+                  placeholder="1.00"
+                  required
+                  className="text-xs sm:text-sm"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <Label htmlFor="fornecedor" className="text-xs sm:text-sm">Fornecedor</Label>
+                <Input
+                  id="fornecedor"
+                  value={formData.fornecedor}
+                  onChange={(e) => setFormData(prev => ({ ...prev, fornecedor: e.target.value }))}
+                  placeholder="Ex: Açougue Central"
+                  className="text-xs sm:text-sm"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <Label htmlFor="observacoes" className="text-xs sm:text-sm">Observações</Label>
+                <Input
+                  id="observacoes"
+                  value={formData.observacoes}
+                  onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                  placeholder="Informações adicionais..."
+                  className="text-xs sm:text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={resetForm} className="text-xs sm:text-sm">
                 Cancelar
               </Button>
+              <Button type="submit" className="text-xs sm:text-sm">
+                {editingInsumo ? "Atualizar" : "Salvar"} Insumo
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Lista de Insumos */}
-      <div className="grid gap-4">
-        {filteredInsumos.length === 0 ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">Nenhum insumo encontrado</p>
-                <p className="text-sm text-muted-foreground">
-                  {searchTerm 
-                    ? 'Tente ajustar o filtro de busca'
-                    : 'Comece cadastrando seu primeiro insumo'
-                  }
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredInsumos.map((insumo) => (
-            <Card key={insumo.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold">{insumo.nome}</h3>
-                      {insumo.codigo && (
-                        <Badge variant="outline">#{insumo.codigo}</Badge>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Preço Pago:</span>
-                        <p className="font-medium">R$ {insumo.preco_pago.toFixed(2)}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Volume:</span>
-                        <p className="font-medium">{insumo.volume_embalagem} {insumo.unidade_medida}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Preço Unitário:</span>
-                        <p className="font-medium text-blue-600">R$ {insumo.preco_unitario.toFixed(3)}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Unidade:</span>
-                        <p className="font-medium">{insumo.unidade_medida}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-2 text-xs text-muted-foreground">
-                      Cadastrado em: {new Date(insumo.created_at).toLocaleDateString('pt-BR')}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2 ml-4">
-                    <Button variant="outline" size="sm" onClick={() => editarInsumo(insumo)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => excluirInsumo(insumo.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {/* Estatísticas */}
-      {filteredInsumos.length > 0 && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold">{filteredInsumos.length}</p>
-                <p className="text-sm text-muted-foreground">Total de Insumos</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">
-                  R$ {filteredInsumos.reduce((total, insumo) => total + insumo.preco_pago, 0).toFixed(2)}
-                </p>
-                <p className="text-sm text-muted-foreground">Valor Total Investido</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-blue-600">
-                  R$ {(filteredInsumos.reduce((total, insumo) => total + insumo.preco_unitario, 0) / filteredInsumos.length).toFixed(3)}
-                </p>
-                <p className="text-sm text-muted-foreground">Preço Unitário Médio</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-purple-600">
-                  {[...new Set(filteredInsumos.map(i => i.unidade_medida))].length}
-                </p>
-                <p className="text-sm text-muted-foreground">Tipos de Unidades</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -7,16 +7,16 @@ import { TrendingUp, Calculator, Target } from "lucide-react";
 export function ProjecoesPagina() {
   return (
     <ModernLayout>
-      <div className="main-content-padding space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Projeções e Cenários</h1>
-          <p className="text-muted-foreground">
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
+        <div className="space-y-2">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight">Projeções e Cenários</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm">
             Planeje o futuro do seu restaurante com projeções inteligentes e análise de cenários
           </p>
         </div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -25,7 +25,7 @@ export function ProjecoesPagina() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-xl sm:text-2xl font-bold text-green-600">
                 Baseada em dados reais
               </div>
               <p className="text-xs text-muted-foreground">
@@ -42,7 +42,7 @@ export function ProjecoesPagina() {
               <Calculator className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-xl sm:text-2xl font-bold text-blue-600">
                 Múltiplas variáveis
               </div>
               <p className="text-xs text-muted-foreground">
@@ -59,7 +59,7 @@ export function ProjecoesPagina() {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
+              <div className="text-xl sm:text-2xl font-bold text-purple-600">
                 Decisões informadas
               </div>
               <p className="text-xs text-muted-foreground">
@@ -70,21 +70,23 @@ export function ProjecoesPagina() {
         </div>
 
         {/* Main Forecasting Component */}
-        <ProfitForecasting />
+        <div className="w-full overflow-hidden">
+          <ProfitForecasting />
+        </div>
 
         {/* Additional Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Como usar as projeções</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Como usar as projeções</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <h4 className="font-medium mb-2">📊 Análise de Cenários</h4>
-                <p className="text-sm text-muted-foreground mb-4">
+                <h4 className="font-medium mb-2 text-sm sm:text-base">📊 Análise de Cenários</h4>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                   Use diferentes combinações de parâmetros para entender o impacto de mudanças no negócio.
                 </p>
-                <ul className="text-sm space-y-1 text-muted-foreground">
+                <ul className="text-xs sm:text-sm space-y-1 text-muted-foreground">
                   <li>• Alterações de preço</li>
                   <li>• Redução de custos</li>
                   <li>• Aumento de volume</li>
@@ -93,11 +95,11 @@ export function ProjecoesPagina() {
               </div>
               
               <div>
-                <h4 className="font-medium mb-2">🎯 Planejamento Estratégico</h4>
-                <p className="text-sm text-muted-foreground mb-4">
+                <h4 className="font-medium mb-2 text-sm sm:text-base">🎯 Planejamento Estratégico</h4>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                   Defina metas realistas e acompanhe o progresso em direção aos objetivos.
                 </p>
-                <ul className="text-sm space-y-1 text-muted-foreground">
+                <ul className="text-xs sm:text-sm space-y-1 text-muted-foreground">
                   <li>• Metas de crescimento</li>
                   <li>• Planejamento de expansão</li>
                   <li>• Análise de ROI</li>

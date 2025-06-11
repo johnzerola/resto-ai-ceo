@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { InventoryOverview } from "@/components/restaurant/InventoryOverview";
@@ -27,11 +28,26 @@ const Estoque = () => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
 
   useEffect(() => {
+    loadInventoryItems();
+    
+    // Listen for inventory updates
+    const handleInventoryUpdate = () => {
+      loadInventoryItems();
+    };
+
+    window.addEventListener('inventoryUpdated', handleInventoryUpdate);
+    
+    return () => {
+      window.removeEventListener('inventoryUpdated', handleInventoryUpdate);
+    };
+  }, []);
+
+  const loadInventoryItems = () => {
     const storedItems = localStorage.getItem("inventoryItems");
     if (storedItems) {
       try {
         const parsedItems = JSON.parse(storedItems);
-        if (Array.isArray(parsedItems) && parsedItems.length > 0) {
+        if (Array.isArray(parsedItems)) {
           setInventoryItems(parsedItems);
         }
       } catch (error) {
@@ -39,7 +55,7 @@ const Estoque = () => {
         setInventoryItems([]);
       }
     }
-  }, []);
+  };
 
   const exportToPDF = () => {
     try {
@@ -87,6 +103,16 @@ const Estoque = () => {
       pdf.text(`Valor Total em Estoque: R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, yPosition);
       yPosition += 15;
       
+      // Items with low stock
+      const lowStockItems = inventoryItems.filter(item => item.quantity <= item.minStock);
+      if (lowStockItems.length > 0) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(255, 0, 0);
+        pdf.text(`Itens com Estoque Baixo: ${lowStockItems.length}`, 20, yPosition);
+        pdf.setTextColor(0, 0, 0);
+        yPosition += 15;
+      }
+      
       // Table header
       pdf.setFont('helvetica', 'bold');
       pdf.text('Item', 20, yPosition);
@@ -110,6 +136,11 @@ const Estoque = () => {
           yPosition = 30;
         }
         
+        // Highlight low stock items
+        if (item.quantity <= item.minStock) {
+          pdf.setTextColor(255, 0, 0);
+        }
+        
         const itemName = item.name.length > 15 ? item.name.substring(0, 12) + '...' : item.name;
         const category = item.category.length > 12 ? item.category.substring(0, 9) + '...' : item.category;
         const unitCost = `R$ ${item.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -122,6 +153,7 @@ const Estoque = () => {
         pdf.text(unitCost, 150, yPosition);
         pdf.text(totalCost, 180, yPosition);
         
+        pdf.setTextColor(0, 0, 0); // Reset color
         yPosition += 8;
       });
       
@@ -165,20 +197,9 @@ const Estoque = () => {
   };
 
   const handleFormSuccess = () => {
-    const storedItems = localStorage.getItem("inventoryItems");
-    if (storedItems) {
-      try {
-        const parsedItems = JSON.parse(storedItems);
-        setInventoryItems(parsedItems);
-      } catch (error) {
-        console.error("Error parsing stored inventory items:", error);
-        setInventoryItems([]);
-      }
-    }
-    
+    loadInventoryItems();
     setIsAddingItem(false);
     setSelectedItemId(null);
-    
     toast.success(selectedItemId ? "Item atualizado com sucesso" : "Item adicionado com sucesso");
   };
 

@@ -3,8 +3,7 @@ import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { GoalsManager } from "@/components/restaurant/GoalsManager";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Target, Plus } from "lucide-react";
+import { Target } from "lucide-react";
 
 export function Metas() {
   const [hasGoals, setHasGoals] = useState(false);
@@ -63,14 +62,14 @@ export function Metas() {
         <div className="w-full overflow-hidden">
           {!hasGoals ? (
             <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12 sm:py-16">
-                <div className="text-center space-y-4">
+              <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
+                <div className="text-center space-y-4 max-w-md mx-auto px-4">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
                     <Target className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-base sm:text-lg font-semibold">Nenhuma meta definida</h3>
-                    <p className="text-muted-foreground text-sm max-w-md px-4">
+                    <p className="text-muted-foreground text-xs sm:text-sm">
                       Comece definindo suas primeiras metas de negócio para acompanhar o crescimento do seu restaurante.
                     </p>
                   </div>
@@ -79,7 +78,9 @@ export function Metas() {
             </Card>
           ) : null}
 
-          <GoalsManager />
+          <div className="w-full overflow-hidden">
+            <GoalsManager />
+          </div>
         </div>
       </div>
     </ModernLayout>
