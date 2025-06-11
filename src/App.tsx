@@ -18,7 +18,7 @@ import Cardapio from "./pages/Cardapio";
 import { AIAssistantPage } from "./pages/AIAssistantPage";
 import { Assinatura } from "./pages/Assinatura";
 import Configuracoes from "./pages/Configuracoes";
-import Privacidade from "./pages/Privacidade";
+import { Privacidade } from "./pages/Privacidade";
 import { ProjecoesPagina } from "./pages/ProjecoesPagina";
 import Simulador from "./pages/Simulador";
 import NotFound from "./pages/NotFound";
