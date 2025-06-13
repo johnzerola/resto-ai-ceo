@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Brain, 
   Megaphone, 
@@ -19,10 +19,15 @@ import {
   Image as ImageIcon,
   TrendingUp,
   Settings,
-  RefreshCw
+  RefreshCw,
+  Lock,
+  Crown
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
+import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
+import { PlanGate } from "@/components/subscription/PlanGate";
+import { Link } from "react-router-dom";
 
 interface Message {
   id: string;
@@ -46,6 +51,7 @@ interface RestaurantContext {
 }
 
 export function UnifiedAIAssistant() {
+  const { hasFeature, showUpgradeMessage, planType } = useSubscriptionPlan();
   const [activeTab, setActiveTab] = useState<'manager' | 'social'>('manager');
   const [messages, setMessages] = useState<ChatHistory>({
     manager: [],
@@ -214,8 +220,191 @@ export function UnifiedAIAssistant() {
     ];
   };
 
-  return (
-    <div className="space-y-6">
+  // Função para enviar mensagem limitada (plano essencial)
+  const sendLimitedMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: inputMessage,
+      timestamp: new Date(),
+      aiType: activeTab
+    };
+
+    setMessages(prev => ({
+      ...prev,
+      [activeTab]: [...prev[activeTab], userMessage]
+    }));
+
+    setInputMessage('');
+
+    // Resposta limitada para plano essencial
+    const limitedResponse: Message = {
+      id: (Date.now() + 1).toString(),
+      type: 'assistant',
+      content: `Olá! Sou o ${activeTab === 'manager' ? 'Gerente Virtual' : 'Social Media IA'} do RestaurIA. 
+
+Esta funcionalidade está limitada no seu plano atual. Para ter acesso completo a todas as minhas capacidades, incluindo:
+
+${activeTab === 'manager' ? 
+  '• Análises financeiras avançadas\n• Relatórios personalizados\n• Sugestões estratégicas detalhadas\n• Integração completa com seus dados' :
+  '• Geração de imagens promocionais\n• Criação de campanhas completas\n• Análise de tendências\n• Estratégias de marketing avançadas'
+}
+
+Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial!`,
+      timestamp: new Date(),
+      aiType: activeTab
+    };
+
+    setTimeout(() => {
+      setMessages(prev => ({
+        ...prev,
+        [activeTab]: [...prev[activeTab], limitedResponse]
+      }));
+    }, 1000);
+  };
+
+  // Renderizar conteúdo baseado no plano
+  const renderAIContent = () => {
+    if (!hasFeature('hasFullAIAssistant')) {
+      return (
+        <div className="space-y-6">
+          <Alert className="border-amber-200 bg-amber-50">
+            <Lock className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>Assistente IA com funcionalidades limitadas no seu plano atual.</span>
+              <Button size="sm" asChild>
+                <Link to="/assinatura">
+                  <Crown className="h-4 w-4 mr-2" />
+                  Upgrade
+                </Link>
+              </Button>
+            </AlertDescription>
+          </Alert>
+
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'manager' | 'social')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="manager" className="flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                Gerente Virtual
+                <Badge variant="secondary" className="text-xs">Limitado</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="social" className="flex items-center gap-2">
+                <Megaphone className="h-4 w-4" />
+                Social Media IA
+                <Badge variant="secondary" className="text-xs">Limitado</Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Conteúdo limitado para ambas as abas */}
+            <TabsContent value={activeTab}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {activeTab === 'manager' ? (
+                      <Brain className="h-5 w-5 text-blue-600" />
+                    ) : (
+                      <Megaphone className="h-5 w-5 text-pink-600" />
+                    )}
+                    {activeTab === 'manager' ? 'Gerente Virtual' : 'Social Media IA'}
+                    <Badge variant="outline">Versão Limitada</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Chat Area Limitado */}
+                  <div className="border rounded-lg h-96">
+                    <ScrollArea className="h-80 p-4">
+                      {messages[activeTab].length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center">
+                          <div className="relative">
+                            {activeTab === 'manager' ? (
+                              <Brain className="h-12 w-12 text-blue-600 mb-4" />
+                            ) : (
+                              <Megaphone className="h-12 w-12 text-pink-600 mb-4" />
+                            )}
+                            <Lock className="h-6 w-6 absolute -top-2 -right-2 bg-amber-500 text-white rounded-full p-1" />
+                          </div>
+                          <h3 className="font-medium mb-2">
+                            {activeTab === 'manager' ? 'Gerente Virtual' : 'Social Media IA'} - Versão Limitada
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                            Você pode fazer perguntas básicas, mas as respostas serão limitadas. 
+                            Upgrade para o plano Profissional para acesso completo.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {messages[activeTab].map((message) => (
+                            <div
+                              key={message.id}
+                              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                            >
+                              <div
+                                className={`max-w-[80%] rounded-lg p-3 ${
+                                  message.type === 'user'
+                                    ? activeTab === 'manager' ? 'bg-blue-600 text-white' : 'bg-pink-600 text-white'
+                                    : 'bg-muted'
+                                }`}
+                              >
+                                <div className="flex items-start gap-2">
+                                  {message.type === 'assistant' && (
+                                    activeTab === 'manager' ? (
+                                      <Brain className="h-4 w-4 mt-1 text-blue-600" />
+                                    ) : (
+                                      <Megaphone className="h-4 w-4 mt-1 text-pink-600" />
+                                    )
+                                  )}
+                                  {message.type === 'user' && (
+                                    <User className="h-4 w-4 mt-1" />
+                                  )}
+                                  <div className="flex-1">
+                                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                    <p className="text-xs opacity-70 mt-1">
+                                      {message.timestamp.toLocaleTimeString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+
+                    <Separator />
+
+                    {/* Input Area */}
+                    <div className="p-4">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Digite sua pergunta (funcionalidade limitada)..."
+                          value={inputMessage}
+                          onChange={(e) => setInputMessage(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              sendLimitedMessage();
+                            }
+                          }}
+                        />
+                        <Button onClick={sendLimitedMessage} disabled={!inputMessage.trim()}>
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      );
+    }
+
+    // Conteúdo completo para plano profissional (manter código existente)
+    return (
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Assistentes IA</h2>
@@ -513,5 +702,8 @@ export function UnifiedAIAssistant() {
         </Card>
       )}
     </div>
-  );
+    );
+  };
+
+  return renderAIContent();
 }
