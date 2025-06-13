@@ -46,29 +46,36 @@ export function useSubscriptionPlan() {
       setIsLoading(true);
       setError(null);
 
-      // Por enquanto, vamos usar a tabela 'subscribers' existente como base
-      const { data, error } = await supabase
+      console.log('Buscando assinatura para usuário:', user?.id);
+
+      // Primeiro, tentar buscar na tabela subscribers
+      const { data: subscriberData, error: subscriberError } = await supabase
         .from('subscribers')
         .select('*')
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (subscriberError) {
+        console.error('Erro ao buscar subscriber:', subscriberError);
       }
 
-      if (data && data.subscribed) {
+      console.log('Dados do subscriber:', subscriberData);
+
+      if (subscriberData && subscriberData.subscribed) {
         // Mapear dados da tabela subscribers para o formato esperado
         const mappedSubscription: UserSubscription = {
-          id: data.id,
-          plan_type: data.subscription_tier === 'professional' ? PlanType.PROFISSIONAL : PlanType.ESSENCIAL,
-          status: data.subscribed ? 'active' : 'inactive',
-          expires_at: data.subscription_end,
-          created_at: data.created_at
+          id: subscriberData.id,
+          plan_type: subscriberData.subscription_tier === 'professional' ? PlanType.PROFISSIONAL : PlanType.ESSENCIAL,
+          status: subscriberData.subscribed ? 'active' : 'inactive',
+          expires_at: subscriberData.subscription_end,
+          created_at: subscriberData.created_at
         };
+        
+        console.log('Assinatura mapeada:', mappedSubscription);
         setSubscription(mappedSubscription);
       } else {
         // Usuário sem assinatura ativa - considerar plano gratuito
+        console.log('Usuário sem assinatura ativa, definindo plano gratuito');
         setSubscription({
           id: 'free',
           plan_type: PlanType.FREE,
@@ -123,9 +130,14 @@ export function useSubscriptionPlan() {
   };
 
   const hasFeature = (feature: keyof PlanFeatures): boolean => {
-    if (!subscription) return false;
+    if (!subscription) {
+      console.log('Sem assinatura, negando acesso a:', feature);
+      return false;
+    }
     const features = getPlanFeatures(subscription.plan_type);
-    return features[feature];
+    const hasAccess = features[feature];
+    console.log(`Verificando feature ${feature} para plano ${subscription.plan_type}:`, hasAccess);
+    return hasAccess;
   };
 
   const requiresUpgrade = (feature: keyof PlanFeatures): boolean => {
