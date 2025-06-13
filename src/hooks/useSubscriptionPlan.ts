@@ -46,19 +46,27 @@ export function useSubscriptionPlan() {
       setIsLoading(true);
       setError(null);
 
+      // Por enquanto, vamos usar a tabela 'subscribers' existente como base
       const { data, error } = await supabase
-        .from('subscriptions')
+        .from('subscribers')
         .select('*')
         .eq('user_id', user?.id)
-        .eq('status', 'active')
         .single();
 
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
-      if (data) {
-        setSubscription(data);
+      if (data && data.subscribed) {
+        // Mapear dados da tabela subscribers para o formato esperado
+        const mappedSubscription: UserSubscription = {
+          id: data.id,
+          plan_type: data.subscription_tier === 'professional' ? PlanType.PROFISSIONAL : PlanType.ESSENCIAL,
+          status: data.subscribed ? 'active' : 'inactive',
+          expires_at: data.subscription_end,
+          created_at: data.created_at
+        };
+        setSubscription(mappedSubscription);
       } else {
         // Usuário sem assinatura ativa - considerar plano gratuito
         setSubscription({
