@@ -7,9 +7,9 @@ const TestePage = () => {
     <ModernLayout>
       <div className="space-y-6 p-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Teste de Sistema</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Sistema de Planos - Teste Completo</h1>
           <p className="text-muted-foreground">
-            Verificação da integração com Supabase e sistema de planos
+            Verificação completa da integração Supabase e controle de acesso por planos
           </p>
         </div>
 

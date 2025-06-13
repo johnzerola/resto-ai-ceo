@@ -21,6 +21,8 @@ import Configuracoes from "./pages/Configuracoes";
 import { Privacidade } from "./pages/Privacidade";
 import { ProjecoesPagina } from "./pages/ProjecoesPagina";
 import Simulador from "./pages/Simulador";
+import AssistenteIA from "./pages/AssistenteIA";
+import TestePage from "./pages/TestePage";
 import NotFound from "./pages/NotFound";
 import PaginaVendas from "./pages/PaginaVendas";
 
@@ -115,6 +117,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AIAssistantPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/assistente-ia"
+                element={
+                  <ProtectedRoute>
+                    <AssistenteIA />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/teste"
+                element={
+                  <ProtectedRoute>
+                    <TestePage />
                   </ProtectedRoute>
                 }
               />
