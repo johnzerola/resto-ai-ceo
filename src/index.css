@@ -108,72 +108,87 @@ body {
 
 /* Margem padrão para conteúdo principal das telas */
 .main-content-padding {
-  @apply p-3 sm:p-6;
+  padding: 0.75rem 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .main-content-padding {
+    padding: 1.5rem 1.5rem;
+  }
 }
 
 /* Padronização de títulos no mobile - APLICAÇÃO UNIVERSAL */
 @media (max-width: 768px) {
   /* SuperAdmin Dashboard específico - melhor responsividade */
   .superadmin-dashboard {
-    @apply space-y-3;
+    gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
   }
   
   .superadmin-dashboard .space-y-6 {
-    @apply space-y-4;
+    gap: 1rem;
+    display: flex;
+    flex-direction: column;
   }
   
   .superadmin-dashboard .text-3xl {
-    @apply text-xl;
+    font-size: 1.25rem;
+    line-height: 1.75rem;
   }
   
   .superadmin-dashboard .text-2xl {
-    @apply text-lg;
+    font-size: 1.125rem;
+    line-height: 1.75rem;
   }
   
   .superadmin-dashboard .text-xl {
-    @apply text-base;
+    font-size: 1rem;
+    line-height: 1.5rem;
   }
   
   .superadmin-dashboard .p-6 {
-    @apply p-4;
+    padding: 1rem;
   }
   
   .superadmin-dashboard .py-6 {
-    @apply py-4;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
   }
   
   .superadmin-dashboard .px-6 {
-    @apply px-4;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   
   /* Margem adicional no mobile para afastar do menu lateral */
   .main-content-padding {
-    @apply p-3 pl-4;
+    padding: 0.75rem 0.75rem 0.75rem 1rem;
   }
   
   /* Classes específicas para títulos e subtítulos */
   .page-title {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   .page-subtitle {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   /* Aplicar automaticamente a páginas com estrutura padrão */
   .space-y-4 > div:first-child h1,
   .space-y-6 > div:first-child h1 {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   .space-y-4 > div:first-child p,
   .space-y-6 > div:first-child p {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   /* Títulos específicos por nível hierárquico */
   h1, h2 {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   /* Div que contém títulos principais */
@@ -181,7 +196,7 @@ body {
   .flex.justify-between.items-start h1,
   .flex.items-center h1,
   .flex.items-start h1 {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   /* Subtítulos e descrições */
@@ -189,24 +204,24 @@ body {
   .flex.justify-between.items-start p,
   .flex.items-center p,
   .flex.items-start p {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   /* Container de header específico */
   .flex.justify-between > div:first-child h1,
   .flex.justify-between > div:first-child p {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   /* Títulos dentro de cards ou containers principais */
   .space-y-4 h1, .space-y-6 h1,
   .space-y-4 h2, .space-y-6 h2 {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   /* Descrições e textos secundários */
   .text-muted-foreground {
-    @apply ml-4;
+    margin-left: 1rem;
   }
   
   /* Aplicar a todos os elementos de header das páginas principais */
@@ -216,7 +231,7 @@ body {
   [data-page] h1,
   [data-page] h2,
   [data-page] p.text-muted-foreground {
-    @apply ml-4;
+    margin-left: 1rem;
   }
 }
 
@@ -278,19 +293,35 @@ body {
 }
 
 .glass-card {
-  @apply backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border border-white/20 dark:border-gray-700/20 shadow-xl;
+  backdrop-filter: blur(24px);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.dark .glass-card {
+  background-color: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(107, 114, 128, 0.2);
 }
 
 .stats-card {
-  @apply transition-all duration-300 hover:scale-105 hover:shadow-lg;
+  transition: all 300ms;
+}
+
+.stats-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
 }
 
 .stats-label {
-  @apply text-sm font-medium text-muted-foreground;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
 }
 
 .stats-value {
-  @apply text-2xl font-bold;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 /* Scrollbar personalizada */
@@ -330,30 +361,34 @@ body {
 /* Responsividade específica */
 @media (max-width: 640px) {
   .mobile-padding {
-    @apply px-3;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
   
   .mobile-text-sm {
-    @apply text-sm;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
   
   /* SuperAdmin mobile otimizations */
   .superadmin-mobile-grid {
-    @apply grid-cols-2 gap-2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
   }
   
   .superadmin-mobile-card {
-    @apply p-3;
+    padding: 0.75rem;
   }
   
   .superadmin-mobile-text {
-    @apply text-xs;
+    font-size: 0.75rem;
+    line-height: 1rem;
   }
 }
 
 /* Cores de tema claro/escuro para componentes específicos */
 .theme-transition {
-  @apply transition-colors duration-200;
+  transition: color 200ms, background-color 200ms;
 }
 
 /* Override para melhor legibilidade no dark mode - usando cores diretas para evitar circulares */
@@ -371,13 +406,22 @@ body {
 
 /* Cache performance indicators */
 .cache-indicator {
-  @apply inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background-color: rgb(220 252 231);
+  color: rgb(22 101 52);
+  border-radius: 9999px;
 }
 
 .cache-indicator.loading {
-  @apply bg-yellow-100 text-yellow-800;
+  background-color: rgb(254 249 195);
+  color: rgb(133 77 14);
 }
 
 .cache-indicator.error {
-  @apply bg-red-100 text-red-800;
+  background-color: rgb(254 226 226);
+  color: rgb(153 27 27);
 }
