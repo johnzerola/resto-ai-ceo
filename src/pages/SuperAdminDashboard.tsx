@@ -32,6 +32,41 @@ import { MobileStatsGrid } from "@/components/superadmin/MobileStatsGrid";
 import { MobileTabsNavigation } from "@/components/superadmin/MobileTabsNavigation";
 import { CompactAuditSection } from "@/components/superadmin/CompactAuditSection";
 
+interface AuditLog {
+  id: string;
+  action: string;
+  table_name: string;
+  timestamp: string;
+  user_id: string;
+  additional_data?: any;
+}
+
+interface SystemLog {
+  id: string;
+  level: string;
+  service: string;
+  message: string;
+  timestamp: string;
+}
+
+interface AIPrompt {
+  id: string;
+  name: string;
+  category: string;
+  prompt_text: string;
+  is_active: boolean;
+}
+
+interface PlanConfig {
+  id: string;
+  plan_name: string;
+  features: any;
+  limits: any;
+  price_monthly: number;
+  price_yearly: number;
+  is_active: boolean;
+}
+
 const LoadingCard = memo(() => (
   <Card className="animate-pulse">
     <CardContent className="p-6">
@@ -50,10 +85,10 @@ const SuperAdminDashboard = () => {
     apiResponses: 0,
     errors24h: 0
   });
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [systemLogs, setSystemLogs] = useState<any[]>([]);
-  const [aiPrompts, setAiPrompts] = useState<any[]>([]);
-  const [planConfigs, setPlanConfigs] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
+  const [aiPrompts, setAiPrompts] = useState<AIPrompt[]>([]);
+  const [planConfigs, setPlanConfigs] = useState<PlanConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const { getSystemStats, getAuditLogs, clearCache, getCacheStats } = useSuperAdminCache();
@@ -73,7 +108,7 @@ const SuperAdminDashboard = () => {
       ]);
 
       setSystemStats(stats);
-      setAuditLogs(logs);
+      setAuditLogs(logs as AuditLog[]);
 
       // Mock data para outros componentes
       setSystemLogs([
@@ -222,7 +257,7 @@ const SuperAdminDashboard = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-2 max-h-64 sm:max-h-96 overflow-y-auto font-mono text-xs sm:text-sm">
-          {systemLogs.slice(0, 20).map((log: any, index) => (
+          {systemLogs.slice(0, 20).map((log, index) => (
             <div key={index} className={`p-2 rounded ${
               log.level === 'error' ? 'bg-red-50 border-l-4 border-red-500' :
               log.level === 'warning' ? 'bg-yellow-50 border-l-4 border-yellow-500' :
@@ -245,7 +280,7 @@ const SuperAdminDashboard = () => {
   ));
 
   const AIPromptsEditor = memo(() => {
-    const [selectedPrompt, setSelectedPrompt] = useState<any>(null);
+    const [selectedPrompt, setSelectedPrompt] = useState<AIPrompt | null>(null);
 
     return (
       <Card className="border-0 shadow-sm">
@@ -263,7 +298,7 @@ const SuperAdminDashboard = () => {
             <div>
               <Label className="text-xs sm:text-sm">Prompts Disponíveis</Label>
               <div className="space-y-2 mt-2">
-                {aiPrompts.map((prompt: any) => (
+                {aiPrompts.map((prompt) => (
                   <Button
                     key={prompt.id}
                     variant={selectedPrompt?.id === prompt.id ? "default" : "outline"}
@@ -321,7 +356,7 @@ const SuperAdminDashboard = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {planConfigs.map((plan: any) => (
+          {planConfigs.map((plan) => (
             <div key={plan.id} className="border rounded-lg p-3 sm:p-4">
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium capitalize text-sm sm:text-base">{plan.plan_name}</h4>

@@ -45,7 +45,7 @@ export const MobileStatsGrid = memo(function MobileStatsGrid({ stats }: MobileSt
       description: "Saúde do sistema",
       color: "text-green-600",
       showProgress: true,
-      progressValue: stats.systemHealth
+      progressValue: Number(stats.systemHealth)
     },
     {
       title: "APIs 24h",
@@ -84,7 +84,7 @@ export const MobileStatsGrid = memo(function MobileStatsGrid({ stats }: MobileSt
               </p>
               {stat.showProgress && (
                 <Progress 
-                  value={stat.progressValue} 
+                  value={Number(stat.progressValue)} 
                   className="h-1 mt-2" 
                 />
               )}
