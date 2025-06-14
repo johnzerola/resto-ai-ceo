@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, memo, Suspense } from 'react';
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -364,10 +363,10 @@ const SuperAdminDashboard = () => {
               </div>
               <div className="grid gap-2 grid-cols-2 text-xs sm:text-sm">
                 <div>
-                  <strong>Mensal:</strong> R$ {plan.price_monthly}
+                  <strong>Mensal:</strong> R$ {plan.price_monthly.toFixed(2)}
                 </div>
                 <div>
-                  <strong>Anual:</strong> R$ {plan.price_yearly}
+                  <strong>Anual:</strong> R$ {plan.price_yearly.toFixed(2)}
                 </div>
               </div>
               <details className="mt-2">
