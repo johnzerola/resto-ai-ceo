@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -196,7 +197,15 @@ export function useSubscriptionPlan() {
     }
 
     const features = getPlanFeatures(subscription.plan_type);
-    const hasAccess = features[feature];
+    
+    // Handle maxRestaurants specially since it's a number
+    if (feature === 'maxRestaurants') {
+      const hasAccess = features.maxRestaurants > 0;
+      console.log(`🔍 [Feature Check] ${feature} para plano ${subscription.plan_type}:`, hasAccess ? '✅ LIBERADO' : '❌ BLOQUEADO');
+      return hasAccess;
+    }
+    
+    const hasAccess = features[feature] as boolean;
     
     console.log(`🔍 [Feature Check] ${feature} para plano ${subscription.plan_type}:`, hasAccess ? '✅ LIBERADO' : '❌ BLOQUEADO');
     return hasAccess;
