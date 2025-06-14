@@ -32,29 +32,37 @@ export function useUsageLimits() {
     try {
       setIsLoading(true);
 
+      // Buscar IDs dos restaurantes do usuário
+      const { data: userRestaurants } = await supabase
+        .from('restaurants')
+        .select('id')
+        .eq('owner_id', user.id);
+
+      const restaurantIds = userRestaurants?.map(r => r.id) || [];
+
       // Buscar quantidade de restaurantes
       const { count: restaurantCount } = await supabase
         .from('restaurants')
         .select('*', { count: 'exact', head: true })
         .eq('owner_id', user.id);
 
-      // Buscar quantidade de itens do menu
+      // Buscar quantidade de receitas/itens do menu
       const { count: menuItemsCount } = await supabase
         .from('recipes')
         .select('*', { count: 'exact', head: true })
-        .in('restaurant_id', [/* IDs dos restaurantes do usuário */]);
+        .in('restaurant_id', restaurantIds);
 
       // Buscar quantidade de registros de fluxo de caixa
       const { count: cashFlowCount } = await supabase
         .from('cash_flow')
         .select('*', { count: 'exact', head: true })
-        .in('restaurant_id', [/* IDs dos restaurantes do usuário */]);
+        .in('restaurant_id', restaurantIds);
 
       // Buscar quantidade de membros da equipe
       const { count: teamMembersCount } = await supabase
         .from('restaurant_members')
         .select('*', { count: 'exact', head: true })
-        .in('restaurant_id', [/* IDs dos restaurantes do usuário */]);
+        .in('restaurant_id', restaurantIds);
 
       setUsage({
         restaurants: restaurantCount || 0,
