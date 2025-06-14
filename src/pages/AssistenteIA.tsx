@@ -1,6 +1,7 @@
 
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
-import { AIAssistant } from "@/components/restaurant/AIAssistant";
+import { UnifiedAIAssistant } from "@/components/restaurant/UnifiedAIAssistant";
+import { ProtectedFeature } from "@/components/subscription/ProtectedFeature";
 
 const AssistenteIA = () => {
   return (
@@ -14,7 +15,13 @@ const AssistenteIA = () => {
         </div>
 
         <div className="w-full min-w-0 overflow-hidden h-[calc(100vh-120px)] sm:h-[calc(100vh-140px)] lg:h-[calc(100vh-160px)]">
-          <AIAssistant />
+          <ProtectedFeature
+            feature="hasFullAIAssistant"
+            featureName="Assistente IA Completo"
+            description="Tenha acesso completo aos assistentes de IA: Gerente Virtual e Social Media IA com todas as funcionalidades."
+          >
+            <UnifiedAIAssistant />
+          </ProtectedFeature>
         </div>
       </div>
     </ModernLayout>

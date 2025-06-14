@@ -6,12 +6,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SimulatorForm } from "@/components/restaurant/SimulatorForm";
 import { SimulatorResults } from "@/components/restaurant/SimulatorResults";
 import { PriceSimulator } from "@/components/restaurant/PriceSimulator";
-import { PlanGate } from "@/components/subscription/PlanGate";
+import { ProtectedFeature } from "@/components/subscription/ProtectedFeature";
 import { Calculator, DollarSign, TrendingUp } from "lucide-react";
-import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
 
 const Simulador = () => {
-  const { hasFeature } = useSubscriptionPlan();
   const [simulationData, setSimulationData] = useState<any>(null);
   const [showResults, setShowResults] = useState(false);
 
@@ -44,17 +42,10 @@ const Simulador = () => {
                   <span className="hidden xs:inline">Simulador de</span>
                   <span>Preços</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="scenario" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2"
-                  disabled={!hasFeature('hasSimuladorCenarios')}
-                >
+                <TabsTrigger value="scenario" className="flex items-center gap-1 text-xs sm:text-sm px-2">
                   <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden xs:inline">Simulador de</span>
                   <span>Cenários</span>
-                  {!hasFeature('hasSimuladorCenarios') && (
-                    <span className="text-xs bg-amber-500 text-white px-1 rounded">Pro</span>
-                  )}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -81,32 +72,10 @@ const Simulador = () => {
             </TabsContent>
 
             <TabsContent value="scenario" className="space-y-3 sm:space-y-4">
-              <PlanGate
+              <ProtectedFeature
                 feature="hasSimuladorCenarios"
                 featureName="Simulador de Cenários"
                 description="Simule diferentes cenários financeiros e projete o futuro do seu negócio com análises avançadas."
-                fallback={
-                  <Card className="w-full min-w-0">
-                    <CardHeader className="p-3 sm:p-4 lg:p-6">
-                      <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
-                        <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
-                        <span className="truncate">Simulador de Cenários Financeiros</span>
-                      </CardTitle>
-                      <p className="text-muted-foreground text-xs sm:text-sm">
-                        Simule diferentes cenários de negócio
-                      </p>
-                    </CardHeader>
-                    <CardContent className="p-3 sm:p-4 lg:p-6 pt-0 w-full min-w-0 overflow-hidden">
-                      {!showResults ? (
-                        <SimulatorForm onSimulate={handleSimulate} />
-                      ) : (
-                        <div className="w-full min-w-0 overflow-hidden">
-                          <SimulatorResults data={simulationData} onBackToForm={handleBackToForm} />
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                }
               >
                 {!showResults ? (
                   <Card className="w-full min-w-0">
@@ -128,7 +97,7 @@ const Simulador = () => {
                     <SimulatorResults data={simulationData} onBackToForm={handleBackToForm} />
                   </div>
                 )}
-              </PlanGate>
+              </ProtectedFeature>
             </TabsContent>
           </Tabs>
         </div>

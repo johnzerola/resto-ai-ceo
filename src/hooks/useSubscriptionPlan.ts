@@ -6,18 +6,19 @@ import { toast } from 'sonner';
 
 export enum PlanType {
   ESSENCIAL = 'essencial',
-  PROFISSIONAL = 'profissional',
+  PROFISSIONAL = 'profissional', 
   FREE = 'free'
 }
 
 export interface UserSubscription {
   id: string;
   plan_type: PlanType;
-  status: 'active' | 'inactive' | 'cancelled';
+  status: 'active' | 'inactive' | 'cancelled' | 'trial';
   expires_at: string | null;
   created_at: string;
   user_id?: string;
   email?: string;
+  stripe_customer_id?: string;
 }
 
 export interface PlanFeatures {
@@ -26,12 +27,10 @@ export interface PlanFeatures {
   hasAdvancedReports: boolean;
   hasInventoryManagement: boolean;
   hasFinancialAnalysis: boolean;
+  maxRestaurants: number;
+  hasTeamManagement: boolean;
+  hasPrioritySupport: boolean;
 }
-
-// Cache para evitar múltiplas consultas
-let subscriptionCache: { [userId: string]: UserSubscription } = {};
-let lastFetch: { [userId: string]: number } = {};
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 
 export function useSubscriptionPlan() {
   const { user } = useAuth();
@@ -39,38 +38,19 @@ export function useSubscriptionPlan() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const mapSubscriberToSubscription = useCallback((subscriberData: any): UserSubscription => {
-    const planMapping: { [key: string]: PlanType } = {
-      'professional': PlanType.PROFISSIONAL,
-      'profissional': PlanType.PROFISSIONAL,
-      'essencial': PlanType.ESSENCIAL,
-      'essential': PlanType.ESSENCIAL
-    };
-
-    return {
-      id: subscriberData.id,
-      plan_type: planMapping[subscriberData.subscription_tier?.toLowerCase()] || PlanType.ESSENCIAL,
-      status: subscriberData.subscribed ? 'active' : 'inactive',
-      expires_at: subscriberData.subscription_end,
-      created_at: subscriberData.created_at,
-      user_id: subscriberData.user_id,
-      email: subscriberData.email
-    };
-  }, []);
-
-  const fetchUserSubscription = useCallback(async (skipCache = false) => {
+  const fetchUserSubscription = useCallback(async () => {
     if (!user?.id) {
-      setSubscription(null);
-      setIsLoading(false);
-      setError(null);
-      return;
-    }
-
-    // Verificar cache primeiro
-    const now = Date.now();
-    if (!skipCache && subscriptionCache[user.id] && (now - (lastFetch[user.id] || 0)) < CACHE_DURATION) {
-      console.log('🎯 [Subscription] Usando dados do cache para:', user.email);
-      setSubscription(subscriptionCache[user.id]);
+      // Usuário não logado - plano gratuito por padrão
+      const freeSubscription: UserSubscription = {
+        id: 'free-guest',
+        plan_type: PlanType.FREE,
+        status: 'active',
+        expires_at: null,
+        created_at: new Date().toISOString(),
+        user_id: '',
+        email: ''
+      };
+      setSubscription(freeSubscription);
       setIsLoading(false);
       setError(null);
       return;
@@ -80,8 +60,9 @@ export function useSubscriptionPlan() {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔍 [Subscription] Buscando dados para usuário:', user.email);
+      console.log('🔍 [Subscription] Verificando plano para usuário:', user.email);
 
+      // Buscar dados do usuário na tabela subscribers
       const { data: subscriberData, error: subscriberError } = await supabase
         .from('subscribers')
         .select('*')
@@ -89,19 +70,48 @@ export function useSubscriptionPlan() {
         .maybeSingle();
 
       if (subscriberError) {
-        console.error('❌ [Subscription] Erro na consulta:', subscriberError);
-        throw new Error(`Erro ao consultar assinatura: ${subscriberError.message}`);
+        console.error('❌ [Subscription] Erro na consulta subscribers:', subscriberError);
+        throw new Error(`Erro ao verificar assinatura: ${subscriberError.message}`);
       }
 
       let finalSubscription: UserSubscription;
 
-      if (subscriberData && subscriberData.subscribed) {
-        console.log('✅ [Subscription] Assinatura ativa encontrada:', subscriberData);
-        finalSubscription = mapSubscriberToSubscription(subscriberData);
-      } else {
-        console.log('⚠️ [Subscription] Usuário sem assinatura ativa, aplicando plano gratuito');
+      if (subscriberData) {
+        console.log('✅ [Subscription] Dados encontrados:', subscriberData);
+        
+        // Mapear dados do Supabase para nossa interface
+        const planMapping: { [key: string]: PlanType } = {
+          'professional': PlanType.PROFISSIONAL,
+          'profissional': PlanType.PROFISSIONAL,
+          'pro': PlanType.PROFISSIONAL,
+          'essencial': PlanType.ESSENCIAL,
+          'essential': PlanType.ESSENCIAL,
+          'basic': PlanType.ESSENCIAL
+        };
+
+        const mappedPlan = planMapping[subscriberData.subscription_tier?.toLowerCase()] || PlanType.FREE;
+        
+        // Verificar se a assinatura está ativa
+        const isActive = subscriberData.subscribed && 
+          (!subscriberData.subscription_end || new Date(subscriberData.subscription_end) > new Date());
+
         finalSubscription = {
-          id: 'free',
+          id: subscriberData.id,
+          plan_type: isActive ? mappedPlan : PlanType.FREE,
+          status: isActive ? 'active' : 'inactive',
+          expires_at: subscriberData.subscription_end,
+          created_at: subscriberData.created_at,
+          user_id: subscriberData.user_id,
+          email: subscriberData.email,
+          stripe_customer_id: subscriberData.stripe_customer_id
+        };
+
+        console.log(`✅ [Subscription] Plano determinado: ${finalSubscription.plan_type} (${finalSubscription.status})`);
+      } else {
+        console.log('⚠️ [Subscription] Usuário sem registro na tabela subscribers - aplicando plano gratuito');
+        
+        finalSubscription = {
+          id: 'free-user',
           plan_type: PlanType.FREE,
           status: 'active',
           expires_at: null,
@@ -111,18 +121,13 @@ export function useSubscriptionPlan() {
         };
       }
 
-      // Atualizar cache
-      subscriptionCache[user.id] = finalSubscription;
-      lastFetch[user.id] = now;
-
-      console.log('🎯 [Subscription] Plano definido:', finalSubscription.plan_type);
       setSubscription(finalSubscription);
 
     } catch (err: any) {
       console.error('💥 [Subscription] Erro crítico:', err);
-      setError('Estamos com instabilidade técnica ao acessar os dados. Tente novamente em instantes ou contate nosso suporte.');
+      setError(err.message || 'Erro ao verificar plano de assinatura');
       
-      // Fallback para plano gratuito em caso de erro
+      // Em caso de erro, aplicar plano gratuito como fallback
       const fallbackSubscription: UserSubscription = {
         id: 'free-error',
         plan_type: PlanType.FREE,
@@ -136,7 +141,7 @@ export function useSubscriptionPlan() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, mapSubscriberToSubscription]);
+  }, [user]);
 
   useEffect(() => {
     fetchUserSubscription();
@@ -151,6 +156,9 @@ export function useSubscriptionPlan() {
           hasAdvancedReports: true,
           hasInventoryManagement: true,
           hasFinancialAnalysis: true,
+          maxRestaurants: 5,
+          hasTeamManagement: true,
+          hasPrioritySupport: true,
         };
       case PlanType.ESSENCIAL:
         return {
@@ -159,6 +167,9 @@ export function useSubscriptionPlan() {
           hasAdvancedReports: true,
           hasInventoryManagement: true,
           hasFinancialAnalysis: true,
+          maxRestaurants: 2,
+          hasTeamManagement: false,
+          hasPrioritySupport: false,
         };
       default: // FREE
         return {
@@ -167,6 +178,9 @@ export function useSubscriptionPlan() {
           hasAdvancedReports: false,
           hasInventoryManagement: false,
           hasFinancialAnalysis: false,
+          maxRestaurants: 1,
+          hasTeamManagement: false,
+          hasPrioritySupport: false,
         };
     }
   }, []);
@@ -184,6 +198,7 @@ export function useSubscriptionPlan() {
 
     const features = getPlanFeatures(subscription.plan_type);
     const hasAccess = features[feature];
+    
     console.log(`🔍 [Feature Check] ${feature} para plano ${subscription.plan_type}:`, hasAccess ? '✅ LIBERADO' : '❌ BLOQUEADO');
     return hasAccess;
   }, [subscription, getPlanFeatures]);
@@ -191,6 +206,34 @@ export function useSubscriptionPlan() {
   const requiresUpgrade = useCallback((feature: keyof PlanFeatures): boolean => {
     return !hasFeature(feature);
   }, [hasFeature]);
+
+  const getRequiredPlan = useCallback((feature: keyof PlanFeatures): PlanType => {
+    // Mapear quais funcionalidades requerem qual plano
+    const featurePlanMap: { [K in keyof PlanFeatures]: PlanType } = {
+      hasSimuladorCenarios: PlanType.PROFISSIONAL,
+      hasFullAIAssistant: PlanType.PROFISSIONAL,
+      hasAdvancedReports: PlanType.ESSENCIAL,
+      hasInventoryManagement: PlanType.ESSENCIAL,
+      hasFinancialAnalysis: PlanType.ESSENCIAL,
+      maxRestaurants: PlanType.ESSENCIAL,
+      hasTeamManagement: PlanType.PROFISSIONAL,
+      hasPrioritySupport: PlanType.PROFISSIONAL,
+    };
+    
+    return featurePlanMap[feature];
+  }, []);
+
+  const canAccess = useCallback((requiredPlan: PlanType): boolean => {
+    if (!subscription || subscription.status !== 'active') return false;
+    
+    const planHierarchy = {
+      [PlanType.FREE]: 0,
+      [PlanType.ESSENCIAL]: 1,
+      [PlanType.PROFISSIONAL]: 2
+    };
+    
+    return planHierarchy[subscription.plan_type] >= planHierarchy[requiredPlan];
+  }, [subscription]);
 
   const showUpgradeMessage = useCallback((featureName: string) => {
     const currentPlan = subscription?.plan_type || PlanType.FREE;
@@ -216,7 +259,7 @@ export function useSubscriptionPlan() {
 
   const refreshSubscription = useCallback(() => {
     console.log('🔄 [Subscription] Forçando atualização dos dados...');
-    return fetchUserSubscription(true);
+    return fetchUserSubscription();
   }, [fetchUserSubscription]);
 
   return {
@@ -225,6 +268,8 @@ export function useSubscriptionPlan() {
     error,
     hasFeature,
     requiresUpgrade,
+    getRequiredPlan,
+    canAccess,
     showUpgradeMessage,
     features: subscription ? getPlanFeatures(subscription.plan_type) : null,
     planType: subscription?.plan_type || PlanType.FREE,
