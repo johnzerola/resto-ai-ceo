@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +26,7 @@ export interface PlanFeatures {
   hasAdvancedReports: boolean;
   hasInventoryManagement: boolean;
   hasFinancialAnalysis: boolean;
-  maxRestaurants: number;
+  maxRestaurants: number; // Changed from boolean to number
   hasTeamManagement: boolean;
   hasPrioritySupport: boolean;
 }
