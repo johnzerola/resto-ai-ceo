@@ -1,13 +1,8 @@
 
-import { ModernLayout } from "@/components/restaurant/ModernLayout";
-import { OptimizedDashboard } from "@/components/dashboard/OptimizedDashboard";
+import PaginaVendasOtimizada from "./PaginaVendasOtimizada";
 
 const Index = () => {
-  return (
-    <ModernLayout>
-      <OptimizedDashboard />
-    </ModernLayout>
-  );
+  return <PaginaVendasOtimizada />;
 };
 
 export default Index;
