@@ -1,4 +1,3 @@
-
 interface SecurityTest {
   id: string;
   name: string;
@@ -32,9 +31,19 @@ interface SecurityReport {
   vulnerabilities: VulnerabilityReport[];
 }
 
+interface PenetrationTestResult {
+  id: string;
+  target: string;
+  result: 'passed' | 'failed' | 'warning';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  timestamp: string;
+}
+
 class SecurityTestingService {
   private tests: SecurityTest[] = [];
   private vulnerabilities: VulnerabilityReport[] = [];
+  private penetrationResults: PenetrationTestResult[] = [];
 
   async runBasicPenetrationTest(): Promise<SecurityTest> {
     const testId = `pen-test-${Date.now()}`;
@@ -51,37 +60,53 @@ class SecurityTestingService {
     };
 
     this.tests.push(test);
-
-    // Simular teste de penetração
     await this.simulatePenetrationTest(test);
-    
     test.duration = Date.now() - startTime;
     return test;
   }
 
   private async simulatePenetrationTest(test: SecurityTest): Promise<void> {
-    // Simular verificações de segurança
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Verificar injeção SQL
     const sqlInjectionVuln = await this.checkSQLInjection();
     if (sqlInjectionVuln) {
       this.vulnerabilities.push(sqlInjectionVuln);
+      this.penetrationResults.push({
+        id: `pen-${Date.now()}`,
+        target: 'SQL Injection',
+        result: 'failed',
+        severity: sqlInjectionVuln.severity,
+        description: sqlInjectionVuln.description,
+        timestamp: new Date().toISOString()
+      });
     }
 
-    // Verificar autenticação
     const authVuln = await this.checkAuthentication();
     if (authVuln) {
       this.vulnerabilities.push(authVuln);
+      this.penetrationResults.push({
+        id: `pen-${Date.now()}`,
+        target: 'Authentication',
+        result: 'warning',
+        severity: authVuln.severity,
+        description: authVuln.description,
+        timestamp: new Date().toISOString()
+      });
     }
 
-    // Verificar autorização
     const authzVuln = await this.checkAuthorization();
     if (authzVuln) {
       this.vulnerabilities.push(authzVuln);
+      this.penetrationResults.push({
+        id: `pen-${Date.now()}`,
+        target: 'Authorization',
+        result: 'failed',
+        severity: authzVuln.severity,
+        description: authzVuln.description,
+        timestamp: new Date().toISOString()
+      });
     }
 
-    // Determinar resultado do teste
     const criticalVulns = this.vulnerabilities.filter(v => v.severity === 'critical').length;
     
     if (criticalVulns > 0) {
@@ -94,10 +119,8 @@ class SecurityTestingService {
   }
 
   private async checkSQLInjection(): Promise<VulnerabilityReport | null> {
-    // Simular verificação de injeção SQL
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    // Simular resultado (90% chance de não ter vulnerabilidade)
     if (Math.random() < 0.1) {
       return {
         id: `vuln-sql-${Date.now()}`,
@@ -146,6 +169,10 @@ class SecurityTestingService {
     return null;
   }
 
+  getPenetrationResults(): PenetrationTestResult[] {
+    return [...this.penetrationResults];
+  }
+
   async runVulnerabilityAudit(): Promise<void> {
     const startTime = Date.now();
 
@@ -160,7 +187,6 @@ class SecurityTestingService {
     };
 
     this.tests.push(test);
-
     // Simular auditoria
     await new Promise(resolve => setTimeout(resolve, 3000));
 
@@ -293,8 +319,9 @@ class SecurityTestingService {
   clearTestData(): void {
     this.tests = [];
     this.vulnerabilities = [];
+    this.penetrationResults = [];
   }
 }
 
 export const securityTestingService = new SecurityTestingService();
-export type { SecurityTest, VulnerabilityReport, SecurityReport };
+export type { SecurityTest, VulnerabilityReport, SecurityReport, PenetrationTestResult };

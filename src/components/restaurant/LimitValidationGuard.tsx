@@ -10,7 +10,7 @@ interface LimitValidationGuardProps {
   children: React.ReactNode;
   onLimitReached?: () => void;
   showToast?: boolean;
-  blockAction?: boolean; // Nova prop para controlar se deve bloquear a ação
+  blockAction?: boolean;
 }
 
 export function LimitValidationGuard({ 
@@ -23,7 +23,7 @@ export function LimitValidationGuard({
   const { canCreate, usage, limits } = useUsageLimits();
   const { planType } = useSubscriptionPlan();
 
-  const handleLimitReached = (e?: React.MouseEvent) => {
+  const handleLimitReached = (e?: React.MouseEvent | React.FormEvent) => {
     if (blockAction && e) {
       e.preventDefault();
       e.stopPropagation();
@@ -53,12 +53,10 @@ export function LimitValidationGuard({
     return false;
   };
 
-  // Se não pode criar e deve bloquear, envolver em div que intercepta cliques
   if (!canCreate(resourceType) && blockAction) {
     return (
       <div 
         onClick={handleLimitReached}
-        onSubmit={handleLimitReached}
         className="cursor-not-allowed"
         style={{ pointerEvents: 'auto' }}
       >
@@ -75,7 +73,6 @@ export function LimitValidationGuard({
     );
   }
 
-  // Se não pode criar mas não deve bloquear, mostrar o LimitGuard
   if (!canCreate(resourceType)) {
     return (
       <LimitGuard 
@@ -91,11 +88,9 @@ export function LimitValidationGuard({
     );
   }
 
-  // Se pode criar, renderizar normalmente
   return <>{children}</>;
 }
 
-// Hook para validação de limite antes de ações
 export function useValidateLimit() {
   const { canCreate } = useUsageLimits();
   const { planType } = useSubscriptionPlan();

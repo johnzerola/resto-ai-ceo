@@ -1,14 +1,13 @@
 import { toast } from "sonner";
 import { addSystemAlert } from "./ModuleIntegrationService";
 
-// Tipos de usuários para controle de acesso
 export enum UserRole {
   OWNER = "owner",
-  MANAGER = "manager",
-  EMPLOYEE = "employee"
+  MANAGER = "manager", 
+  EMPLOYEE = "employee",
+  SUPERADMIN = "superadmin"
 }
 
-// Interface para representar um usuário
 export interface User {
   id: string;
   name: string;
@@ -16,15 +15,17 @@ export interface User {
   role: UserRole;
   createdAt: string;
   lastLogin?: string;
+  dev_notes?: string;
+  alert_level?: 'critical' | 'medium' | 'low';
+  debug_mode?: boolean;
+  last_activity?: string;
 }
 
-// Interface para representação de credenciais
 interface Credentials {
   email: string;
   password: string;
 }
 
-// Interface para dados de registro
 interface RegistrationData {
   name: string;
   email: string;
@@ -32,19 +33,14 @@ interface RegistrationData {
   role: UserRole;
 }
 
-// Função para criptografar senha (simulação simples)
-// Em produção, isso seria feito no backend com bcrypt ou similar
 const encryptPassword = (password: string): string => {
-  // Simulação simplificada de hash - NÃO USE EM PRODUÇÃO
   return btoa(password + "salt_value");
 };
 
-// Verificar se senha corresponde à senha criptografada
 const verifyPassword = (password: string, encryptedPassword: string): boolean => {
   return encryptPassword(password) === encryptedPassword;
 };
 
-// Obter todos os usuários do sistema
 export const getUsers = (): User[] => {
   try {
     const usersData = localStorage.getItem("users");
@@ -58,7 +54,6 @@ export const getUsers = (): User[] => {
   }
 };
 
-// Salvar usuários no localStorage
 const saveUsers = (users: User[]): void => {
   try {
     localStorage.setItem("users", JSON.stringify(users));
@@ -67,24 +62,20 @@ const saveUsers = (users: User[]): void => {
   }
 };
 
-// Obter usuário pelo ID
 export const getUserById = (userId: string): User | null => {
   const users = getUsers();
   return users.find(user => user.id === userId) || null;
 };
 
-// Obter usuário pelo email
 export const getUserByEmail = (email: string): User | null => {
   const users = getUsers();
   return users.find(user => user.email === email) || null;
 };
 
-// Verificar se um email já está em uso
 export const isEmailInUse = (email: string): boolean => {
   return getUserByEmail(email) !== null;
 };
 
-// Registrar um novo usuário
 export const registerUser = (userData: RegistrationData): User | null => {
   try {
     if (isEmailInUse(userData.email)) {
@@ -94,7 +85,6 @@ export const registerUser = (userData: RegistrationData): User | null => {
 
     const users = getUsers();
     
-    // Criar novo usuário
     const newUser: User = {
       id: crypto.randomUUID(),
       name: userData.name,
@@ -103,12 +93,10 @@ export const registerUser = (userData: RegistrationData): User | null => {
       createdAt: new Date().toISOString()
     };
 
-    // Salvar senha criptografada separadamente
     const passwords = getPasswords();
     passwords[newUser.id] = encryptPassword(userData.password);
     savePasswords(passwords);
 
-    // Adicionar à lista de usuários e salvar
     users.push(newUser);
     saveUsers(users);
 
@@ -128,7 +116,6 @@ export const registerUser = (userData: RegistrationData): User | null => {
   }
 };
 
-// Obter senhas criptografadas
 const getPasswords = (): Record<string, string> => {
   try {
     const passwordsData = localStorage.getItem("userPasswords");
@@ -142,7 +129,6 @@ const getPasswords = (): Record<string, string> => {
   }
 };
 
-// Salvar senhas criptografadas
 const savePasswords = (passwords: Record<string, string>): void => {
   try {
     localStorage.setItem("userPasswords", JSON.stringify(passwords));
@@ -151,7 +137,6 @@ const savePasswords = (passwords: Record<string, string>): void => {
   }
 };
 
-// Login de usuário
 export const loginUser = async (credentials: Credentials): Promise<User | null> => {
   try {
     const user = getUserByEmail(credentials.email);
@@ -169,7 +154,6 @@ export const loginUser = async (credentials: Credentials): Promise<User | null> 
       return null;
     }
 
-    // Atualizar último login
     const users = getUsers();
     const updatedUsers = users.map(u => {
       if (u.id === user.id) {
@@ -180,7 +164,6 @@ export const loginUser = async (credentials: Credentials): Promise<User | null> 
     
     saveUsers(updatedUsers);
     
-    // Salvar dados da sessão
     localStorage.setItem("currentUser", JSON.stringify({
       ...user,
       lastLogin: new Date().toISOString()
@@ -195,7 +178,6 @@ export const loginUser = async (credentials: Credentials): Promise<User | null> 
   }
 };
 
-// Logout de usuário
 export const logoutUser = (): void => {
   try {
     localStorage.removeItem("currentUser");
@@ -205,7 +187,6 @@ export const logoutUser = (): void => {
   }
 };
 
-// Obter usuário atual (logado)
 export const getCurrentUser = (): User | null => {
   try {
     const userData = localStorage.getItem("currentUser");
@@ -219,25 +200,25 @@ export const getCurrentUser = (): User | null => {
   }
 };
 
-// Verificar se usuário tem determinada permissão
 export const hasPermission = (requiredRole: UserRole): boolean => {
   const currentUser = getCurrentUser();
   if (!currentUser) return false;
 
-  // Hierarquia de permissões
+  if (currentUser.role === UserRole.SUPERADMIN) {
+    return true;
+  }
+  
   if (currentUser.role === UserRole.OWNER) {
-    return true; // Proprietário tem acesso a tudo
+    return requiredRole !== UserRole.SUPERADMIN;
   }
   
   if (currentUser.role === UserRole.MANAGER) {
-    return requiredRole !== UserRole.OWNER; // Gerente não tem acesso às funções exclusivas do proprietário
+    return requiredRole !== UserRole.OWNER && requiredRole !== UserRole.SUPERADMIN;
   }
   
-  // Funcionário só tem acesso às funções de funcionário
   return currentUser.role === requiredRole;
 };
 
-// Inicializar usuário padrão (proprietário) se não houver usuários
 export const initializeDefaultUser = (): void => {
   const users = getUsers();
   if (users.length === 0) {
@@ -247,6 +228,16 @@ export const initializeDefaultUser = (): void => {
       password: "admin123",
       role: UserRole.OWNER
     });
-    console.log("Usuário padrão criado: admin@restaurante.com / admin123");
+    
+    registerUser({
+      name: "Administrador Técnico da Plataforma",
+      email: "superadmin@restauria.com", 
+      password: "SuperAdmin2024!Tech",
+      role: UserRole.SUPERADMIN
+    });
+    
+    console.log("Usuários padrão criados:");
+    console.log("Admin: admin@restaurante.com / admin123");
+    console.log("SuperAdmin: superadmin@restauria.com / SuperAdmin2024!Tech");
   }
 };
