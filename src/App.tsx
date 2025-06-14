@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { UserRole } from "@/services/AuthService";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import { Register } from "./pages/Register";
@@ -25,6 +26,7 @@ import AssistenteIA from "./pages/AssistenteIA";
 import TestePage from "./pages/TestePage";
 import NotFound from "./pages/NotFound";
 import PaginaVendas from "./pages/PaginaVendas";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/super-admin-dashboard"
+                element={
+                  <ProtectedRoute requiredRole={UserRole.SUPERADMIN}>
+                    <SuperAdminDashboard />
                   </ProtectedRoute>
                 }
               />

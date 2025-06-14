@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo, Suspense } from 'react';
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/services/AuthService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,30 +12,37 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
 import { 
   Shield, 
-  Users, 
-  Database, 
-  Settings, 
   AlertTriangle, 
-  Activity,
-  Server,
-  Lock,
-  Eye,
-  FileText,
-  Zap,
-  Bug,
-  BarChart3,
   Terminal,
   Code,
   Brain,
-  TestTube
+  TestTube,
+  Bug,
+  Database,
+  Activity,
+  FileText,
+  Users,
+  Settings
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSuperAdminCache } from "@/hooks/useSuperAdminCache";
+import { MobileStatsGrid } from "@/components/superadmin/MobileStatsGrid";
+import { MobileTabsNavigation } from "@/components/superadmin/MobileTabsNavigation";
+import { CompactAuditSection } from "@/components/superadmin/CompactAuditSection";
+
+const LoadingCard = memo(() => (
+  <Card className="animate-pulse">
+    <CardContent className="p-6">
+      <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+      <div className="h-8 bg-muted rounded w-1/2"></div>
+    </CardContent>
+  </Card>
+));
 
 const SuperAdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState("overview");
   const [systemStats, setSystemStats] = useState({
     totalUsers: 0,
     activeSubscriptions: 0,
@@ -43,12 +50,13 @@ const SuperAdminDashboard = () => {
     apiResponses: 0,
     errors24h: 0
   });
-
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [systemLogs, setSystemLogs] = useState<any[]>([]);
   const [aiPrompts, setAiPrompts] = useState<any[]>([]);
   const [planConfigs, setPlanConfigs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { getSystemStats, getAuditLogs, clearCache, getCacheStats } = useSuperAdminCache();
 
   useEffect(() => {
     loadDashboardData();
@@ -58,39 +66,16 @@ const SuperAdminDashboard = () => {
     try {
       setIsLoading(true);
       
-      // Carregar estatísticas do sistema usando tabelas existentes
-      const { data: profiles } = await supabase.from('profiles').select('*');
-      const { data: subscribers } = await supabase.from('subscribers').select('*');
-
-      setSystemStats({
-        totalUsers: profiles?.length || 0,
-        activeSubscriptions: subscribers?.filter(s => s.subscribed)?.length || 0,
-        systemHealth: Math.floor(Math.random() * 20) + 80, // Simulado
-        apiResponses: Math.floor(Math.random() * 1000) + 500,
-        errors24h: Math.floor(Math.random() * 10)
-      });
-
-      // Mock data para logs de auditoria até as tabelas serem criadas
-      setAuditLogs([
-        {
-          id: '1',
-          action: 'LOGIN',
-          table_name: 'profiles',
-          timestamp: new Date().toISOString(),
-          user_id: 'mock-user',
-          additional_data: { ip: '192.168.1.1' }
-        },
-        {
-          id: '2',
-          action: 'UPDATE',
-          table_name: 'subscribers',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          user_id: 'mock-user-2',
-          additional_data: { changes: 'subscription_tier' }
-        }
+      // Carregar dados com cache
+      const [stats, logs] = await Promise.all([
+        getSystemStats(),
+        getAuditLogs()
       ]);
 
-      // Mock data para logs do sistema
+      setSystemStats(stats);
+      setAuditLogs(logs);
+
+      // Mock data para outros componentes
       setSystemLogs([
         {
           id: '1',
@@ -105,17 +90,9 @@ const SuperAdminDashboard = () => {
           service: 'payments',
           message: 'Payment processing delayed',
           timestamp: new Date(Date.now() - 1800000).toISOString()
-        },
-        {
-          id: '3',
-          level: 'error',
-          service: 'api',
-          message: 'Rate limit exceeded for endpoint /api/restaurants',
-          timestamp: new Date(Date.now() - 900000).toISOString()
         }
       ]);
 
-      // Mock data para prompts da IA
       setAiPrompts([
         {
           id: '1',
@@ -130,17 +107,9 @@ const SuperAdminDashboard = () => {
           category: 'optimization',
           prompt_text: 'Você é um consultor de custos para restaurantes...',
           is_active: true
-        },
-        {
-          id: '3',
-          name: 'Precificação de Menu',
-          category: 'pricing',
-          prompt_text: 'Você é um especialista em precificação de cardápios...',
-          is_active: true
         }
       ]);
 
-      // Mock data para configurações de planos
       setPlanConfigs([
         {
           id: '1',
@@ -159,15 +128,6 @@ const SuperAdminDashboard = () => {
           price_monthly: 29.90,
           price_yearly: 299.00,
           is_active: true
-        },
-        {
-          id: '3',
-          plan_name: 'profissional',
-          features: { restaurants: 5, menuItems: -1, fullReports: true, prioritySupport: true, aiAssistant: true },
-          limits: { restaurants: 5, menuItems: -1, storage: '20GB' },
-          price_monthly: 79.90,
-          price_yearly: 799.00,
-          is_active: true
         }
       ]);
 
@@ -181,8 +141,6 @@ const SuperAdminDashboard = () => {
 
   const simulateSystemTest = async () => {
     toast.info('Iniciando testes do sistema...');
-    
-    // Simular testes
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     const testResults = [
@@ -202,278 +160,188 @@ const SuperAdminDashboard = () => {
     });
   };
 
-  const SystemOverview = () => (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Usuários Totais</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemStats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">Registrados na plataforma</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assinaturas Ativas</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{systemStats.activeSubscriptions}</div>
-            <p className="text-xs text-muted-foreground">Pagantes ativos</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saúde do Sistema</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{systemStats.systemHealth}%</div>
-            <Progress value={systemStats.systemHealth} className="mt-2" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">APIs 24h</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{systemStats.apiResponses}</div>
-            <p className="text-xs text-muted-foreground">Chamadas processadas</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Erros 24h</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${systemStats.errors24h > 5 ? 'text-red-600' : 'text-green-600'}`}>
-              {systemStats.errors24h}
-            </div>
-            <p className="text-xs text-muted-foreground">Incidentes registrados</p>
-          </CardContent>
-        </Card>
-      </div>
+  const SystemOverview = memo(() => (
+    <div className="space-y-4 sm:space-y-6">
+      <MobileStatsGrid stats={systemStats} />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TestTube className="h-5 w-5" />
-              Testes Rápidos do Sistema
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <TestTube className="h-4 w-4 sm:h-5 sm:w-5" />
+              Testes do Sistema
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={simulateSystemTest} className="w-full">
+            <Button onClick={simulateSystemTest} className="w-full" size="sm">
               <Bug className="h-4 w-4 mr-2" />
-              Executar Bateria de Testes
+              Executar Testes
             </Button>
-            <div className="text-sm text-muted-foreground">
-              • Conectividade Supabase<br/>
-              • Funcionalidades dos Planos<br/>
-              • Resposta da IA<br/>
-              • Sistema de Logs<br/>
-              • Performance da API
+            <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
+              <div>• Conectividade Supabase</div>
+              <div>• Funcionalidades dos Planos</div>
+              <div>• Resposta da IA</div>
+              <div>• Sistema de Logs</div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Terminal className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Terminal className="h-4 w-4 sm:h-5 sm:w-5" />
               Ações Rápidas
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" size="sm">
               <Database className="h-4 w-4 mr-2" />
-              Backup Manual do Banco
+              <span className="text-xs sm:text-sm">Backup Manual</span>
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" size="sm">
               <Shield className="h-4 w-4 mr-2" />
-              Verificar Segurança
+              <span className="text-xs sm:text-sm">Verificar Segurança</span>
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" size="sm">
               <Activity className="h-4 w-4 mr-2" />
-              Limpar Cache do Sistema
+              <span className="text-xs sm:text-sm">Limpar Cache</span>
             </Button>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
+  ));
 
-  const AuditSection = () => (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Logs de Auditoria Recentes
-          </CardTitle>
-          <CardDescription>
-            Todas as ações dos usuários são registradas para auditoria
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {auditLogs.slice(0, 20).map((log: any, index) => (
-              <div key={index} className="flex items-center gap-3 p-2 border rounded">
-                <Badge variant={log.action === 'DELETE' ? 'destructive' : 'secondary'}>
-                  {log.action}
-                </Badge>
-                <span className="text-sm">{log.table_name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(log.timestamp).toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const TechnicalLogs = () => (
-    <Card>
+  const TechnicalLogs = memo(() => (
+    <Card className="border-0 shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Terminal className="h-5 w-5" />
-          Logs Técnicos do Sistema
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Terminal className="h-4 w-4 sm:h-5 sm:w-5" />
+          Logs Técnicos
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2 max-h-96 overflow-y-auto font-mono text-sm">
-          {systemLogs.slice(0, 30).map((log: any, index) => (
+        <div className="space-y-2 max-h-64 sm:max-h-96 overflow-y-auto font-mono text-xs sm:text-sm">
+          {systemLogs.slice(0, 20).map((log: any, index) => (
             <div key={index} className={`p-2 rounded ${
               log.level === 'error' ? 'bg-red-50 border-l-4 border-red-500' :
               log.level === 'warning' ? 'bg-yellow-50 border-l-4 border-yellow-500' :
               'bg-gray-50 border-l-4 border-gray-300'
             }`}>
-              <div className="flex items-center gap-2">
-                <Badge variant={log.level === 'error' ? 'destructive' : 'secondary'}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant={log.level === 'error' ? 'destructive' : 'secondary'} className="text-xs">
                   {log.level.toUpperCase()}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
-                  {new Date(log.timestamp).toLocaleString()}
+                  {new Date(log.timestamp).toLocaleTimeString()}
                 </span>
               </div>
-              <p className="mt-1">[{log.service}] {log.message}</p>
+              <p className="mt-1 break-words">[{log.service}] {log.message}</p>
             </div>
           ))}
         </div>
       </CardContent>
     </Card>
-  );
+  ));
 
-  const AIPromptsEditor = () => {
+  const AIPromptsEditor = memo(() => {
     const [selectedPrompt, setSelectedPrompt] = useState<any>(null);
 
     return (
-      <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5" />
-              Editor de Prompts da IA
-            </CardTitle>
-            <CardDescription>
-              Gerencie e edite os prompts utilizados pelo sistema de IA
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label>Prompts Disponíveis</Label>
-                <div className="space-y-2 mt-2">
-                  {aiPrompts.map((prompt: any) => (
-                    <Button
-                      key={prompt.id}
-                      variant={selectedPrompt?.id === prompt.id ? "default" : "outline"}
-                      className="w-full justify-start"
-                      onClick={() => setSelectedPrompt(prompt)}
-                    >
-                      <Code className="h-4 w-4 mr-2" />
-                      {prompt.name}
-                    </Button>
-                  ))}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Brain className="h-4 w-4 sm:h-5 sm:w-5" />
+            Editor de Prompts da IA
+          </CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
+            Gerencie os prompts do sistema de IA
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div>
+              <Label className="text-xs sm:text-sm">Prompts Disponíveis</Label>
+              <div className="space-y-2 mt-2">
+                {aiPrompts.map((prompt: any) => (
+                  <Button
+                    key={prompt.id}
+                    variant={selectedPrompt?.id === prompt.id ? "default" : "outline"}
+                    className="w-full justify-start text-xs sm:text-sm"
+                    size="sm"
+                    onClick={() => setSelectedPrompt(prompt)}
+                  >
+                    <Code className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                    {prompt.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
+            {selectedPrompt && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-xs sm:text-sm">Nome do Prompt</Label>
+                  <Input defaultValue={selectedPrompt.name} size="sm" />
+                </div>
+                <div>
+                  <Label className="text-xs sm:text-sm">Categoria</Label>
+                  <Input defaultValue={selectedPrompt.category} size="sm" />
+                </div>
+                <div>
+                  <Label className="text-xs sm:text-sm">Texto do Prompt</Label>
+                  <Textarea 
+                    rows={4} 
+                    defaultValue={selectedPrompt.prompt_text}
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" className="flex-1">Salvar</Button>
+                  <Button variant="outline" size="sm" className="flex-1">Testar</Button>
                 </div>
               </div>
-              
-              {selectedPrompt && (
-                <div className="space-y-4">
-                  <div>
-                    <Label>Nome do Prompt</Label>
-                    <Input defaultValue={selectedPrompt.name} />
-                  </div>
-                  <div>
-                    <Label>Categoria</Label>
-                    <Input defaultValue={selectedPrompt.category} />
-                  </div>
-                  <div>
-                    <Label>Texto do Prompt</Label>
-                    <Textarea 
-                      rows={8} 
-                      defaultValue={selectedPrompt.prompt_text}
-                      className="font-mono"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button>Salvar Alterações</Button>
-                    <Button variant="outline">Testar Prompt</Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     );
-  };
+  });
 
-  const PlansManager = () => (
-    <Card>
+  const PlansManager = memo(() => (
+    <Card className="border-0 shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Settings className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
           Gerenciador de Planos
         </CardTitle>
-        <CardDescription>
-          Configure os planos, preços e funcionalidades disponíveis
+        <CardDescription className="text-xs sm:text-sm">
+          Configure planos, preços e funcionalidades
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {planConfigs.map((plan: any) => (
-            <div key={plan.id} className="border rounded p-4">
+            <div key={plan.id} className="border rounded-lg p-3 sm:p-4">
               <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium capitalize">{plan.plan_name}</h4>
+                <h4 className="font-medium capitalize text-sm sm:text-base">{plan.plan_name}</h4>
                 <Switch checked={plan.is_active} />
               </div>
-              <div className="grid gap-2 md:grid-cols-2 text-sm">
+              <div className="grid gap-2 grid-cols-2 text-xs sm:text-sm">
                 <div>
-                  <strong>Preço Mensal:</strong> R$ {plan.price_monthly}
+                  <strong>Mensal:</strong> R$ {plan.price_monthly}
                 </div>
                 <div>
-                  <strong>Preço Anual:</strong> R$ {plan.price_yearly}
+                  <strong>Anual:</strong> R$ {plan.price_yearly}
                 </div>
               </div>
               <details className="mt-2">
-                <summary className="cursor-pointer text-sm font-medium">
-                  Ver Features e Limites
+                <summary className="cursor-pointer text-xs sm:text-sm font-medium">
+                  Ver Detalhes
                 </summary>
-                <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
-                  <div><strong>Features:</strong> {JSON.stringify(plan.features, null, 2)}</div>
-                  <div><strong>Limites:</strong> {JSON.stringify(plan.limits, null, 2)}</div>
+                <div className="mt-2 p-2 bg-muted/20 rounded text-xs">
+                  <div><strong>Features:</strong> {JSON.stringify(plan.features)}</div>
+                  <div><strong>Limites:</strong> {JSON.stringify(plan.limits)}</div>
                 </div>
               </details>
             </div>
@@ -481,7 +349,33 @@ const SuperAdminDashboard = () => {
         </div>
       </CardContent>
     </Card>
-  );
+  ));
+
+  const ToolsSection = memo(() => (
+    <Card className="border-0 shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-base sm:text-lg">Ferramentas de Desenvolvimento</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Button variant="outline" className="w-full justify-start" size="sm">
+          <Database className="h-4 w-4 mr-2" />
+          <span className="text-xs sm:text-sm">Query SQL Customizada</span>
+        </Button>
+        <Button variant="outline" className="w-full justify-start" size="sm">
+          <FileText className="h-4 w-4 mr-2" />
+          <span className="text-xs sm:text-sm">Relatório do Sistema</span>
+        </Button>
+        <Button variant="outline" className="w-full justify-start" size="sm">
+          <Users className="h-4 w-4 mr-2" />
+          <span className="text-xs sm:text-sm">Simular Usuário</span>
+        </Button>
+        <Button variant="outline" className="w-full justify-start" size="sm" onClick={clearCache}>
+          <Activity className="h-4 w-4 mr-2" />
+          <span className="text-xs sm:text-sm">Limpar Cache ({getCacheStats.size} itens)</span>
+        </Button>
+      </CardContent>
+    </Card>
+  ));
 
   if (isLoading) {
     return (
@@ -490,7 +384,7 @@ const SuperAdminDashboard = () => {
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p>Carregando dashboard do superadministrador...</p>
+              <p className="text-sm sm:text-base">Carregando dashboard do superadministrador...</p>
             </div>
           </div>
         </ModernLayout>
@@ -501,77 +395,57 @@ const SuperAdminDashboard = () => {
   return (
     <ProtectedRoute requiredRole={UserRole.SUPERADMIN}>
       <ModernLayout>
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <Shield className="h-8 w-8 text-red-600" />
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight text-red-600">
-                Super Administrador Técnico
+        <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
+          {/* Header - Responsivo */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-red-600" />
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-red-600">
+                Super Administrador
               </h1>
-              <p className="text-muted-foreground">
-                Controle total da plataforma • Acesso irrestrito • Logs completos
+              <p className="text-muted-foreground text-xs sm:text-sm">
+                Controle total da plataforma • Acesso irrestrito
               </p>
             </div>
           </div>
 
-          <Alert>
+          <Alert className="border-orange-200 bg-orange-50">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>ATENÇÃO:</strong> Você tem acesso completo ao sistema. Todas as suas ações são registradas e auditadas.
+            <AlertDescription className="text-xs sm:text-sm">
+              <strong>ATENÇÃO:</strong> Você tem acesso completo ao sistema. Todas as ações são auditadas.
             </AlertDescription>
           </Alert>
 
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-              <TabsTrigger value="audit">Auditoria</TabsTrigger>
-              <TabsTrigger value="logs">Logs Técnicos</TabsTrigger>
-              <TabsTrigger value="ai">IA & Prompts</TabsTrigger>
-              <TabsTrigger value="plans">Planos</TabsTrigger>
-              <TabsTrigger value="tools">Ferramentas</TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <MobileTabsNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-            <TabsContent value="overview" className="mt-6">
-              <SystemOverview />
-            </TabsContent>
+            <div className="mt-4 sm:mt-6">
+              <Suspense fallback={<LoadingCard />}>
+                <TabsContent value="overview">
+                  <SystemOverview />
+                </TabsContent>
 
-            <TabsContent value="audit" className="mt-6">
-              <AuditSection />
-            </TabsContent>
+                <TabsContent value="audit">
+                  <CompactAuditSection logs={auditLogs} />
+                </TabsContent>
 
-            <TabsContent value="logs" className="mt-6">
-              <TechnicalLogs />
-            </TabsContent>
+                <TabsContent value="logs">
+                  <TechnicalLogs />
+                </TabsContent>
 
-            <TabsContent value="ai" className="mt-6">
-              <AIPromptsEditor />
-            </TabsContent>
+                <TabsContent value="ai">
+                  <AIPromptsEditor />
+                </TabsContent>
 
-            <TabsContent value="plans" className="mt-6">
-              <PlansManager />
-            </TabsContent>
+                <TabsContent value="plans">
+                  <PlansManager />
+                </TabsContent>
 
-            <TabsContent value="tools" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ferramentas de Desenvolvimento</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Database className="h-4 w-4 mr-2" />
-                    Executar Query SQL Customizada
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Gerar Relatório Completo do Sistema
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Users className="h-4 w-4 mr-2" />
-                    Simular Usuário (User Impersonation)
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                <TabsContent value="tools">
+                  <ToolsSection />
+                </TabsContent>
+              </Suspense>
+            </div>
           </Tabs>
         </div>
       </ModernLayout>

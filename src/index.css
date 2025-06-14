@@ -108,14 +108,47 @@ body {
 
 /* Margem padrão para conteúdo principal das telas */
 .main-content-padding {
-  @apply p-6;
+  @apply p-3 sm:p-6;
 }
 
 /* Padronização de títulos no mobile - APLICAÇÃO UNIVERSAL */
 @media (max-width: 768px) {
+  /* SuperAdmin Dashboard específico - melhor responsividade */
+  .superadmin-dashboard {
+    @apply space-y-3;
+  }
+  
+  .superadmin-dashboard .space-y-6 {
+    @apply space-y-4;
+  }
+  
+  .superadmin-dashboard .text-3xl {
+    @apply text-xl;
+  }
+  
+  .superadmin-dashboard .text-2xl {
+    @apply text-lg;
+  }
+  
+  .superadmin-dashboard .text-xl {
+    @apply text-base;
+  }
+  
+  .superadmin-dashboard .p-6 {
+    @apply p-4;
+  }
+  
+  .superadmin-dashboard .py-6 {
+    @apply py-4;
+  }
+  
+  .superadmin-dashboard .px-6 {
+    @apply px-4;
+  }
+  
   /* Margem adicional no mobile para afastar do menu lateral */
   .main-content-padding {
-    @apply p-4 pl-6;
+    @apply p-3 pl-4;
   }
   
   /* Classes específicas para títulos e subtítulos */
@@ -297,11 +330,24 @@ body {
 /* Responsividade específica */
 @media (max-width: 640px) {
   .mobile-padding {
-    @apply px-4;
+    @apply px-3;
   }
   
   .mobile-text-sm {
     @apply text-sm;
+  }
+  
+  /* SuperAdmin mobile otimizations */
+  .superadmin-mobile-grid {
+    @apply grid-cols-2 gap-2;
+  }
+  
+  .superadmin-mobile-card {
+    @apply p-3;
+  }
+  
+  .superadmin-mobile-text {
+    @apply text-xs;
   }
 }
 
@@ -321,4 +367,17 @@ body {
 
 .dark .text-gray-400 {
   color: #6b7280;
+}
+
+/* Cache performance indicators */
+.cache-indicator {
+  @apply inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full;
+}
+
+.cache-indicator.loading {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.cache-indicator.error {
+  @apply bg-red-100 text-red-800;
 }
