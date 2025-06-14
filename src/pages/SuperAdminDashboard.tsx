@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -199,18 +200,6 @@ const SuperAdminDashboard = () => {
         toast.warning(`⚠️ ${result.test}: Verificar`);
       }
     });
-  };
-
-  const createAuditLog = async (action: string, details: any) => {
-    try {
-      await supabase.from('audit_logs').insert({
-        action,
-        additional_data: details,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Erro ao criar log de auditoria:', error);
-    }
   };
 
   const SystemOverview = () => (
