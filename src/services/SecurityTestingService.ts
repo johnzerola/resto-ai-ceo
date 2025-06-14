@@ -33,11 +33,14 @@ interface SecurityReport {
 
 interface PenetrationTestResult {
   id: string;
+  test_type: string;
   target: string;
+  success: boolean;
   result: 'passed' | 'failed' | 'warning';
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   timestamp: string;
+  vulnerabilities_found: VulnerabilityReport[];
 }
 
 class SecurityTestingService {
@@ -73,11 +76,14 @@ class SecurityTestingService {
       this.vulnerabilities.push(sqlInjectionVuln);
       this.penetrationResults.push({
         id: `pen-${Date.now()}`,
-        target: 'SQL Injection',
+        test_type: 'SQL Injection Test',
+        target: 'Database Endpoints',
+        success: false,
         result: 'failed',
         severity: sqlInjectionVuln.severity,
         description: sqlInjectionVuln.description,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        vulnerabilities_found: [sqlInjectionVuln]
       });
     }
 
@@ -86,11 +92,14 @@ class SecurityTestingService {
       this.vulnerabilities.push(authVuln);
       this.penetrationResults.push({
         id: `pen-${Date.now()}`,
-        target: 'Authentication',
+        test_type: 'Authentication Test',
+        target: 'Login System',
+        success: false,
         result: 'warning',
         severity: authVuln.severity,
         description: authVuln.description,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        vulnerabilities_found: [authVuln]
       });
     }
 
@@ -99,11 +108,29 @@ class SecurityTestingService {
       this.vulnerabilities.push(authzVuln);
       this.penetrationResults.push({
         id: `pen-${Date.now()}`,
-        target: 'Authorization',
+        test_type: 'Authorization Test',
+        target: 'Access Control',
+        success: false,
         result: 'failed',
         severity: authzVuln.severity,
         description: authzVuln.description,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        vulnerabilities_found: [authzVuln]
+      });
+    }
+
+    // Adicionar teste de sucesso se não houver vulnerabilidades críticas
+    if (this.vulnerabilities.filter(v => v.severity === 'critical').length === 0) {
+      this.penetrationResults.push({
+        id: `pen-${Date.now()}`,
+        test_type: 'Overall Security Test',
+        target: 'System Wide',
+        success: true,
+        result: 'passed',
+        severity: 'low',
+        description: 'Sistema passou nos testes básicos de segurança',
+        timestamp: new Date().toISOString(),
+        vulnerabilities_found: []
       });
     }
 

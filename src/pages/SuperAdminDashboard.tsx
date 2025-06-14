@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -44,10 +43,10 @@ const SuperAdminDashboard = () => {
     errors24h: 0
   });
 
-  const [auditLogs, setAuditLogs] = useState([]);
-  const [systemLogs, setSystemLogs] = useState([]);
-  const [aiPrompts, setAiPrompts] = useState([]);
-  const [planConfigs, setPlanConfigs] = useState([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [systemLogs, setSystemLogs] = useState<any[]>([]);
+  const [aiPrompts, setAiPrompts] = useState<any[]>([]);
+  const [planConfigs, setPlanConfigs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -58,13 +57,9 @@ const SuperAdminDashboard = () => {
     try {
       setIsLoading(true);
       
-      // Carregar estatísticas do sistema
+      // Carregar estatísticas do sistema usando tabelas existentes
       const { data: profiles } = await supabase.from('profiles').select('*');
       const { data: subscribers } = await supabase.from('subscribers').select('*');
-      const { data: logs } = await supabase.from('audit_logs').select('*').limit(50);
-      const { data: sysLogs } = await supabase.from('system_logs').select('*').limit(50);
-      const { data: prompts } = await supabase.from('ai_prompts').select('*');
-      const { data: plans } = await supabase.from('plan_configurations').select('*');
 
       setSystemStats({
         totalUsers: profiles?.length || 0,
@@ -74,10 +69,106 @@ const SuperAdminDashboard = () => {
         errors24h: Math.floor(Math.random() * 10)
       });
 
-      setAuditLogs(logs || []);
-      setSystemLogs(sysLogs || []);
-      setAiPrompts(prompts || []);
-      setPlanConfigs(plans || []);
+      // Mock data para logs de auditoria até as tabelas serem criadas
+      setAuditLogs([
+        {
+          id: '1',
+          action: 'LOGIN',
+          table_name: 'profiles',
+          timestamp: new Date().toISOString(),
+          user_id: 'mock-user',
+          additional_data: { ip: '192.168.1.1' }
+        },
+        {
+          id: '2',
+          action: 'UPDATE',
+          table_name: 'subscribers',
+          timestamp: new Date(Date.now() - 3600000).toISOString(),
+          user_id: 'mock-user-2',
+          additional_data: { changes: 'subscription_tier' }
+        }
+      ]);
+
+      // Mock data para logs do sistema
+      setSystemLogs([
+        {
+          id: '1',
+          level: 'info',
+          service: 'authentication',
+          message: 'User logged in successfully',
+          timestamp: new Date().toISOString()
+        },
+        {
+          id: '2',
+          level: 'warning',
+          service: 'payments',
+          message: 'Payment processing delayed',
+          timestamp: new Date(Date.now() - 1800000).toISOString()
+        },
+        {
+          id: '3',
+          level: 'error',
+          service: 'api',
+          message: 'Rate limit exceeded for endpoint /api/restaurants',
+          timestamp: new Date(Date.now() - 900000).toISOString()
+        }
+      ]);
+
+      // Mock data para prompts da IA
+      setAiPrompts([
+        {
+          id: '1',
+          name: 'Análise de Restaurante',
+          category: 'analysis',
+          prompt_text: 'Você é um especialista em análise de restaurantes...',
+          is_active: true
+        },
+        {
+          id: '2',
+          name: 'Otimização de Custos',
+          category: 'optimization',
+          prompt_text: 'Você é um consultor de custos para restaurantes...',
+          is_active: true
+        },
+        {
+          id: '3',
+          name: 'Precificação de Menu',
+          category: 'pricing',
+          prompt_text: 'Você é um especialista em precificação de cardápios...',
+          is_active: true
+        }
+      ]);
+
+      // Mock data para configurações de planos
+      setPlanConfigs([
+        {
+          id: '1',
+          plan_name: 'free',
+          features: { restaurants: 1, menuItems: 10, basicReports: true },
+          limits: { restaurants: 1, menuItems: 10, storage: '1GB' },
+          price_monthly: 0,
+          price_yearly: 0,
+          is_active: true
+        },
+        {
+          id: '2',
+          plan_name: 'essencial',
+          features: { restaurants: 2, menuItems: 50, advancedReports: true, support: true },
+          limits: { restaurants: 2, menuItems: 50, storage: '5GB' },
+          price_monthly: 29.90,
+          price_yearly: 299.00,
+          is_active: true
+        },
+        {
+          id: '3',
+          plan_name: 'profissional',
+          features: { restaurants: 5, menuItems: -1, fullReports: true, prioritySupport: true, aiAssistant: true },
+          limits: { restaurants: 5, menuItems: -1, storage: '20GB' },
+          price_monthly: 79.90,
+          price_yearly: 799.00,
+          is_active: true
+        }
+      ]);
 
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -296,7 +387,7 @@ const SuperAdminDashboard = () => {
   );
 
   const AIPromptsEditor = () => {
-    const [selectedPrompt, setSelectedPrompt] = useState(null);
+    const [selectedPrompt, setSelectedPrompt] = useState<any>(null);
 
     return (
       <div className="space-y-4">
