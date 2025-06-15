@@ -90,47 +90,49 @@ export function PlanGate({
   console.log(`🔒 [PlanGate] Acesso negado para ${featureName}. Plano atual: ${planType}, Requerido: ${requiredPlan}`);
 
   return (
-    <Card className="border-2 border-dashed border-muted-foreground/20">
-      <CardHeader className="text-center pb-3">
-        <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-3">
-          <Lock className="h-6 w-6 text-muted-foreground" />
-        </div>
-        <CardTitle className="text-lg flex items-center justify-center gap-2">
-          {featureName}
-          <Badge variant="outline" className="text-xs">
-            {getPlanIcon()}
-            {requiredPlan}
-          </Badge>
-        </CardTitle>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
-      </CardHeader>
-      <CardContent className="text-center space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Esta funcionalidade está disponível no plano <strong>{requiredPlan}</strong>.
-        </p>
-        
-        {/* Mostrar plano atual */}
-        <div className="p-3 bg-muted rounded-lg">
-          <p className="text-xs text-muted-foreground mb-1">Seu plano atual:</p>
-          <Badge variant="outline">{planType.toUpperCase()}</Badge>
-        </div>
+    <div className="flex items-center justify-center min-h-[50vh] p-4">
+      <Card className="border-2 border-dashed border-muted-foreground/20 max-w-md w-full">
+        <CardHeader className="text-center pb-3">
+          <div className="mx-auto w-16 h-16 sm:w-12 sm:h-12 bg-muted rounded-full flex items-center justify-center mb-4 sm:mb-3">
+            <Lock className="h-8 w-8 sm:h-6 sm:w-6 text-muted-foreground" />
+          </div>
+          <CardTitle className="text-lg sm:text-base flex flex-col sm:flex-row items-center justify-center gap-2">
+            <span className="text-center">{featureName}</span>
+            <Badge variant="outline" className="text-xs">
+              {getPlanIcon()}
+              {requiredPlan}
+            </Badge>
+          </CardTitle>
+          {description && (
+            <p className="text-sm text-muted-foreground text-center px-2">{description}</p>
+          )}
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Esta funcionalidade está disponível no plano <strong>{requiredPlan}</strong>.
+          </p>
+          
+          {/* Mostrar plano atual */}
+          <div className="p-3 bg-muted rounded-lg">
+            <p className="text-xs text-muted-foreground mb-1">Seu plano atual:</p>
+            <Badge variant="outline">{planType.toUpperCase()}</Badge>
+          </div>
 
-        <div className="flex gap-2 justify-center">
-          <Button asChild size="sm">
-            <Link to="/assinatura">
-              <Crown className="h-4 w-4 mr-2" />
-              Ver Planos
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/dashboard">
-              Voltar ao Dashboard
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <Button asChild size="sm" className="w-full sm:w-auto">
+              <Link to="/assinatura">
+                <Crown className="h-4 w-4 mr-2" />
+                Ver Planos
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild className="w-full sm:w-auto">
+              <Link to="/dashboard">
+                Voltar ao Dashboard
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
