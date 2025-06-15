@@ -247,6 +247,39 @@ export type Database = {
           },
         ]
       }
+      ia_usage: {
+        Row: {
+          created_at: string | null
+          date: string
+          feature_used: string | null
+          id: string
+          messages_sent: number | null
+          plan_limit: number | null
+          tokens_used: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          feature_used?: string | null
+          id?: string
+          messages_sent?: number | null
+          plan_limit?: number | null
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          feature_used?: string | null
+          id?: string
+          messages_sent?: number | null
+          plan_limit?: number | null
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       ingredientes_por_prato: {
         Row: {
           created_at: string | null
@@ -445,6 +478,45 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          access_level: number | null
+          created_at: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          limits: Json | null
+          name: string
+          plan_id: string
+          price: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          access_level?: number | null
+          created_at?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          limits?: Json | null
+          name: string
+          plan_id: string
+          price?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          access_level?: number | null
+          created_at?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          limits?: Json | null
+          name?: string
+          plan_id?: string
+          price?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       pratos: {
         Row: {
           categoria: string | null
@@ -559,24 +631,33 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
+          last_login: string | null
           name: string | null
+          preferences: Json | null
           role: string | null
+          status: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           email?: string | null
           id: string
+          last_login?: string | null
           name?: string | null
+          preferences?: Json | null
           role?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string | null
           id?: string
+          last_login?: string | null
           name?: string | null
+          preferences?: Json | null
           role?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -753,7 +834,12 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          features: Json | null
           id: string
+          last_login: string | null
+          limits: Json | null
+          name: string | null
+          plan_status: string | null
           stripe_customer_id: string | null
           subscribed: boolean
           subscription_end: string | null
@@ -764,7 +850,12 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
+          features?: Json | null
           id?: string
+          last_login?: string | null
+          limits?: Json | null
+          name?: string | null
+          plan_status?: string | null
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
@@ -775,12 +866,77 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+          features?: Json | null
           id?: string
+          last_login?: string | null
+          limits?: Json | null
+          name?: string | null
+          plan_status?: string | null
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
           updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      system_config: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      system_logs: {
+        Row: {
+          id: string
+          message: string
+          metadata: Json | null
+          severity: string | null
+          source: string
+          timestamp: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          message: string
+          metadata?: Json | null
+          severity?: string | null
+          source: string
+          timestamp?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          message?: string
+          metadata?: Json | null
+          severity?: string | null
+          source?: string
+          timestamp?: string | null
+          type?: string
           user_id?: string | null
         }
         Relationships: []
@@ -806,6 +962,42 @@ export type Database = {
           id?: number
           palavra_chave?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          event: string
+          id: string
+          payload: Json | null
+          processed_at: string | null
+          response: Json | null
+          status: string
+          timestamp: string | null
+          user_id: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          event: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          response?: Json | null
+          status?: string
+          timestamp?: string | null
+          user_id?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          event?: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          response?: Json | null
+          status?: string
+          timestamp?: string | null
+          user_id?: string | null
+          webhook_url?: string | null
         }
         Relationships: []
       }
