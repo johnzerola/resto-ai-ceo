@@ -10,7 +10,7 @@ import {
 import Index from "./pages/Index";
 import { AssinaturaCompleta as Pricing } from "./pages/AssinaturaCompleta";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import { Register } from "./pages/Register";
 import { Integracoes } from "./pages/Integracoes";
 import { AssinaturaCompleta as Subscription } from "./pages/AssinaturaCompleta";
 import { Dashboard } from "./pages/Dashboard";
