@@ -28,8 +28,8 @@ export interface WebhookPayload {
 
 export class N8nWebhookService {
   private static config: N8nWebhookConfig = {
-    baseUrl: process.env.N8N_WEBHOOK_BASE_URL || 'https://n8n.yourcompany.com/webhook',
-    authToken: process.env.N8N_WEBHOOK_TOKEN,
+    baseUrl: 'https://n8n.yourcompany.com/webhook', // Default fallback URL
+    authToken: undefined, // Will be set via updateConfig if needed
     endpoints: {
       userRegistration: '/user-registration',
       planUpgrade: '/plan-upgrade',
