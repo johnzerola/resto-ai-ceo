@@ -76,9 +76,14 @@ serve(async (req) => {
     let response;
     
     if (requiresSystemData) {
-      // Usar n8n workflow para consulta inteligente
-      logStep('Pergunta requer dados do sistema, usando n8n workflow');
-      response = await queryWithN8n(message, finalRestaurantId, aiType, userId);
+      // Consulta direta ao Supabase primeiro
+      logStep('Pergunta requer dados do sistema, consultando Supabase diretamente');
+      try {
+        response = await querySupabaseDirectly(message, finalRestaurantId, aiType, supabase);
+      } catch (error) {
+        logStep('Erro na consulta direta, usando fallback n8n', { error: error.message });
+        response = await queryWithN8n(message, finalRestaurantId, aiType, userId);
+      }
     } else {
       // Resposta direta com IA
       logStep('Pergunta não requer dados específicos, usando IA direta');
@@ -130,10 +135,225 @@ async function needsSystemData(message: string): Promise<boolean> {
   return systemKeywords.some(keyword => messageLower.includes(keyword));
 }
 
-// Função para consultar via n8n workflow
+// Nova função para consultar Supabase diretamente
+async function querySupabaseDirectly(message: string, restaurantId: string, aiType: string, supabase: any): Promise<string> {
+  logStep('Iniciando consulta direta ao Supabase', { restaurantId });
+
+  try {
+    // 1. Buscar dados do restaurante
+    const { data: restaurant, error: restaurantError } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('id', restaurantId)
+      .single();
+
+    if (restaurantError) {
+      logStep('Erro ao buscar restaurante', { error: restaurantError });
+      throw new Error('Erro ao acessar dados do restaurante');
+    }
+
+    // 2. Buscar fluxo de caixa (últimas 50 transações)
+    const { data: cashFlow, error: cashFlowError } = await supabase
+      .from('cash_flow')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .order('date', { ascending: false })
+      .limit(50);
+
+    if (cashFlowError) {
+      logStep('Erro ao buscar fluxo de caixa', { error: cashFlowError });
+    }
+
+    // 3. Buscar estoque
+    const { data: inventory, error: inventoryError } = await supabase
+      .from('inventory')
+      .select('*')
+      .eq('restaurant_id', restaurantId);
+
+    if (inventoryError) {
+      logStep('Erro ao buscar estoque', { error: inventoryError });
+    }
+
+    // 4. Buscar receitas/pratos
+    const { data: recipes, error: recipesError } = await supabase
+      .from('recipes')
+      .select('*')
+      .eq('restaurant_id', restaurantId);
+
+    if (recipesError) {
+      logStep('Erro ao buscar receitas', { error: recipesError });
+    }
+
+    // 5. Buscar metas
+    const { data: goals, error: goalsError } = await supabase
+      .from('goals')
+      .select('*')
+      .eq('restaurant_id', restaurantId);
+
+    if (goalsError) {
+      logStep('Erro ao buscar metas', { error: goalsError });
+    }
+
+    // Compilar contexto estruturado
+    const contextData = await compileRestaurantContext(
+      restaurant,
+      cashFlow || [],
+      inventory || [],
+      recipes || [],
+      goals || []
+    );
+
+    logStep('Contexto compilado', { 
+      transacoes: cashFlow?.length || 0,
+      itensEstoque: inventory?.length || 0,
+      receitas: recipes?.length || 0,
+      metas: goals?.length || 0
+    });
+
+    // Gerar resposta com Groq
+    return await generateGroqResponse(message, contextData, aiType);
+
+  } catch (error) {
+    logStep('Erro na consulta direta ao Supabase', { error: error.message });
+    throw error;
+  }
+}
+
+// Função para compilar contexto do restaurante
+async function compileRestaurantContext(restaurant: any, cashFlow: any[], inventory: any[], recipes: any[], goals: any[]): Promise<any> {
+  // Calcular métricas financeiras
+  const receitas = cashFlow
+    .filter(item => item.type === 'income')
+    .reduce((total, item) => total + parseFloat(item.amount || 0), 0);
+
+  const despesas = cashFlow
+    .filter(item => item.type === 'expense')
+    .reduce((total, item) => total + parseFloat(item.amount || 0), 0);
+
+  // Calcular itens com estoque baixo
+  const itensEstoqueBaixo = inventory.filter(item => 
+    parseFloat(item.quantity || 0) <= parseFloat(item.minimum_stock || 0)
+  );
+
+  // Calcular valor total do estoque
+  const valorTotalEstoque = inventory.reduce((total, item) => 
+    total + (parseFloat(item.quantity || 0) * parseFloat(item.cost_per_unit || 0)), 0
+  );
+
+  return {
+    restaurante: {
+      nome: restaurant?.name || 'Não informado',
+      tipo: restaurant?.business_type || 'Não informado',
+      id: restaurant?.id
+    },
+    financeiro: {
+      receitas: receitas,
+      despesas: despesas,
+      saldoAtual: receitas - despesas,
+      totalTransacoes: cashFlow.length,
+      ultimasTransacoes: cashFlow.slice(0, 10).map(t => ({
+        data: t.date,
+        tipo: t.type,
+        valor: t.amount,
+        categoria: t.category,
+        descricao: t.description
+      }))
+    },
+    estoque: {
+      totalItens: inventory.length,
+      itensComEstoqueBaixo: itensEstoqueBaixo.length,
+      valorTotalEstoque: valorTotalEstoque,
+      alertasEstoque: itensEstoqueBaixo.map(item => ({
+        nome: item.name,
+        quantidadeAtual: item.quantity,
+        estoqueMinimo: item.minimum_stock
+      }))
+    },
+    cardapio: {
+      totalReceitas: recipes.length,
+      categorias: [...new Set(recipes.map(r => r.category).filter(Boolean))],
+      receitasRecentes: recipes.slice(0, 5).map(r => ({
+        nome: r.name,
+        categoria: r.category,
+        custo: r.cost,
+        precoVenda: r.selling_price
+      }))
+    },
+    metas: {
+      total: goals.length,
+      concluidas: goals.filter(m => m.completed).length,
+      pendentes: goals.filter(m => !m.completed).length,
+      porcentagemConclusao: goals.length > 0 ? 
+        (goals.filter(m => m.completed).length / goals.length) * 100 : 0
+    }
+  };
+}
+
+// Função para gerar resposta com Groq
+async function generateGroqResponse(message: string, contextData: any, aiType: string): Promise<string> {
+  const groqApiKey = Deno.env.get('GROQ_API');
+  
+  if (!groqApiKey) {
+    logStep('API key do Groq não encontrada');
+    throw new Error('Configuração da IA não encontrada');
+  }
+
+  try {
+    logStep('Enviando consulta para Groq API');
+
+    const systemPrompt = aiType === 'social' 
+      ? `Você é um especialista em marketing digital e redes sociais para restaurantes. 
+         Analise os dados fornecidos e forneça insights criativos e estratégias de marketing.
+         Sempre cite números específicos dos dados quando disponíveis.`
+      : `Você é um gerente virtual especializado em restaurantes. 
+         Analise os dados fornecidos e forneça insights precisos e acionáveis.
+         Sempre cite números específicos dos dados quando disponíveis.
+         Forneça análises detalhadas sobre finanças, estoque, metas e operações.`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt
+          },
+          {
+            role: 'user',
+            content: `Pergunta: "${message}"\n\nDados do restaurante:\n${JSON.stringify(contextData, null, 2)}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logStep('Erro na API do Groq', { status: response.status, error: errorText });
+      throw new Error(`Erro na API do Groq: ${response.status}`);
+    }
+
+    const result = await response.json();
+    logStep('Resposta do Groq recebida com sucesso');
+
+    return result.choices[0].message.content;
+
+  } catch (error) {
+    logStep('Erro ao gerar resposta com Groq', { error: error.message });
+    throw error;
+  }
+}
+
+// Função para consultar via n8n workflow (fallback)
 async function queryWithN8n(message: string, restaurantId: string, aiType: string, userId: string): Promise<string> {
   try {
-    // URL do seu webhook n8n atualizada
+    // URL do seu webhook n8n
     const n8nWebhookUrl = 'https://restauria.app.n8n.cloud/webhook/ai-assistant';
     
     logStep('Chamando n8n webhook', { 
