@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,8 +99,9 @@ const plans = [
 ];
 
 export function AssinaturaCompleta() {
-  const { planType, subscription, refreshSubscription } = useSubscriptionPlan();
+  const { planType, subscription, refreshSubscription, isLoading } = useSubscriptionPlan();
   const [selectedPlan, setSelectedPlan] = useState<string>(planType || 'free');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     // Forçar atualização imediata dos dados da assinatura
@@ -119,6 +119,20 @@ export function AssinaturaCompleta() {
       setSelectedPlan(planType);
     }
   }, [planType]);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      console.log('🔄 [Manual] Atualizando dados da assinatura...');
+      await refreshSubscription();
+      toast.success('Dados da assinatura atualizados!');
+    } catch (error) {
+      console.error('Erro ao atualizar:', error);
+      toast.error('Erro ao atualizar dados da assinatura');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handlePlanSelection = (planId: string) => {
     setSelectedPlan(planId);
@@ -158,6 +172,25 @@ export function AssinaturaCompleta() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Escolha o plano ideal para acelerar o crescimento do seu restaurante
           </p>
+          
+          {/* Botão de atualização manual */}
+          <div className="flex justify-center mt-4">
+            <Button 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing || isLoading}
+              variant="outline"
+              size="sm"
+            >
+              {isRefreshing ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  Atualizando...
+                </>
+              ) : (
+                'Atualizar Status da Assinatura'
+              )}
+            </Button>
+          </div>
         </div>
 
         <SubscriptionBanner />
@@ -166,6 +199,17 @@ export function AssinaturaCompleta() {
         <div className="max-w-md mx-auto">
           <SubscriptionStatus />
         </div>
+
+        {/* Debug info - apenas para desenvolvimento */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="max-w-md mx-auto p-4 bg-gray-100 rounded-lg text-xs">
+            <h3 className="font-bold mb-2">Debug Info:</h3>
+            <p>Plan Type: {planType}</p>
+            <p>Status: {subscription?.status}</p>
+            <p>Email: {subscription?.email}</p>
+            <p>Loading: {isLoading ? 'true' : 'false'}</p>
+          </div>
+        )}
 
         {/* Planos */}
         <div className="grid gap-6 lg:gap-8 md:grid-cols-3">
