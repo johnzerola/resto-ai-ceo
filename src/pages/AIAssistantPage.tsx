@@ -14,13 +14,15 @@ export function AIAssistantPage() {
           </p>
         </div>
 
-        <div className="w-full min-w-0 overflow-hidden h-[calc(100vh-120px)] sm:h-[calc(100vh-140px)] lg:h-[calc(100vh-160px)]">
+        <div className="w-full min-w-0 overflow-hidden">
           <ProtectedFeature
             feature="hasFullAIAssistant"
             featureName="Assistente IA Completo"
             description="Tenha acesso completo aos assistentes de IA: Gerente Virtual e Social Media IA com todas as funcionalidades."
           >
-            <UnifiedAIAssistant />
+            <div className="h-[calc(100vh-120px)] sm:h-[calc(100vh-140px)] lg:h-[calc(100vh-160px)]">
+              <UnifiedAIAssistant />
+            </div>
           </ProtectedFeature>
         </div>
       </div>
