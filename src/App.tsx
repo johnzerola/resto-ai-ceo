@@ -15,6 +15,8 @@ import { Integracoes } from "./pages/Integracoes";
 import { AssinaturaCompleta as Subscription } from "./pages/AssinaturaCompleta";
 import { Dashboard } from "./pages/Dashboard";
 import { SystemMonitoring } from "@/pages/SystemMonitoring";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { Toaster } from "@/components/ui/sonner";
 
 // For now, using Dashboard for missing pages until they're created
 const Settings = Dashboard;
@@ -62,7 +64,12 @@ const router = createBrowserRouter(
 );
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+      <Toaster />
+    </AuthProvider>
+  );
 }
 
 export default App;
