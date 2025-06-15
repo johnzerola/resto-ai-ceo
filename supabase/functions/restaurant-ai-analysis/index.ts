@@ -25,7 +25,31 @@ serve(async (req) => {
       throw new Error('Mensagem é obrigatória');
     }
 
-    logStep('Iniciando análise inteligente de IA', { message, aiType, restaurantId });
+    // Extrair Authorization header para obter user_id
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Token de autorização é obrigatório');
+    }
+
+    // Criar cliente Supabase para validar o token
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Validar token e extrair user_id
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      logStep('Erro de autenticação', { error: authError });
+      throw new Error('Token inválido ou expirado');
+    }
+
+    const userId = user.id;
+    logStep('Usuário autenticado', { userId, email: user.email });
+
+    logStep('Iniciando análise inteligente de IA', { message, aiType, restaurantId, userId });
 
     // Determinar se a pergunta requer dados do sistema
     const requiresSystemData = await needsSystemData(message);
@@ -35,7 +59,7 @@ serve(async (req) => {
     if (requiresSystemData) {
       // Usar n8n workflow para consulta inteligente
       logStep('Pergunta requer dados do sistema, usando n8n workflow');
-      response = await queryWithN8n(message, restaurantId || context?.restaurantData?.id);
+      response = await queryWithN8n(message, restaurantId || context?.restaurantData?.id, aiType, userId);
     } else {
       // Resposta direta com IA
       logStep('Pergunta não requer dados específicos, usando IA direta');
@@ -88,34 +112,75 @@ async function needsSystemData(message: string): Promise<boolean> {
 }
 
 // Função para consultar via n8n workflow
-async function queryWithN8n(message: string, restaurantId: string): Promise<string> {
+async function queryWithN8n(message: string, restaurantId: string, aiType: string, userId: string): Promise<string> {
   try {
-    // URL do seu webhook n8n (você precisa fornecer a URL real)
-    const n8nWebhookUrl = 'https://n8n.lovable.app/webhook/restaurante-ai'; // Substitua pela URL real
+    // URL do seu webhook n8n atualizada
+    const n8nWebhookUrl = 'https://restauria.app.n8n.cloud/webhook/ai-assistant';
     
+    logStep('Chamando n8n webhook', { 
+      url: n8nWebhookUrl, 
+      restaurantId, 
+      aiType, 
+      userId,
+      messageLength: message.length 
+    });
+
     const webhookResponse = await fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        message: message,
+        userId: userId,
         restaurantId: restaurantId,
+        message: message,
+        aiType: aiType || 'manager',
         timestamp: new Date().toISOString()
       })
     });
 
+    logStep('Resposta do n8n webhook', { 
+      status: webhookResponse.status, 
+      statusText: webhookResponse.statusText 
+    });
+
     if (!webhookResponse.ok) {
-      throw new Error(`Erro no webhook n8n: ${webhookResponse.status}`);
+      const errorText = await webhookResponse.text();
+      logStep('Erro detalhado do webhook n8n', { 
+        status: webhookResponse.status, 
+        error: errorText 
+      });
+      throw new Error(`Erro no webhook n8n: ${webhookResponse.status} - ${errorText}`);
     }
 
     const result = await webhookResponse.json();
-    return result.response || result.reply || 'Resposta processada pelo sistema.';
+    logStep('Resultado processado do n8n', { hasResponse: !!result });
+
+    // Tentar extrair a resposta de diferentes formatos possíveis
+    let finalResponse = result.response || result.reply || result.message || result.answer;
+    
+    // Se a resposta vem do Groq, pode estar aninhada
+    if (result.choices && result.choices[0] && result.choices[0].message) {
+      finalResponse = result.choices[0].message.content;
+    }
+
+    if (!finalResponse && typeof result === 'string') {
+      finalResponse = result;
+    }
+
+    if (!finalResponse) {
+      logStep('Formato de resposta inesperado', { result });
+      finalResponse = 'Resposta processada pelo sistema, mas formato não reconhecido.';
+    }
+
+    return finalResponse;
     
   } catch (error) {
-    logStep('Erro ao consultar n8n', { error: error.message });
-    // Fallback para resposta direta
-    return await directAIResponse(message, 'manager', null, []);
+    logStep('Erro ao consultar n8n', { error: error.message, stack: error.stack });
+    
+    // Fallback para resposta direta em caso de erro
+    logStep('Usando fallback para resposta direta');
+    return await directAIResponse(message, aiType, null, []);
   }
 }
 
