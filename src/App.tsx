@@ -17,6 +17,8 @@ import { Dashboard } from "./pages/Dashboard";
 import { SystemMonitoring } from "@/pages/SystemMonitoring";
 import { AIAssistantPage } from "@/pages/AIAssistantPage";
 import { ProjecoesPagina } from "@/pages/ProjecoesPagina";
+import FluxoDeCaixa from "@/pages/FluxoDeCaixa";
+import NotFound from "@/pages/NotFound";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -60,12 +62,16 @@ const router = createBrowserRouter(
         <Route path="/system-monitoring" element={<SystemMonitoring />} />
         <Route path="/ai-assistant" element={<AIAssistantPage />} />
         <Route path="/projecoes" element={<ProjecoesPagina />} />
+        <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
       </Route>
 
       <Route element={<RestaurantLayout />}>
         <Route path="/restaurants" element={<Restaurants />} />
         <Route path="/restaurants/:id" element={<Restaurant />} />
       </Route>
+
+      {/* 404 Route */}
+      <Route path="*" element={<NotFound />} />
     </>
   )
 );
