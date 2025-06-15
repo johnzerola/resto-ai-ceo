@@ -1,6 +1,5 @@
-
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,25 +23,8 @@ const Login = () => {
   const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   
-  const { login, register, isAuthenticated, isLoading } = useAuth();
+  const { login, register, isLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  const from = (location.state as { from?: string })?.from || "/dashboard";
-
-  // Only redirect if user is authenticated AND not currently on login page by choice
-  useEffect(() => {
-    // Don't auto-redirect if user explicitly navigated to /login
-    if (isAuthenticated && !isLoading && location.pathname === "/login" && !location.state?.from) {
-      // Only redirect if there's a "from" location or if they came from elsewhere
-      const timer = setTimeout(() => {
-        console.log('Usuário autenticado, redirecionando para dashboard...');
-        navigate("/dashboard", { replace: true });
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, isLoading, navigate, location]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,8 +42,7 @@ const Login = () => {
       const success = await login(loginEmail, loginPassword);
       
       if (success) {
-        console.log("Login bem-sucedido!");
-        toast.success("Login realizado com sucesso!");
+        console.log("Login bem-sucedido, redirecionando...");
         navigate("/dashboard", { replace: true });
       } else {
         toast.error("Credenciais inválidas. Verifique email e senha.");

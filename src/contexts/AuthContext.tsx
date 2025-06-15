@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -242,6 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log('Tentando fazer login com:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -253,7 +255,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
+        console.log('Login bem-sucedido!', data.user.email);
         toast.success('Login realizado com sucesso!');
         return true;
       }
@@ -394,14 +397,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
+        console.log('Inicializando autenticação...');
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession?.user && mounted) {
+          console.log('Sessão encontrada:', currentSession.user.email);
           setSession(currentSession);
           setUser(currentSession.user);
           setUserRole(UserRole.OWNER); // Define role padrão
           
-          // Setup restaurante padrão
+          // Setup restaurante padrão apenas para usuários autenticados
           const defaultRestaurant: Restaurant = {
             id: 'default',
             name: 'Meu Restaurante',
@@ -410,9 +415,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           setUserRestaurants([defaultRestaurant]);
           setCurrentRestaurant(defaultRestaurant);
+        } else {
+          console.log('Nenhuma sessão ativa encontrada');
+          clearUserData();
         }
       } catch (error) {
         console.error('Erro na inicialização:', error);
+        clearUserData();
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -428,13 +437,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (!mounted) return;
 
-      if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT' || !currentSession) {
+        console.log('Usuário deslogado');
         clearUserData();
         setIsLoading(false);
         return;
       }
 
       if (currentSession?.user) {
+        console.log('Usuário logado:', currentSession.user.email);
         setSession(currentSession);
         setUser(currentSession.user);
         setUserRole(UserRole.OWNER);
@@ -469,7 +480,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [session?.access_token]);
 
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!user && !!session;
 
   const value: AuthContextType = {
     user,
