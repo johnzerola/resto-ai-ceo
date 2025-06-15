@@ -22,15 +22,15 @@ import NotFound from "@/pages/NotFound";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
-// Importing existing pages
-import CMV from "@/pages/CMV";
-import DRE from "@/pages/DRE";
+// Importing existing pages - using named imports for components that don't have default exports
+import { CMV } from "@/pages/CMV";
+import { DRE } from "@/pages/DRE";
 import Estoque from "@/pages/Estoque";
 import FichaTecnica from "@/pages/FichaTecnica";
-import Financeiro from "@/pages/Financeiro";
-import Receitas from "@/pages/Receitas";
+import { Financeiro } from "@/pages/Financeiro";
+import { Receitas } from "@/pages/Receitas";
 import Simulador from "@/pages/Simulador";
-import Metas from "@/pages/Metas";
+import { Metas } from "@/pages/Metas";
 import Promocoes from "@/pages/Promocoes";
 import Cardapio from "@/pages/Cardapio";
 import Marketing from "@/pages/Marketing";
