@@ -78,18 +78,49 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
     pendingExpense: 0
   });
 
-  // Load cash flow data
-  useEffect(() => {
+  // Load cash flow data from localStorage
+  const loadCashFlowData = () => {
     const savedCashFlow = localStorage.getItem("cashFlowEntries");
     if (savedCashFlow) {
       const parsedCashFlow = JSON.parse(savedCashFlow);
       setCashFlow(parsedCashFlow);
       calculateSummary(parsedCashFlow);
+      console.log("Cash flow data loaded:", parsedCashFlow.length, "entries");
     } else {
-      // Iniciar com array vazio - sem dados pré-preenchidos
       setCashFlow([]);
       calculateSummary([]);
+      console.log("No cash flow data found in localStorage");
     }
+  };
+
+  // Load cash flow data
+  useEffect(() => {
+    loadCashFlowData();
+  }, []);
+
+  // Add listeners for cash flow updates
+  useEffect(() => {
+    const handleCashFlowUpdate = (event: CustomEvent) => {
+      console.log("Cash flow updated event received:", event.detail);
+      loadCashFlowData(); // Recarregar dados do localStorage
+    };
+
+    const handleDataSync = () => {
+      console.log("Data sync event received");
+      loadCashFlowData(); // Recarregar dados do localStorage
+    };
+
+    // Adicionar listeners para eventos de atualização
+    window.addEventListener('cashFlowUpdated', handleCashFlowUpdate as EventListener);
+    window.addEventListener('dataSync', handleDataSync);
+    window.addEventListener('financialDataUpdated', handleDataSync);
+
+    // Cleanup listeners
+    return () => {
+      window.removeEventListener('cashFlowUpdated', handleCashFlowUpdate as EventListener);
+      window.removeEventListener('dataSync', handleDataSync);
+      window.removeEventListener('financialDataUpdated', handleDataSync);
+    };
   }, []);
 
   // Calculate summary data
