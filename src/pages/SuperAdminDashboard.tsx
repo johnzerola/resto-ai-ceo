@@ -54,7 +54,7 @@ const SuperAdminDashboard = () => {
         getAuditLogs()
       ]);
       setStats(statsData);
-      setAuditLogs(logsData);
+      setAuditLogs(logsData as AuditLog[]);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
@@ -102,7 +102,7 @@ const SuperAdminDashboard = () => {
     console.log('Cache limpo!');
   };
 
-  const cacheStats = getCacheStats();
+  const cacheStats = getCacheStats;
 
   const StatCard = ({ title, value, description, icon: Icon, trend }: {
     title: string;
@@ -325,7 +325,7 @@ const SuperAdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="audit" className="space-y-4">
-          <CompactAuditSection auditLogs={auditLogs} />
+          <CompactAuditSection logs={auditLogs} />
         </TabsContent>
       </Tabs>
 
@@ -375,7 +375,7 @@ const SuperAdminDashboard = () => {
         )}
 
         {activeTab === 'audit' && (
-          <CompactAuditSection auditLogs={auditLogs} />
+          <CompactAuditSection logs={auditLogs} />
         )}
       </div>
     </div>
