@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
 import { PlanGate } from "@/components/subscription/PlanGate";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -36,6 +37,7 @@ interface Message {
   timestamp: Date;
   aiType: 'manager' | 'social';
   imageUrl?: string;
+  queryType?: 'system_query' | 'direct_ai';
 }
 
 interface ChatHistory {
@@ -48,6 +50,7 @@ interface RestaurantContext {
   menuData: any;
   financialData: any;
   simulatorData: any;
+  restaurantId?: string;
 }
 
 export function UnifiedAIAssistant() {
@@ -62,7 +65,7 @@ export function UnifiedAIAssistant() {
   const [context, setContext] = useState<RestaurantContext | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Carregar contexto do restaurante
+  // Carregar contexto do restaurante de forma mais inteligente
   useEffect(() => {
     loadRestaurantContext();
   }, []);
@@ -72,22 +75,53 @@ export function UnifiedAIAssistant() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const loadRestaurantContext = () => {
+  const loadRestaurantContext = async () => {
     try {
-      // Carregar dados do localStorage (ou integrar com API do Supabase)
-      const restaurantData = JSON.parse(localStorage.getItem('restaurantData') || '{}');
-      const menuData = JSON.parse(localStorage.getItem('menuItems') || '[]');
-      const financialData = JSON.parse(localStorage.getItem('cashFlowData') || '[]');
-      const simulatorData = JSON.parse(localStorage.getItem('simulatorData') || '{}');
+      // Buscar dados reais do Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.log('Usuário não autenticado');
+        return;
+      }
+
+      // Buscar restaurante do usuário
+      const { data: restaurants } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('owner_id', user.id)
+        .limit(1);
+
+      const restaurant = restaurants?.[0];
+      const restaurantId = restaurant?.id;
+
+      // Carregar dados em paralelo
+      const [cashFlowData, inventoryData, recipesData, goalsData] = await Promise.all([
+        supabase.from('cash_flow').select('*').eq('restaurant_id', restaurantId).order('date', { ascending: false }).limit(50),
+        supabase.from('inventory').select('*').eq('restaurant_id', restaurantId),
+        supabase.from('recipes').select('*').eq('restaurant_id', restaurantId),
+        supabase.from('goals').select('*').eq('restaurant_id', restaurantId)
+      ]);
 
       setContext({
-        restaurantData,
-        menuData,
-        financialData,
-        simulatorData
+        restaurantData: restaurant || {},
+        menuData: recipesData.data || [],
+        financialData: cashFlowData.data || [],
+        simulatorData: {},
+        restaurantId: restaurantId
       });
+
+      console.log('Contexto do restaurante carregado:', {
+        restaurant: restaurant?.name,
+        cashFlow: cashFlowData.data?.length || 0,
+        inventory: inventoryData.data?.length || 0,
+        recipes: recipesData.data?.length || 0,
+        goals: goalsData.data?.length || 0
+      });
+
     } catch (error) {
       console.error('Erro ao carregar contexto do restaurante:', error);
+      toast.error('Erro ao carregar dados do restaurante');
     }
   };
 
@@ -111,20 +145,18 @@ export function UnifiedAIAssistant() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Chamar a Edge Function melhorada
+      const { data, error } = await supabase.functions.invoke('restaurant-ai-analysis', {
+        body: {
           message: inputMessage,
           aiType: activeTab,
           context: context,
-          conversationHistory: messages[activeTab].slice(-10) // Últimas 10 mensagens para contexto
-        })
+          conversationHistory: messages[activeTab].slice(-10),
+          restaurantId: context?.restaurantId
+        }
       });
 
-      if (!response.ok) throw new Error('Erro na comunicação com a IA');
-
-      const data = await response.json();
+      if (error) throw error;
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -132,13 +164,19 @@ export function UnifiedAIAssistant() {
         content: data.reply || 'Desculpe, não consegui processar sua mensagem.',
         timestamp: new Date(),
         aiType: activeTab,
-        imageUrl: data.imageUrl // Para imagens do Social Media IA
+        queryType: data.type,
+        imageUrl: data.imageUrl
       };
 
       setMessages(prev => ({
         ...prev,
         [activeTab]: [...prev[activeTab], aiMessage]
       }));
+
+      // Mostrar indicador se foi consulta do sistema
+      if (data.type === 'system_query') {
+        toast.success('Consulta realizada com dados do sistema!');
+      }
 
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
@@ -196,19 +234,19 @@ export function UnifiedAIAssistant() {
 
   const getPlaceholderText = () => {
     if (activeTab === 'manager') {
-      return 'Ex: "Como calcular a margem ideal para o meu prato principal?" ou "Preciso de ajuda com gestão de equipe"';
+      return 'Ex: "Qual foi meu faturamento total na semana passada?" ou "Como está meu estoque de ingredientes?"';
     }
-    return 'Ex: "Crie uma imagem promocional para pizza" ou "Que hashtags usar para posts de sobremesas?"';
+    return 'Ex: "Crie uma campanha para promoção de pizza" ou "Que hashtags usar para posts de sobremesas?"';
   };
 
   const getQuickActions = () => {
     if (activeTab === 'manager') {
       return [
-        "Analisar meu cardápio atual",
-        "Calcular ponto de equilíbrio",
-        "Dicas para reduzir custos",
-        "Como treinar minha equipe",
-        "Estratégias de precificação"
+        "Qual foi meu faturamento da semana passada?",
+        "Como está meu estoque atual?",
+        "Quais são minhas metas pendentes?",
+        "Análise do fluxo de caixa do mês",
+        "Pratos com maior margem de lucro"
       ];
     }
     return [
@@ -220,7 +258,6 @@ export function UnifiedAIAssistant() {
     ];
   };
 
-  // Função para enviar mensagem limitada (plano essencial)
   const sendLimitedMessage = async () => {
     if (!inputMessage.trim()) return;
 
@@ -300,7 +337,6 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
                 </TabsTrigger>
               </TabsList>
 
-              {/* Conteúdo limitado para ambas as abas */}
               <TabsContent value={activeTab} className="flex-1 min-h-0 mt-2 sm:mt-4">
                 <Card className="h-full flex flex-col">
                   <CardHeader className="flex-shrink-0 pb-2 sm:pb-4">
@@ -320,7 +356,6 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="flex-1 min-h-0 p-2 sm:p-4 flex flex-col">
-                    {/* Chat Area Limitado */}
                     <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
                       <ScrollArea className="flex-1 min-h-0 p-2 sm:p-4">
                         {messages[activeTab].length === 0 ? (
@@ -382,7 +417,6 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
 
                       <Separator />
 
-                      {/* Input Area */}
                       <div className="p-2 sm:p-4 flex-shrink-0">
                         <div className="flex gap-2">
                           <Input
@@ -437,6 +471,9 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
               <Brain className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Gerente Virtual</span>
               <span className="sm:hidden">Gerente</span>
+              {context?.restaurantId && (
+                <Badge variant="outline" className="text-xs">Conectado</Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="social" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
               <Megaphone className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -450,24 +487,28 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
               <CardHeader className="flex-shrink-0 pb-2 sm:pb-4">
                 <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
                   <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                  <span className="hidden sm:inline">Gerente Virtual - Assistente de Gestão</span>
+                  <span className="hidden sm:inline">Gerente Virtual - Assistente Inteligente</span>
                   <span className="sm:hidden">Gerente Virtual</span>
+                  {context?.restaurantId && (
+                    <Badge variant="default" className="text-xs bg-green-600">
+                      Sistema Conectado
+                    </Badge>
+                  )}
                 </CardTitle>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  Especialista em administração, finanças, operação e gestão de equipe. 
+                  Faça perguntas sobre seus dados reais: faturamento, estoque, metas e muito mais.
                   Integrado com todos os dados do seu restaurante.
                 </p>
               </CardHeader>
               <CardContent className="flex-1 min-h-0 p-2 sm:p-4 flex flex-col">
-                {/* Chat Area */}
                 <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
                   <ScrollArea className="flex-1 min-h-0 p-2 sm:p-4">
                     {currentMessages.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-center">
                         <Brain className="h-8 w-8 sm:h-12 sm:w-12 text-blue-600 mb-4" />
-                        <h3 className="font-medium mb-2 text-sm sm:text-base">Olá! Sou seu Gerente Virtual</h3>
+                        <h3 className="font-medium mb-2 text-sm sm:text-base">Olá! Sou seu Gerente Virtual Inteligente</h3>
                         <p className="text-xs sm:text-sm text-muted-foreground mb-4 px-2">
-                          Estou aqui para ajudar com gestão, finanças, operação e estratégias do seu restaurante.
+                          Posso consultar seus dados reais para responder sobre vendas, estoque, metas e muito mais.
                         </p>
                         <div className="flex flex-wrap gap-1 sm:gap-2 max-w-md">
                           {getQuickActions().map((action, index) => (
@@ -499,7 +540,12 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
                             >
                               <div className="flex items-start gap-2">
                                 {message.type === 'assistant' && (
-                                  <Brain className="h-3 w-3 sm:h-4 sm:w-4 mt-1 text-blue-600 flex-shrink-0" />
+                                  <div className="flex items-center gap-1">
+                                    <Brain className="h-3 w-3 sm:h-4 sm:w-4 mt-1 text-blue-600 flex-shrink-0" />
+                                    {message.queryType === 'system_query' && (
+                                      <Badge variant="secondary" className="text-xs">Sistema</Badge>
+                                    )}
+                                  </div>
                                 )}
                                 {message.type === 'user' && (
                                   <User className="h-3 w-3 sm:h-4 sm:w-4 mt-1 flex-shrink-0" />
@@ -528,7 +574,6 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
 
                   <Separator />
 
-                  {/* Input Area */}
                   <div className="p-2 sm:p-4 flex-shrink-0">
                     <div className="flex gap-2">
                       <Input
@@ -554,7 +599,6 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
                   </div>
                 </div>
 
-                {/* Stats */}
                 <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground mt-2 flex-shrink-0">
                   <span>
                     {currentMessages.length} mensagens nesta conversa
@@ -581,7 +625,6 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
                 </p>
               </CardHeader>
               <CardContent className="flex-1 min-h-0 p-2 sm:p-4 flex flex-col">
-                {/* Chat Area */}
                 <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
                   <ScrollArea className="flex-1 min-h-0 p-2 sm:p-4">
                     {currentMessages.length === 0 ? (
@@ -650,7 +693,6 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
 
                   <Separator />
 
-                  {/* Input Area */}
                   <div className="p-2 sm:p-4 flex-shrink-0">
                     <div className="flex gap-2">
                       <Input
@@ -676,7 +718,6 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
                   </div>
                 </div>
 
-                {/* Stats */}
                 <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground mt-2 flex-shrink-0">
                   <span>
                     {currentMessages.length} mensagens nesta conversa
@@ -691,11 +732,14 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
         </Tabs>
       </div>
 
-      {/* Context Info */}
+      {/* Context Info melhorado */}
       {context && (
         <Card className="flex-shrink-0">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs sm:text-sm">Contexto do Restaurante Carregado</CardTitle>
+            <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
+              <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+              Sistema Conectado
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm">
@@ -704,16 +748,16 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
                 <p className="mt-1 text-xs sm:text-sm">{context.restaurantData.name || 'Não configurado'}</p>
               </div>
               <div>
-                <Badge variant="outline" className="text-xs">Itens do Menu</Badge>
+                <Badge variant="outline" className="text-xs">Receitas</Badge>
                 <p className="mt-1 text-xs sm:text-sm">{context.menuData.length || 0} itens</p>
               </div>
               <div>
-                <Badge variant="outline" className="text-xs">Registros Financeiros</Badge>
+                <Badge variant="outline" className="text-xs">Transações</Badge>
                 <p className="mt-1 text-xs sm:text-sm">{context.financialData.length || 0} registros</p>
               </div>
               <div>
-                <Badge variant="outline" className="text-xs">Dados do Simulador</Badge>
-                <p className="mt-1 text-xs sm:text-sm">{Object.keys(context.simulatorData).length > 0 ? 'Configurado' : 'Pendente'}</p>
+                <Badge variant="outline" className="text-xs">Status</Badge>
+                <p className="mt-1 text-xs sm:text-sm font-medium text-green-600">Ativo</p>
               </div>
             </div>
           </CardContent>
