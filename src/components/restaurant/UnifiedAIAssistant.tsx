@@ -412,16 +412,10 @@ Faça upgrade para o plano Profissional e tenha acesso completo ao meu potencial
       );
     }
 
-    // Conteúdo completo para plano profissional (manter código existente)
+    // Conteúdo completo para plano profissional (removendo header redundante)
     return (
       <div className="space-y-4 sm:space-y-6 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 flex-shrink-0">
-        <div>
-          <h2 className="text-lg sm:text-2xl font-bold">Assistentes IA</h2>
-          <p className="text-muted-foreground text-xs sm:text-sm">
-            Dois assistentes especializados para gestão e marketing do seu restaurante
-          </p>
-        </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={loadRestaurantContext} size="sm">
             <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
