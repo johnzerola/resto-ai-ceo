@@ -43,7 +43,11 @@ export class PlanService {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(plan => ({
+      ...plan,
+      features: plan.features as PlanFeatures,
+      limits: plan.limits as PlanLimits
+    }));
   }
 
   static async getPlanById(planId: string): Promise<Plan | null> {
@@ -59,7 +63,11 @@ export class PlanService {
       return null;
     }
 
-    return data;
+    return data ? {
+      ...data,
+      features: data.features as PlanFeatures,
+      limits: data.limits as PlanLimits
+    } : null;
   }
 
   static async getUserPlan(userId: string): Promise<Plan | null> {
@@ -79,10 +87,18 @@ export class PlanService {
   }
 
   static async updateUserPlan(userId: string, planId: string): Promise<boolean> {
+    // Primeiro, buscar o email do usuário
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', userId)
+      .single();
+
     const { error } = await supabase
       .from('subscribers')
       .upsert({
         user_id: userId,
+        email: profile?.email || '',
         subscription_tier: planId,
         plan_status: 'active',
         updated_at: new Date().toISOString()

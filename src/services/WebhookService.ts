@@ -76,7 +76,10 @@ export class WebhookService {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(log => ({
+      ...log,
+      status: log.status as WebhookLog['status']
+    }));
   }
 
   static async getUserWebhooks(userId: string, limit: number = 50): Promise<WebhookLog[]> {
@@ -92,6 +95,9 @@ export class WebhookService {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(log => ({
+      ...log,
+      status: log.status as WebhookLog['status']
+    }));
   }
 }

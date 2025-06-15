@@ -67,7 +67,10 @@ export class SystemLogService {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(log => ({
+      ...log,
+      severity: log.severity as SystemLog['severity']
+    }));
   }
 
   static async getUserLogs(userId: string, limit: number = 50): Promise<SystemLog[]> {
@@ -83,7 +86,10 @@ export class SystemLogService {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(log => ({
+      ...log,
+      severity: log.severity as SystemLog['severity']
+    }));
   }
 
   static async getErrorLogs(limit: number = 50): Promise<SystemLog[]> {
@@ -99,6 +105,9 @@ export class SystemLogService {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(log => ({
+      ...log,
+      severity: log.severity as SystemLog['severity']
+    }));
   }
 }
