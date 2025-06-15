@@ -1,3 +1,4 @@
+
 import {
   createBrowserRouter,
   RouterProvider,
@@ -5,24 +6,27 @@ import {
   createRoutesFromElements,
 } from "react-router-dom";
 
-import { Home } from "./pages/Home";
-import { Pricing } from "./pages/Pricing";
-import { Login } from "./pages/Login";
-import { Register } from "./pages/Register";
-import { ForgotPassword } from "./pages/ForgotPassword";
-import { ResetPassword } from "./pages/ResetPassword";
-import { Logout } from "./pages/Logout";
-import { Settings } from "./pages/Settings";
-import { Restaurant } from "./pages/Restaurant";
-import { Restaurants } from "./pages/Restaurants";
+import { Index as Home } from "./pages/Index";
+import { AssinaturaCompleta as Pricing } from "./pages/AssinaturaCompleta";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import { Integracoes } from "./pages/Integracoes";
-import { Subscription } from "./pages/Subscription";
+import { AssinaturaCompleta as Subscription } from "./pages/AssinaturaCompleta";
 import { Dashboard } from "./pages/Dashboard";
 import { SystemMonitoring } from "@/pages/SystemMonitoring";
 
-import { AuthLayout } from "./layouts/AuthLayout";
-import { MainLayout } from "./layouts/MainLayout";
-import { RestaurantLayout } from "./layouts/RestaurantLayout";
+// For now, using Dashboard for missing pages until they're created
+const Settings = Dashboard;
+const Restaurant = Dashboard;
+const Restaurants = Dashboard;
+const ForgotPassword = Login;
+const ResetPassword = Login;
+const Logout = Login;
+
+// Simple layout components
+const AuthLayout = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const MainLayout = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const RestaurantLayout = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
 const router = createBrowserRouter(
   createRoutesFromElements(
