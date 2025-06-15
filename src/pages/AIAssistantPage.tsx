@@ -2,8 +2,17 @@
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { UnifiedAIAssistant } from "@/components/restaurant/UnifiedAIAssistant";
 import { ProtectedFeature } from "@/components/subscription/ProtectedFeature";
+import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
+import { useEffect } from "react";
 
 export function AIAssistantPage() {
+  const { refreshSubscription } = useSubscriptionPlan();
+
+  // Forçar atualização dos dados da assinatura ao carregar a página
+  useEffect(() => {
+    refreshSubscription();
+  }, [refreshSubscription]);
+
   return (
     <ModernLayout>
       <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-2 sm:p-4 lg:p-6 bg-background min-h-screen max-w-full overflow-hidden">

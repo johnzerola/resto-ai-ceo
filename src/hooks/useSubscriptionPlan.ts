@@ -27,7 +27,7 @@ export interface PlanFeatures {
   hasAdvancedReports: boolean;
   hasInventoryManagement: boolean;
   hasFinancialAnalysis: boolean;
-  maxRestaurants: number; // Changed from boolean to number
+  maxRestaurants: number;
   hasTeamManagement: boolean;
   hasPrioritySupport: boolean;
 }
@@ -62,11 +62,11 @@ export function useSubscriptionPlan() {
 
       console.log('🔍 [Subscription] Verificando plano para usuário:', user.email);
 
-      // Buscar dados do usuário na tabela subscribers
+      // Buscar dados do usuário na tabela subscribers por email E user_id
       const { data: subscriberData, error: subscriberError } = await supabase
         .from('subscribers')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},email.eq.${user.email}`)
         .maybeSingle();
 
       if (subscriberError) {
@@ -79,25 +79,35 @@ export function useSubscriptionPlan() {
       if (subscriberData) {
         console.log('✅ [Subscription] Dados encontrados:', subscriberData);
         
-        // Mapear dados do Supabase para nossa interface
-        const planMapping: { [key: string]: PlanType } = {
-          'professional': PlanType.PROFISSIONAL,
-          'profissional': PlanType.PROFISSIONAL,
-          'pro': PlanType.PROFISSIONAL,
-          'essencial': PlanType.ESSENCIAL,
-          'essential': PlanType.ESSENCIAL,
-          'basic': PlanType.ESSENCIAL
-        };
-
-        const mappedPlan = planMapping[subscriberData.subscription_tier?.toLowerCase()] || PlanType.FREE;
-        
         // Verificar se a assinatura está ativa
-        const isActive = subscriberData.subscribed && 
-          (!subscriberData.subscription_end || new Date(subscriberData.subscription_end) > new Date());
+        const isSubscribed = subscriberData.subscribed === true;
+        const isNotExpired = !subscriberData.subscription_end || new Date(subscriberData.subscription_end) > new Date();
+        const hasActiveStatus = subscriberData.plan_status === 'active';
+        
+        const isActive = isSubscribed && isNotExpired && hasActiveStatus;
+        
+        console.log('🔍 [Subscription] Verificações:', {
+          isSubscribed,
+          isNotExpired,
+          hasActiveStatus,
+          isActive,
+          subscription_tier: subscriberData.subscription_tier
+        });
+
+        // Mapear tier para PlanType
+        let planType = PlanType.FREE;
+        if (isActive && subscriberData.subscription_tier) {
+          const tier = subscriberData.subscription_tier.toLowerCase();
+          if (tier === 'profissional' || tier === 'professional' || tier === 'pro') {
+            planType = PlanType.PROFISSIONAL;
+          } else if (tier === 'essencial' || tier === 'essential' || tier === 'basic') {
+            planType = PlanType.ESSENCIAL;
+          }
+        }
 
         finalSubscription = {
           id: subscriberData.id,
-          plan_type: isActive ? mappedPlan : PlanType.FREE,
+          plan_type: planType,
           status: isActive ? 'active' : 'inactive',
           expires_at: subscriberData.subscription_end,
           created_at: subscriberData.created_at,
