@@ -29,7 +29,7 @@ export function AIAssistantPage() {
             featureName="Assistente IA Completo"
             description="Tenha acesso completo aos assistentes de IA: Gerente Virtual e Social Media IA com todas as funcionalidades."
           >
-            <div className="h-[calc(100vh-120px)] sm:h-[calc(100vh-140px)] lg:h-[calc(100vh-160px)]">
+            <div className="h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] lg:h-[calc(100vh-220px)]">
               <UnifiedAIAssistant />
             </div>
           </ProtectedFeature>
