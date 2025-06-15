@@ -49,7 +49,26 @@ serve(async (req) => {
     const userId = user.id;
     logStep('Usuário autenticado', { userId, email: user.email });
 
-    logStep('Iniciando análise inteligente de IA', { message, aiType, restaurantId, userId });
+    // Buscar o restaurante do usuário
+    let finalRestaurantId = restaurantId;
+    
+    if (!finalRestaurantId) {
+      const { data: restaurant, error: restaurantError } = await supabase
+        .from('restaurants')
+        .select('id')
+        .eq('owner_id', userId)
+        .single();
+
+      if (restaurantError || !restaurant) {
+        logStep('Erro ao buscar restaurante', { error: restaurantError });
+        throw new Error('Restaurante não encontrado para este usuário');
+      }
+
+      finalRestaurantId = restaurant.id;
+      logStep('Restaurante encontrado', { restaurantId: finalRestaurantId });
+    }
+
+    logStep('Iniciando análise inteligente de IA', { message, aiType, restaurantId: finalRestaurantId, userId });
 
     // Determinar se a pergunta requer dados do sistema
     const requiresSystemData = await needsSystemData(message);
@@ -59,7 +78,7 @@ serve(async (req) => {
     if (requiresSystemData) {
       // Usar n8n workflow para consulta inteligente
       logStep('Pergunta requer dados do sistema, usando n8n workflow');
-      response = await queryWithN8n(message, restaurantId || context?.restaurantData?.id, aiType, userId);
+      response = await queryWithN8n(message, finalRestaurantId, aiType, userId);
     } else {
       // Resposta direta com IA
       logStep('Pergunta não requer dados específicos, usando IA direta');
