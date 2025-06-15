@@ -1,4 +1,5 @@
 
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -145,7 +146,7 @@ const Login = () => {
                         id="login-email"
                         type="email"
                         placeholder="Digite seu email"
-                        className="pl-10"
+                        className="pl-12"
                         disabled={isSubmitting}
                         value={loginEmail}
                         onChange={(e) => setLoginEmail(e.target.value)}
@@ -161,7 +162,7 @@ const Login = () => {
                         id="login-password"
                         type="password"
                         placeholder="Digite sua senha"
-                        className="pl-10"
+                        className="pl-12"
                         disabled={isSubmitting}
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
@@ -195,7 +196,7 @@ const Login = () => {
                       <Input
                         id="register-name"
                         placeholder="Digite seu nome completo"
-                        className="pl-10"
+                        className="pl-12"
                         disabled={isSubmitting}
                         value={registerName}
                         onChange={(e) => setRegisterName(e.target.value)}
@@ -211,7 +212,7 @@ const Login = () => {
                         id="register-email"
                         type="email"
                         placeholder="Digite seu email"
-                        className="pl-10"
+                        className="pl-12"
                         disabled={isSubmitting}
                         value={registerEmail}
                         onChange={(e) => setRegisterEmail(e.target.value)}
@@ -227,7 +228,7 @@ const Login = () => {
                         id="register-password"
                         type="password"
                         placeholder="Crie uma senha segura"
-                        className="pl-10"
+                        className="pl-12"
                         disabled={isSubmitting}
                         value={registerPassword}
                         onChange={(e) => setRegisterPassword(e.target.value)}
@@ -243,7 +244,7 @@ const Login = () => {
                         id="confirm-password"
                         type="password"
                         placeholder="Confirme sua senha"
-                        className="pl-10"
+                        className="pl-12"
                         disabled={isSubmitting}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -286,3 +287,4 @@ const Login = () => {
 };
 
 export default Login;
+
