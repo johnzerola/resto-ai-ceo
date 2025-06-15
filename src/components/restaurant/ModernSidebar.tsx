@@ -27,7 +27,7 @@ import { ModernNavItem } from "./ModernNavItem";
 const navigation = [
   {
     title: "Dashboard",
-    href: "/",
+    href: "/dashboard",
     icon: LayoutDashboard,
     description: "Visão geral do negócio",
     category: "overview"
