@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,40 +9,26 @@ import { Label } from "@/components/ui/label";
 import { Lock, Mail, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-
-// Esquemas de validação
-const loginSchema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-});
-
-const registerSchema = z.object({
-  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  confirmPassword: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "As senhas não coincidem",
-  path: ["confirmPassword"],
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
-type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Login = () => {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loginAttempts, setLoginAttempts] = useState(0);
+  
+  // Login form state
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  
+  // Register form state
+  const [registerName, setRegisterName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   
   const { login, register, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
-  const from = (location.state as { from?: string })?.from || "/";
+  const from = (location.state as { from?: string })?.from || "/dashboard";
 
   // Redirecionar usuários autenticados
   useEffect(() => {
@@ -51,29 +38,24 @@ const Login = () => {
     }
   }, [isAuthenticated, isLoading, navigate, from]);
 
-  // Forms
-  const loginForm = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
-  });
-
-  const registerForm = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
-  });
-
-  const handleLogin = async (values: LoginFormValues) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (isSubmitting) return;
     
-    console.log("Iniciando login para:", values.email);
+    if (!loginEmail || !loginPassword) {
+      toast.error("Preencha todos os campos");
+      return;
+    }
+    
+    console.log("Iniciando login para:", loginEmail);
     setIsSubmitting(true);
-    setLoginAttempts(prev => prev + 1);
     
     try {
-      const success = await login(values.email, values.password);
+      const success = await login(loginEmail, loginPassword);
       
       if (success) {
         console.log("Login bem-sucedido!");
+        toast.success("Login realizado com sucesso!");
         // O redirecionamento será feito pelo useEffect acima
       } else {
         toast.error("Credenciais inválidas. Verifique email e senha.");
@@ -86,19 +68,39 @@ const Login = () => {
     }
   };
 
-  const handleRegister = async (values: RegisterFormValues) => {
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (isSubmitting) return;
+    
+    if (!registerName || !registerEmail || !registerPassword || !confirmPassword) {
+      toast.error("Preencha todos os campos");
+      return;
+    }
+    
+    if (registerPassword !== confirmPassword) {
+      toast.error("As senhas não coincidem");
+      return;
+    }
+    
+    if (registerPassword.length < 6) {
+      toast.error("Senha deve ter pelo menos 6 caracteres");
+      return;
+    }
     
     console.log("Iniciando registro...");
     setIsSubmitting(true);
     
     try {
-      const success = await register(values.name, values.email, values.password);
+      const success = await register(registerName, registerEmail, registerPassword);
       
       if (success) {
         toast.success("Conta criada com sucesso! Você pode fazer login agora.");
         setActiveTab("login");
-        registerForm.reset();
+        // Limpar formulário de registro
+        setRegisterName("");
+        setRegisterEmail("");
+        setRegisterPassword("");
+        setConfirmPassword("");
       } else {
         toast.error("Erro ao criar conta. Email pode já estar em uso.");
       }
@@ -158,188 +160,136 @@ const Login = () => {
               </TabsList>
               
               <TabsContent value="login">
-                <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-                    <FormField
-                      control={loginForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                              <Input
-                                type="email"
-                                placeholder="seu@email.com"
-                                className="pl-10"
-                                disabled={isSubmitting}
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={loginForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Senha</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                              <Input
-                                type="password"
-                                placeholder="••••••••"
-                                className="pl-10"
-                                disabled={isSubmitting}
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                          Entrando...
-                        </>
-                      ) : (
-                        "Entrar"
-                      )}
-                    </Button>
-                    
-                    {loginAttempts > 0 && (
-                      <div className="text-sm text-gray-600 text-center">
-                        Tentativas de login: {loginAttempts}
-                      </div>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <Label htmlFor="login-email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="login-email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="login-password">Senha</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="login-password"
+                        type="password"
+                        placeholder="••••••••"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Entrando...
+                      </>
+                    ) : (
+                      "Entrar"
                     )}
-                  </form>
-                </Form>
+                  </Button>
+                </form>
               </TabsContent>
               
               <TabsContent value="register">
-                <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
-                    <FormField
-                      control={registerForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <UserPlus className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                              <Input
-                                placeholder="Seu nome completo"
-                                className="pl-10"
-                                disabled={isSubmitting}
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                              <Input
-                                type="email"
-                                placeholder="seu@email.com"
-                                className="pl-10"
-                                disabled={isSubmitting}
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Senha</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                              <Input
-                                type="password"
-                                placeholder="••••••••"
-                                className="pl-10"
-                                disabled={isSubmitting}
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirmar Senha</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                              <Input
-                                type="password"
-                                placeholder="••••••••"
-                                className="pl-10"
-                                disabled={isSubmitting}
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full" 
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                          Registrando...
-                        </>
-                      ) : (
-                        "Criar Conta"
-                      )}
-                    </Button>
-                  </form>
-                </Form>
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div>
+                    <Label htmlFor="register-name">Nome</Label>
+                    <div className="relative">
+                      <UserPlus className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="register-name"
+                        placeholder="Seu nome completo"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                        value={registerName}
+                        onChange={(e) => setRegisterName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="register-email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="register-email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                        value={registerEmail}
+                        onChange={(e) => setRegisterEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="register-password">Senha</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="register-password"
+                        type="password"
+                        placeholder="••••••••"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                        value={registerPassword}
+                        onChange={(e) => setRegisterPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="confirm-password">Confirmar Senha</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        placeholder="••••••••"
+                        className="pl-10"
+                        disabled={isSubmitting}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                        Registrando...
+                      </>
+                    ) : (
+                      "Criar Conta"
+                    )}
+                  </Button>
+                </form>
               </TabsContent>
             </CardContent>
           </Tabs>
