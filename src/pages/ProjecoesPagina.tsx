@@ -69,9 +69,11 @@ export function ProjecoesPagina() {
           </Card>
         </div>
 
-        {/* Main Forecasting Component */}
-        <div className="w-full overflow-hidden">
-          <ProfitForecasting />
+        {/* Main Forecasting Component - Centralized */}
+        <div className="flex justify-center w-full">
+          <div className="w-full max-w-4xl">
+            <ProfitForecasting />
+          </div>
         </div>
 
         {/* Additional Information */}
