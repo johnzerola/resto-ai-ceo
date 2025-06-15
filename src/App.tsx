@@ -15,6 +15,7 @@ import { Integracoes } from "./pages/Integracoes";
 import { AssinaturaCompleta as Subscription } from "./pages/AssinaturaCompleta";
 import { Dashboard } from "./pages/Dashboard";
 import { SystemMonitoring } from "@/pages/SystemMonitoring";
+import { AIAssistantPage } from "@/pages/AIAssistantPage";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -56,6 +57,7 @@ const router = createBrowserRouter(
         <Route path="/integracoes" element={<Integracoes />} />
         <Route path="/assinatura" element={<Subscription />} />
         <Route path="/system-monitoring" element={<SystemMonitoring />} />
+        <Route path="/ai-assistant" element={<AIAssistantPage />} />
       </Route>
 
       <Route element={<RestaurantLayout />}>
