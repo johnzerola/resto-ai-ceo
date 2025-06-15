@@ -78,37 +78,43 @@ export function useSubscriptionPlan() {
       if (subscriberData) {
         console.log('✅ [Subscription] Dados encontrados:', subscriberData);
         
-        // NOVA LÓGICA: Se há subscription_tier definido, considerar como ativo
-        const hasSubscriptionTier = subscriberData.subscription_tier && subscriberData.subscription_tier !== null;
-        const isNotExpired = !subscriberData.subscription_end || new Date(subscriberData.subscription_end) > new Date();
-        const hasActiveStatus = subscriberData.plan_status === 'active';
+        // LÓGICA SIMPLIFICADA: Se tem subscription_tier válido, usar esse tier
+        const hasValidTier = subscriberData.subscription_tier && 
+                            subscriberData.subscription_tier !== null && 
+                            subscriberData.subscription_tier !== '';
         
-        // Se tem tier definido E não expirou E status é ativo, considerar ativo
-        const isActive = hasSubscriptionTier && isNotExpired && hasActiveStatus;
-        
-        console.log('🔍 [Subscription] Nova verificação:', {
-          hasSubscriptionTier,
-          isNotExpired,
-          hasActiveStatus,
-          isActive,
-          subscription_tier: subscriberData.subscription_tier
+        console.log('🔍 [Subscription] Verificação do tier:', {
+          subscription_tier: subscriberData.subscription_tier,
+          hasValidTier,
+          plan_status: subscriberData.plan_status,
+          subscription_end: subscriberData.subscription_end
         });
 
-        // Mapear tier para PlanType
         let planType = PlanType.FREE;
-        if (hasSubscriptionTier) {
+        let status: 'active' | 'inactive' | 'cancelled' | 'trial' = 'inactive';
+
+        if (hasValidTier) {
+          // Mapear tier para PlanType
           const tier = subscriberData.subscription_tier.toLowerCase();
           if (tier === 'profissional' || tier === 'professional' || tier === 'pro') {
             planType = PlanType.PROFISSIONAL;
           } else if (tier === 'essencial' || tier === 'essential' || tier === 'basic') {
             planType = PlanType.ESSENCIAL;
           }
+
+          // Verificar se está ativo
+          const isNotExpired = !subscriberData.subscription_end || new Date(subscriberData.subscription_end) > new Date();
+          const hasActiveStatus = subscriberData.plan_status === 'active';
+          
+          if (isNotExpired && hasActiveStatus) {
+            status = 'active';
+          }
         }
 
         finalSubscription = {
           id: subscriberData.id,
           plan_type: planType,
-          status: isActive ? 'active' : 'inactive',
+          status: status,
           expires_at: subscriberData.subscription_end,
           created_at: subscriberData.created_at,
           user_id: subscriberData.user_id,
@@ -116,7 +122,7 @@ export function useSubscriptionPlan() {
           stripe_customer_id: subscriberData.stripe_customer_id
         };
 
-        console.log(`✅ [Subscription] Plano determinado: ${finalSubscription.plan_type} (${finalSubscription.status})`);
+        console.log(`✅ [Subscription] Plano final determinado: ${finalSubscription.plan_type} (${finalSubscription.status})`);
       } else {
         console.log('⚠️ [Subscription] Usuário sem registro na tabela subscribers - aplicando plano gratuito');
         
