@@ -1,182 +1,63 @@
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Route,
+  createRoutesFromElements,
+} from "react-router-dom";
 
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { UserRole } from "@/services/AuthService";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
+import { Home } from "./pages/Home";
+import { Pricing } from "./pages/Pricing";
+import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
+import { ForgotPassword } from "./pages/ForgotPassword";
+import { ResetPassword } from "./pages/ResetPassword";
+import { Logout } from "./pages/Logout";
+import { Settings } from "./pages/Settings";
+import { Restaurant } from "./pages/Restaurant";
+import { Restaurants } from "./pages/Restaurants";
+import { Integracoes } from "./pages/Integracoes";
+import { Subscription } from "./pages/Subscription";
 import { Dashboard } from "./pages/Dashboard";
-import FluxoDeCaixa from "./pages/FluxoDeCaixa";
-import { DRE } from "./pages/DRE";
-import { CMV } from "./pages/CMV";
-import { Metas } from "./pages/Metas";
-import Estoque from "./pages/Estoque";
-import Cardapio from "./pages/Cardapio";
-import { AIAssistantPage } from "./pages/AIAssistantPage";
-import { Assinatura } from "./pages/Assinatura";
-import Configuracoes from "./pages/Configuracoes";
-import { Privacidade } from "./pages/Privacidade";
-import { ProjecoesPagina } from "./pages/ProjecoesPagina";
-import Simulador from "./pages/Simulador";
-import AssistenteIA from "./pages/AssistenteIA";
-import TestePage from "./pages/TestePage";
-import NotFound from "./pages/NotFound";
-import PaginaVendas from "./pages/PaginaVendas";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import { SystemMonitoring } from "@/pages/SystemMonitoring";
 
-const queryClient = new QueryClient();
+import { AuthLayout } from "./layouts/AuthLayout";
+import { MainLayout } from "./layouts/MainLayout";
+import { RestaurantLayout } from "./layouts/RestaurantLayout";
+
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <>
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/pricing" element={<Pricing />} />
+      </Route>
+
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/logout" element={<Logout />} />
+      </Route>
+
+      <Route element={<MainLayout />}>
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/integracoes" element={<Integracoes />} />
+        <Route path="/assinatura" element={<Subscription />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/system-monitoring" element={<SystemMonitoring />} />
+      </Route>
+
+      <Route element={<RestaurantLayout />}>
+        <Route path="/restaurants" element={<Restaurants />} />
+        <Route path="/restaurants/:id" element={<Restaurant />} />
+      </Route>
+    </>
+  )
+);
 
 function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/apresentacao" element={<PaginaVendas />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/super-admin-dashboard"
-                element={
-                  <ProtectedRoute requiredRole={UserRole.SUPERADMIN}>
-                    <SuperAdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/fluxo-de-caixa"
-                element={
-                  <ProtectedRoute>
-                    <FluxoDeCaixa />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/projecoes"
-                element={
-                  <ProtectedRoute>
-                    <ProjecoesPagina />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dre"
-                element={
-                  <ProtectedRoute>
-                    <DRE />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/cmv"
-                element={
-                  <ProtectedRoute>
-                    <CMV />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/simulador"
-                element={
-                  <ProtectedRoute>
-                    <Simulador />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/metas"
-                element={
-                  <ProtectedRoute>
-                    <Metas />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/estoque"
-                element={
-                  <ProtectedRoute>
-                    <Estoque />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/cardapio"
-                element={
-                  <ProtectedRoute>
-                    <Cardapio />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/ai-assistant"
-                element={
-                  <ProtectedRoute>
-                    <AIAssistantPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/assistente-ia"
-                element={
-                  <ProtectedRoute>
-                    <AssistenteIA />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/teste"
-                element={
-                  <ProtectedRoute>
-                    <TestePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/assinatura"
-                element={
-                  <ProtectedRoute>
-                    <Assinatura />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/configuracoes"
-                element={
-                  <ProtectedRoute>
-                    <Configuracoes />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/privacidade"
-                element={
-                  <ProtectedRoute>
-                    <Privacidade />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;

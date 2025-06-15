@@ -1,366 +1,197 @@
 
-import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
+import { SystemLogService } from './SystemLogService';
 
-export interface UptimeRecord {
-  id: string;
-  timestamp: string;
-  status: 'up' | 'down' | 'degraded';
-  responseTime: number;
-  endpoint: string;
-  errorMessage?: string;
+export interface SystemMetrics {
+  totalUsers: number;
+  activeSubscriptions: number;
+  planDistribution: { [plan: string]: number };
+  dailyAIUsage: number;
+  errorRate: number;
+  webhookSuccessRate: number;
+  lastUpdated: string;
 }
 
-export interface PerformanceMetric {
+export interface AlertConfig {
   id: string;
-  timestamp: string;
-  metric: 'page_load' | 'api_response' | 'memory_usage' | 'cpu_usage';
-  value: number;
-  unit: string;
-  threshold?: number;
-}
-
-export interface Alert {
-  id: string;
-  type: 'uptime' | 'performance' | 'security' | 'error';
+  name: string;
+  condition: string;
+  threshold: number;
   severity: 'low' | 'medium' | 'high' | 'critical';
-  message: string;
-  timestamp: string;
-  resolved: boolean;
-  resolvedAt?: string;
+  enabled: boolean;
 }
 
 export class MonitoringService {
-  private static instance: MonitoringService;
-  private uptimeRecords: UptimeRecord[] = [];
-  private performanceMetrics: PerformanceMetric[] = [];
-  private alerts: Alert[] = [];
-  private monitoringInterval?: number;
-  private isMonitoring = false;
-
-  public static getInstance(): MonitoringService {
-    if (!MonitoringService.instance) {
-      MonitoringService.instance = new MonitoringService();
-    }
-    return MonitoringService.instance;
-  }
-
-  constructor() {
-    this.loadFromStorage();
-    this.startMonitoring();
-  }
-
-  private loadFromStorage(): void {
+  static async getSystemMetrics(): Promise<SystemMetrics | null> {
     try {
-      const uptime = localStorage.getItem('uptime_records');
-      if (uptime) this.uptimeRecords = JSON.parse(uptime);
+      // Total de usuários
+      const { count: totalUsers } = await supabase
+        .from('subscribers')
+        .select('*', { count: 'exact', head: true });
 
-      const performance = localStorage.getItem('performance_metrics');
-      if (performance) this.performanceMetrics = JSON.parse(performance);
+      // Assinaturas ativas
+      const { count: activeSubscriptions } = await supabase
+        .from('subscribers')
+        .select('*', { count: 'exact', head: true })
+        .eq('subscribed', true)
+        .eq('plan_status', 'active');
 
-      const alerts = localStorage.getItem('monitoring_alerts');
-      if (alerts) this.alerts = JSON.parse(alerts);
-    } catch (error) {
-      console.error("Erro ao carregar dados de monitoramento:", error);
-    }
-  }
+      // Distribuição de planos
+      const { data: planData } = await supabase
+        .from('subscribers')
+        .select('subscription_tier')
+        .eq('subscribed', true);
 
-  private saveToStorage(): void {
-    try {
-      localStorage.setItem('uptime_records', JSON.stringify(this.uptimeRecords));
-      localStorage.setItem('performance_metrics', JSON.stringify(this.performanceMetrics));
-      localStorage.setItem('monitoring_alerts', JSON.stringify(this.alerts));
-    } catch (error) {
-      console.error("Erro ao salvar dados de monitoramento:", error);
-    }
-  }
-
-  // Monitoramento de uptime
-  async checkUptime(): Promise<UptimeRecord> {
-    const startTime = performance.now();
-    const endpoint = window.location.origin;
-
-    try {
-      const response = await fetch(endpoint + '/health', {
-        method: 'HEAD',
-        cache: 'no-cache'
+      const planDistribution: { [plan: string]: number } = {};
+      planData?.forEach(sub => {
+        const plan = sub.subscription_tier || 'free';
+        planDistribution[plan] = (planDistribution[plan] || 0) + 1;
       });
 
-      const endTime = performance.now();
-      const responseTime = endTime - startTime;
+      // Uso diário de IA
+      const today = new Date().toISOString().split('T')[0];
+      const { data: aiUsage } = await supabase
+        .from('ia_usage')
+        .select('messages_sent')
+        .eq('date', today);
 
-      const record: UptimeRecord = {
-        id: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-        status: response.ok ? 'up' : 'degraded',
-        responseTime,
-        endpoint
+      const dailyAIUsage = aiUsage?.reduce((sum, usage) => sum + (usage.messages_sent || 0), 0) || 0;
+
+      // Taxa de erro (últimas 24h)
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const { count: totalLogs } = await supabase
+        .from('system_logs')
+        .select('*', { count: 'exact', head: true })
+        .gte('timestamp', yesterday.toISOString());
+
+      const { count: errorLogs } = await supabase
+        .from('system_logs')
+        .select('*', { count: 'exact', head: true })
+        .in('severity', ['error', 'critical'])
+        .gte('timestamp', yesterday.toISOString());
+
+      const errorRate = totalLogs ? (errorLogs || 0) / totalLogs * 100 : 0;
+
+      // Taxa de sucesso de webhooks (últimas 24h)
+      const { count: totalWebhooks } = await supabase
+        .from('webhook_logs')
+        .select('*', { count: 'exact', head: true })
+        .gte('timestamp', yesterday.toISOString());
+
+      const { count: successWebhooks } = await supabase
+        .from('webhook_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'success')
+        .gte('timestamp', yesterday.toISOString());
+
+      const webhookSuccessRate = totalWebhooks ? (successWebhooks || 0) / totalWebhooks * 100 : 100;
+
+      return {
+        totalUsers: totalUsers || 0,
+        activeSubscriptions: activeSubscriptions || 0,
+        planDistribution,
+        dailyAIUsage,
+        errorRate,
+        webhookSuccessRate,
+        lastUpdated: new Date().toISOString()
       };
-
-      this.uptimeRecords.push(record);
-      this.cleanOldRecords();
-
-      // Verificar alertas
-      if (responseTime > 2000) {
-        this.createAlert('performance', 'medium', `Tempo de resposta alto: ${Math.round(responseTime)}ms`);
-      }
-
-      if (!response.ok) {
-        this.createAlert('uptime', 'high', `Serviço indisponível: ${response.status}`);
-      }
-
-      this.saveToStorage();
-      return record;
 
     } catch (error) {
-      const endTime = performance.now();
-      const responseTime = endTime - startTime;
-
-      const record: UptimeRecord = {
-        id: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-        status: 'down',
-        responseTime,
-        endpoint,
-        errorMessage: (error as Error).message
-      };
-
-      this.uptimeRecords.push(record);
-      this.createAlert('uptime', 'critical', `Serviço offline: ${(error as Error).message}`);
-      this.saveToStorage();
-      return record;
+      await SystemLogService.log(
+        'Monitoring',
+        'metrics_error',
+        `Erro ao obter métricas do sistema: ${error}`,
+        'error'
+      );
+      return null;
     }
   }
 
-  // Monitoramento de performance
-  recordPerformanceMetric(metric: Omit<PerformanceMetric, 'id' | 'timestamp'>): void {
-    const performanceMetric: PerformanceMetric = {
-      ...metric,
-      id: crypto.randomUUID(),
-      timestamp: new Date().toISOString()
-    };
+  static async checkAlerts(): Promise<string[]> {
+    const alerts: string[] = [];
+    
+    try {
+      const metrics = await this.getSystemMetrics();
+      if (!metrics) return ['Falha ao obter métricas do sistema'];
 
-    this.performanceMetrics.push(performanceMetric);
-
-    // Verificar thresholds
-    if (metric.threshold && metric.value > metric.threshold) {
-      this.createAlert('performance', 'medium', 
-        `Métrica ${metric.metric} excedeu limite: ${metric.value}${metric.unit}`);
-    }
-
-    this.cleanOldRecords();
-    this.saveToStorage();
-  }
-
-  // Sistema de alertas
-  private createAlert(type: Alert['type'], severity: Alert['severity'], message: string): void {
-    const alert: Alert = {
-      id: crypto.randomUUID(),
-      type,
-      severity,
-      message,
-      timestamp: new Date().toISOString(),
-      resolved: false
-    };
-
-    this.alerts.push(alert);
-
-    // Notificar usuário para alertas críticos
-    if (severity === 'critical' || severity === 'high') {
-      toast.error(`Alerta ${severity}: ${message}`);
-    }
-
-    this.saveToStorage();
-  }
-
-  // Iniciar monitoramento automático
-  startMonitoring(): void {
-    if (this.isMonitoring) return;
-
-    this.isMonitoring = true;
-
-    // Verificar uptime a cada 5 minutos
-    this.monitoringInterval = window.setInterval(() => {
-      this.checkUptime();
-    }, 5 * 60 * 1000);
-
-    // Monitorar performance da página
-    this.monitorPagePerformance();
-
-    console.log("Monitoramento iniciado");
-  }
-
-  private monitorPagePerformance(): void {
-    // Monitorar tempo de carregamento
-    if (performance.timing) {
-      const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-      if (loadTime > 0) {
-        this.recordPerformanceMetric({
-          metric: 'page_load',
-          value: loadTime,
-          unit: 'ms',
-          threshold: 3000
-        });
+      // Verificar taxa de erro alta
+      if (metrics.errorRate > 5) {
+        alerts.push(`Taxa de erro alta: ${metrics.errorRate.toFixed(2)}%`);
+        await SystemLogService.log(
+          'Monitoring',
+          'alert_error_rate',
+          `Taxa de erro crítica detectada: ${metrics.errorRate.toFixed(2)}%`,
+          'critical'
+        );
       }
-    }
 
-    // Monitorar uso de memória (se disponível)
-    if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      this.recordPerformanceMetric({
-        metric: 'memory_usage',
-        value: memory.usedJSHeapSize / 1024 / 1024,
-        unit: 'MB',
-        threshold: 100
-      });
+      // Verificar taxa de sucesso de webhooks baixa
+      if (metrics.webhookSuccessRate < 90) {
+        alerts.push(`Taxa de sucesso de webhooks baixa: ${metrics.webhookSuccessRate.toFixed(2)}%`);
+        await SystemLogService.log(
+          'Monitoring',
+          'alert_webhook_failure',
+          `Taxa de sucesso de webhooks baixa: ${metrics.webhookSuccessRate.toFixed(2)}%`,
+          'warning'
+        );
+      }
+
+      // Verificar uso excessivo de IA
+      if (metrics.dailyAIUsage > 10000) {
+        alerts.push(`Uso diário de IA muito alto: ${metrics.dailyAIUsage} mensagens`);
+        await SystemLogService.log(
+          'Monitoring',
+          'alert_ai_usage',
+          `Uso diário de IA excedendo limite esperado: ${metrics.dailyAIUsage}`,
+          'warning'
+        );
+      }
+
+      return alerts;
+
+    } catch (error) {
+      await SystemLogService.log(
+        'Monitoring',
+        'alert_check_error',
+        `Erro ao verificar alertas: ${error}`,
+        'error'
+      );
+      return [`Erro ao verificar alertas: ${error}`];
     }
   }
 
-  // Parar monitoramento
-  stopMonitoring(): void {
-    if (this.monitoringInterval) {
-      clearInterval(this.monitoringInterval);
-      this.monitoringInterval = undefined;
-    }
-    this.isMonitoring = false;
-    console.log("Monitoramento parado");
-  }
-
-  // Limpar registros antigos (manter apenas 7 dias)
-  private cleanOldRecords(): void {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    this.uptimeRecords = this.uptimeRecords.filter(record => 
-      new Date(record.timestamp) > sevenDaysAgo
-    );
-
-    this.performanceMetrics = this.performanceMetrics.filter(metric => 
-      new Date(metric.timestamp) > sevenDaysAgo
-    );
-
-    this.alerts = this.alerts.filter(alert => 
-      new Date(alert.timestamp) > sevenDaysAgo
+  static async logPerformanceMetric(metric: string, value: number, context?: any): Promise<void> {
+    await SystemLogService.log(
+      'Performance',
+      'metric',
+      `${metric}: ${value}`,
+      'info',
+      { metric, value, ...context }
     );
   }
 
-  // Calcular uptime percentage
-  calculateUptime(): number {
-    if (this.uptimeRecords.length === 0) return 100;
+  static async getSystemHealth(): Promise<{ status: 'healthy' | 'warning' | 'critical'; details: string[] }> {
+    const alerts = await this.checkAlerts();
+    const metrics = await this.getSystemMetrics();
 
-    const upRecords = this.uptimeRecords.filter(record => record.status === 'up').length;
-    return Math.round((upRecords / this.uptimeRecords.length) * 100 * 100) / 100;
-  }
-
-  // Calcular tempo médio de resposta
-  getAverageResponseTime(): number {
-    if (this.uptimeRecords.length === 0) return 0;
-
-    const totalTime = this.uptimeRecords.reduce((sum, record) => sum + record.responseTime, 0);
-    return Math.round(totalTime / this.uptimeRecords.length);
-  }
-
-  // Getters
-  getUptimeRecords(): UptimeRecord[] {
-    return [...this.uptimeRecords];
-  }
-
-  getPerformanceMetrics(): PerformanceMetric[] {
-    return [...this.performanceMetrics];
-  }
-
-  getAlerts(): Alert[] {
-    return [...this.alerts];
-  }
-
-  getActiveAlerts(): Alert[] {
-    return this.alerts.filter(alert => !alert.resolved);
-  }
-
-  // Resolver alerta
-  resolveAlert(alertId: string): void {
-    const alert = this.alerts.find(a => a.id === alertId);
-    if (alert) {
-      alert.resolved = true;
-      alert.resolvedAt = new Date().toISOString();
-      this.saveToStorage();
-    }
-  }
-
-  // Teste de carga
-  async runLoadTest(concurrent: number = 10, duration: number = 30): Promise<any> {
-    console.log(`Iniciando teste de carga: ${concurrent} requisições simultâneas por ${duration}s`);
-
-    const results = {
-      totalRequests: 0,
-      successfulRequests: 0,
-      failedRequests: 0,
-      averageResponseTime: 0,
-      minResponseTime: Infinity,
-      maxResponseTime: 0,
-      responseTimes: [] as number[]
-    };
-
-    const startTime = Date.now();
-    const promises: Promise<any>[] = [];
-
-    const makeRequest = async () => {
-      const requestStart = performance.now();
-      try {
-        const response = await fetch(window.location.origin, { cache: 'no-cache' });
-        const requestEnd = performance.now();
-        const responseTime = requestEnd - requestStart;
-
-        results.totalRequests++;
-        results.responseTimes.push(responseTime);
-        
-        if (response.ok) {
-          results.successfulRequests++;
-        } else {
-          results.failedRequests++;
-        }
-
-        results.minResponseTime = Math.min(results.minResponseTime, responseTime);
-        results.maxResponseTime = Math.max(results.maxResponseTime, responseTime);
-
-      } catch (error) {
-        results.totalRequests++;
-        results.failedRequests++;
-      }
-    };
-
-    // Executar requisições concorrentes
-    const interval = setInterval(() => {
-      for (let i = 0; i < concurrent; i++) {
-        promises.push(makeRequest());
-      }
-    }, 1000);
-
-    // Parar após duração especificada
-    setTimeout(() => {
-      clearInterval(interval);
-    }, duration * 1000);
-
-    // Aguardar conclusão
-    await new Promise(resolve => setTimeout(resolve, (duration + 5) * 1000));
-    await Promise.all(promises);
-
-    // Calcular estatísticas
-    if (results.responseTimes.length > 0) {
-      results.averageResponseTime = results.responseTimes.reduce((a, b) => a + b, 0) / results.responseTimes.length;
+    if (!metrics) {
+      return { status: 'critical', details: ['Falha ao obter métricas do sistema'] };
     }
 
-    // Registrar resultado
-    this.recordPerformanceMetric({
-      metric: 'api_response',
-      value: results.averageResponseTime,
-      unit: 'ms'
-    });
+    if (alerts.length === 0) {
+      return { status: 'healthy', details: ['Todos os sistemas operando normalmente'] };
+    }
 
-    console.log("Teste de carga concluído:", results);
-    toast.success(`Teste de carga concluído: ${results.successfulRequests}/${results.totalRequests} sucessos`);
+    // Determinar severidade baseada nos alertas
+    const hasCriticalIssues = alerts.some(alert => 
+      alert.includes('Taxa de erro alta') || alert.includes('Falha ao obter métricas')
+    );
 
-    return results;
+    return {
+      status: hasCriticalIssues ? 'critical' : 'warning',
+      details: alerts
+    };
   }
 }
-
-export const monitoringService = MonitoringService.getInstance();
