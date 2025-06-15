@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -143,7 +144,7 @@ const Login = () => {
                       <Input
                         id="login-email"
                         type="email"
-                        placeholder="seu@email.com"
+                        placeholder="Digite seu email"
                         className="pl-10"
                         disabled={isSubmitting}
                         value={loginEmail}
@@ -159,7 +160,7 @@ const Login = () => {
                       <Input
                         id="login-password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="Digite sua senha"
                         className="pl-10"
                         disabled={isSubmitting}
                         value={loginPassword}
@@ -193,7 +194,7 @@ const Login = () => {
                       <UserPlus className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       <Input
                         id="register-name"
-                        placeholder="Seu nome completo"
+                        placeholder="Digite seu nome completo"
                         className="pl-10"
                         disabled={isSubmitting}
                         value={registerName}
@@ -209,7 +210,7 @@ const Login = () => {
                       <Input
                         id="register-email"
                         type="email"
-                        placeholder="seu@email.com"
+                        placeholder="Digite seu email"
                         className="pl-10"
                         disabled={isSubmitting}
                         value={registerEmail}
@@ -225,7 +226,7 @@ const Login = () => {
                       <Input
                         id="register-password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="Crie uma senha segura"
                         className="pl-10"
                         disabled={isSubmitting}
                         value={registerPassword}
@@ -241,7 +242,7 @@ const Login = () => {
                       <Input
                         id="confirm-password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="Confirme sua senha"
                         className="pl-10"
                         disabled={isSubmitting}
                         value={confirmPassword}
