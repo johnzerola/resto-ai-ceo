@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,15 +78,16 @@ export function useSubscriptionPlan() {
       if (subscriberData) {
         console.log('✅ [Subscription] Dados encontrados:', subscriberData);
         
-        // Verificar se a assinatura está ativa
-        const isSubscribed = subscriberData.subscribed === true;
+        // NOVA LÓGICA: Se há subscription_tier definido, considerar como ativo
+        const hasSubscriptionTier = subscriberData.subscription_tier && subscriberData.subscription_tier !== null;
         const isNotExpired = !subscriberData.subscription_end || new Date(subscriberData.subscription_end) > new Date();
         const hasActiveStatus = subscriberData.plan_status === 'active';
         
-        const isActive = isSubscribed && isNotExpired && hasActiveStatus;
+        // Se tem tier definido E não expirou E status é ativo, considerar ativo
+        const isActive = hasSubscriptionTier && isNotExpired && hasActiveStatus;
         
-        console.log('🔍 [Subscription] Verificações:', {
-          isSubscribed,
+        console.log('🔍 [Subscription] Nova verificação:', {
+          hasSubscriptionTier,
           isNotExpired,
           hasActiveStatus,
           isActive,
@@ -96,7 +96,7 @@ export function useSubscriptionPlan() {
 
         // Mapear tier para PlanType
         let planType = PlanType.FREE;
-        if (isActive && subscriberData.subscription_tier) {
+        if (hasSubscriptionTier) {
           const tier = subscriberData.subscription_tier.toLowerCase();
           if (tier === 'profissional' || tier === 'professional' || tier === 'pro') {
             planType = PlanType.PROFISSIONAL;
