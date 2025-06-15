@@ -4,9 +4,10 @@ import {
   RouterProvider,
   Route,
   createRoutesFromElements,
+  Outlet,
 } from "react-router-dom";
 
-import { Index as Home } from "./pages/Index";
+import Index from "./pages/Index";
 import { AssinaturaCompleta as Pricing } from "./pages/AssinaturaCompleta";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -24,15 +25,15 @@ const ResetPassword = Login;
 const Logout = Login;
 
 // Simple layout components
-const AuthLayout = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-const MainLayout = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-const RestaurantLayout = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const AuthLayout = () => <Outlet />;
+const MainLayout = () => <Outlet />;
+const RestaurantLayout = () => <Outlet />;
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
       <Route element={<MainLayout />}>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Index />} />
         <Route path="/pricing" element={<Pricing />} />
       </Route>
 
