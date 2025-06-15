@@ -136,7 +136,7 @@ export function ProfitForecasting() {
   };
 
   return (
-    <div className="w-full space-y-3 sm:space-y-4 lg:space-y-6 overflow-hidden">
+    <div className="w-full space-y-3 sm:space-y-4 lg:space-y-6">
       <Card className="w-full">
         <CardHeader className="p-3 sm:p-4 lg:p-6">
           <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
@@ -148,23 +148,21 @@ export function ProfitForecasting() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="p-3 sm:p-4 lg:p-6 pt-0 w-full overflow-hidden">
+        <CardContent className="p-3 sm:p-4 lg:p-6 pt-0 w-full">
           <Tabs defaultValue="parametros" className="w-full">
-            <div className="w-full overflow-x-auto mb-3 sm:mb-4">
-              <TabsList className="grid w-full grid-cols-3 min-w-[280px] h-8 sm:h-10">
-                <TabsTrigger value="parametros" className="text-xs sm:text-sm px-1 sm:px-2">
-                  Parâmetros
-                </TabsTrigger>
-                <TabsTrigger value="resultados" className="text-xs sm:text-sm px-1 sm:px-2">
-                  Resultados
-                </TabsTrigger>
-                <TabsTrigger value="projecoes" className="text-xs sm:text-sm px-1 sm:px-2">
-                  Projeções
-                </TabsTrigger>
-              </TabsList>
-            </div>
+            <TabsList className="grid w-full grid-cols-3 h-8 sm:h-10">
+              <TabsTrigger value="parametros" className="text-xs sm:text-sm px-1 sm:px-2">
+                Parâmetros
+              </TabsTrigger>
+              <TabsTrigger value="resultados" className="text-xs sm:text-sm px-1 sm:px-2">
+                Resultados
+              </TabsTrigger>
+              <TabsTrigger value="projecoes" className="text-xs sm:text-sm px-1 sm:px-2">
+                Projeções
+              </TabsTrigger>
+            </TabsList>
 
-            <TabsContent value="parametros" className="space-y-3 sm:space-y-4 w-full overflow-hidden">
+            <TabsContent value="parametros" className="space-y-3 sm:space-y-4 w-full">
               <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="currentRevenue" className="text-xs sm:text-sm">Receita Mensal Atual</Label>
@@ -211,7 +209,7 @@ export function ProfitForecasting() {
               </div>
             </TabsContent>
 
-            <TabsContent value="resultados" className="space-y-3 sm:space-y-4 w-full overflow-hidden">
+            <TabsContent value="resultados" className="space-y-3 sm:space-y-4 w-full">
               <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
                 {scenarios.map((scenario, index) => (
                   <Card key={index} className="w-full">
@@ -253,9 +251,9 @@ export function ProfitForecasting() {
               </div>
             </TabsContent>
 
-            <TabsContent value="projecoes" className="space-y-3 sm:space-y-4 w-full overflow-hidden">
-              <div className="w-full overflow-x-auto">
-                <div className="min-w-[300px] w-full h-[250px] sm:h-[300px] lg:h-[400px]">
+            <TabsContent value="projecoes" className="space-y-3 sm:space-y-4 w-full">
+              <div className="w-full">
+                <div className="w-full h-[250px] sm:h-[300px] lg:h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={forecastData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" />
