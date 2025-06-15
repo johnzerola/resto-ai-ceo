@@ -45,8 +45,8 @@ export class PlanService {
 
     return (data || []).map(plan => ({
       ...plan,
-      features: plan.features as PlanFeatures,
-      limits: plan.limits as PlanLimits
+      features: plan.features as unknown as PlanFeatures,
+      limits: plan.limits as unknown as PlanLimits
     }));
   }
 
@@ -65,8 +65,8 @@ export class PlanService {
 
     return data ? {
       ...data,
-      features: data.features as PlanFeatures,
-      limits: data.limits as PlanLimits
+      features: data.features as unknown as PlanFeatures,
+      limits: data.limits as unknown as PlanLimits
     } : null;
   }
 
