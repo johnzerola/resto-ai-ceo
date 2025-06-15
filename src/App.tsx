@@ -34,11 +34,13 @@ const RestaurantLayout = () => <Outlet />;
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
+      {/* Public routes */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Index />} />
         <Route path="/pricing" element={<Pricing />} />
       </Route>
 
+      {/* Auth routes - accessible without authentication */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -47,11 +49,12 @@ const router = createBrowserRouter(
         <Route path="/logout" element={<Logout />} />
       </Route>
 
+      {/* Protected routes */}
       <Route element={<MainLayout />}>
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/integracoes" element={<Integracoes />} />
         <Route path="/assinatura" element={<Subscription />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/system-monitoring" element={<SystemMonitoring />} />
       </Route>
 

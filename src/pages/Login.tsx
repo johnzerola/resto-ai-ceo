@@ -30,13 +30,19 @@ const Login = () => {
   
   const from = (location.state as { from?: string })?.from || "/dashboard";
 
-  // Redirecionar usuários autenticados
+  // Only redirect if user is authenticated AND not currently on login page by choice
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      console.log('Usuário já autenticado, redirecionando...');
-      navigate(from, { replace: true });
+    // Don't auto-redirect if user explicitly navigated to /login
+    if (isAuthenticated && !isLoading && location.pathname === "/login" && !location.state?.from) {
+      // Only redirect if there's a "from" location or if they came from elsewhere
+      const timer = setTimeout(() => {
+        console.log('Usuário autenticado, redirecionando para dashboard...');
+        navigate("/dashboard", { replace: true });
+      }, 1000);
+      
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, isLoading, navigate, from]);
+  }, [isAuthenticated, isLoading, navigate, location]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +62,7 @@ const Login = () => {
       if (success) {
         console.log("Login bem-sucedido!");
         toast.success("Login realizado com sucesso!");
-        // O redirecionamento será feito pelo useEffect acima
+        navigate("/dashboard", { replace: true });
       } else {
         toast.error("Credenciais inválidas. Verifique email e senha.");
       }
@@ -111,18 +117,6 @@ const Login = () => {
       setIsSubmitting(false);
     }
   };
-
-  // Se usuário já está autenticado, mostrar loading enquanto redireciona
-  if (isAuthenticated && !isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Redirecionando...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Loading inicial
   if (isLoading) {
