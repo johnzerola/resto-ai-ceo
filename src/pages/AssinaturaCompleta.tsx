@@ -104,9 +104,21 @@ export function AssinaturaCompleta() {
   const [selectedPlan, setSelectedPlan] = useState<string>(planType || 'free');
 
   useEffect(() => {
-    // Forçar atualização dos dados da assinatura
-    refreshSubscription();
+    // Forçar atualização imediata dos dados da assinatura
+    const forceRefresh = async () => {
+      console.log('🔄 [AssinaturaCompleta] Forçando refresh dos dados...');
+      await refreshSubscription();
+    };
+    
+    forceRefresh();
   }, [refreshSubscription]);
+
+  // Atualizar selectedPlan quando planType mudar
+  useEffect(() => {
+    if (planType) {
+      setSelectedPlan(planType);
+    }
+  }, [planType]);
 
   const handlePlanSelection = (planId: string) => {
     setSelectedPlan(planId);
@@ -117,7 +129,7 @@ export function AssinaturaCompleta() {
     }
 
     if (planId === planType) {
-      toast.info('Este já é seu plano atual');
+      toast.success('Este já é seu plano atual!');
       return;
     }
 

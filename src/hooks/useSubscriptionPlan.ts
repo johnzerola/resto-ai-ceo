@@ -60,13 +60,13 @@ export function useSubscriptionPlan() {
       setIsLoading(true);
       setError(null);
 
-      console.log('🔍 [Subscription] Verificando plano para usuário:', user.email);
+      console.log('🔍 [Subscription] Buscando plano para usuário:', user.email);
 
-      // Buscar dados do usuário na tabela subscribers por email E user_id
+      // Buscar dados do usuário na tabela subscribers por email
       const { data: subscriberData, error: subscriberError } = await supabase
         .from('subscribers')
         .select('*')
-        .or(`user_id.eq.${user.id},email.eq.${user.email}`)
+        .eq('email', user.email)
         .maybeSingle();
 
       if (subscriberError) {
@@ -77,68 +77,30 @@ export function useSubscriptionPlan() {
       let finalSubscription: UserSubscription;
 
       if (subscriberData) {
-        console.log('✅ [Subscription] Dados brutos encontrados:', subscriberData);
+        console.log('✅ [Subscription] Dados encontrados:', subscriberData);
         
-        // Log detalhado dos campos importantes
-        console.log('🔍 [Subscription] Análise dos campos:', {
-          subscription_tier: subscriberData.subscription_tier,
-          subscription_tier_type: typeof subscriberData.subscription_tier,
-          plan_status: subscriberData.plan_status,
-          plan_status_type: typeof subscriberData.plan_status,
-          subscription_end: subscriberData.subscription_end,
-          subscription_end_type: typeof subscriberData.subscription_end,
-          subscribed: subscriberData.subscribed,
-          now: new Date().toISOString()
-        });
-
-        // LÓGICA REFINADA: Verificar tier e status
-        const hasTier = subscriberData.subscription_tier && 
-                        subscriberData.subscription_tier !== null && 
-                        subscriberData.subscription_tier.trim() !== '';
-        
+        // Determinar o tipo de plano
         let planType = PlanType.FREE;
         let status: 'active' | 'inactive' | 'cancelled' | 'trial' = 'inactive';
 
-        if (hasTier) {
-          // Mapear tier para PlanType
+        // Verificar se tem um tier válido
+        if (subscriberData.subscription_tier) {
           const tier = subscriberData.subscription_tier.toLowerCase().trim();
-          console.log('🔍 [Subscription] Tier processado:', tier);
+          console.log('🔍 [Subscription] Processando tier:', tier);
           
-          if (tier === 'profissional' || tier === 'professional' || tier === 'pro') {
+          if (tier === 'profissional' || tier === 'professional') {
             planType = PlanType.PROFISSIONAL;
-            console.log('✅ [Subscription] Tier mapeado para PROFISSIONAL');
-          } else if (tier === 'essencial' || tier === 'essential' || tier === 'basic') {
+            console.log('✅ [Subscription] Plano PROFISSIONAL identificado');
+          } else if (tier === 'essencial' || tier === 'essential') {
             planType = PlanType.ESSENCIAL;
-            console.log('✅ [Subscription] Tier mapeado para ESSENCIAL');
-          } else {
-            console.log('⚠️ [Subscription] Tier não reconhecido:', tier);
+            console.log('✅ [Subscription] Plano ESSENCIAL identificado');
           }
 
-          // Verificar se está ativo
-          const now = new Date();
-          const endDate = subscriberData.subscription_end ? new Date(subscriberData.subscription_end) : null;
-          const isNotExpired = !endDate || endDate > now;
-          const hasActiveStatus = subscriberData.plan_status === 'active';
-          
-          console.log('🔍 [Subscription] Verificação de ativação:', {
-            now: now.toISOString(),
-            endDate: endDate?.toISOString(),
-            isNotExpired,
-            hasActiveStatus,
-            plan_status: subscriberData.plan_status
-          });
-          
-          if (isNotExpired && hasActiveStatus) {
+          // Se tem tier válido e está com status ativo, considerar ativo
+          if (subscriberData.plan_status === 'active' && subscriberData.subscribed) {
             status = 'active';
-            console.log('✅ [Subscription] Status definido como ACTIVE');
-          } else {
-            console.log('❌ [Subscription] Status definido como INACTIVE - motivo:', {
-              expired: !isNotExpired,
-              inactiveStatus: !hasActiveStatus
-            });
+            console.log('✅ [Subscription] Status ATIVO confirmado');
           }
-        } else {
-          console.log('❌ [Subscription] Nenhum tier válido encontrado');
         }
 
         finalSubscription = {
@@ -152,13 +114,13 @@ export function useSubscriptionPlan() {
           stripe_customer_id: subscriberData.stripe_customer_id
         };
 
-        console.log(`🎯 [Subscription] RESULTADO FINAL:`, {
+        console.log('🎯 [Subscription] RESULTADO FINAL:', {
           plan_type: finalSubscription.plan_type,
           status: finalSubscription.status,
           expires_at: finalSubscription.expires_at
         });
       } else {
-        console.log('⚠️ [Subscription] Usuário sem registro na tabela subscribers - aplicando plano gratuito');
+        console.log('⚠️ [Subscription] Nenhum registro encontrado - aplicando plano gratuito');
         
         finalSubscription = {
           id: 'free-user',
