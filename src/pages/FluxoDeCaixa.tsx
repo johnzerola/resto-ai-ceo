@@ -22,6 +22,14 @@ export default function FluxoDeCaixa() {
     setEditingEntryId(null);
   };
 
+  const handleEntryAdded = () => {
+    handleFormClose();
+  };
+
+  const handleEditComplete = () => {
+    handleFormClose();
+  };
+
   return (
     <ModernLayout>
       <div className="space-y-4 sm:space-y-6 p-3 sm:p-6 bg-background min-h-screen">
@@ -47,8 +55,9 @@ export default function FluxoDeCaixa() {
                 </DialogTitle>
               </DialogHeader>
               <CashFlowForm 
-                onSuccess={handleFormClose}
-                editingEntryId={editingEntryId}
+                onEntryAdded={handleEntryAdded}
+                onEditComplete={handleEditComplete}
+                editingEntry={editingEntryId ? { id: editingEntryId } as any : undefined}
               />
             </DialogContent>
           </Dialog>
