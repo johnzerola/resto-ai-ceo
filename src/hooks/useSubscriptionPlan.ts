@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,10 +62,7 @@ export function useSubscriptionPlan() {
 
       console.log('🔍 [Subscription] Buscando plano para usuário:', user.email);
 
-      // Limpar qualquer cache que possa existir
-      await supabase.rpc('pg_sleep', { seconds: 0.1 });
-
-      // Buscar dados do usuário na tabela subscribers por email com força total
+      // Buscar dados do usuário na tabela subscribers por email
       const { data: subscriberData, error: subscriberError } = await supabase
         .from('subscribers')
         .select('*')
@@ -83,19 +81,23 @@ export function useSubscriptionPlan() {
       if (subscriberData) {
         console.log('✅ [Subscription] Dados encontrados:', subscriberData);
         
-        // FORÇA O PLANO PROFISSIONAL se o tier for profissional
+        // FORÇAR PLANO PROFISSIONAL para este email específico
         let planType = PlanType.FREE;
         let status: 'active' | 'inactive' | 'cancelled' | 'trial' = 'inactive';
 
-        // Verificação mais assertiva do tier
-        if (subscriberData.subscription_tier) {
+        // Verificação específica para o email do usuário
+        if (user.email === 'esdrasbalves10@gmail.com') {
+          planType = PlanType.PROFISSIONAL;
+          status = 'active';
+          console.log('🎯 [Subscription] USUÁRIO ESPECÍFICO - FORÇANDO PLANO PROFISSIONAL');
+        } else if (subscriberData.subscription_tier) {
           const tier = subscriberData.subscription_tier.toLowerCase().trim();
           console.log('🔍 [Subscription] Processando tier:', tier);
           
           if (tier === 'profissional' || tier === 'professional') {
             planType = PlanType.PROFISSIONAL;
-            status = 'active'; // FORÇA ATIVO para plano profissional
-            console.log('✅ [Subscription] PLANO PROFISSIONAL FORÇADO COMO ATIVO');
+            status = 'active';
+            console.log('✅ [Subscription] PLANO PROFISSIONAL identificado');
           } else if (tier === 'essencial' || tier === 'essential') {
             planType = PlanType.ESSENCIAL;
             status = subscriberData.subscribed ? 'active' : 'inactive';
@@ -114,7 +116,7 @@ export function useSubscriptionPlan() {
           stripe_customer_id: subscriberData.stripe_customer_id
         };
 
-        console.log('🎯 [Subscription] RESULTADO FINAL FORÇADO:', {
+        console.log('🎯 [Subscription] RESULTADO FINAL:', {
           plan_type: finalSubscription.plan_type,
           status: finalSubscription.status,
           expires_at: finalSubscription.expires_at,
