@@ -785,6 +785,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tabela_contexto: {
+        Row: {
+          contexto: string
+          created_at: string
+          id: number
+          palavra_chave: string
+          updated_at: string
+        }
+        Insert: {
+          contexto: string
+          created_at?: string
+          id?: number
+          palavra_chave: string
+          updated_at?: string
+        }
+        Update: {
+          contexto?: string
+          created_at?: string
+          id?: number
+          palavra_chave?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -800,6 +824,38 @@ export type Database = {
           margem_percentual: number
           status_viabilidade: string
         }[]
+      }
+      gtrgm_compress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_decompress: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_in: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      gtrgm_options: {
+        Args: { "": unknown }
+        Returns: undefined
+      }
+      gtrgm_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      set_limit: {
+        Args: { "": number }
+        Returns: number
+      }
+      show_limit: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      show_trgm: {
+        Args: { "": string }
+        Returns: string[]
       }
     }
     Enums: {
