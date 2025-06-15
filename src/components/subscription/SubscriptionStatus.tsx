@@ -52,6 +52,16 @@ export function SubscriptionStatus() {
     }
   };
 
+  const getStatusDisplayName = (status: string) => {
+    switch (status) {
+      case 'active': return 'Ativo';
+      case 'inactive': return 'Inativo';
+      case 'cancelled': return 'Cancelado';
+      case 'trial': return 'Teste';
+      default: return status;
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -72,7 +82,7 @@ export function SubscriptionStatus() {
           </Badge>
           {subscription?.status && (
             <Badge variant="outline" className="text-xs">
-              {subscription.status}
+              {getStatusDisplayName(subscription.status)}
             </Badge>
           )}
         </div>
