@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check, ShieldCheck, Star, CircleDollarSign, Users, ArrowRight, Play, TrendingUp, BarChart3, Shield, Zap, Clock, DollarSign } from "lucide-react";
@@ -51,6 +50,14 @@ const PaginaVendas = () => {
   const handleComprarPlano = (plano: "basico" | "premium") => {
     navigate("/register", { state: { plano, periodo: planoPeriodo } });
   };
+
+  const handleEntrar = () => {
+    navigate("/login");
+  };
+
+  const handleComecarAgora = () => {
+    navigate("/register");
+  };
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -64,12 +71,16 @@ const PaginaVendas = () => {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/login">
-              <Button variant="outline" className="hidden sm:flex">Entrar</Button>
-            </Link>
-            <Link to="/login">
-              <Button>Começar agora</Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              className="hidden sm:flex"
+              onClick={handleEntrar}
+            >
+              Entrar
+            </Button>
+            <Button onClick={handleComecarAgora}>
+              Começar agora
+            </Button>
           </div>
         </div>
       </header>
