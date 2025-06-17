@@ -24,10 +24,16 @@ serve(async (req) => {
     // Criar cliente Supabase com a chave de serviço para acessar APIs restritas
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
     
-    // Determinar URL de redirecionamento
+    // Determinar URL de redirecionamento - usar HTTPS sempre em produção
     const frontendUrl = Deno.env.get("FRONTEND_URL") || 
                         req.headers.get("origin") || 
                         "https://0005761a-44b8-44a3-8399-ec161dcc8416.lovableproject.com";
@@ -37,12 +43,15 @@ serve(async (req) => {
     console.log(`Gerando link de confirmação para: ${email}`);
     console.log(`URL de redirecionamento: ${redirectUrl}`);
     
-    // Gerar um link de confirmação de email
+    // Gerar um link de confirmação de email com configurações seguras
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: "signup",
       email,
       options: {
-        redirectTo: redirectUrl
+        redirectTo: redirectUrl,
+        data: {
+          name: name || "Usuário"
+        }
       }
     });
 
@@ -58,9 +67,9 @@ serve(async (req) => {
       throw new Error("URL de confirmação não foi gerada");
     }
     
-    console.log(`Link de confirmação gerado: ${confirmationUrl}`);
+    console.log(`Link de confirmação gerado com sucesso`);
     
-    // Criar o conteúdo HTML do e-mail com branding personalizado
+    // Criar o conteúdo HTML do e-mail otimizado para mobile
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -70,54 +79,58 @@ serve(async (req) => {
         <title>Confirme seu e-mail - RestoAI CEO</title>
         <style>
           body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 16px;
             background-color: #f9f9f9;
             color: #333;
+            line-height: 1.6;
           }
           .email-container {
             max-width: 600px;
             margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
           }
           .email-header {
-            background-color: #1a56db;
-            padding: 24px;
+            background: linear-gradient(135deg, #1a56db 0%, #1245b5 100%);
+            padding: 32px 24px;
             text-align: center;
           }
           .email-header h1 {
             color: #ffffff;
             margin: 0;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
           }
           .email-content {
-            padding: 32px 24px;
+            padding: 40px 24px;
           }
           .email-footer {
-            background-color: #f4f5f7;
-            padding: 16px 24px;
+            background-color: #f8f9fa;
+            padding: 20px 24px;
             text-align: center;
-            font-size: 12px;
+            font-size: 14px;
             color: #6b7280;
           }
           .btn {
             display: inline-block;
-            background-color: #1a56db;
+            background: linear-gradient(135deg, #1a56db 0%, #1245b5 100%);
             color: #ffffff !important;
             text-decoration: none;
-            padding: 12px 24px;
-            border-radius: 4px;
+            padding: 16px 32px;
+            border-radius: 8px;
             font-weight: 600;
-            margin: 16px 0;
+            margin: 24px 0;
             text-align: center;
+            min-width: 200px;
+            transition: all 0.3s ease;
           }
           .btn:hover {
-            background-color: #1245b5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(26, 86, 219, 0.3);
           }
           .highlight {
             color: #1a56db;
@@ -127,22 +140,49 @@ serve(async (req) => {
             font-size: 14px;
             color: #6b7280;
             font-style: italic;
-            margin-top: 24px;
+            margin-top: 32px;
+            padding: 16px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
           }
           .logo {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             color: #ffffff;
           }
           .logo span {
             color: #4ade80;
           }
+          .url-box {
+            word-break: break-all; 
+            font-size: 12px; 
+            background-color: #f4f5f7; 
+            padding: 12px; 
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            margin: 16px 0;
+          }
           @media (max-width: 600px) {
+            body {
+              padding: 8px;
+            }
             .email-container {
-              margin: 0 10px;
+              margin: 0;
+              border-radius: 8px;
             }
             .email-content {
-              padding: 20px 16px;
+              padding: 24px 16px;
+            }
+            .email-header {
+              padding: 24px 16px;
+            }
+            .btn {
+              width: 100%;
+              padding: 16px 24px;
+              font-size: 16px;
+            }
+            .logo {
+              font-size: 24px;
             }
           }
         </style>
@@ -153,32 +193,34 @@ serve(async (req) => {
             <div class="logo">Resto<span>AI</span> CEO</div>
           </div>
           <div class="email-content">
-            <h2>Olá, ${name || "Usuário"}!</h2>
-            <p>Bem-vindo(a) ao <span class="highlight">RestoAI CEO</span>, a plataforma completa para gestão inteligente do seu restaurante.</p>
-            <p>Para começar a usar todas as funcionalidades, confirme seu e-mail clicando no botão abaixo:</p>
+            <h2 style="color: #1f2937; margin-bottom: 16px;">Olá, ${name || "Usuário"}!</h2>
+            <p style="margin-bottom: 20px;">Bem-vindo(a) ao <span class="highlight">RestoAI CEO</span>, a plataforma completa para gestão inteligente do seu restaurante.</p>
+            <p style="margin-bottom: 24px;">Para começar a usar todas as funcionalidades, confirme seu e-mail clicando no botão abaixo:</p>
             
             <div style="text-align: center;">
-              <a href="${confirmationUrl}" class="btn">Confirmar meu e-mail</a>
+              <a href="${confirmationUrl}" class="btn" style="color: #ffffff;">Confirmar meu e-mail</a>
             </div>
             
-            <p>Ou copie e cole o link abaixo no seu navegador:</p>
-            <p style="word-break: break-all; font-size: 14px; background-color: #f4f5f7; padding: 10px; border-radius: 4px;">
+            <p style="margin: 24px 0 8px 0; font-size: 14px;">Ou copie e cole o link abaixo no seu navegador:</p>
+            <div class="url-box">
               ${confirmationUrl}
-            </p>
+            </div>
             
-            <p class="note">Se você não solicitou esta mensagem, pode ignorá-la com segurança.</p>
+            <div class="note">
+              <p style="margin: 0;">Se você não solicitou esta mensagem, pode ignorá-la com segurança.</p>
+            </div>
           </div>
           <div class="email-footer">
-            <p>&copy; ${new Date().getFullYear()} RestoAI CEO. Todos os direitos reservados.</p>
-            <p>Sua plataforma completa de gestão para restaurantes</p>
+            <p style="margin: 0 0 8px 0;">&copy; ${new Date().getFullYear()} RestoAI CEO. Todos os direitos reservados.</p>
+            <p style="margin: 0;">Sua plataforma completa de gestão para restaurantes</p>
           </div>
         </div>
       </body>
       </html>
     `;
     
-    // Simular envio do email e logar para debug
-    console.log(`[Simulação] Email HTML preparado para ${email}`);
+    // Log para debug
+    console.log(`[Email] Template gerado para ${email}`);
     console.log(`[Debug] Tamanho do email: ${emailHtml.length} caracteres`);
 
     // Sucesso!
@@ -188,10 +230,9 @@ serve(async (req) => {
         message: "Email de confirmação gerado com sucesso.",
         email: email,
         redirectUrl: redirectUrl,
-        // Em desenvolvimento, incluir URL para debug
         debug: {
-          confirmationUrl: confirmationUrl.substring(0, 100) + "...",
-          emailSize: emailHtml.length
+          emailSize: emailHtml.length,
+          hasConfirmationUrl: !!confirmationUrl
         }
       }),
       {

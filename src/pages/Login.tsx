@@ -1,19 +1,22 @@
 
-
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Lock, Mail, UserPlus } from "lucide-react";
+import { Lock, Mail, UserPlus, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Login = () => {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchParams] = useSearchParams();
+  const isMobile = useIsMobile();
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -27,6 +30,18 @@ const Login = () => {
   
   const { login, register, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Verificar se o usuário foi confirmado via URL
+  const isConfirmed = searchParams.get('confirmed') === 'true';
+
+  useEffect(() => {
+    if (isConfirmed) {
+      toast.success("Email confirmado com sucesso!", {
+        description: "Agora você pode fazer login normalmente.",
+        duration: 5000
+      });
+    }
+  }, [isConfirmed]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +60,7 @@ const Login = () => {
       
       if (success) {
         console.log("Login bem-sucedido, redirecionando...");
+        // Usar replace para evitar problemas de navegação no mobile
         navigate("/dashboard", { replace: true });
       } else {
         toast.error("Credenciais inválidas. Verifique email e senha.");
@@ -75,15 +91,25 @@ const Login = () => {
       toast.error("Senha deve ter pelo menos 6 caracteres");
       return;
     }
+
+    // Validação de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(registerEmail)) {
+      toast.error("Por favor, insira um email válido");
+      return;
+    }
     
     console.log("Iniciando registro...");
     setIsSubmitting(true);
     
     try {
-      const success = await register(registerName, registerEmail, registerPassword);
+      const success = await register(registerEmail, registerPassword, registerName);
       
       if (success) {
-        toast.success("Conta criada com sucesso! Você pode fazer login agora.");
+        toast.success("Conta criada com sucesso!", {
+          description: "Verifique seu email para confirmar sua conta.",
+          duration: 5000
+        });
         setActiveTab("login");
         // Limpar formulário de registro
         setRegisterName("");
@@ -114,32 +140,45 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
+    <div className={`min-h-screen flex items-center justify-center bg-gray-50 ${isMobile ? 'px-2' : 'px-4'}`}>
+      <div className={`w-full ${isMobile ? 'max-w-sm' : 'max-w-md'}`}>
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Resto<span className="text-primary">AI</span> CEO</h1>
-          <p className="text-gray-600 mt-2">Sua plataforma completa de gestão para restaurantes</p>
+          <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold`}>
+            Resto<span className="text-primary">AI</span> CEO
+          </h1>
+          <p className={`text-gray-600 mt-2 ${isMobile ? 'text-sm' : ''}`}>
+            Sua plataforma completa de gestão para restaurantes
+          </p>
         </div>
+
+        {isConfirmed && (
+          <Alert className="mb-4 bg-green-50 border-green-200">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              Sua conta foi confirmada com sucesso! Agora você pode fazer login.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <Card>
-          <CardHeader>
-            <CardTitle>Bem-vindo</CardTitle>
-            <CardDescription>
+          <CardHeader className={isMobile ? 'pb-4' : ''}>
+            <CardTitle className={isMobile ? 'text-lg' : ''}>Bem-vindo</CardTitle>
+            <CardDescription className={isMobile ? 'text-sm' : ''}>
               Acesse sua conta para gerenciar seu restaurante
             </CardDescription>
           </CardHeader>
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <CardContent>
+            <CardContent className={isMobile ? 'px-4' : ''}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="register">Registrar</TabsTrigger>
+                <TabsTrigger value="login" className={isMobile ? 'text-sm' : ''}>Entrar</TabsTrigger>
+                <TabsTrigger value="register" className={isMobile ? 'text-sm' : ''}>Registrar</TabsTrigger>
               </TabsList>
               
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
-                    <Label htmlFor="login-email">Email</Label>
+                    <Label htmlFor="login-email" className={isMobile ? 'text-sm' : ''}>Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -150,12 +189,13 @@ const Login = () => {
                         disabled={isSubmitting}
                         value={loginEmail}
                         onChange={(e) => setLoginEmail(e.target.value)}
+                        autoComplete="email"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <Label htmlFor="login-password">Senha</Label>
+                    <Label htmlFor="login-password" className={isMobile ? 'text-sm' : ''}>Senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -166,6 +206,7 @@ const Login = () => {
                         disabled={isSubmitting}
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
+                        autoComplete="current-password"
                       />
                     </div>
                   </div>
@@ -174,6 +215,7 @@ const Login = () => {
                     type="submit" 
                     className="w-full" 
                     disabled={isSubmitting}
+                    size={isMobile ? "default" : "default"}
                   >
                     {isSubmitting ? (
                       <>
@@ -190,7 +232,7 @@ const Login = () => {
               <TabsContent value="register">
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div>
-                    <Label htmlFor="register-name">Nome</Label>
+                    <Label htmlFor="register-name" className={isMobile ? 'text-sm' : ''}>Nome</Label>
                     <div className="relative">
                       <UserPlus className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -200,12 +242,13 @@ const Login = () => {
                         disabled={isSubmitting}
                         value={registerName}
                         onChange={(e) => setRegisterName(e.target.value)}
+                        autoComplete="name"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <Label htmlFor="register-email">Email</Label>
+                    <Label htmlFor="register-email" className={isMobile ? 'text-sm' : ''}>Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -216,12 +259,13 @@ const Login = () => {
                         disabled={isSubmitting}
                         value={registerEmail}
                         onChange={(e) => setRegisterEmail(e.target.value)}
+                        autoComplete="email"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <Label htmlFor="register-password">Senha</Label>
+                    <Label htmlFor="register-password" className={isMobile ? 'text-sm' : ''}>Senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -232,12 +276,13 @@ const Login = () => {
                         disabled={isSubmitting}
                         value={registerPassword}
                         onChange={(e) => setRegisterPassword(e.target.value)}
+                        autoComplete="new-password"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <Label htmlFor="confirm-password">Confirmar Senha</Label>
+                    <Label htmlFor="confirm-password" className={isMobile ? 'text-sm' : ''}>Confirmar Senha</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -248,6 +293,7 @@ const Login = () => {
                         disabled={isSubmitting}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
+                        autoComplete="new-password"
                       />
                     </div>
                   </div>
@@ -256,6 +302,7 @@ const Login = () => {
                     type="submit" 
                     className="w-full" 
                     disabled={isSubmitting}
+                    size={isMobile ? "default" : "default"}
                   >
                     {isSubmitting ? (
                       <>
@@ -271,14 +318,14 @@ const Login = () => {
             </CardContent>
           </Tabs>
           
-          <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-center w-full text-gray-600">
+          <CardFooter className={`flex flex-col space-y-4 ${isMobile ? 'px-4 pb-4' : ''}`}>
+            <div className={`text-center w-full text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
               Ao se registrar, você concorda com nossos termos de uso
             </div>
           </CardFooter>
         </Card>
         
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className={`mt-6 text-center text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
           <p>© {new Date().getFullYear()} RestoAI CEO. Todos os direitos reservados.</p>
         </div>
       </div>
@@ -287,4 +334,3 @@ const Login = () => {
 };
 
 export default Login;
-

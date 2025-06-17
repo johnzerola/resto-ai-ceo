@@ -116,7 +116,7 @@ export async function isAuthenticated() {
 }
 
 /**
- * Envia novamente o email de confirmação
+ * Envia novamente o email de confirmação - Otimizado para mobile
  */
 export async function resendConfirmationEmail() {
   try {
@@ -127,22 +127,34 @@ export async function resendConfirmationEmail() {
       return false;
     }
     
+    // Usar URL móvel-friendly
+    const redirectUrl = `${window.location.origin}/login?confirmed=true`;
+    
     const { error } = await supabase.auth.resend({
       type: 'signup',
       email: user.email,
       options: {
-        emailRedirectTo: `${window.location.origin}/login?confirmed=true`
+        emailRedirectTo: redirectUrl
       }
     });
     
     if (error) {
       console.error("Erro ao reenviar email:", error);
-      toast.error(`Erro ao reenviar email: ${error.message}`);
+      
+      // Mensagens de erro mais específicas
+      if (error.message.includes('rate limit')) {
+        toast.error("Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.");
+      } else if (error.message.includes('email not confirmed')) {
+        toast.error("Email ainda não foi confirmado. Verifique sua caixa de entrada.");
+      } else {
+        toast.error(`Erro ao reenviar email: ${error.message}`);
+      }
       return false;
     }
     
-    toast.success("Email de confirmação enviado com sucesso!", {
-      description: "Por favor, verifique sua caixa de entrada ou pasta de spam."
+    toast.success("Email de confirmação enviado!", {
+      description: "Verifique sua caixa de entrada ou pasta de spam.",
+      duration: 5000
     });
     return true;
   } catch (error) {
@@ -153,11 +165,18 @@ export async function resendConfirmationEmail() {
 }
 
 /**
- * Dispara evento de alternância do sidebar
+ * Dispara evento de alternância do sidebar - Mobile friendly
  */
 export function dispatchSidebarToggle(isCollapsed: boolean) {
-  const event = new CustomEvent('sidebarToggle', { detail: { isCollapsed } });
-  window.dispatchEvent(event);
+  try {
+    const event = new CustomEvent('sidebarToggle', { 
+      detail: { isCollapsed },
+      bubbles: true
+    });
+    window.dispatchEvent(event);
+  } catch (error) {
+    console.error("Erro ao disparar evento sidebar:", error);
+  }
 }
 
 /**
@@ -182,6 +201,28 @@ export async function upgradePlan(targetPlan: 'essencial' | 'profissional') {
   } catch (error) {
     console.error("Erro ao fazer upgrade:", error);
     toast.error("Erro ao processar upgrade");
+    return false;
+  }
+}
+
+/**
+ * Utilitário para detectar se está em dispositivo móvel
+ */
+export function isMobileDevice() {
+  try {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Utilitário para viewport móvel
+ */
+export function isMobileViewport() {
+  try {
+    return window.innerWidth <= 768;
+  } catch (error) {
     return false;
   }
 }
