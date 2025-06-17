@@ -93,7 +93,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ];
     
     keysToRemove.forEach(key => {
-      localStorage.removeItem(key);
+      try {
+        localStorage.removeItem(key);
+      } catch (error) {
+        console.error(`Erro ao remover ${key} do localStorage:`, error);
+      }
     });
   };
 
@@ -271,10 +275,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
+      console.log('Tentando criar conta para:', email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/login?confirmed=true`,
           data: {
             name: name,
           },
@@ -283,12 +289,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Erro no cadastro:', error);
-        toast.error('Erro no cadastro. Tente novamente.');
+        if (error.message.includes('already registered')) {
+          toast.error('Este email já está cadastrado. Tente fazer login.');
+        } else {
+          toast.error(`Erro no cadastro: ${error.message}`);
+        }
         return false;
       }
 
       if (data.user) {
-        toast.success('Conta criada com sucesso! Verifique seu email.');
+        console.log('Conta criada com sucesso para:', data.user.email);
+        
+        // Verificar se precisa confirmar email
+        if (!data.session) {
+          toast.success('Conta criada com sucesso! Verifique seu email para confirmar.');
+        } else {
+          toast.success('Conta criada e confirmada com sucesso!');
+        }
+        
         return true;
       }
 

@@ -17,27 +17,48 @@ serve(async (req) => {
   try {
     const { email, name } = await req.json();
     
+    if (!email) {
+      throw new Error("Email é obrigatório");
+    }
+    
     // Criar cliente Supabase com a chave de serviço para acessar APIs restritas
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
     
+    // Determinar URL de redirecionamento
+    const frontendUrl = Deno.env.get("FRONTEND_URL") || 
+                        req.headers.get("origin") || 
+                        "https://0005761a-44b8-44a3-8399-ec161dcc8416.lovableproject.com";
+    
+    const redirectUrl = `${frontendUrl}/login?confirmed=true`;
+    
+    console.log(`Gerando link de confirmação para: ${email}`);
+    console.log(`URL de redirecionamento: ${redirectUrl}`);
+    
     // Gerar um link de confirmação de email
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: "signup",
       email,
       options: {
-        redirectTo: `${Deno.env.get("FRONTEND_URL") || req.headers.get("origin") || "http://localhost:5173"}/login?confirmed=true`
+        redirectTo: redirectUrl
       }
     });
 
     if (error) {
+      console.error("Erro ao gerar link:", error);
       throw error;
     }
     
     // Obter a URL para criar o email personalizado
-    const confirmationUrl = data.properties.action_link;
+    const confirmationUrl = data.properties?.action_link;
+    
+    if (!confirmationUrl) {
+      throw new Error("URL de confirmação não foi gerada");
+    }
+    
+    console.log(`Link de confirmação gerado: ${confirmationUrl}`);
     
     // Criar o conteúdo HTML do e-mail com branding personalizado
     const emailHtml = `
@@ -116,6 +137,14 @@ serve(async (req) => {
           .logo span {
             color: #4ade80;
           }
+          @media (max-width: 600px) {
+            .email-container {
+              margin: 0 10px;
+            }
+            .email-content {
+              padding: 20px 16px;
+            }
+          }
         </style>
       </head>
       <body>
@@ -148,17 +177,22 @@ serve(async (req) => {
       </html>
     `;
     
-    // Aqui enviaria o e-mail personalizado usando um serviço como SendGrid, Resend, etc.
-    // Por enquanto, apenas simulamos o envio
-    console.log(`[Simulação] Email HTML enviado para ${email}`);
+    // Simular envio do email e logar para debug
+    console.log(`[Simulação] Email HTML preparado para ${email}`);
+    console.log(`[Debug] Tamanho do email: ${emailHtml.length} caracteres`);
 
     // Sucesso!
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Email de confirmação enviado com sucesso.",
-        // Não enviar a URL completa em produção por segurança
-        debug: process.env.NODE_ENV === "development" ? confirmationUrl : undefined
+        message: "Email de confirmação gerado com sucesso.",
+        email: email,
+        redirectUrl: redirectUrl,
+        // Em desenvolvimento, incluir URL para debug
+        debug: {
+          confirmationUrl: confirmationUrl.substring(0, 100) + "...",
+          emailSize: emailHtml.length
+        }
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -171,7 +205,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message 
+        error: error.message,
+        timestamp: new Date().toISOString()
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

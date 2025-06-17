@@ -131,11 +131,12 @@ export async function resendConfirmationEmail() {
       type: 'signup',
       email: user.email,
       options: {
-        emailRedirectTo: window.location.origin
+        emailRedirectTo: `${window.location.origin}/login?confirmed=true`
       }
     });
     
     if (error) {
+      console.error("Erro ao reenviar email:", error);
       toast.error(`Erro ao reenviar email: ${error.message}`);
       return false;
     }

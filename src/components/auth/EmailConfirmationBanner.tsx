@@ -23,13 +23,17 @@ export const EmailConfirmationBanner = () => {
     
     // Verificar status de confirmação
     const checkConfirmation = async () => {
-      const confirmed = await checkEmailConfirmation();
-      setIsEmailConfirmed(confirmed);
-      
-      // Mostrar banner apenas se não estiver confirmado e não estiver temporariamente dispensado
-      const now = Date.now();
-      if (!confirmed && (!dismissUntil || now > dismissUntil)) {
-        setShowBanner(true);
+      try {
+        const confirmed = await checkEmailConfirmation();
+        setIsEmailConfirmed(confirmed);
+        
+        // Mostrar banner apenas se não estiver confirmado e não estiver temporariamente dispensado
+        const now = Date.now();
+        if (!confirmed && (!dismissUntil || now > dismissUntil)) {
+          setShowBanner(true);
+        }
+      } catch (error) {
+        console.error("Erro ao verificar confirmação de email:", error);
       }
     };
     
@@ -45,8 +49,10 @@ export const EmailConfirmationBanner = () => {
   useEffect(() => {
     if (!showBanner || isEmailConfirmed) return;
     
+    let timer: NodeJS.Timeout;
+    
     // Simular verificação em progresso
-    const timer = setInterval(() => {
+    timer = setInterval(() => {
       setProgress((oldProgress) => {
         const newProgress = Math.min(oldProgress + 1, 100);
         if (newProgress === 100) {
@@ -61,36 +67,51 @@ export const EmailConfirmationBanner = () => {
             } else {
               setProgress(0);
             }
+          }).catch(error => {
+            console.error("Erro na verificação automática:", error);
+            setProgress(0);
           });
         }
         return newProgress;
       });
     }, 3000);
     
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [showBanner, isEmailConfirmed]);
   
   const handleResendEmail = async () => {
     if (isResending) return;
     
     setIsResending(true);
-    const success = await resendConfirmationEmail();
-    
-    if (success) {
-      toast.success("Email de confirmação enviado com sucesso!", {
-        description: "Por favor, verifique sua caixa de entrada ou pasta de spam."
-      });
+    try {
+      const success = await resendConfirmationEmail();
+      
+      if (success) {
+        toast.success("Email de confirmação enviado com sucesso!", {
+          description: "Por favor, verifique sua caixa de entrada ou pasta de spam."
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao reenviar email:", error);
+      toast.error("Erro ao reenviar email. Tente novamente.");
+    } finally {
+      setIsResending(false);
     }
-    
-    setIsResending(false);
   };
   
   const handleDismiss = (hours: number) => {
-    // Esconder temporariamente por um determinado número de horas
-    const until = Date.now() + (hours * 60 * 60 * 1000);
-    setDismissUntil(until);
-    localStorage.setItem("emailBannerDismissedUntil", until.toString());
-    setShowBanner(false);
+    try {
+      // Esconder temporariamente por um determinado número de horas
+      const until = Date.now() + (hours * 60 * 60 * 1000);
+      setDismissUntil(until);
+      localStorage.setItem("emailBannerDismissedUntil", until.toString());
+      setShowBanner(false);
+    } catch (error) {
+      console.error("Erro ao dispensar banner:", error);
+      setShowBanner(false);
+    }
   };
   
   if (!showBanner || !user || isEmailConfirmed) return null;
