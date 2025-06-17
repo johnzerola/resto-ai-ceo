@@ -913,7 +913,7 @@ export type Database = {
           id: string
           message: string
           metadata: Json | null
-          severity: string | null
+          severity: string
           source: string
           timestamp: string | null
           type: string
@@ -923,17 +923,17 @@ export type Database = {
           id?: string
           message: string
           metadata?: Json | null
-          severity?: string | null
-          source: string
+          severity?: string
+          source?: string
           timestamp?: string | null
-          type: string
+          type?: string
           user_id?: string | null
         }
         Update: {
           id?: string
           message?: string
           metadata?: Json | null
-          severity?: string | null
+          severity?: string
           source?: string
           timestamp?: string | null
           type?: string

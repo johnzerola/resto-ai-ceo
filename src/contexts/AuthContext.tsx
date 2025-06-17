@@ -101,37 +101,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  // Função para inicializar dados de novo usuário
-  const initializeNewUserData = async (userId: string) => {
-    try {
-      console.log('Inicializando dados para novo usuário:', userId);
-      
-      // Criar dados financeiros vazios
-      const emptyFinancialData = {
-        receita: 0,
-        cmv: 0,
-        cmvPercentage: 0,
-        profitMargin: 0,
-        fixedCosts: 0,
-        variableCosts: 0,
-        netProfit: 0,
-        lastUpdate: new Date().toISOString()
-      };
-      
-      localStorage.setItem('financialData', JSON.stringify(emptyFinancialData));
-      localStorage.setItem('cashFlow', JSON.stringify([]));
-      localStorage.setItem('goals', JSON.stringify([]));
-      localStorage.setItem('inventory', JSON.stringify([]));
-      localStorage.setItem('recipes', JSON.stringify([]));
-      
-      console.log('Dados iniciais criados para novo usuário');
-      return true;
-    } catch (error) {
-      console.error('Erro ao inicializar dados do usuário:', error);
-      return false;
-    }
-  };
-
   const checkSubscription = async () => {
     try {
       if (!session?.access_token) {
@@ -276,11 +245,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
       console.log('Tentando criar conta para:', email);
+      
+      // Garantir HTTPS para redirecionamento em produção
+      const redirectUrl = window.location.protocol === 'https:' 
+        ? `${window.location.origin}/login?confirmed=true`
+        : `https://${window.location.host}/login?confirmed=true`;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/login?confirmed=true`,
+          emailRedirectTo: redirectUrl,
           data: {
             name: name,
           },
@@ -302,7 +277,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Verificar se precisa confirmar email
         if (!data.session) {
-          toast.success('Conta criada com sucesso! Verifique seu email para confirmar.');
+          toast.success('Conta criada com sucesso! Verifique seu email para confirmar.', {
+            description: 'Um email de confirmação foi enviado automaticamente.',
+            duration: 8000
+          });
         } else {
           toast.success('Conta criada e confirmada com sucesso!');
         }

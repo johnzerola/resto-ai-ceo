@@ -127,8 +127,10 @@ export async function resendConfirmationEmail() {
       return false;
     }
     
-    // Usar URL móvel-friendly
-    const redirectUrl = `${window.location.origin}/login?confirmed=true`;
+    // Usar URL móvel-friendly com HTTPS
+    const redirectUrl = window.location.protocol === 'https:' 
+      ? `${window.location.origin}/login?confirmed=true`
+      : `https://${window.location.host}/login?confirmed=true`;
     
     const { error } = await supabase.auth.resend({
       type: 'signup',
@@ -224,5 +226,35 @@ export function isMobileViewport() {
     return window.innerWidth <= 768;
   } catch (error) {
     return false;
+  }
+}
+
+/**
+ * Monitora logs de email do sistema para debugging
+ */
+export async function getEmailLogs(userId?: string) {
+  try {
+    let query = supabase
+      .from('system_logs')
+      .select('*')
+      .in('source', ['email', 'auth'])
+      .order('timestamp', { ascending: false })
+      .limit(50);
+    
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error('Erro ao buscar logs de email:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error('Erro ao buscar logs:', error);
+    return [];
   }
 }
