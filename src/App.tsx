@@ -1,4 +1,3 @@
-
 import {
   createBrowserRouter,
   RouterProvider,
@@ -13,12 +12,12 @@ import Login from "./pages/Login";
 import { Register } from "./pages/Register";
 import { Integracoes } from "./pages/Integracoes";
 import { AssinaturaCompleta as Subscription } from "./pages/AssinaturaCompleta";
-import { Dashboard } from "./pages/Dashboard";
+import Dashboard from "./pages/Dashboard";
 import { SystemMonitoring } from "@/pages/SystemMonitoring";
 import { AIAssistantPage } from "@/pages/AIAssistantPage";
 import { ProjecoesPagina } from "@/pages/ProjecoesPagina";
 import FluxoDeCaixa from "@/pages/FluxoDeCaixa";
-import NotFound from "@/pages/NotFound";
+import NotFound from "./pages/NotFound";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner";
 
