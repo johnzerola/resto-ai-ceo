@@ -30,7 +30,18 @@ export class EnhancedSecurityService {
         return null;
       }
 
-      return data as PasswordValidationResult;
+      // Safely cast the response to our expected type
+      const result = data as unknown as PasswordValidationResult;
+      
+      // Validate the structure before returning
+      if (result && typeof result === 'object' && 
+          'score' in result && 'max_score' in result && 
+          'is_strong' in result && 'issues' in result) {
+        return result;
+      }
+
+      console.error('Resposta inválida da função validate_password_strength:', data);
+      return null;
     } catch (error) {
       console.error('Erro na validação de senha:', error);
       return null;

@@ -26,7 +26,16 @@ export function SecurityHistory() {
   const loadSecurityHistory = async () => {
     try {
       const history = await getUserSecurityHistory(20);
-      setLogs(history);
+      // Transform the data to match our SecurityLog interface
+      const transformedLogs: SecurityLog[] = history.map((log: any) => ({
+        id: log.id,
+        timestamp: log.timestamp,
+        type: log.type,
+        message: log.message,
+        severity: (['info', 'warning', 'error'].includes(log.severity) ? log.severity : 'info') as 'info' | 'warning' | 'error',
+        metadata: log.metadata
+      }));
+      setLogs(transformedLogs);
     } catch (error) {
       console.error('Erro ao carregar histórico:', error);
     } finally {
