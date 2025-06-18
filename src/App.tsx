@@ -49,6 +49,8 @@ const AuthLayout = () => <Outlet />;
 const MainLayout = () => <Outlet />;
 const RestaurantLayout = () => <Outlet />;
 
+import SystemAuditPage from "@/pages/SystemAuditPage";
+
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
@@ -76,6 +78,7 @@ const router = createBrowserRouter(
         <Route path="/integracoes" element={<Integracoes />} />
         <Route path="/assinatura" element={<Subscription />} />
         <Route path="/system-monitoring" element={<SystemMonitoring />} />
+        <Route path="/system-audit" element={<SystemAuditPage />} />
         <Route path="/ai-assistant" element={<AIAssistantPage />} />
         <Route path="/projecoes" element={<ProjecoesPagina />} />
         <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
