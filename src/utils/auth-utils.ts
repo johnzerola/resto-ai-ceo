@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { initializeNewUserData } from "@/services/SyncService";
 import { toast } from "sonner";
@@ -58,21 +57,24 @@ async function setupDefaultSubscription(userId: string, email?: string) {
       .maybeSingle();
 
     if (!existingSubscription && email) {
-      // Criar registro de assinatura gratuita
+      // Criar registro de assinatura gratuita com trial
       const { error } = await supabase
         .from('subscribers')
         .insert({
           user_id: userId,
           email: email,
-          subscribed: false,
+          subscribed: true,
           subscription_tier: 'free',
-          subscription_end: null
+          plan_status: 'trial',
+          trial_start: new Date().toISOString(),
+          trial_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 dias
+          subscription_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
         });
 
       if (error) {
         console.error('Erro ao criar assinatura padrão:', error);
       } else {
-        console.log('✅ Assinatura gratuita criada para novo usuário');
+        console.log('✅ Trial de 14 dias criado para novo usuário');
       }
     }
   } catch (error) {
@@ -116,7 +118,7 @@ export async function isAuthenticated() {
 }
 
 /**
- * Envia novamente o email de confirmação - Otimizado para mobile
+ * Envia novamente o email de confirmação - Versão melhorada
  */
 export async function resendConfirmationEmail() {
   try {
@@ -127,38 +129,47 @@ export async function resendConfirmationEmail() {
       return false;
     }
     
-    // Usar URL móvel-friendly com HTTPS
-    const redirectUrl = window.location.protocol === 'https:' 
-      ? `${window.location.origin}/login?confirmed=true`
-      : `https://${window.location.host}/login?confirmed=true`;
+    // Verificar se já está confirmado
+    if (user.email_confirmed_at) {
+      toast.info("Email já foi confirmado!");
+      return true;
+    }
     
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: user.email,
-      options: {
-        emailRedirectTo: redirectUrl
+    // Usar a edge function para reenvio
+    const { data, error } = await supabase.functions.invoke('send-confirmation-email', {
+      body: {
+        email: user.email,
+        name: user.user_metadata?.name || 'Usuário',
+        user_id: user.id,
+        retry_attempt: 1
       }
     });
     
     if (error) {
       console.error("Erro ao reenviar email:", error);
-      
-      // Mensagens de erro mais específicas
-      if (error.message.includes('rate limit')) {
-        toast.error("Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.");
-      } else if (error.message.includes('email not confirmed')) {
-        toast.error("Email ainda não foi confirmado. Verifique sua caixa de entrada.");
-      } else {
-        toast.error(`Erro ao reenviar email: ${error.message}`);
-      }
+      toast.error(`Erro ao reenviar email: ${error.message}`);
       return false;
     }
     
-    toast.success("Email de confirmação enviado!", {
-      description: "Verifique sua caixa de entrada ou pasta de spam.",
-      duration: 5000
-    });
-    return true;
+    console.log('Resposta do reenvio:', data);
+    
+    if (data?.success) {
+      toast.success("Email de confirmação reenviado!", {
+        description: "Verifique sua caixa de entrada ou pasta de spam.",
+        duration: 5000
+      });
+      
+      // Em desenvolvimento, mostrar o link de debug
+      if (data.debug_link) {
+        console.log('🔗 Link de confirmação (DEBUG):', data.debug_link);
+        toast.info("Link de confirmação disponível no console (modo debug)");
+      }
+      
+      return true;
+    } else {
+      toast.error("Falha ao reenviar email");
+      return false;
+    }
   } catch (error) {
     console.error("Erro ao reenviar email de confirmação:", error);
     toast.error("Erro ao reenviar email de confirmação");

@@ -844,6 +844,9 @@ export type Database = {
           subscribed: boolean
           subscription_end: string | null
           subscription_tier: string | null
+          trial_end: string | null
+          trial_start: string | null
+          trial_used: boolean | null
           updated_at: string
           user_id: string | null
         }
@@ -860,6 +863,9 @@ export type Database = {
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          trial_used?: boolean | null
           updated_at?: string
           user_id?: string | null
         }
@@ -876,6 +882,9 @@ export type Database = {
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
+          trial_used?: boolean | null
           updated_at?: string
           user_id?: string | null
         }
@@ -1006,6 +1015,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_expire_trials: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       calcular_custos_prato: {
         Args: { prato_uuid: string }
         Returns: {
@@ -1015,6 +1028,15 @@ export type Database = {
           lucro_estimado: number
           margem_percentual: number
           status_viabilidade: string
+        }[]
+      }
+      check_trial_status: {
+        Args: { user_email: string }
+        Returns: {
+          is_trial_active: boolean
+          days_remaining: number
+          trial_end_date: string
+          plan_status: string
         }[]
       }
       gtrgm_compress: {

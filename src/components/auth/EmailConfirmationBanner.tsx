@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Mail, X, ShieldCheck, CheckCircle } from "lucide-react";
+import { Mail, X, ShieldCheck, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { checkEmailConfirmation, resendConfirmationEmail, isMobileDevice } from "@/utils/auth-utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,7 @@ export const EmailConfirmationBanner = () => {
   );
   const [progress, setProgress] = useState(0);
   const [lastCheckTime, setLastCheckTime] = useState(0);
+  const [cooldownEnd, setCooldownEnd] = useState<number>(0);
   const { user } = useAuth();
   const isMobile = isMobileDevice();
   
@@ -66,7 +67,7 @@ export const EmailConfirmationBanner = () => {
     // Simular verificação em progresso apenas se o banner está visível
     timer = setInterval(() => {
       setProgress((oldProgress) => {
-        const newProgress = Math.min(oldProgress + 2, 100);
+        const newProgress = Math.min(oldProgress + 3, 100);
         if (newProgress === 100) {
           clearInterval(timer);
           // Resetar progresso e verificar novamente
@@ -86,7 +87,7 @@ export const EmailConfirmationBanner = () => {
         }
         return newProgress;
       });
-    }, 2000); // Verificação mais lenta para não sobrecarregar
+    }, 3000); // Verificação mais lenta para não sobrecarregar
     
     return () => {
       if (timer) clearInterval(timer);
@@ -96,11 +97,22 @@ export const EmailConfirmationBanner = () => {
   const handleResendEmail = async () => {
     if (isResending) return;
     
+    // Verificar cooldown
+    const now = Date.now();
+    if (cooldownEnd > now) {
+      const remainingSeconds = Math.ceil((cooldownEnd - now) / 1000);
+      toast.error(`Aguarde ${remainingSeconds}s antes de tentar novamente.`);
+      return;
+    }
+    
     setIsResending(true);
     try {
       const success = await resendConfirmationEmail();
       
       if (success) {
+        // Definir cooldown de 60 segundos
+        setCooldownEnd(now + 60000);
+        
         // Feedback diferenciado para mobile
         if (isMobile) {
           toast.success("Email enviado!", {
@@ -108,8 +120,8 @@ export const EmailConfirmationBanner = () => {
             icon: <Mail className="h-4 w-4 text-green-600" />
           });
         } else {
-          toast.success("Email de confirmação enviado com sucesso!", {
-            description: "Por favor, verifique sua caixa de entrada ou pasta de spam.",
+          toast.success("Email de confirmação reenviado!", {
+            description: "Verifique sua caixa de entrada ou pasta de spam.",
             icon: <Mail className="h-4 w-4 text-green-600" />
           });
         }
@@ -144,6 +156,8 @@ export const EmailConfirmationBanner = () => {
   
   if (!showBanner || !user || isEmailConfirmed) return null;
   
+  const cooldownRemaining = Math.max(0, Math.ceil((cooldownEnd - Date.now()) / 1000));
+  
   return (
     <Alert 
       className={`bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 mb-6 animate-in fade-in slide-in-from-top-4 duration-500 relative shadow-md ${
@@ -155,6 +169,8 @@ export const EmailConfirmationBanner = () => {
         <div className="shrink-0 bg-gradient-to-r from-amber-100 to-orange-100 rounded-full p-2 mt-0.5">
           {progress > 0 && progress < 100 ? (
             <div className="h-5 w-5 rounded-full border-2 border-amber-600 border-t-transparent animate-spin" />
+          ) : cooldownRemaining > 0 ? (
+            <Clock className="h-5 w-5 text-amber-600" />
           ) : (
             <ShieldCheck className="h-5 w-5 text-amber-600" />
           )}
@@ -167,11 +183,11 @@ export const EmailConfirmationBanner = () => {
             <p className="mb-3">
               {isMobile ? (
                 <>Enviamos um email para <strong className="font-medium text-amber-900">{user.email}</strong>. 
-                Clique no link para confirmar.</>
+                Clique no link para confirmar e ativar seu trial de 14 dias.</>
               ) : (
                 <>Enviamos um email de confirmação para <strong className="font-medium text-amber-900">{user.email}</strong>. 
-                Para garantir acesso a todas as funcionalidades e receber notificações importantes,
-                por favor clique no link de confirmação que enviamos automaticamente.</>
+                Para ativar seu <strong>trial gratuito de 14 dias</strong> e ter acesso a todas as funcionalidades,
+                clique no link de confirmação que enviamos automaticamente.</>
               )}
             </p>
             
@@ -190,11 +206,13 @@ export const EmailConfirmationBanner = () => {
                 variant="default"
                 className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 border-none text-white shadow-sm"
                 onClick={handleResendEmail}
-                disabled={isResending}
+                disabled={isResending || cooldownRemaining > 0}
                 size={isMobile ? "default" : "default"}
               >
                 <Mail className="mr-2 h-4 w-4" />
-                {isResending ? "Enviando..." : isMobile ? "Reenviar email" : "Reenviar email de confirmação"}
+                {isResending ? "Enviando..." : 
+                 cooldownRemaining > 0 ? `Aguarde ${cooldownRemaining}s` : 
+                 isMobile ? "Reenviar email" : "Reenviar email de confirmação"}
               </Button>
               <Button 
                 variant="outline" 
@@ -211,6 +229,9 @@ export const EmailConfirmationBanner = () => {
                   "📧 Verifique sua pasta de spam se não encontrar o email." :
                   "📧 Não encontrou o email? Verifique sua pasta de spam ou clique em \"Reenviar\"."
                 }
+              </p>
+              <p className="mt-1 font-medium">
+                🎁 <strong>Trial de 14 dias grátis</strong> será ativado após confirmação!
               </p>
             </div>
           </AlertDescription>

@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTrialStatus } from './useTrialStatus';
 
 export enum PlanType {
   ESSENCIAL = 'essencial',
@@ -13,12 +14,15 @@ export enum PlanType {
 export interface UserSubscription {
   id: string;
   plan_type: PlanType;
-  status: 'active' | 'inactive' | 'cancelled' | 'trial';
+  status: 'active' | 'inactive' | 'cancelled' | 'trial' | 'expired';
   expires_at: string | null;
   created_at: string;
   user_id?: string;
   email?: string;
   stripe_customer_id?: string;
+  trial_start?: string;
+  trial_end?: string;
+  trial_used?: boolean;
 }
 
 export interface PlanFeatures {
@@ -34,6 +38,7 @@ export interface PlanFeatures {
 
 export function useSubscriptionPlan() {
   const { user } = useAuth();
+  const { trialStatus } = useTrialStatus();
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,22 +86,27 @@ export function useSubscriptionPlan() {
       if (subscriberData) {
         console.log('✅ [Subscription] Dados encontrados:', subscriberData);
         
-        // FORÇAR PLANO PROFISSIONAL para este email específico
+        // Determinar o plano baseado no trial status e subscription tier
         let planType = PlanType.FREE;
-        let status: 'active' | 'inactive' | 'cancelled' | 'trial' = 'inactive';
+        let status: 'active' | 'inactive' | 'cancelled' | 'trial' | 'expired' = 'inactive';
 
-        // Verificação específica para o email do usuário
+        // Verificação específica para emails especiais
         if (user.email === 'esdrasbalves10@gmail.com') {
           planType = PlanType.PROFISSIONAL;
           status = 'active';
           console.log('🎯 [Subscription] USUÁRIO ESPECÍFICO - FORÇANDO PLANO PROFISSIONAL');
+        } else if (trialStatus?.isTrialActive) {
+          // Trial ativo - liberar recursos baseado no tier ou dar acesso básico
+          planType = subscriberData.subscription_tier === 'profissional' ? PlanType.PROFISSIONAL : PlanType.ESSENCIAL;
+          status = 'trial';
+          console.log('✅ [Subscription] TRIAL ATIVO - Plano liberado:', planType);
         } else if (subscriberData.subscription_tier) {
           const tier = subscriberData.subscription_tier.toLowerCase().trim();
           console.log('🔍 [Subscription] Processando tier:', tier);
           
           if (tier === 'profissional' || tier === 'professional') {
             planType = PlanType.PROFISSIONAL;
-            status = 'active';
+            status = subscriberData.subscribed ? 'active' : 'inactive';
             console.log('✅ [Subscription] PLANO PROFISSIONAL identificado');
           } else if (tier === 'essencial' || tier === 'essential') {
             planType = PlanType.ESSENCIAL;
@@ -113,14 +123,18 @@ export function useSubscriptionPlan() {
           created_at: subscriberData.created_at,
           user_id: subscriberData.user_id,
           email: subscriberData.email,
-          stripe_customer_id: subscriberData.stripe_customer_id
+          stripe_customer_id: subscriberData.stripe_customer_id,
+          trial_start: subscriberData.trial_start,
+          trial_end: subscriberData.trial_end,
+          trial_used: subscriberData.trial_used
         };
 
         console.log('🎯 [Subscription] RESULTADO FINAL:', {
           plan_type: finalSubscription.plan_type,
           status: finalSubscription.status,
           expires_at: finalSubscription.expires_at,
-          email: user.email
+          email: user.email,
+          trial_active: trialStatus?.isTrialActive
         });
       } else {
         console.log('⚠️ [Subscription] Nenhum registro encontrado - aplicando plano gratuito');
@@ -156,7 +170,7 @@ export function useSubscriptionPlan() {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, trialStatus]);
 
   useEffect(() => {
     fetchUserSubscription();
@@ -206,7 +220,15 @@ export function useSubscriptionPlan() {
       return false;
     }
 
-    if (subscription.status !== 'active') {
+    // Se está em trial ativo, liberar mais funcionalidades
+    if (trialStatus?.isTrialActive) {
+      const trialFeatures = getPlanFeatures(PlanType.ESSENCIAL); // Trial tem acesso ao essencial
+      const hasAccess = feature === 'maxRestaurants' ? trialFeatures.maxRestaurants > 0 : trialFeatures[feature] as boolean;
+      console.log(`🎁 [Feature Check] TRIAL ATIVO - ${feature}:`, hasAccess ? '✅ LIBERADO' : '❌ BLOQUEADO');
+      return hasAccess;
+    }
+
+    if (subscription.status !== 'active' && subscription.status !== 'trial') {
       console.log('🔒 [Feature Check] Assinatura inativa, negando acesso a:', feature);
       return false;
     }
@@ -224,7 +246,7 @@ export function useSubscriptionPlan() {
     
     console.log(`🔍 [Feature Check] ${feature} para plano ${subscription.plan_type}:`, hasAccess ? '✅ LIBERADO' : '❌ BLOQUEADO');
     return hasAccess;
-  }, [subscription, getPlanFeatures]);
+  }, [subscription, getPlanFeatures, trialStatus]);
 
   const requiresUpgrade = useCallback((feature: keyof PlanFeatures): boolean => {
     return !hasFeature(feature);
@@ -247,7 +269,19 @@ export function useSubscriptionPlan() {
   }, []);
 
   const canAccess = useCallback((requiredPlan: PlanType): boolean => {
-    if (!subscription || subscription.status !== 'active') return false;
+    if (!subscription) return false;
+    
+    // Trial ativo permite acesso ao plano essencial
+    if (trialStatus?.isTrialActive) {
+      const planHierarchy = {
+        [PlanType.FREE]: 0,
+        [PlanType.ESSENCIAL]: 1,
+        [PlanType.PROFISSIONAL]: 2
+      };
+      return planHierarchy[PlanType.ESSENCIAL] >= planHierarchy[requiredPlan];
+    }
+    
+    if (subscription.status !== 'active' && subscription.status !== 'trial') return false;
     
     const planHierarchy = {
       [PlanType.FREE]: 0,
@@ -256,10 +290,25 @@ export function useSubscriptionPlan() {
     };
     
     return planHierarchy[subscription.plan_type] >= planHierarchy[requiredPlan];
-  }, [subscription]);
+  }, [subscription, trialStatus]);
 
   const showUpgradeMessage = useCallback((featureName: string) => {
     const currentPlan = subscription?.plan_type || PlanType.FREE;
+    
+    if (trialStatus?.isTrialActive) {
+      toast.info(
+        `${featureName} estará disponível durante seu trial! Trial expira em ${trialStatus.daysRemaining} dias.`,
+        {
+          duration: 5000,
+          action: {
+            label: 'Ver Planos',
+            onClick: () => window.location.href = '/assinatura'
+          }
+        }
+      );
+      return;
+    }
+    
     let targetPlan = '';
     
     if (currentPlan === PlanType.FREE) {
@@ -278,7 +327,7 @@ export function useSubscriptionPlan() {
         }
       }
     );
-  }, [subscription]);
+  }, [subscription, trialStatus]);
 
   const refreshSubscription = useCallback(() => {
     console.log('🔄 [Subscription] Forçando atualização TOTAL dos dados...');
@@ -302,6 +351,7 @@ export function useSubscriptionPlan() {
     showUpgradeMessage,
     features: subscription ? getPlanFeatures(subscription.plan_type) : null,
     planType: subscription?.plan_type || PlanType.FREE,
-    refreshSubscription
+    refreshSubscription,
+    trialStatus
   };
 }
