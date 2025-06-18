@@ -1059,6 +1059,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      log_security_event: {
+        Args: { event_type: string; user_id?: string; details?: Json }
+        Returns: undefined
+      }
       set_limit: {
         Args: { "": number }
         Returns: number
@@ -1070,6 +1074,10 @@ export type Database = {
       show_trgm: {
         Args: { "": string }
         Returns: string[]
+      }
+      validate_password_strength: {
+        Args: { password_text: string }
+        Returns: Json
       }
     }
     Enums: {
