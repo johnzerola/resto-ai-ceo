@@ -47,7 +47,9 @@ export function FluxoCaixaIntegrado() {
     type: 'entrada',
     conta_tipo: 'operacional',
     recorrente: false,
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    amount: 0, // Ensure amount is initialized
+    description: '' // Ensure description is initialized
   });
   const [isLoading, setIsLoading] = useState(false);
   const [filtroTipo, setFiltroTipo] = useState<string>('todos');
@@ -97,11 +99,20 @@ export function FluxoCaixaIntegrado() {
       const { data, error } = await supabase
         .from('cash_flow')
         .insert({
-          ...novoMovimento,
-          restaurant_id: currentRestaurant.id,
+          type: novoMovimento.type || 'entrada',
           amount: novoMovimento.amount,
+          description: novoMovimento.description,
           category: novoMovimento.category || 'geral',
-          date: novoMovimento.date || new Date().toISOString().split('T')[0]
+          date: novoMovimento.date || new Date().toISOString().split('T')[0],
+          payment_method: novoMovimento.payment_method,
+          status: novoMovimento.status,
+          conta_tipo: novoMovimento.conta_tipo || 'operacional',
+          centro_custo: novoMovimento.centro_custo,
+          documento: novoMovimento.documento,
+          pessoa_responsavel: novoMovimento.pessoa_responsavel,
+          recorrente: novoMovimento.recorrente || false,
+          vencimento: novoMovimento.vencimento,
+          restaurant_id: currentRestaurant.id
         })
         .select()
         .single();
@@ -113,7 +124,9 @@ export function FluxoCaixaIntegrado() {
         type: 'entrada',
         conta_tipo: 'operacional',
         recorrente: false,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        amount: 0,
+        description: ''
       });
       toast.success('Movimento adicionado com sucesso!');
     } catch (error) {

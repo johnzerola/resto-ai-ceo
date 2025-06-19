@@ -52,7 +52,9 @@ export function ControleEstoque() {
     validade_dias: 30,
     estoque_minimo: 1,
     preco_pago: 0,
-    volume_embalagem: 1
+    volume_embalagem: 1,
+    nome: '', // Ensure nome is initialized
+    estoque_atual: 0
   });
 
   useEffect(() => {
@@ -93,7 +95,16 @@ export function ControleEstoque() {
       const { data, error } = await supabase
         .from('insumos')
         .insert({
-          ...novoInsumo,
+          nome: novoInsumo.nome,
+          categoria: novoInsumo.categoria || 'geral',
+          unidade_medida: novoInsumo.unidade_medida || 'kg',
+          preco_pago: novoInsumo.preco_pago || 0,
+          volume_embalagem: novoInsumo.volume_embalagem || 1,
+          perda_media_percentual: novoInsumo.perda_media_percentual || 5,
+          validade_dias: novoInsumo.validade_dias || 30,
+          estoque_minimo: novoInsumo.estoque_minimo || 1,
+          estoque_atual: novoInsumo.estoque_atual || 0,
+          fornecedor: novoInsumo.fornecedor,
           restaurant_id: currentRestaurant.id,
           preco_unitario: (novoInsumo.preco_pago || 0) / (novoInsumo.volume_embalagem || 1)
         })
@@ -110,7 +121,9 @@ export function ControleEstoque() {
         validade_dias: 30,
         estoque_minimo: 1,
         preco_pago: 0,
-        volume_embalagem: 1
+        volume_embalagem: 1,
+        nome: '',
+        estoque_atual: 0
       });
       toast.success('Insumo adicionado com sucesso!');
     } catch (error) {

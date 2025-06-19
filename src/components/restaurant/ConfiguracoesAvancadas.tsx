@@ -198,31 +198,6 @@ export function ConfiguracoesAvancadas() {
     }
   };
 
-  const salvarConfiguracoes = async () => {
-    if (!currentRestaurant?.id) return;
-
-    try {
-      setIsLoading(true);
-
-      const { error } = await supabase
-        .from('configuracoes_precificacao')
-        .upsert({
-          restaurant_id: currentRestaurant.id,
-          ...configuracoes,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      toast.success('Configurações salvas com sucesso!');
-    } catch (error) {
-      console.error('Erro ao salvar:', error);
-      toast.error('Erro ao salvar configurações');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const calcularMargemRecomendada = () => {
     const custoFixoPorPrato = configuracoes.despesa_fixa_mensal / configuracoes.total_pratos_vendidos_mensal;
     const margemMinima = (custoFixoPorPrato * 100) + 20; // 20% de lucro mínimo
