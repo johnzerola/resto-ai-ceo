@@ -431,7 +431,7 @@ export function FluxoCaixaIntegrado() {
                       </div>
                       
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-muted-foreground">
-                        <div>Data: {new Date(movimento.date).to LocaleDateString('pt-BR')}</div>
+                        <div>Data: {new Date(movimento.date).toLocaleDateString('pt-BR')}</div>
                         <div>Categoria: {movimento.category}</div>
                         {movimento.payment_method && <div>Pagamento: {movimento.payment_method}</div>}
                         <div>Tipo: {movimento.conta_tipo}</div>
