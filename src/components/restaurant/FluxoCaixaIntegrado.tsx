@@ -6,20 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign,
-  Calendar,
-  Clock,
-  AlertCircle,
-  CheckCircle,
-  Plus
-} from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { FinancialSummary } from "./analytics/FinancialSummary";
 
 interface MovimentoCaixa {
   id: string;
@@ -48,8 +39,8 @@ export function FluxoCaixaIntegrado() {
     conta_tipo: 'operacional',
     recorrente: false,
     date: new Date().toISOString().split('T')[0],
-    amount: 0, // Ensure amount is initialized
-    description: '' // Ensure description is initialized
+    amount: 0,
+    description: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [filtroTipo, setFiltroTipo] = useState<string>('todos');
@@ -139,91 +130,20 @@ export function FluxoCaixaIntegrado() {
     filtroTipo === 'todos' || mov.type === filtroTipo
   );
 
-  const totalEntradas = movimentos
-    .filter(m => m.type === 'entrada')
-    .reduce((acc, m) => acc + m.amount, 0);
-
-  const totalSaidas = movimentos
-    .filter(m => m.type === 'saida')
-    .reduce((acc, m) => acc + m.amount, 0);
-
-  const saldoLiquido = totalEntradas - totalSaidas;
-
-  const contasAPagar = movimentos.filter(m => 
-    m.type === 'saida' && 
-    m.status === 'pending' && 
-    m.vencimento && 
-    new Date(m.vencimento) >= new Date()
-  );
-
-  const contasVencidas = movimentos.filter(m => 
-    m.type === 'saida' && 
-    m.status === 'pending' && 
-    m.vencimento && 
-    new Date(m.vencimento) < new Date()
-  );
-
   return (
     <div className="space-y-6">
-      {/* Header com Resumo */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Entradas</p>
-                <p className="text-2xl font-bold text-green-600">
-                  R$ {totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Saídas</p>
-                <p className="text-2xl font-bold text-red-600">
-                  R$ {totalSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <TrendingDown className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Saldo Líquido</p>
-                <p className={`text-2xl font-bold ${saldoLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  R$ {saldoLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-              <DollarSign className={`h-8 w-8 ${saldoLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Contas a Pagar</p>
-                <p className="text-2xl font-bold text-orange-600">{contasAPagar.length}</p>
-                {contasVencidas.length > 0 && (
-                  <p className="text-sm text-red-600">{contasVencidas.length} vencidas</p>
-                )}
-              </div>
-              <Clock className="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
+          <p className="text-muted-foreground">
+            Controle completo de entradas e saídas financeiras
+          </p>
+        </div>
       </div>
+
+      {/* Resumo Financeiro */}
+      <FinancialSummary movimentos={movimentos} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Formulário de Novo Movimento */}

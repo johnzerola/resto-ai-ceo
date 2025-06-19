@@ -7,19 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Package, 
-  AlertTriangle, 
-  TrendingDown,
-  Plus,
-  Edit,
-  Trash2,
-  Calendar,
-  DollarSign
-} from "lucide-react";
+import { Plus, AlertTriangle, Package } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { EstoqueWidget } from "./widgets/EstoqueWidget";
 
 interface Insumo {
   id: string;
@@ -53,7 +45,7 @@ export function ControleEstoque() {
     estoque_minimo: 1,
     preco_pago: 0,
     volume_embalagem: 1,
-    nome: '', // Ensure nome is initialized
+    nome: '',
     estoque_atual: 0
   });
 
@@ -173,7 +165,7 @@ export function ControleEstoque() {
     switch (status) {
       case 'zerado': return 'Zerado';
       case 'baixo': return 'Estoque Baixo';
-      case 'atenc': return 'Atenção';
+      case 'atencao': return 'Atenção';
       case 'ok': return 'OK';
       default: return 'N/A';
     }
@@ -198,6 +190,9 @@ export function ControleEstoque() {
           </p>
         </div>
       </div>
+
+      {/* Widget de Estoque */}
+      <EstoqueWidget insumos={insumos} />
 
       {/* Alertas */}
       {alertasEstoque.length > 0 && (

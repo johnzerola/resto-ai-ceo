@@ -4,28 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { 
   Settings, 
-  Package, 
-  Truck, 
   Calculator, 
   TrendingUp,
   DollarSign,
-  Clock,
   AlertTriangle,
-  CheckCircle,
-  Plus,
-  Edit,
-  Trash2
+  CheckCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { EmbalgemForm } from "./forms/EmbalgemForm";
+import { CanalVendaForm } from "./forms/CanalVendaForm";
 
 interface Embalagem {
   id: string;
@@ -200,7 +194,7 @@ export function ConfiguracoesAvancadas() {
 
   const calcularMargemRecomendada = () => {
     const custoFixoPorPrato = configuracoes.despesa_fixa_mensal / configuracoes.total_pratos_vendidos_mensal;
-    const margemMinima = (custoFixoPorPrato * 100) + 20; // 20% de lucro mínimo
+    const margemMinima = (custoFixoPorPrato * 100) + 20;
     return Math.round(margemMinima);
   };
 
@@ -393,118 +387,87 @@ export function ConfiguracoesAvancadas() {
 
         {/* Aba Embalagens */}
         <TabsContent value="embalagens" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Gestão de Embalagens
-                </CardTitle>
-                <Button onClick={() => {
-                  const nome = prompt('Nome da embalagem:');
-                  const custo = prompt('Custo unitário (R$):');
-                  if (nome && custo) {
-                    adicionarEmbalagem({
-                      nome,
-                      tipo: 'descartavel',
-                      custo_unitario: parseFloat(custo),
-                      quantidade_minima: 1
-                    });
-                  }
-                }}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Embalagem
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {embalagens.map((embalagem) => (
-                  <div key={embalagem.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{embalagem.nome}</h4>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Tipo: {embalagem.tipo}</span>
-                        <span>Custo: R$ {embalagem.custo_unitario.toFixed(2)}</span>
-                        {embalagem.fornecedor && <span>Fornecedor: {embalagem.fornecedor}</span>}
+          <div className="grid gap-6 lg:grid-cols-3">
+            <EmbalgemForm onSubmit={adicionarEmbalagem} />
+            
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Embalagens Cadastradas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {embalagens.map((embalagem) => (
+                      <div key={embalagem.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <h4 className="font-medium">{embalagem.nome}</h4>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>Tipo: {embalagem.tipo}</span>
+                            <span>Custo: R$ {embalagem.custo_unitario.toFixed(2)}</span>
+                            {embalagem.fornecedor && <span>Fornecedor: {embalagem.fornecedor}</span>}
+                          </div>
+                        </div>
+                        <Badge variant={embalagem.tipo === 'descartavel' ? 'destructive' : 'default'}>
+                          {embalagem.tipo}
+                        </Badge>
                       </div>
-                    </div>
-                    <Badge variant={embalagem.tipo === 'descartavel' ? 'destructive' : 'default'}>
-                      {embalagem.tipo}
-                    </Badge>
+                    ))}
+                    
+                    {embalagens.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p>Nenhuma embalagem cadastrada</p>
+                        <p className="text-sm">Adicione embalagens para calcular custos precisos</p>
+                      </div>
+                    )}
                   </div>
-                ))}
-                
-                {embalagens.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhuma embalagem cadastrada</p>
-                    <p className="text-sm">Adicione embalagens para calcular custos precisos</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Aba Canais de Venda */}
         <TabsContent value="canais" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Truck className="h-5 w-5" />
-                  Canais de Venda
-                </CardTitle>
-                <Button onClick={() => {
-                  const nome = prompt('Nome do canal (ex: iFood, Uber Eats):');
-                  const taxa = prompt('Taxa percentual (%):');
-                  if (nome && taxa) {
-                    adicionarCanalVenda({
-                      nome,
-                      taxa_percentual: parseFloat(taxa),
-                      taxa_fixa: 0,
-                      tempo_entrega_min: 30,
-                      ativo: true
-                    });
-                  }
-                }}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Canal
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                {canaisVenda.map((canal) => (
-                  <div key={canal.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{canal.nome}</h4>
-                        <Switch checked={canal.ativo} />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <CanalVendaForm onSubmit={adicionarCanalVenda} />
+            
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Canais de Venda</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                    {canaisVenda.map((canal) => (
+                      <div key={canal.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium">{canal.nome}</h4>
+                            <Switch checked={canal.ativo} />
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>Taxa: {canal.taxa_percentual}%</span>
+                            {canal.taxa_fixa > 0 && <span>Taxa fixa: R$ {canal.taxa_fixa.toFixed(2)}</span>}
+                            <span>Entrega: {canal.tempo_entrega_min}min</span>
+                          </div>
+                        </div>
+                        <Badge variant={canal.ativo ? 'default' : 'secondary'}>
+                          {canal.ativo ? 'Ativo' : 'Inativo'}
+                        </Badge>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>Taxa: {canal.taxa_percentual}%</span>
-                        {canal.taxa_fixa > 0 && <span>Taxa fixa: R$ {canal.taxa_fixa.toFixed(2)}</span>}
-                        <span>Entrega: {canal.tempo_entrega_min}min</span>
+                    ))}
+                    
+                    {canaisVenda.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p>Nenhum canal de venda cadastrado</p>
+                        <p className="text-sm">Configure canais como iFood, Uber Eats, etc.</p>
                       </div>
-                    </div>
-                    <Badge variant={canal.ativo ? 'default' : 'secondary'}>
-                      {canal.ativo ? 'Ativo' : 'Inativo'}
-                    </Badge>
+                    )}
                   </div>
-                ))}
-                
-                {canaisVenda.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Truck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhum canal de venda cadastrado</p>
-                    <p className="text-sm">Configure canais como iFood, Uber Eats, etc.</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
 
         {/* Aba Análise */}
