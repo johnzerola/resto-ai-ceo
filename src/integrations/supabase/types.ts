@@ -209,6 +209,77 @@ export type Database = {
           },
         ]
       }
+      configuracoes_restaurante: {
+        Row: {
+          created_at: string | null
+          custo_medio_por_prato: number | null
+          despesas_fixas_mensais: number | null
+          despesas_variaveis_mensais: number | null
+          id: string
+          margem_lucro_esperada: number | null
+          markup_padrao: number | null
+          meta_vendas_diaria: number | null
+          perda_media_percentual: number | null
+          pratos_vendidos_dia_meta: number | null
+          receita_mensal_esperada: number | null
+          rendimento_porcao_padrao: number | null
+          restaurant_id: string | null
+          taxa_entrega: number | null
+          taxa_ifood: number | null
+          taxa_impostos: number | null
+          ticket_medio_esperado: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custo_medio_por_prato?: number | null
+          despesas_fixas_mensais?: number | null
+          despesas_variaveis_mensais?: number | null
+          id?: string
+          margem_lucro_esperada?: number | null
+          markup_padrao?: number | null
+          meta_vendas_diaria?: number | null
+          perda_media_percentual?: number | null
+          pratos_vendidos_dia_meta?: number | null
+          receita_mensal_esperada?: number | null
+          rendimento_porcao_padrao?: number | null
+          restaurant_id?: string | null
+          taxa_entrega?: number | null
+          taxa_ifood?: number | null
+          taxa_impostos?: number | null
+          ticket_medio_esperado?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custo_medio_por_prato?: number | null
+          despesas_fixas_mensais?: number | null
+          despesas_variaveis_mensais?: number | null
+          id?: string
+          margem_lucro_esperada?: number | null
+          markup_padrao?: number | null
+          meta_vendas_diaria?: number | null
+          perda_media_percentual?: number | null
+          pratos_vendidos_dia_meta?: number | null
+          receita_mensal_esperada?: number | null
+          rendimento_porcao_padrao?: number | null
+          restaurant_id?: string | null
+          taxa_entrega?: number | null
+          taxa_ifood?: number | null
+          taxa_impostos?: number | null
+          ticket_medio_esperado?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_restaurante_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       embalagens: {
         Row: {
           created_at: string | null
@@ -543,6 +614,53 @@ export type Database = {
           },
         ]
       }
+      metas_vendas: {
+        Row: {
+          created_at: string | null
+          data_meta: string
+          id: string
+          meta_pratos_dia: number | null
+          meta_receita_dia: number | null
+          percentual_atingido: number | null
+          pratos_vendidos_dia: number | null
+          receita_real_dia: number | null
+          restaurant_id: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_meta: string
+          id?: string
+          meta_pratos_dia?: number | null
+          meta_receita_dia?: number | null
+          percentual_atingido?: number | null
+          pratos_vendidos_dia?: number | null
+          receita_real_dia?: number | null
+          restaurant_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_meta?: string
+          id?: string
+          meta_pratos_dia?: number | null
+          meta_receita_dia?: number | null
+          percentual_atingido?: number | null
+          pratos_vendidos_dia?: number | null
+          receita_real_dia?: number | null
+          restaurant_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metas_vendas_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -640,8 +758,11 @@ export type Database = {
       }
       pratos: {
         Row: {
+          ativo: boolean | null
           categoria: string | null
           created_at: string | null
+          custo_embalagem: number | null
+          custo_perdas: number | null
           custo_por_porcao: number | null
           custo_total: number | null
           embalagem_id: string | null
@@ -655,9 +776,11 @@ export type Database = {
           peso_bruto_kg: number | null
           peso_liquido_kg: number | null
           preco_concorrente: number | null
+          preco_ifood: number | null
           preco_praticado: number | null
           preco_promocional: number | null
           preco_sugerido: number | null
+          preco_uber_eats: number | null
           promocao_ativa: boolean | null
           rendimento_porcoes: number | null
           restaurant_id: string | null
@@ -665,11 +788,16 @@ export type Database = {
           taxa_entrega: number | null
           taxa_ifood_percentual: number | null
           tempo_preparo_min: number | null
+          ultima_venda: string | null
           updated_at: string | null
+          vendas_dia: number | null
         }
         Insert: {
+          ativo?: boolean | null
           categoria?: string | null
           created_at?: string | null
+          custo_embalagem?: number | null
+          custo_perdas?: number | null
           custo_por_porcao?: number | null
           custo_total?: number | null
           embalagem_id?: string | null
@@ -683,9 +811,11 @@ export type Database = {
           peso_bruto_kg?: number | null
           peso_liquido_kg?: number | null
           preco_concorrente?: number | null
+          preco_ifood?: number | null
           preco_praticado?: number | null
           preco_promocional?: number | null
           preco_sugerido?: number | null
+          preco_uber_eats?: number | null
           promocao_ativa?: boolean | null
           rendimento_porcoes?: number | null
           restaurant_id?: string | null
@@ -693,11 +823,16 @@ export type Database = {
           taxa_entrega?: number | null
           taxa_ifood_percentual?: number | null
           tempo_preparo_min?: number | null
+          ultima_venda?: string | null
           updated_at?: string | null
+          vendas_dia?: number | null
         }
         Update: {
+          ativo?: boolean | null
           categoria?: string | null
           created_at?: string | null
+          custo_embalagem?: number | null
+          custo_perdas?: number | null
           custo_por_porcao?: number | null
           custo_total?: number | null
           embalagem_id?: string | null
@@ -711,9 +846,11 @@ export type Database = {
           peso_bruto_kg?: number | null
           peso_liquido_kg?: number | null
           preco_concorrente?: number | null
+          preco_ifood?: number | null
           preco_praticado?: number | null
           preco_promocional?: number | null
           preco_sugerido?: number | null
+          preco_uber_eats?: number | null
           promocao_ativa?: boolean | null
           rendimento_porcoes?: number | null
           restaurant_id?: string | null
@@ -721,7 +858,9 @@ export type Database = {
           taxa_entrega?: number | null
           taxa_ifood_percentual?: number | null
           tempo_preparo_min?: number | null
+          ultima_venda?: string | null
           updated_at?: string | null
+          vendas_dia?: number | null
         }
         Relationships: [
           {
@@ -1228,6 +1367,14 @@ export type Database = {
           lucro_estimado: number
           margem_percentual: number
           status_viabilidade: string
+        }[]
+      }
+      calcular_meta_diaria: {
+        Args: { restaurant_uuid: string }
+        Returns: {
+          meta_receita: number
+          meta_pratos: number
+          ticket_medio: number
         }[]
       }
       check_trial_status: {

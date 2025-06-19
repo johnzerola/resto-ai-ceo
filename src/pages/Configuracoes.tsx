@@ -12,6 +12,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ConfiguracaoEmpresarial } from "@/components/restaurant/ConfiguracaoEmpresarial";
+import { ConfiguracoesAvancadas } from "@/components/restaurant/ConfiguracoesAvancadas";
+import { Settings, Building2, Cog } from "lucide-react";
 
 interface ConfigForm {
   businessName: string;
@@ -176,120 +180,156 @@ const Configuracoes = () => {
 
   return (
     <ModernLayout>
-      <div className="container mx-auto p-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Configurações</CardTitle>
-            <CardDescription>
-              Gerencie as configurações do seu restaurante.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6">
-            <div className="flex items-center justify-between space-y-0 pb-2">
-              <Label htmlFor="dark-mode">Usar modo escuro</Label>
-              <Switch
-                id="dark-mode"
-                checked={darkMode}
-                onCheckedChange={toggleDarkMode}
-              />
-            </div>
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="businessName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome do negócio</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nome do seu restaurante" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="targetFoodCost"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CMV Alvo - Alimentos (%)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="30" 
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Percentual ideal do custo de alimentos sobre as vendas.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="targetBeverageCost"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CMV Alvo - Bebidas (%)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="25" 
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Percentual ideal do custo de bebidas sobre as vendas.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="averageMonthlyRevenue"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Receita Mensal Média (R$)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="0" 
-                          {...field}
-                          onChange={e => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Usado para calcular projeções financeiras.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="pt-4">
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading}
-                    className="w-full"
-                  >
-                    {isLoading ? "Salvando e Sincronizando..." : "Salvar e Sincronizar"}
-                  </Button>
+      <div className="container mx-auto p-4 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Settings className="h-8 w-8" />
+            Configurações
+          </h1>
+          <p className="text-muted-foreground">
+            Gerencie todas as configurações do seu restaurante em um só lugar
+          </p>
+        </div>
+
+        <Tabs defaultValue="basicas" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="basicas" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Básicas
+            </TabsTrigger>
+            <TabsTrigger value="empresarial" className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Empresarial
+            </TabsTrigger>
+            <TabsTrigger value="avancadas" className="flex items-center gap-2">
+              <Cog className="h-4 w-4" />
+              Avançadas
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="basicas" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações Básicas</CardTitle>
+                <CardDescription>
+                  Configurações fundamentais do sistema e preferências pessoais.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-6">
+                <div className="flex items-center justify-between space-y-0 pb-2">
+                  <Label htmlFor="dark-mode">Usar modo escuro</Label>
+                  <Switch
+                    id="dark-mode"
+                    checked={darkMode}
+                    onCheckedChange={toggleDarkMode}
+                  />
                 </div>
-              </form>
-            </Form>
-            
-          </CardContent>
-        </Card>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="businessName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome do negócio</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nome do seu restaurante" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="targetFoodCost"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CMV Alvo - Alimentos (%)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="30" 
+                              {...field}
+                              onChange={e => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Percentual ideal do custo de alimentos sobre as vendas.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="targetBeverageCost"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CMV Alvo - Bebidas (%)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="25" 
+                              {...field}
+                              onChange={e => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Percentual ideal do custo de bebidas sobre as vendas.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="averageMonthlyRevenue"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Receita Mensal Média (R$)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="0" 
+                              {...field}
+                              onChange={e => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Usado para calcular projeções financeiras.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="pt-4">
+                      <Button 
+                        type="submit" 
+                        disabled={isLoading}
+                        className="w-full"
+                      >
+                        {isLoading ? "Salvando e Sincronizando..." : "Salvar e Sincronizar"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="empresarial">
+            <ConfiguracaoEmpresarial />
+          </TabsContent>
+
+          <TabsContent value="avancadas">
+            <ConfiguracoesAvancadas />
+          </TabsContent>
+        </Tabs>
       </div>
     </ModernLayout>
   );
