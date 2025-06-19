@@ -50,6 +50,12 @@ const MainLayout = () => <Outlet />;
 const RestaurantLayout = () => <Outlet />;
 
 import SystemAuditPage from "@/pages/SystemAuditPage";
+import ConfiguracoesCompletas from "@/pages/ConfiguracoesCompletas";
+import PrecificacaoCompleta from "@/pages/PrecificacaoCompleta";
+import EstoqueCompleto from "@/pages/EstoqueCompleto";
+import FluxoCaixaCompleto from "@/pages/FluxoCaixaCompleto";
+
+// ... keep existing code until the routes section
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -75,6 +81,7 @@ const router = createBrowserRouter(
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/configuracoes-completas" element={<ConfiguracoesCompletas />} />
         <Route path="/integracoes" element={<Integracoes />} />
         <Route path="/assinatura" element={<Subscription />} />
         <Route path="/system-monitoring" element={<SystemMonitoring />} />
@@ -82,14 +89,17 @@ const router = createBrowserRouter(
         <Route path="/ai-assistant" element={<AIAssistantPage />} />
         <Route path="/projecoes" element={<ProjecoesPagina />} />
         <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
+        <Route path="/fluxo-de-caixa-completo" element={<FluxoCaixaCompleto />} />
         
         {/* Financial routes */}
         <Route path="/cmv" element={<CMV />} />
         <Route path="/dre" element={<DRE />} />
         <Route path="/financeiro" element={<Financeiro />} />
+        <Route path="/precificacao-completa" element={<PrecificacaoCompleta />} />
         
         {/* Inventory and recipes */}
         <Route path="/estoque" element={<Estoque />} />
+        <Route path="/estoque-completo" element={<EstoqueCompleto />} />
         <Route path="/ficha-tecnica" element={<FichaTecnica />} />
         <Route path="/receitas" element={<Receitas />} />
         

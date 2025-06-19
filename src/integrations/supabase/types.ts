@@ -56,42 +56,101 @@ export type Database = {
           },
         ]
       }
+      canais_venda: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          nome: string
+          restaurant_id: string | null
+          taxa_fixa: number | null
+          taxa_percentual: number | null
+          tempo_entrega_min: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          restaurant_id?: string | null
+          taxa_fixa?: number | null
+          taxa_percentual?: number | null
+          tempo_entrega_min?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          restaurant_id?: string | null
+          taxa_fixa?: number | null
+          taxa_percentual?: number | null
+          tempo_entrega_min?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canais_venda_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_flow: {
         Row: {
           amount: number
           category: string
+          centro_custo: string | null
+          conta_tipo: string | null
           created_at: string | null
           date: string
           description: string | null
+          documento: string | null
           id: string
           payment_method: string | null
+          pessoa_responsavel: string | null
+          recorrente: boolean | null
           restaurant_id: string | null
           status: string | null
           type: string
+          vencimento: string | null
         }
         Insert: {
           amount: number
           category: string
+          centro_custo?: string | null
+          conta_tipo?: string | null
           created_at?: string | null
           date: string
           description?: string | null
+          documento?: string | null
           id?: string
           payment_method?: string | null
+          pessoa_responsavel?: string | null
+          recorrente?: boolean | null
           restaurant_id?: string | null
           status?: string | null
           type: string
+          vencimento?: string | null
         }
         Update: {
           amount?: number
           category?: string
+          centro_custo?: string | null
+          conta_tipo?: string | null
           created_at?: string | null
           date?: string
           description?: string | null
+          documento?: string | null
           id?: string
           payment_method?: string | null
+          pessoa_responsavel?: string | null
+          recorrente?: boolean | null
           restaurant_id?: string | null
           status?: string | null
           type?: string
+          vencimento?: string | null
         }
         Relationships: [
           {
@@ -143,6 +202,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "configuracoes_precificacao_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      embalagens: {
+        Row: {
+          created_at: string | null
+          custo_unitario: number
+          fornecedor: string | null
+          id: string
+          nome: string
+          quantidade_minima: number | null
+          restaurant_id: string | null
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custo_unitario?: number
+          fornecedor?: string | null
+          id?: string
+          nome: string
+          quantidade_minima?: number | null
+          restaurant_id?: string | null
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custo_unitario?: number
+          fornecedor?: string | null
+          id?: string
+          nome?: string
+          quantidade_minima?: number | null
+          restaurant_id?: string | null
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "embalagens_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -330,39 +433,57 @@ export type Database = {
       }
       insumos: {
         Row: {
+          categoria: string | null
           codigo: number | null
           created_at: string | null
+          estoque_atual: number | null
+          estoque_minimo: number | null
+          fornecedor: string | null
           id: string
           nome: string
+          perda_media_percentual: number | null
           preco_pago: number
           preco_unitario: number | null
           restaurant_id: string | null
           unidade_medida: string
           updated_at: string | null
+          validade_dias: number | null
           volume_embalagem: number
         }
         Insert: {
+          categoria?: string | null
           codigo?: number | null
           created_at?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          fornecedor?: string | null
           id?: string
           nome: string
+          perda_media_percentual?: number | null
           preco_pago: number
           preco_unitario?: number | null
           restaurant_id?: string | null
           unidade_medida: string
           updated_at?: string | null
+          validade_dias?: number | null
           volume_embalagem: number
         }
         Update: {
+          categoria?: string | null
           codigo?: number | null
           created_at?: string | null
+          estoque_atual?: number | null
+          estoque_minimo?: number | null
+          fornecedor?: string | null
           id?: string
           nome?: string
+          perda_media_percentual?: number | null
           preco_pago?: number
           preco_unitario?: number | null
           restaurant_id?: string | null
           unidade_medida?: string
           updated_at?: string | null
+          validade_dias?: number | null
           volume_embalagem?: number
         }
         Relationships: [
@@ -523,17 +644,27 @@ export type Database = {
           created_at: string | null
           custo_por_porcao: number | null
           custo_total: number | null
+          embalagem_id: string | null
+          formato_venda: string | null
           id: string
           lucro_estimado: number | null
           margem_percentual: number | null
           margem_seguranca: number | null
           nome_prato: string
           observacoes: string | null
+          peso_bruto_kg: number | null
+          peso_liquido_kg: number | null
+          preco_concorrente: number | null
           preco_praticado: number | null
+          preco_promocional: number | null
           preco_sugerido: number | null
+          promocao_ativa: boolean | null
           rendimento_porcoes: number | null
           restaurant_id: string | null
           status_viabilidade: string | null
+          taxa_entrega: number | null
+          taxa_ifood_percentual: number | null
+          tempo_preparo_min: number | null
           updated_at: string | null
         }
         Insert: {
@@ -541,17 +672,27 @@ export type Database = {
           created_at?: string | null
           custo_por_porcao?: number | null
           custo_total?: number | null
+          embalagem_id?: string | null
+          formato_venda?: string | null
           id?: string
           lucro_estimado?: number | null
           margem_percentual?: number | null
           margem_seguranca?: number | null
           nome_prato: string
           observacoes?: string | null
+          peso_bruto_kg?: number | null
+          peso_liquido_kg?: number | null
+          preco_concorrente?: number | null
           preco_praticado?: number | null
+          preco_promocional?: number | null
           preco_sugerido?: number | null
+          promocao_ativa?: boolean | null
           rendimento_porcoes?: number | null
           restaurant_id?: string | null
           status_viabilidade?: string | null
+          taxa_entrega?: number | null
+          taxa_ifood_percentual?: number | null
+          tempo_preparo_min?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -559,20 +700,37 @@ export type Database = {
           created_at?: string | null
           custo_por_porcao?: number | null
           custo_total?: number | null
+          embalagem_id?: string | null
+          formato_venda?: string | null
           id?: string
           lucro_estimado?: number | null
           margem_percentual?: number | null
           margem_seguranca?: number | null
           nome_prato?: string
           observacoes?: string | null
+          peso_bruto_kg?: number | null
+          peso_liquido_kg?: number | null
+          preco_concorrente?: number | null
           preco_praticado?: number | null
+          preco_promocional?: number | null
           preco_sugerido?: number | null
+          promocao_ativa?: boolean | null
           rendimento_porcoes?: number | null
           restaurant_id?: string | null
           status_viabilidade?: string | null
+          taxa_entrega?: number | null
+          taxa_ifood_percentual?: number | null
+          tempo_preparo_min?: number | null
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "pratos_embalagem_id_fkey"
+            columns: ["embalagem_id"]
+            isOneToOne: false
+            referencedRelation: "embalagens"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pratos_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -974,6 +1132,33 @@ export type Database = {
         }
         Relationships: []
       }
+      unidades_medida: {
+        Row: {
+          created_at: string | null
+          fator_conversao: number | null
+          id: string
+          nome: string
+          tipo: string
+          unidade_base: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fator_conversao?: number | null
+          id?: string
+          nome: string
+          tipo: string
+          unidade_base?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fator_conversao?: number | null
+          id?: string
+          nome?: string
+          tipo?: string
+          unidade_base?: string | null
+        }
+        Relationships: []
+      }
       webhook_logs: {
         Row: {
           event: string
@@ -1018,6 +1203,21 @@ export type Database = {
       auto_expire_trials: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      calcular_cmv_completo: {
+        Args: { prato_uuid: string }
+        Returns: {
+          custo_ingredientes: number
+          custo_embalagem: number
+          custo_perdas: number
+          custo_total: number
+          custo_por_porcao: number
+          margem_bruta_percentual: number
+          margem_liquida_percentual: number
+          preco_sugerido_balcao: number
+          preco_sugerido_ifood: number
+          status_viabilidade: string
+        }[]
       }
       calcular_custos_prato: {
         Args: { prato_uuid: string }
