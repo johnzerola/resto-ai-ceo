@@ -30,10 +30,13 @@ import { useAuth } from "@/contexts/AuthContext";
 interface Embalagem {
   id: string;
   nome: string;
-  tipo: 'descartavel' | 'retornavel' | 'personalizada';
+  tipo: string;
   custo_unitario: number;
   quantidade_minima: number;
   fornecedor?: string;
+  restaurant_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface CanalVenda {
@@ -43,6 +46,8 @@ interface CanalVenda {
   taxa_fixa: number;
   tempo_entrega_min: number;
   ativo: boolean;
+  restaurant_id?: string;
+  created_at?: string;
 }
 
 interface ConfiguracoesPrecificacao {
@@ -102,7 +107,7 @@ export function ConfiguracoesAvancadas() {
         .order('nome');
 
       if (embalagemError) throw embalagemError;
-      setEmbalagens(embalagemData || []);
+      setEmbalagens((embalagemData || []) as Embalagem[]);
 
       // Carregar canais de venda
       const { data: canaisData, error: canaisError } = await supabase
@@ -112,7 +117,7 @@ export function ConfiguracoesAvancadas() {
         .order('nome');
 
       if (canaisError) throw canaisError;
-      setCanaisVenda(canaisData || []);
+      setCanaisVenda((canaisData || []) as CanalVenda[]);
 
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -162,7 +167,7 @@ export function ConfiguracoesAvancadas() {
 
       if (error) throw error;
 
-      setEmbalagens(prev => [...prev, data]);
+      setEmbalagens(prev => [...prev, data as Embalagem]);
       toast.success('Embalagem adicionada com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar embalagem:', error);
@@ -185,11 +190,36 @@ export function ConfiguracoesAvancadas() {
 
       if (error) throw error;
 
-      setCanaisVenda(prev => [...prev, data]);
+      setCanaisVenda(prev => [...prev, data as CanalVenda]);
       toast.success('Canal de venda adicionado com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar canal:', error);
       toast.error('Erro ao adicionar canal de venda');
+    }
+  };
+
+  const salvarConfiguracoes = async () => {
+    if (!currentRestaurant?.id) return;
+
+    try {
+      setIsLoading(true);
+
+      const { error } = await supabase
+        .from('configuracoes_precificacao')
+        .upsert({
+          restaurant_id: currentRestaurant.id,
+          ...configuracoes,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      toast.success('Configurações salvas com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
+      toast.error('Erro ao salvar configurações');
+    } finally {
+      setIsLoading(false);
     }
   };
 

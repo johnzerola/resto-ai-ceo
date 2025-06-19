@@ -23,19 +23,21 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface MovimentoCaixa {
   id: string;
-  type: 'entrada' | 'saida';
+  type: string;
   amount: number;
   description: string;
   date: string;
   category: string;
   payment_method?: string;
   status?: string;
-  conta_tipo: 'operacional' | 'investimento' | 'financiamento';
+  conta_tipo: string;
   centro_custo?: string;
   documento?: string;
   pessoa_responsavel?: string;
   recorrente: boolean;
   vencimento?: string;
+  restaurant_id?: string;
+  created_at?: string;
 }
 
 export function FluxoCaixaIntegrado() {
@@ -76,7 +78,7 @@ export function FluxoCaixaIntegrado() {
         .order('date', { ascending: false });
 
       if (error) throw error;
-      setMovimentos(data || []);
+      setMovimentos((data || []) as MovimentoCaixa[]);
     } catch (error) {
       console.error('Erro ao carregar movimentos:', error);
       toast.error('Erro ao carregar fluxo de caixa');
@@ -96,14 +98,17 @@ export function FluxoCaixaIntegrado() {
         .from('cash_flow')
         .insert({
           ...novoMovimento,
-          restaurant_id: currentRestaurant.id
+          restaurant_id: currentRestaurant.id,
+          amount: novoMovimento.amount,
+          category: novoMovimento.category || 'geral',
+          date: novoMovimento.date || new Date().toISOString().split('T')[0]
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      setMovimentos(prev => [data, ...prev]);
+      setMovimentos(prev => [data as MovimentoCaixa, ...prev]);
       setNovoMovimento({
         type: 'entrada',
         conta_tipo: 'operacional',
@@ -222,7 +227,7 @@ export function FluxoCaixaIntegrado() {
                 <Label>Tipo</Label>
                 <Select 
                   value={novoMovimento.type} 
-                  onValueChange={(value: 'entrada' | 'saida') => setNovoMovimento(prev => ({...prev, type: value}))}
+                  onValueChange={(value) => setNovoMovimento(prev => ({...prev, type: value}))}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -322,9 +327,7 @@ export function FluxoCaixaIntegrado() {
               <Label>Tipo de Conta</Label>
               <Select 
                 value={novoMovimento.conta_tipo} 
-                onValueChange={(value: 'operacional' | 'investimento' | 'financiamento') => 
-                  setNovoMovimento(prev => ({...prev, conta_tipo: value}))
-                }
+                onValueChange={(value) => setNovoMovimento(prev => ({...prev, conta_tipo: value}))}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -428,7 +431,7 @@ export function FluxoCaixaIntegrado() {
                       </div>
                       
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-muted-foreground">
-                        <div>Data: {new Date(movimento.date).toLocaleDateString('pt-BR')}</div>
+                        <div>Data: {new Date(movimento.date).to LocaleDateString('pt-BR')}</div>
                         <div>Categoria: {movimento.category}</div>
                         {movimento.payment_method && <div>Pagamento: {movimento.payment_method}</div>}
                         <div>Tipo: {movimento.conta_tipo}</div>

@@ -32,6 +32,12 @@ interface Insumo {
   perda_media_percentual: number;
   fornecedor?: string;
   validade_dias: number;
+  preco_pago: number;
+  volume_embalagem: number;
+  restaurant_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  codigo?: number;
 }
 
 export function ControleEstoque() {
@@ -44,7 +50,9 @@ export function ControleEstoque() {
     unidade_medida: 'kg',
     perda_media_percentual: 5,
     validade_dias: 30,
-    estoque_minimo: 1
+    estoque_minimo: 1,
+    preco_pago: 0,
+    volume_embalagem: 1
   });
 
   useEffect(() => {
@@ -66,7 +74,7 @@ export function ControleEstoque() {
         .order('nome');
 
       if (error) throw error;
-      setInsumos(data || []);
+      setInsumos((data || []) as Insumo[]);
     } catch (error) {
       console.error('Erro ao carregar insumos:', error);
       toast.error('Erro ao carregar estoque');
@@ -87,7 +95,6 @@ export function ControleEstoque() {
         .insert({
           ...novoInsumo,
           restaurant_id: currentRestaurant.id,
-          // Calcular preço unitário baseado no preço pago e volume da embalagem
           preco_unitario: (novoInsumo.preco_pago || 0) / (novoInsumo.volume_embalagem || 1)
         })
         .select()
@@ -95,13 +102,15 @@ export function ControleEstoque() {
 
       if (error) throw error;
 
-      setInsumos(prev => [...prev, data]);
+      setInsumos(prev => [...prev, data as Insumo]);
       setNovoInsumo({
         categoria: 'geral',
         unidade_medida: 'kg',
         perda_media_percentual: 5,
         validade_dias: 30,
-        estoque_minimo: 1
+        estoque_minimo: 1,
+        preco_pago: 0,
+        volume_embalagem: 1
       });
       toast.success('Insumo adicionado com sucesso!');
     } catch (error) {
@@ -151,7 +160,7 @@ export function ControleEstoque() {
     switch (status) {
       case 'zerado': return 'Zerado';
       case 'baixo': return 'Estoque Baixo';
-      case 'atencao': return 'Atenção';
+      case 'atenc': return 'Atenção';
       case 'ok': return 'OK';
       default: return 'N/A';
     }
