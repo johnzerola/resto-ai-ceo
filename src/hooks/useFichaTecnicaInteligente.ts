@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -100,6 +99,26 @@ export function useFichaTecnicaInteligente() {
 
       if (resultadosCalculo && resultadosCalculo.length > 0) {
         const resultado = resultadosCalculo[0];
+        
+        // Converter status para o tipo correto
+        const statusViabilidade = resultado.status_viabilidade as 'saudavel' | 'atencao' | 'prejuizo';
+        
+        // Converter alertas JSON para array de strings
+        let alertasArray: string[] = [];
+        if (resultado.alertas) {
+          try {
+            if (Array.isArray(resultado.alertas)) {
+              alertasArray = resultado.alertas.map(item => String(item));
+            } else if (typeof resultado.alertas === 'string') {
+              const parsed = JSON.parse(resultado.alertas);
+              alertasArray = Array.isArray(parsed) ? parsed.map(item => String(item)) : [];
+            }
+          } catch (e) {
+            console.warn('Erro ao processar alertas:', e);
+            alertasArray = [];
+          }
+        }
+
         setResultados({
           cmv_estimado_percentual: resultado.cmv_estimado_percentual,
           cmv_estimado_valor: resultado.cmv_estimado_valor,
@@ -108,8 +127,8 @@ export function useFichaTecnicaInteligente() {
           margem_bruta: resultado.margem_bruta,
           margem_liquida: resultado.margem_liquida,
           preco_sugerido: resultado.preco_sugerido,
-          status_viabilidade: resultado.status_viabilidade,
-          alertas: Array.isArray(resultado.alertas) ? resultado.alertas : []
+          status_viabilidade: statusViabilidade,
+          alertas: alertasArray
         });
       }
 
