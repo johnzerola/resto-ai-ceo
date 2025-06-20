@@ -614,6 +614,56 @@ export type Database = {
           },
         ]
       }
+      metas_lucro_individual: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          meta_cmv_percentual: number | null
+          meta_lucro_percentual: number | null
+          meta_lucro_valor: number | null
+          meta_vendas_mes: number | null
+          prato_id: string | null
+          restaurant_id: string
+          tipo_meta: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          meta_cmv_percentual?: number | null
+          meta_lucro_percentual?: number | null
+          meta_lucro_valor?: number | null
+          meta_vendas_mes?: number | null
+          prato_id?: string | null
+          restaurant_id: string
+          tipo_meta?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          meta_cmv_percentual?: number | null
+          meta_lucro_percentual?: number | null
+          meta_lucro_valor?: number | null
+          meta_vendas_mes?: number | null
+          prato_id?: string | null
+          restaurant_id?: string
+          tipo_meta?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metas_lucro_individual_prato_id_fkey"
+            columns: ["prato_id"]
+            isOneToOne: false
+            referencedRelation: "pratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metas_vendas: {
         Row: {
           created_at: string | null
@@ -879,6 +929,50 @@ export type Database = {
           },
         ]
       }
+      precos_desejados_por_produto: {
+        Row: {
+          created_at: string | null
+          id: string
+          lucro_desejado: number | null
+          margem_desejada: number | null
+          prato_id: string | null
+          preco_desejado: number
+          restaurant_id: string
+          tipo_meta: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lucro_desejado?: number | null
+          margem_desejada?: number | null
+          prato_id?: string | null
+          preco_desejado?: number
+          restaurant_id: string
+          tipo_meta?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lucro_desejado?: number | null
+          margem_desejada?: number | null
+          prato_id?: string | null
+          preco_desejado?: number
+          restaurant_id?: string
+          tipo_meta?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "precos_desejados_por_produto_prato_id_fkey"
+            columns: ["prato_id"]
+            isOneToOne: false
+            referencedRelation: "pratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pricing_models: {
         Row: {
           channel: string
@@ -1127,6 +1221,71 @@ export type Database = {
         }
         Relationships: []
       }
+      resultados_estimados_por_receita: {
+        Row: {
+          alertas: Json | null
+          cmv_estimado_percentual: number | null
+          cmv_estimado_valor: number | null
+          created_at: string | null
+          id: string
+          lucro_estimado_percentual: number | null
+          lucro_estimado_valor: number | null
+          margem_bruta: number | null
+          margem_liquida: number | null
+          prato_id: string | null
+          preco_sugerido: number | null
+          rentabilidade_mensal: number | null
+          rentabilidade_unitaria: number | null
+          restaurant_id: string
+          status_analise: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          alertas?: Json | null
+          cmv_estimado_percentual?: number | null
+          cmv_estimado_valor?: number | null
+          created_at?: string | null
+          id?: string
+          lucro_estimado_percentual?: number | null
+          lucro_estimado_valor?: number | null
+          margem_bruta?: number | null
+          margem_liquida?: number | null
+          prato_id?: string | null
+          preco_sugerido?: number | null
+          rentabilidade_mensal?: number | null
+          rentabilidade_unitaria?: number | null
+          restaurant_id: string
+          status_analise?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          alertas?: Json | null
+          cmv_estimado_percentual?: number | null
+          cmv_estimado_valor?: number | null
+          created_at?: string | null
+          id?: string
+          lucro_estimado_percentual?: number | null
+          lucro_estimado_valor?: number | null
+          margem_bruta?: number | null
+          margem_liquida?: number | null
+          prato_id?: string | null
+          preco_sugerido?: number | null
+          rentabilidade_mensal?: number | null
+          rentabilidade_unitaria?: number | null
+          restaurant_id?: string
+          status_analise?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resultados_estimados_por_receita_prato_id_fkey"
+            columns: ["prato_id"]
+            isOneToOne: false
+            referencedRelation: "pratos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -1356,6 +1515,20 @@ export type Database = {
           preco_sugerido_balcao: number
           preco_sugerido_ifood: number
           status_viabilidade: string
+        }[]
+      }
+      calcular_cmv_inteligente: {
+        Args: { prato_uuid: string; preco_final?: number }
+        Returns: {
+          cmv_estimado_percentual: number
+          cmv_estimado_valor: number
+          lucro_estimado_valor: number
+          lucro_estimado_percentual: number
+          margem_bruta: number
+          margem_liquida: number
+          preco_sugerido: number
+          status_viabilidade: string
+          alertas: Json
         }[]
       }
       calcular_custos_prato: {
