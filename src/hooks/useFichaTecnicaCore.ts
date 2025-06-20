@@ -83,16 +83,30 @@ export function useFichaTecnicaCore() {
       if (resultadosCalculo && resultadosCalculo.length > 0) {
         const resultado = resultadosCalculo[0];
         
-        const statusViabilidade = resultado.status_viabilidade as 'saudavel' | 'atencao' | 'prejuizo';
+        // Validação mais robusta do status_viabilidade
+        let statusViabilidade: 'saudavel' | 'atencao' | 'prejuizo' = 'saudavel';
+        if (typeof resultado.status_viabilidade === 'string') {
+          const statusValue = resultado.status_viabilidade.toLowerCase();
+          if (['saudavel', 'atencao', 'prejuizo'].includes(statusValue)) {
+            statusViabilidade = statusValue as 'saudavel' | 'atencao' | 'prejuizo';
+          }
+        }
         
+        // Conversão mais segura dos alertas
         let alertasArray: string[] = [];
         if (resultado.alertas) {
           try {
             if (Array.isArray(resultado.alertas)) {
-              alertasArray = resultado.alertas.map(item => String(item));
+              alertasArray = resultado.alertas
+                .filter(item => item !== null && item !== undefined)
+                .map(item => String(item));
             } else if (typeof resultado.alertas === 'string') {
               const parsed = JSON.parse(resultado.alertas);
-              alertasArray = Array.isArray(parsed) ? parsed.map(item => String(item)) : [];
+              if (Array.isArray(parsed)) {
+                alertasArray = parsed
+                  .filter(item => item !== null && item !== undefined)
+                  .map(item => String(item));
+              }
             }
           } catch (e) {
             console.warn('Erro ao processar alertas:', e);
@@ -101,19 +115,25 @@ export function useFichaTecnicaCore() {
         }
 
         setResultados({
-          cmv_estimado_percentual: resultado.cmv_estimado_percentual,
-          cmv_estimado_valor: resultado.cmv_estimado_valor,
-          lucro_estimado_valor: resultado.lucro_estimado_valor,
-          lucro_estimado_percentual: resultado.lucro_estimado_percentual,
-          margem_bruta: resultado.margem_bruta,
-          margem_liquida: resultado.margem_liquida,
-          preco_sugerido: resultado.preco_sugerido,
+          cmv_estimado_percentual: Number(resultado.cmv_estimado_percentual) || 0,
+          cmv_estimado_valor: Number(resultado.cmv_estimado_valor) || 0,
+          lucro_estimado_valor: Number(resultado.lucro_estimado_valor) || 0,
+          lucro_estimado_percentual: Number(resultado.lucro_estimado_percentual) || 0,
+          margem_bruta: Number(resultado.margem_bruta) || 0,
+          margem_liquida: Number(resultado.margem_liquida) || 0,
+          preco_sugerido: Number(resultado.preco_sugerido) || 0,
           status_viabilidade: statusViabilidade,
           alertas: alertasArray
         });
       }
 
+      // Limpar prato temporário
       if (!pratoId && pratoIdParaCalculo) {
+        await supabase
+          .from('ingredientes_por_prato')
+          .delete()
+          .eq('prato_id', pratoIdParaCalculo);
+        
         await supabase
           .from('pratos')
           .delete()

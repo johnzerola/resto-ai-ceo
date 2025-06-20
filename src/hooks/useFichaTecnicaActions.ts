@@ -34,7 +34,7 @@ export function useFichaTecnicaActions() {
   const [precoDesejado, setPrecoDesejado] = useState<number>(0);
   const [insumosDisponiveis, setInsumosDisponiveis] = useState<any[]>([]);
 
-  // Adicionar ingrediente
+  // Adicionar ingrediente com validação
   const adicionarIngrediente = useCallback(() => {
     const novoIngrediente: IngredienteInteligente = {
       id: Date.now().toString(),
@@ -50,20 +50,27 @@ export function useFichaTecnicaActions() {
     return novoIngrediente;
   }, []);
 
-  // Atualizar ingrediente
+  // Atualizar ingrediente com cálculos automáticos
   const atualizarIngrediente = useCallback((ingredientes: IngredienteInteligente[], id: string, campo: keyof IngredienteInteligente, valor: any) => {
     return ingredientes.map(ing => {
       if (ing.id === id) {
         const updated = { ...ing, [campo]: valor };
         
+        // Recalcular campos dependentes
         if (campo === 'quantidade_bruta' || campo === 'fator_correcao') {
-          updated.quantidade_liquida = updated.quantidade_bruta * updated.fator_correcao;
-          updated.custo_total = updated.quantidade_liquida * updated.preco_unitario;
+          updated.quantidade_liquida = Number(updated.quantidade_bruta) * Number(updated.fator_correcao);
+          updated.custo_total = updated.quantidade_liquida * Number(updated.preco_unitario);
         } else if (campo === 'preco_unitario') {
-          updated.custo_total = updated.quantidade_liquida * Number(valor);
+          updated.custo_total = Number(updated.quantidade_liquida) * Number(valor);
         } else if (campo === 'quantidade_liquida') {
-          updated.custo_total = Number(valor) * updated.preco_unitario;
+          updated.custo_total = Number(valor) * Number(updated.preco_unitario);
         }
+        
+        // Validações básicas
+        if (updated.quantidade_bruta < 0) updated.quantidade_bruta = 0;
+        if (updated.quantidade_liquida < 0) updated.quantidade_liquida = 0;
+        if (updated.fator_correcao < 0) updated.fator_correcao = 1;
+        if (updated.preco_unitario < 0) updated.preco_unitario = 0;
         
         return updated;
       }
@@ -71,7 +78,7 @@ export function useFichaTecnicaActions() {
     });
   }, []);
 
-  // Salvar ficha técnica
+  // Salvar ficha técnica com validações completas
   const salvarFichaTecnica = useCallback(async (
     ingredientes: IngredienteInteligente[],
     resultados: any,
@@ -82,12 +89,41 @@ export function useFichaTecnicaActions() {
       observacoes?: string;
     }
   ) => {
-    if (!currentRestaurant?.id || ingredientes.length === 0) {
-      toast.error('Dados incompletos para salvar a ficha técnica');
+    if (!currentRestaurant?.id) {
+      toast.error('Nenhum restaurante selecionado');
+      return false;
+    }
+
+    if (ingredientes.length === 0) {
+      toast.error('Adicione pelo menos um ingrediente');
+      return false;
+    }
+
+    if (!dadosPrato.nome_prato?.trim()) {
+      toast.error('Nome do prato é obrigatório');
+      return false;
+    }
+
+    if (dadosPrato.rendimento_porcoes <= 0) {
+      toast.error('Rendimento deve ser maior que zero');
+      return false;
+    }
+
+    // Validar ingredientes
+    const ingredientesInvalidos = ingredientes.filter(ing => 
+      !ing.insumo_id || 
+      !ing.nome_insumo || 
+      ing.quantidade_bruta <= 0 || 
+      ing.preco_unitario <= 0
+    );
+
+    if (ingredientesInvalidos.length > 0) {
+      toast.error('Verifique os dados dos ingredientes');
       return false;
     }
 
     try {
+      // Salvar prato
       const { data: prato, error: pratoError } = await supabase
         .from('pratos')
         .insert({
@@ -105,13 +141,14 @@ export function useFichaTecnicaActions() {
 
       if (pratoError) throw pratoError;
 
+      // Salvar ingredientes
       const ingredientesData = ingredientes.map(ing => ({
         prato_id: prato.id,
         insumo_id: ing.insumo_id,
-        quantidade_bruta: ing.quantidade_bruta,
-        quantidade_liquida: ing.quantidade_liquida,
-        fator_correcao: ing.fator_correcao,
-        custo_total: ing.custo_total
+        quantidade_bruta: Number(ing.quantidade_bruta),
+        quantidade_liquida: Number(ing.quantidade_liquida),
+        fator_correcao: Number(ing.fator_correcao),
+        custo_total: Number(ing.custo_total)
       }));
 
       const { error: ingredientesError } = await supabase
@@ -120,26 +157,45 @@ export function useFichaTecnicaActions() {
 
       if (ingredientesError) throw ingredientesError;
 
+      // Salvar metas se definidas
+      if (precoDesejado > 0) {
+        await supabase
+          .from('precos_desejados_por_produto')
+          .insert({
+            prato_id: prato.id,
+            restaurant_id: currentRestaurant.id,
+            preco_desejado: precoDesejado,
+            margem_desejada: metasLucro.meta_lucro_percentual,
+            tipo_meta: metasLucro.tipo_meta
+          });
+      }
+
       toast.success('Ficha técnica salva com sucesso!');
       return true;
+
     } catch (error) {
       console.error('Erro ao salvar ficha técnica:', error);
       toast.error('Erro ao salvar ficha técnica');
       return false;
     }
-  }, [currentRestaurant, precoDesejado]);
+  }, [currentRestaurant, precoDesejado, metasLucro]);
 
   // Carregar insumos disponíveis
   useEffect(() => {
     if (currentRestaurant?.id) {
       const carregarInsumos = async () => {
-        const { data, error } = await supabase
-          .from('insumos')
-          .select('*')
-          .eq('restaurant_id', currentRestaurant.id);
-        
-        if (!error && data) {
-          setInsumosDisponiveis(data);
+        try {
+          const { data, error } = await supabase
+            .from('insumos')
+            .select('*')
+            .eq('restaurant_id', currentRestaurant.id)
+            .order('nome');
+          
+          if (error) throw error;
+          setInsumosDisponiveis(data || []);
+        } catch (error) {
+          console.error('Erro ao carregar insumos:', error);
+          toast.error('Erro ao carregar insumos');
         }
       };
       carregarInsumos();

@@ -17,7 +17,9 @@ import {
   TrendingUp,
   DollarSign,
   Percent,
-  Package
+  Package,
+  Save,
+  RotateCcw
 } from "lucide-react";
 import { useFichaTecnicaCore } from "@/hooks/useFichaTecnicaCore";
 import { useFichaTecnicaActions } from "@/hooks/useFichaTecnicaActions";
@@ -49,13 +51,16 @@ export function FichaTecnicaInteligenteCompleta() {
     observacoes: ''
   });
 
+  // Estado para controlar se mostra campos avançados
+  const [mostrarAvancado, setMostrarAvancado] = useState(false);
+
   // Adicionar novo ingrediente
   const handleAdicionarIngrediente = () => {
     const novoIngrediente = adicionarIngrediente();
     setIngredientes(prev => [...prev, novoIngrediente]);
   };
 
-  // Atualizar ingrediente
+  // Atualizar ingrediente com debounce
   const handleAtualizarIngrediente = (id: string, campo: string, valor: any) => {
     const novosIngredientes = atualizarIngrediente(ingredientes, id, campo as any, valor);
     setIngredientes(novosIngredientes);
@@ -66,12 +71,12 @@ export function FichaTecnicaInteligenteCompleta() {
     setIngredientes(prev => prev.filter(ing => ing.id !== id));
   };
 
-  // Calcular quando ingredientes mudarem
+  // Calcular automaticamente quando dados mudarem
   useEffect(() => {
-    if (ingredientes.length > 0) {
+    if (ingredientes.length > 0 && ingredientes.some(ing => ing.custo_total > 0)) {
       const timer = setTimeout(() => {
         calcularResultados(undefined, precoDesejado || undefined);
-      }, 500);
+      }, 800); // Debounce mais longo para evitar muitas chamadas
       return () => clearTimeout(timer);
     }
   }, [ingredientes, precoDesejado, calcularResultados]);
@@ -80,17 +85,23 @@ export function FichaTecnicaInteligenteCompleta() {
   const handleSalvar = async () => {
     const sucesso = await salvarFichaTecnica(ingredientes, resultados, prato);
     if (sucesso) {
-      setPrato({
-        nome_prato: '',
-        categoria: '',
-        rendimento_porcoes: 1,
-        observacoes: ''
-      });
-      setIngredientes([]);
-      setPrecoDesejado(0);
+      handleLimparTudo();
     }
   };
 
+  // Limpar formulário
+  const handleLimparTudo = () => {
+    setPrato({
+      nome_prato: '',
+      categoria: '',
+      rendimento_porcoes: 1,
+      observacoes: ''
+    });
+    setIngredientes([]);
+    setPrecoDesejado(0);
+  };
+
+  // Funções de estilo
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'saudavel': return 'bg-green-100 text-green-800 border-green-200';
@@ -109,121 +120,158 @@ export function FichaTecnicaInteligenteCompleta() {
     }
   };
 
+  const isFormularioValido = () => {
+    return prato.nome_prato.trim() && 
+           ingredientes.length > 0 && 
+           ingredientes.every(ing => ing.insumo_id && ing.quantidade_bruta > 0);
+  };
+
   return (
-    <div className="space-y-6 p-4 max-w-7xl mx-auto">
-      {/* Header */}
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 max-w-7xl mx-auto">
+      {/* Header Simplificado */}
       <div className="text-center space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
           🧠 Ficha Técnica Inteligente
         </h1>
         <p className="text-gray-600 text-sm sm:text-base">
-          Cálculo automático de CMV, lucro e precificação estratégica
+          Calcule automaticamente CMV, lucro e preço ideal
         </p>
       </div>
 
-      {/* Informações do Prato */}
+      {/* Informações Básicas do Prato */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Package className="h-5 w-5" />
-            Informações do Prato
+            Dados do Prato
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="nome_prato">Nome do Prato *</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <Label htmlFor="nome_prato" className="text-sm font-medium">
+                Nome do Prato *
+              </Label>
               <Input
                 id="nome_prato"
                 value={prato.nome_prato}
                 onChange={(e) => setPrato(prev => ({...prev, nome_prato: e.target.value}))}
-                placeholder="Ex: Risoto de Camarão"
+                placeholder="Ex: Hambúrguer Artesanal"
                 className="mt-1"
               />
             </div>
             
             <div>
-              <Label htmlFor="categoria">Categoria</Label>
+              <Label htmlFor="categoria" className="text-sm font-medium">
+                Categoria
+              </Label>
               <Select value={prato.categoria} onValueChange={(value) => setPrato(prev => ({...prev, categoria: value}))}>
                 <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione uma categoria" />
+                  <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="entrada">Entrada</SelectItem>
                   <SelectItem value="prato_principal">Prato Principal</SelectItem>
                   <SelectItem value="sobremesa">Sobremesa</SelectItem>
                   <SelectItem value="bebida">Bebida</SelectItem>
+                  <SelectItem value="lanche">Lanche</SelectItem>
                   <SelectItem value="acompanhamento">Acompanhamento</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div>
-              <Label htmlFor="rendimento">Rendimento (porções)</Label>
+              <Label htmlFor="rendimento" className="text-sm font-medium">
+                Quantas porções rende?
+              </Label>
               <Input
                 id="rendimento"
                 type="number"
                 value={prato.rendimento_porcoes}
-                onChange={(e) => setPrato(prev => ({...prev, rendimento_porcoes: Number(e.target.value)}))}
+                onChange={(e) => setPrato(prev => ({...prev, rendimento_porcoes: Math.max(1, Number(e.target.value))}))}
                 min="1"
                 className="mt-1"
               />
             </div>
-            
-            <div>
-              <Label htmlFor="preco_desejado">Preço Desejado (R$)</Label>
-              <Input
-                id="preco_desejado"
-                type="number"
-                step="0.01"
-                value={precoDesejado || ''}
-                onChange={(e) => setPrecoDesejado(Number(e.target.value))}
-                placeholder="0.00"
-                className="mt-1"
-              />
-            </div>
           </div>
-          
-          <div>
-            <Label htmlFor="observacoes">Observações</Label>
-            <Textarea
-              id="observacoes"
-              value={prato.observacoes}
-              onChange={(e) => setPrato(prev => ({...prev, observacoes: e.target.value}))}
-              placeholder="Observações sobre o preparo, alergênicos, etc."
-              className="mt-1"
+
+          {/* Campo Preço Desejado em destaque */}
+          <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+            <Label htmlFor="preco_desejado" className="text-sm font-medium text-blue-800">
+              💰 Qual preço você quer cobrar? (Opcional)
+            </Label>
+            <Input
+              id="preco_desejado"
+              type="number"
+              step="0.01"
+              value={precoDesejado || ''}
+              onChange={(e) => setPrecoDesejado(Number(e.target.value))}
+              placeholder="Ex: 25.90"
+              className="mt-2 bg-white"
             />
+            <p className="text-xs text-blue-600 mt-1">
+              Se informar, calculamos se vale a pena cobrar esse preço
+            </p>
+          </div>
+
+          {/* Campos Avançados (Colapsáveis) */}
+          <div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setMostrarAvancado(!mostrarAvancado)}
+              className="text-gray-600"
+            >
+              {mostrarAvancado ? 'Ocultar' : 'Mostrar'} opções avançadas
+            </Button>
+            
+            {mostrarAvancado && (
+              <div className="mt-3 p-4 bg-gray-50 rounded-lg">
+                <Textarea
+                  value={prato.observacoes}
+                  onChange={(e) => setPrato(prev => ({...prev, observacoes: e.target.value}))}
+                  placeholder="Observações sobre preparo, alergênicos, etc."
+                  className="mt-1"
+                />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Ingredientes */}
+      {/* Lista de Ingredientes */}
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Calculator className="h-5 w-5" />
-              Ingredientes
+              Ingredientes ({ingredientes.length})
             </CardTitle>
-            <Button onClick={handleAdicionarIngrediente} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
+            <Button 
+              onClick={handleAdicionarIngrediente} 
+              size="sm"
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="h-4 w-4 mr-1" />
               Adicionar
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {ingredientes.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhum ingrediente adicionado</p>
-                <p className="text-sm">Clique em "Adicionar" para começar</p>
-              </div>
-            ) : (
-              ingredientes.map((ingrediente) => (
-                <div key={ingrediente.id} className="grid grid-cols-1 md:grid-cols-6 gap-3 p-4 border rounded-lg">
-                  <div className="md:col-span-2">
-                    <Label className="text-xs">Nome do Ingrediente</Label>
+          {ingredientes.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium">Nenhum ingrediente adicionado</p>
+              <p className="text-sm">Clique em "Adicionar" para começar</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {ingredientes.map((ingrediente) => (
+                <div key={ingrediente.id} className="grid grid-cols-1 lg:grid-cols-6 gap-3 p-4 border rounded-lg bg-gray-50">
+                  {/* Nome do Ingrediente */}
+                  <div className="lg:col-span-2">
+                    <Label className="text-xs font-medium text-gray-700">Ingrediente</Label>
                     <Select 
                       value={ingrediente.insumo_id} 
                       onValueChange={(value) => {
@@ -236,115 +284,132 @@ export function FichaTecnicaInteligenteCompleta() {
                         }
                       }}
                     >
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="Selecionar insumo" />
+                      <SelectTrigger className="h-9 bg-white">
+                        <SelectValue placeholder="Escolher ingrediente" />
                       </SelectTrigger>
                       <SelectContent>
                         {insumosDisponiveis.map((insumo) => (
                           <SelectItem key={insumo.id} value={insumo.id}>
-                            {insumo.nome} - R$ {insumo.preco_unitario?.toFixed(2)}
+                            <div className="flex flex-col">
+                              <span>{insumo.nome}</span>
+                              <span className="text-xs text-gray-500">
+                                R$ {insumo.preco_unitario?.toFixed(2)}/{insumo.unidade_medida}
+                              </span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   
+                  {/* Quantidade */}
                   <div>
-                    <Label className="text-xs">Qtd Bruta</Label>
+                    <Label className="text-xs font-medium text-gray-700">
+                      Quantidade ({ingrediente.unidade_medida})
+                    </Label>
                     <Input
                       type="number"
                       step="0.001"
                       value={ingrediente.quantidade_bruta || ''}
                       onChange={(e) => handleAtualizarIngrediente(ingrediente.id, 'quantidade_bruta', Number(e.target.value))}
-                      className="h-8"
+                      className="h-9 bg-white"
+                      placeholder="0"
                     />
                   </div>
                   
+                  {/* Fator Correção */}
                   <div>
-                    <Label className="text-xs">Fator Correção</Label>
+                    <Label className="text-xs font-medium text-gray-700">
+                      Fator Correção
+                    </Label>
                     <Input
                       type="number"
                       step="0.01"
                       value={ingrediente.fator_correcao || ''}
                       onChange={(e) => handleAtualizarIngrediente(ingrediente.id, 'fator_correcao', Number(e.target.value))}
-                      className="h-8"
+                      className="h-9 bg-white"
+                      placeholder="1.0"
                     />
                   </div>
                   
+                  {/* Custo Total */}
                   <div>
-                    <Label className="text-xs">Qtd Líquida</Label>
-                    <Input
-                      type="number"
-                      step="0.001"
-                      value={ingrediente.quantidade_liquida?.toFixed(3) || '0'}
-                      readOnly
-                      className="h-8 bg-gray-50"
-                    />
+                    <Label className="text-xs font-medium text-gray-700">Custo Total</Label>
+                    <div className="h-9 bg-green-50 border rounded-md flex items-center px-3">
+                      <span className="text-sm font-medium text-green-700">
+                        R$ {ingrediente.custo_total?.toFixed(2) || '0,00'}
+                      </span>
+                    </div>
                   </div>
                   
+                  {/* Botão Remover */}
                   <div className="flex items-end">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleRemoverIngrediente(ingrediente.id)}
-                      className="h-8 w-8 p-0"
+                      className="h-9 w-full lg:w-auto px-3 text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Resultados */}
+      {/* Resultados da Análise */}
       {resultados && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Análise Financeira
+        <Card className="border-2 border-blue-200 bg-blue-50/30">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Resultado da Análise
               {resultados.status_viabilidade && (
                 <Badge className={`ml-2 ${getStatusColor(resultados.status_viabilidade)}`}>
                   {getStatusIcon(resultados.status_viabilidade)}
-                  <span className="ml-1 capitalize">{resultados.status_viabilidade}</span>
+                  <span className="ml-1 capitalize">
+                    {resultados.status_viabilidade === 'saudavel' ? 'Lucrativo' : 
+                     resultados.status_viabilidade === 'atencao' ? 'Atenção' : 'Prejuízo'}
+                  </span>
                 </Badge>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-lg">
+            {/* Cards de Métricas Principais */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="bg-blue-100 p-4 rounded-lg border border-blue-200">
                 <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">CMV Estimado</span>
+                  <DollarSign className="h-5 w-5 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-800">Custo Real (CMV)</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-900">
                   R$ {resultados.cmv_estimado_valor?.toFixed(2)}
                 </div>
                 <div className="text-sm text-blue-700">
-                  {resultados.cmv_estimado_percentual?.toFixed(1)}% do preço
+                  {resultados.cmv_estimado_percentual?.toFixed(1)}% do preço de venda
                 </div>
               </div>
               
-              <div className="bg-green-50 p-4 rounded-lg">
+              <div className="bg-green-100 p-4 rounded-lg border border-green-200">
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <TrendingUp className="h-5 w-5 text-green-600" />
                   <span className="text-sm font-medium text-green-800">Lucro Estimado</span>
                 </div>
                 <div className="text-2xl font-bold text-green-900">
                   R$ {resultados.lucro_estimado_valor?.toFixed(2)}
                 </div>
                 <div className="text-sm text-green-700">
-                  {resultados.lucro_estimado_percentual?.toFixed(1)}% margem
+                  {resultados.lucro_estimado_percentual?.toFixed(1)}% de margem
                 </div>
               </div>
               
-              <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="bg-purple-100 p-4 rounded-lg border border-purple-200">
                 <div className="flex items-center gap-2 mb-2">
-                  <Percent className="h-4 w-4 text-purple-600" />
+                  <Percent className="h-5 w-5 text-purple-600" />
                   <span className="text-sm font-medium text-purple-800">Preço Sugerido</span>
                 </div>
                 <div className="text-2xl font-bold text-purple-900">
@@ -356,9 +421,10 @@ export function FichaTecnicaInteligenteCompleta() {
               </div>
             </div>
 
-            {/* Alertas */}
+            {/* Alertas e Recomendações */}
             {resultados.alertas && resultados.alertas.length > 0 && (
               <div className="space-y-2">
+                <h4 className="font-medium text-gray-800 mb-3">⚠️ Alertas Importantes:</h4>
                 {resultados.alertas.map((alerta, index) => (
                   <Alert key={index} className="border-yellow-200 bg-yellow-50">
                     <AlertTriangle className="h-4 w-4 text-yellow-600" />
@@ -373,32 +439,42 @@ export function FichaTecnicaInteligenteCompleta() {
         </Card>
       )}
 
-      {/* Ações */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-end">
+      {/* Botões de Ação */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
         <Button 
           variant="outline" 
-          onClick={() => {
-            setPrato({
-              nome_prato: '',
-              categoria: '',
-              rendimento_porcoes: 1,
-              observacoes: ''
-            });
-            setIngredientes([]);
-            setPrecoDesejado(0);
-          }}
+          onClick={handleLimparTudo}
+          className="sm:w-auto w-full"
         >
+          <RotateCcw className="h-4 w-4 mr-2" />
           Limpar Tudo
         </Button>
         
         <Button 
           onClick={handleSalvar}
-          disabled={!prato.nome_prato || ingredientes.length === 0 || isCalculating}
-          className="bg-green-600 hover:bg-green-700"
+          disabled={!isFormularioValido() || isCalculating}
+          className="bg-green-600 hover:bg-green-700 sm:w-auto w-full"
         >
+          <Save className="h-4 w-4 mr-2" />
           {isCalculating ? 'Calculando...' : 'Salvar Ficha Técnica'}
         </Button>
       </div>
+
+      {/* Ajuda Visual para Usuários Leigos */}
+      {ingredientes.length === 0 && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-6">
+            <h3 className="font-semibold text-blue-800 mb-3">💡 Como usar:</h3>
+            <ol className="list-decimal list-inside space-y-2 text-blue-700 text-sm">
+              <li>Preencha o nome do seu prato</li>
+              <li>Adicione todos os ingredientes que usa</li>
+              <li>Informe a quantidade de cada ingrediente</li>
+              <li>Se quiser, coloque o preço que pretende cobrar</li>
+              <li>O sistema calcula automaticamente se vale a pena!</li>
+            </ol>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
