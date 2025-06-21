@@ -9,6 +9,11 @@ interface SystemValidationResult {
   missingFields: string[];
   warnings: string[];
   completionPercentage: number;
+  financialSummary?: {
+    totalReceivable: number;
+    totalPayable: number;
+    balance: number;
+  };
 }
 
 export function useSystemValidation() {
@@ -48,16 +53,20 @@ export function useSystemValidation() {
           missingFields.push('Despesas fixas mensais');
         }
         
-        if (!config.markup_padrao || config.markup_padrao < 100) {
+        if (!config.markup_padrao || config.markup_padrao < 150) {
           warnings.push('Markup padrão muito baixo (recomendado: 250% ou mais)');
         }
 
         if (!config.margem_lucro_esperada || config.margem_lucro_esperada < 15) {
-          warnings.push('Margem de lucro muito baixa (recomendado: 20% ou mais)');
+          warnings.push('Margem de lucro muito baixa (recomendado: 25% ou mais)');
         }
 
         if (!config.receita_mensal_esperada || config.receita_mensal_esperada === 0) {
           missingFields.push('Meta de receita mensal');
+        }
+
+        if (!config.custo_medio_por_prato || config.custo_medio_por_prato === 0) {
+          warnings.push('Custo médio por prato não definido');
         }
       }
 
@@ -87,21 +96,66 @@ export function useSystemValidation() {
         warnings.push('Nenhum prato cadastrado ainda');
       }
 
+      // Verificar unidades de medida
+      const { data: unidades, error: unidadesError } = await supabase
+        .from('unidades_medida')
+        .select('id')
+        .limit(1);
+
+      if (unidadesError) throw unidadesError;
+
+      if (!unidades || unidades.length === 0) {
+        warnings.push('Sistema de unidades de medida precisa ser configurado');
+      }
+
+      // Buscar resumo financeiro
+      let financialSummary;
+      try {
+        const [contasPagar, contasReceber] = await Promise.all([
+          supabase
+            .from('contas_a_pagar')
+            .select('valor')
+            .eq('restaurant_id', currentRestaurant.id)
+            .eq('status', 'pendente'),
+          supabase
+            .from('contas_a_receber')
+            .select('valor')
+            .eq('restaurant_id', currentRestaurant.id)
+            .eq('status', 'pendente')
+        ]);
+
+        const totalPayable = contasPagar.data?.reduce((sum, conta) => sum + Number(conta.valor), 0) || 0;
+        const totalReceivable = contasReceber.data?.reduce((sum, conta) => sum + Number(conta.valor), 0) || 0;
+
+        financialSummary = {
+          totalReceivable,
+          totalPayable,
+          balance: totalReceivable - totalPayable
+        };
+      } catch (error) {
+        console.warn('Erro ao buscar resumo financeiro:', error);
+      }
+
       // Calcular percentual de conclusão
-      const totalFields = 7; // Total de campos essenciais
+      const totalFields = 8; // Total de campos essenciais
       const completedFields = totalFields - missingFields.length;
       const completionPercentage = Math.round((completedFields / totalFields) * 100);
 
-      setValidation({
+      const newValidation = {
         isValid: missingFields.length === 0,
         missingFields,
         warnings,
-        completionPercentage
-      });
+        completionPercentage,
+        financialSummary
+      };
+
+      setValidation(newValidation);
 
       // Mostrar alertas se necessário
       if (missingFields.length > 0) {
         toast.warning(`${missingFields.length} configuração(ões) essencial(is) faltando`);
+      } else if (warnings.length === 0) {
+        toast.success('Sistema configurado com sucesso! 🎉');
       }
 
     } catch (error) {
@@ -117,6 +171,21 @@ export function useSystemValidation() {
       validateSystemConfiguration();
     }
   }, [currentRestaurant]);
+
+  // Revalidar quando houver mudanças importantes
+  useEffect(() => {
+    const handleDataChange = () => {
+      setTimeout(validateSystemConfiguration, 1000);
+    };
+
+    window.addEventListener('dataSync:complete', handleDataChange);
+    window.addEventListener('financialDataUpdated', handleDataChange);
+
+    return () => {
+      window.removeEventListener('dataSync:complete', handleDataChange);
+      window.removeEventListener('financialDataUpdated', handleDataChange);
+    };
+  }, []);
 
   return {
     validation,

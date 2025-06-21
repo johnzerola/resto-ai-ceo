@@ -1,150 +1,178 @@
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useQueryCache } from './useQueryCache';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-interface SyncOptions {
-  syncInterval?: number;
-  maxRetries?: number;
-  onConflict?: (local: any, remote: any) => any;
+interface SyncStatus {
+  isOnline: boolean;
+  lastSync: Date | null;
+  pendingChanges: number;
+  isSyncing: boolean;
 }
 
-export function useDataSync<T>(
-  queryKey: string[],
-  fetchFn: () => Promise<T>,
-  saveFn: (data: T) => Promise<void>,
-  options: SyncOptions = {}
-) {
-  const [data, setData] = useState<T | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSync, setLastSync] = useState<Date | null>(null);
-  const [syncError, setSyncError] = useState<string | null>(null);
-  
-  const { getCachedData, setCachedData, invalidateQueries } = useQueryCache();
-  const syncTimeoutRef = useRef<NodeJS.Timeout>();
-  const retryCountRef = useRef(0);
+export function useDataSync() {
+  const { currentRestaurant } = useAuth();
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>({
+    isOnline: navigator.onLine,
+    lastSync: null,
+    pendingChanges: 0,
+    isSyncing: false
+  });
 
-  const {
-    syncInterval = 30000, // 30 segundos
-    maxRetries = 3,
-    onConflict
-  } = options;
+  // Monitorar status de conexão
+  useEffect(() => {
+    const handleOnline = () => setSyncStatus(prev => ({ ...prev, isOnline: true }));
+    const handleOffline = () => setSyncStatus(prev => ({ ...prev, isOnline: false }));
 
-  // Carregar dados iniciais
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    setSyncError(null);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Sincronizar configurações com todos os módulos
+  const syncConfigurationsToModules = useCallback(async () => {
+    if (!currentRestaurant?.id || !syncStatus.isOnline) return;
+
+    setSyncStatus(prev => ({ ...prev, isSyncing: true }));
     
     try {
-      // Verificar cache primeiro
-      const cachedData = getCachedData(queryKey) as T | undefined;
-      if (cachedData) {
-        setData(cachedData);
+      // Buscar configurações atualizadas
+      const { data: config, error: configError } = await supabase
+        .from('configuracoes_restaurante')
+        .select('*')
+        .eq('restaurant_id', currentRestaurant.id)
+        .single();
+
+      if (configError && configError.code !== 'PGRST116') {
+        throw configError;
       }
 
-      // Buscar dados remotos
-      const remoteData = await fetchFn();
-      
-      // Verificar conflitos se há dados em cache
-      if (cachedData && onConflict) {
-        const resolvedData = onConflict(cachedData, remoteData);
-        setData(resolvedData);
-        setCachedData(queryKey, resolvedData);
-      } else {
-        setData(remoteData);
-        setCachedData(queryKey, remoteData);
-      }
-      
-      setLastSync(new Date());
-      retryCountRef.current = 0;
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
-      setSyncError(error instanceof Error ? error.message : 'Erro desconhecido');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [queryKey, fetchFn, getCachedData, setCachedData, onConflict]);
+      if (config) {
+        // Atualizar pratos com configurações padrão
+        const { error: pratosError } = await supabase
+          .from('pratos')
+          .update({
+            margem_seguranca: config.perda_media_percentual || 5
+          })
+          .eq('restaurant_id', currentRestaurant.id)
+          .is('margem_seguranca', null);
 
-  // Salvar dados
-  const saveData = useCallback(async (newData: T) => {
-    setIsSyncing(true);
-    setSyncError(null);
-    
-    try {
-      await saveFn(newData);
-      setData(newData);
-      setCachedData(queryKey, newData);
-      setLastSync(new Date());
-      
-      // Invalidar queries relacionadas
-      invalidateQueries(queryKey);
-      
-      // Disparar evento para outros componentes
-      window.dispatchEvent(new CustomEvent('dataSync', {
-        detail: { queryKey, data: newData }
+        if (pratosError) console.warn('Erro ao sincronizar pratos:', pratosError);
+
+        // Recalcular custos dos pratos
+        const { data: pratos } = await supabase
+          .from('pratos')
+          .select('id')
+          .eq('restaurant_id', currentRestaurant.id);
+
+        if (pratos) {
+          for (const prato of pratos) {
+            try {
+              await supabase.rpc('calcular_cmv_otimizado', { prato_uuid: prato.id });
+            } catch (error) {
+              console.warn(`Erro ao recalcular prato ${prato.id}:`, error);
+            }
+          }
+        }
+      }
+
+      setSyncStatus(prev => ({ 
+        ...prev, 
+        lastSync: new Date(),
+        pendingChanges: 0 
       }));
-      
-      retryCountRef.current = 0;
+
+      // Emitir evento de sincronização completa
+      window.dispatchEvent(new CustomEvent('dataSync:complete', {
+        detail: { timestamp: new Date().toISOString() }
+      }));
+
     } catch (error) {
-      console.error('Erro ao salvar dados:', error);
-      setSyncError(error instanceof Error ? error.message : 'Erro ao salvar');
-      
-      // Tentar novamente se não excedeu o limite
-      if (retryCountRef.current < maxRetries) {
-        retryCountRef.current++;
-        setTimeout(() => saveData(newData), 1000 * retryCountRef.current);
-      }
+      console.error('Erro na sincronização:', error);
+      toast.error('Erro ao sincronizar dados');
     } finally {
-      setIsSyncing(false);
+      setSyncStatus(prev => ({ ...prev, isSyncing: false }));
     }
-  }, [saveFn, queryKey, setCachedData, invalidateQueries, maxRetries]);
+  }, [currentRestaurant, syncStatus.isOnline]);
 
-  // Sincronização automática
-  const startAutoSync = useCallback(() => {
-    if (syncTimeoutRef.current) {
-      clearTimeout(syncTimeoutRef.current);
-    }
-    
-    syncTimeoutRef.current = setTimeout(() => {
-      loadData();
-      startAutoSync(); // Reagendar
-    }, syncInterval);
-  }, [loadData, syncInterval]);
+  // Validar integridade dos dados
+  const validateDataIntegrity = useCallback(async () => {
+    if (!currentRestaurant?.id) return [];
 
-  const stopAutoSync = useCallback(() => {
-    if (syncTimeoutRef.current) {
-      clearTimeout(syncTimeoutRef.current);
-    }
-  }, []);
+    const issues: string[] = [];
 
-  // Inicializar
-  useEffect(() => {
-    loadData();
-    startAutoSync();
-    
-    return () => {
-      stopAutoSync();
-    };
-  }, [loadData, startAutoSync, stopAutoSync]);
+    try {
+      // Verificar se há configurações básicas
+      const { data: config } = await supabase
+        .from('configuracoes_restaurante')
+        .select('*')
+        .eq('restaurant_id', currentRestaurant.id)
+        .single();
 
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current);
+      if (!config) {
+        issues.push('Configurações básicas do restaurante não encontradas');
+      } else {
+        if (!config.markup_padrao || config.markup_padrao <= 100) {
+          issues.push('Markup padrão muito baixo ou não configurado');
+        }
+        
+        if (!config.margem_lucro_esperada || config.margem_lucro_esperada <= 0) {
+          issues.push('Margem de lucro esperada não configurada');
+        }
       }
-    };
-  }, []);
+
+      // Verificar pratos sem ingredientes
+      const { data: pratosSemIngredientes } = await supabase
+        .from('pratos')
+        .select(`
+          id, nome_prato,
+          ingredientes_por_prato!left(id)
+        `)
+        .eq('restaurant_id', currentRestaurant.id)
+        .is('ingredientes_por_prato.id', null);
+
+      if (pratosSemIngredientes && pratosSemIngredientes.length > 0) {
+        issues.push(`${pratosSemIngredientes.length} prato(s) sem ingredientes cadastrados`);
+      }
+
+      // Verificar ingredientes sem preço
+      const { data: ingredientesSemPreco } = await supabase
+        .from('insumos')
+        .select('id, nome')
+        .eq('restaurant_id', currentRestaurant.id)
+        .or('preco_unitario.is.null,preco_unitario.eq.0');
+
+      if (ingredientesSemPreco && ingredientesSemPreco.length > 0) {
+        issues.push(`${ingredientesSemPreco.length} ingrediente(s) sem preço definido`);
+      }
+
+    } catch (error) {
+      console.error('Erro na validação de integridade:', error);
+      issues.push('Erro ao validar integridade dos dados');
+    }
+
+    return issues;
+  }, [currentRestaurant]);
+
+  // Auto-sincronização periódica
+  useEffect(() => {
+    if (!syncStatus.isOnline || !currentRestaurant?.id) return;
+
+    const interval = setInterval(() => {
+      syncConfigurationsToModules();
+    }, 300000); // 5 minutos
+
+    return () => clearInterval(interval);
+  }, [syncConfigurationsToModules, syncStatus.isOnline, currentRestaurant]);
 
   return {
-    data,
-    isLoading,
-    isSyncing,
-    lastSync,
-    syncError,
-    saveData,
-    refreshData: loadData,
-    startAutoSync,
-    stopAutoSync
+    syncStatus,
+    syncConfigurationsToModules,
+    validateDataIntegrity
   };
 }
