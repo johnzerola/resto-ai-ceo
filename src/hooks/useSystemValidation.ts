@@ -108,24 +108,51 @@ export function useSystemValidation() {
         warnings.push('Sistema de unidades de medida precisa ser configurado');
       }
 
-      // Buscar resumo financeiro
+      // Buscar resumo financeiro usando fallback para cash_flow
       let financialSummary;
       try {
+        // Tentar buscar das novas tabelas primeiro
         const [contasPagar, contasReceber] = await Promise.all([
-          supabase
-            .from('contas_a_pagar')
-            .select('valor')
-            .eq('restaurant_id', currentRestaurant.id)
-            .eq('status', 'pendente'),
-          supabase
-            .from('contas_a_receber')
-            .select('valor')
-            .eq('restaurant_id', currentRestaurant.id)
-            .eq('status', 'pendente')
+          supabase.rpc('get_financial_summary', { 
+            restaurant_uuid: currentRestaurant.id, 
+            type: 'payable' 
+          }).catch(() => null),
+          supabase.rpc('get_financial_summary', { 
+            restaurant_uuid: currentRestaurant.id, 
+            type: 'receivable' 
+          }).catch(() => null)
         ]);
 
-        const totalPayable = contasPagar.data?.reduce((sum, conta) => sum + Number(conta.valor), 0) || 0;
-        const totalReceivable = contasReceber.data?.reduce((sum, conta) => sum + Number(conta.valor), 0) || 0;
+        let totalPayable = 0;
+        let totalReceivable = 0;
+
+        if (contasPagar?.data) {
+          totalPayable = contasPagar.data.reduce((sum: number, conta: any) => sum + Number(conta.valor), 0);
+        } else {
+          // Fallback para cash_flow
+          const { data: cashFlowExpenses } = await supabase
+            .from('cash_flow')
+            .select('amount')
+            .eq('restaurant_id', currentRestaurant.id)
+            .eq('type', 'expense')
+            .in('status', ['pending', null]);
+          
+          totalPayable = cashFlowExpenses?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+        }
+
+        if (contasReceber?.data) {
+          totalReceivable = contasReceber.data.reduce((sum: number, conta: any) => sum + Number(conta.valor), 0);
+        } else {
+          // Fallback para cash_flow
+          const { data: cashFlowIncome } = await supabase
+            .from('cash_flow')
+            .select('amount')
+            .eq('restaurant_id', currentRestaurant.id)
+            .eq('type', 'income')
+            .in('status', ['pending', null]);
+          
+          totalReceivable = cashFlowIncome?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+        }
 
         financialSummary = {
           totalReceivable,

@@ -29,14 +29,41 @@ export function useAccountsPayable() {
 
     setIsLoading(true);
     try {
+      // Usar query SQL direta para acessar a nova tabela
       const { data, error } = await supabase
-        .from('contas_a_pagar')
-        .select('*')
-        .eq('restaurant_id', currentRestaurant.id)
-        .order('data_vencimento', { ascending: true });
+        .rpc('get_contas_a_pagar', { restaurant_uuid: currentRestaurant.id });
 
-      if (error) throw error;
-      setContas(data || []);
+      if (error) {
+        // Fallback: tentar query direta se a função não existir
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('cash_flow' as any)
+          .select('*')
+          .eq('restaurant_id', currentRestaurant.id)
+          .eq('type', 'expense')
+          .order('date', { ascending: false });
+
+        if (fallbackError) throw fallbackError;
+        
+        // Mapear dados do cash_flow para formato de contas_a_pagar
+        const mappedData = fallbackData?.map((item: any) => ({
+          id: item.id,
+          restaurant_id: item.restaurant_id,
+          fornecedor: item.description?.split(' - ')[0] || 'Fornecedor',
+          descricao: item.description,
+          valor: item.amount,
+          data_vencimento: item.vencimento || item.date,
+          data_pagamento: item.status === 'paid' ? item.date : null,
+          status: item.status === 'paid' ? 'pago' : 'pendente' as 'pago' | 'pendente',
+          categoria: item.category,
+          observacoes: null,
+          documento: item.documento,
+          forma_pagamento: item.payment_method
+        })) || [];
+
+        setContas(mappedData);
+      } else {
+        setContas(data || []);
+      }
     } catch (error) {
       console.error('Erro ao carregar contas a pagar:', error);
       toast.error('Erro ao carregar contas a pagar');
@@ -49,14 +76,37 @@ export function useAccountsPayable() {
     if (!currentRestaurant?.id) return false;
 
     try {
+      // Tentar inserir na nova tabela usando SQL direto
       const { error } = await supabase
-        .from('contas_a_pagar')
-        .insert({
-          ...conta,
-          restaurant_id: currentRestaurant.id
+        .rpc('insert_conta_a_pagar', {
+          restaurant_uuid: currentRestaurant.id,
+          fornecedor: conta.fornecedor,
+          descricao: conta.descricao,
+          valor: conta.valor,
+          data_vencimento: conta.data_vencimento,
+          categoria: conta.categoria,
+          observacoes: conta.observacoes,
+          documento: conta.documento
         });
 
-      if (error) throw error;
+      if (error) {
+        // Fallback: inserir no cash_flow
+        const { error: fallbackError } = await supabase
+          .from('cash_flow')
+          .insert({
+            restaurant_id: currentRestaurant.id,
+            type: 'expense',
+            amount: conta.valor,
+            date: conta.data_vencimento,
+            description: conta.descricao,
+            category: conta.categoria,
+            status: 'pending',
+            vencimento: conta.data_vencimento,
+            documento: conta.documento
+          });
+
+        if (fallbackError) throw fallbackError;
+      }
       
       await loadContas();
       toast.success('Conta a pagar adicionada com sucesso');
@@ -71,11 +121,26 @@ export function useAccountsPayable() {
   const updateConta = async (id: string, updates: Partial<ContaPagar>) => {
     try {
       const { error } = await supabase
-        .from('contas_a_pagar')
-        .update(updates)
-        .eq('id', id);
+        .rpc('update_conta_a_pagar', {
+          conta_id: id,
+          updates: updates
+        });
 
-      if (error) throw error;
+      if (error) {
+        // Fallback: atualizar no cash_flow
+        const { error: fallbackError } = await supabase
+          .from('cash_flow')
+          .update({
+            amount: updates.valor,
+            description: updates.descricao,
+            category: updates.categoria,
+            status: updates.status === 'pago' ? 'paid' : 'pending',
+            payment_method: updates.forma_pagamento
+          })
+          .eq('id', id);
+
+        if (fallbackError) throw fallbackError;
+      }
       
       await loadContas();
       toast.success('Conta atualizada com sucesso');
