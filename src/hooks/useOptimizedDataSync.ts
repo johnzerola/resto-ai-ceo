@@ -76,11 +76,16 @@ export function useOptimizedDataSync() {
           .eq('restaurant_id', currentRestaurant.id);
 
         if (pratos) {
-          const promises = pratos.map(prato => 
-            supabase.rpc('calcular_cmv_inteligente', { 
-              prato_uuid: prato.id 
-            }).catch(err => console.warn(`Erro ao recalcular prato ${prato.id}:`, err))
-          );
+          const promises = pratos.map(async (prato) => {
+            try {
+              return await supabase.rpc('calcular_cmv_inteligente', { 
+                prato_uuid: prato.id 
+              });
+            } catch (err) {
+              console.warn(`Erro ao recalcular prato ${prato.id}:`, err);
+              return null;
+            }
+          });
           
           await Promise.allSettled(promises);
         }

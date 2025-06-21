@@ -12,7 +12,7 @@ import {
   Monitor,
   Database,
   Calculator,
-  Sync,
+  RefreshCw,
   Users
 } from 'lucide-react';
 import { useOptimizedDataSync } from '@/hooks/useOptimizedDataSync';
@@ -170,7 +170,7 @@ export function SystemHealthDashboard() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-sm">
-              <Sync className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4" />
               Sincronização
             </CardTitle>
           </CardHeader>
