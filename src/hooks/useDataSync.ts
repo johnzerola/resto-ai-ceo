@@ -64,7 +64,7 @@ export function useDataSync() {
 
         if (pratosError) console.warn('Erro ao sincronizar pratos:', pratosError);
 
-        // Recalcular custos dos pratos
+        // Recalcular custos dos pratos usando função existente
         const { data: pratos } = await supabase
           .from('pratos')
           .select('id')
@@ -73,7 +73,7 @@ export function useDataSync() {
         if (pratos) {
           for (const prato of pratos) {
             try {
-              await supabase.rpc('calcular_cmv_otimizado', { prato_uuid: prato.id });
+              await supabase.rpc('calcular_cmv_inteligente', { prato_uuid: prato.id });
             } catch (error) {
               console.warn(`Erro ao recalcular prato ${prato.id}:`, error);
             }

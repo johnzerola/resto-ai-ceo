@@ -108,51 +108,26 @@ export function useSystemValidation() {
         warnings.push('Sistema de unidades de medida precisa ser configurado');
       }
 
-      // Buscar resumo financeiro usando fallback para cash_flow
+      // Buscar resumo financeiro usando cash_flow
       let financialSummary;
       try {
-        // Tentar buscar das novas tabelas primeiro
-        const [contasPagar, contasReceber] = await Promise.all([
-          supabase.rpc('get_financial_summary', { 
-            restaurant_uuid: currentRestaurant.id, 
-            type: 'payable' 
-          }).catch(() => null),
-          supabase.rpc('get_financial_summary', { 
-            restaurant_uuid: currentRestaurant.id, 
-            type: 'receivable' 
-          }).catch(() => null)
-        ]);
-
-        let totalPayable = 0;
-        let totalReceivable = 0;
-
-        if (contasPagar?.data) {
-          totalPayable = contasPagar.data.reduce((sum: number, conta: any) => sum + Number(conta.valor), 0);
-        } else {
-          // Fallback para cash_flow
-          const { data: cashFlowExpenses } = await supabase
+        const [cashFlowExpenses, cashFlowIncome] = await Promise.all([
+          supabase
             .from('cash_flow')
             .select('amount')
             .eq('restaurant_id', currentRestaurant.id)
             .eq('type', 'expense')
-            .in('status', ['pending', null]);
-          
-          totalPayable = cashFlowExpenses?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
-        }
-
-        if (contasReceber?.data) {
-          totalReceivable = contasReceber.data.reduce((sum: number, conta: any) => sum + Number(conta.valor), 0);
-        } else {
-          // Fallback para cash_flow
-          const { data: cashFlowIncome } = await supabase
+            .in('status', ['pending', 'null']),
+          supabase
             .from('cash_flow')
             .select('amount')
             .eq('restaurant_id', currentRestaurant.id)
             .eq('type', 'income')
-            .in('status', ['pending', null]);
-          
-          totalReceivable = cashFlowIncome?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
-        }
+            .in('status', ['pending', 'null'])
+        ]);
+
+        const totalPayable = cashFlowExpenses.data?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+        const totalReceivable = cashFlowIncome.data?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
 
         financialSummary = {
           totalReceivable,

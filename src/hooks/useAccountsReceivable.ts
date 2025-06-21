@@ -28,40 +28,32 @@ export function useAccountsReceivable() {
 
     setIsLoading(true);
     try {
-      // Usar query SQL direta para acessar a nova tabela
-      const { data, error } = await supabase
-        .rpc('get_contas_a_receber', { restaurant_uuid: currentRestaurant.id });
+      // Usar cash_flow como fonte principal
+      const { data: cashFlowData, error } = await supabase
+        .from('cash_flow')
+        .select('*')
+        .eq('restaurant_id', currentRestaurant.id)
+        .eq('type', 'income')
+        .order('date', { ascending: false });
 
-      if (error) {
-        // Fallback: tentar query usando cash_flow
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('cash_flow' as any)
-          .select('*')
-          .eq('restaurant_id', currentRestaurant.id)
-          .eq('type', 'income')
-          .order('date', { ascending: false });
+      if (error) throw error;
+      
+      // Mapear dados do cash_flow para formato de contas_a_receber
+      const mappedData: ContaReceber[] = cashFlowData?.map((item: any) => ({
+        id: item.id,
+        restaurant_id: item.restaurant_id,
+        cliente: item.description?.split(' - ')[1] || 'Cliente',
+        descricao: item.description,
+        valor: item.amount,
+        data_vencimento: item.vencimento || item.date,
+        data_recebimento: item.status === 'paid' ? item.date : undefined,
+        status: item.status === 'paid' ? 'recebido' : 'pendente' as 'recebido' | 'pendente',
+        categoria: item.category,
+        observacoes: item.documento,
+        forma_recebimento: item.payment_method
+      })) || [];
 
-        if (fallbackError) throw fallbackError;
-        
-        // Mapear dados do cash_flow para formato de contas_a_receber
-        const mappedData = fallbackData?.map((item: any) => ({
-          id: item.id,
-          restaurant_id: item.restaurant_id,
-          cliente: item.description?.split(' - ')[1] || 'Cliente',
-          descricao: item.description,
-          valor: item.amount,
-          data_vencimento: item.vencimento || item.date,
-          data_recebimento: item.status === 'paid' ? item.date : null,
-          status: item.status === 'paid' ? 'recebido' : 'pendente' as 'recebido' | 'pendente',
-          categoria: item.category,
-          observacoes: null,
-          forma_recebimento: item.payment_method
-        })) || [];
-
-        setContas(mappedData);
-      } else {
-        setContas(data || []);
-      }
+      setContas(mappedData);
     } catch (error) {
       console.error('Erro ao carregar contas a receber:', error);
       toast.error('Erro ao carregar contas a receber');
@@ -74,35 +66,21 @@ export function useAccountsReceivable() {
     if (!currentRestaurant?.id) return false;
 
     try {
-      // Tentar inserir na nova tabela usando SQL direto
+      // Inserir no cash_flow
       const { error } = await supabase
-        .rpc('insert_conta_a_receber', {
-          restaurant_uuid: currentRestaurant.id,
-          cliente: conta.cliente,
-          descricao: conta.descricao,
-          valor: conta.valor,
-          data_vencimento: conta.data_vencimento,
-          categoria: conta.categoria,
-          observacoes: conta.observacoes
+        .from('cash_flow')
+        .insert({
+          restaurant_id: currentRestaurant.id,
+          type: 'income',
+          amount: conta.valor,
+          date: conta.data_vencimento,
+          description: conta.descricao,
+          category: conta.categoria,
+          status: 'pending',
+          vencimento: conta.data_vencimento
         });
 
-      if (error) {
-        // Fallback: inserir no cash_flow
-        const { error: fallbackError } = await supabase
-          .from('cash_flow')
-          .insert({
-            restaurant_id: currentRestaurant.id,
-            type: 'income',
-            amount: conta.valor,
-            date: conta.data_vencimento,
-            description: conta.descricao,
-            category: conta.categoria,
-            status: 'pending',
-            vencimento: conta.data_vencimento
-          });
-
-        if (fallbackError) throw fallbackError;
-      }
+      if (error) throw error;
       
       await loadContas();
       toast.success('Conta a receber adicionada com sucesso');
@@ -116,28 +94,16 @@ export function useAccountsReceivable() {
 
   const marcarComoRecebida = async (id: string, formaRecebimento?: string) => {
     try {
+      // Atualizar no cash_flow
       const { error } = await supabase
-        .rpc('update_conta_a_receber', {
-          conta_id: id,
-          updates: {
-            status: 'recebido',
-            data_recebimento: new Date().toISOString().split('T')[0],
-            forma_recebimento: formaRecebimento || 'dinheiro'
-          }
-        });
+        .from('cash_flow')
+        .update({
+          status: 'paid',
+          payment_method: formaRecebimento || 'dinheiro'
+        })
+        .eq('id', id);
 
-      if (error) {
-        // Fallback: atualizar no cash_flow
-        const { error: fallbackError } = await supabase
-          .from('cash_flow')
-          .update({
-            status: 'paid',
-            payment_method: formaRecebimento || 'dinheiro'
-          })
-          .eq('id', id);
-
-        if (fallbackError) throw fallbackError;
-      }
+      if (error) throw error;
       
       await loadContas();
       toast.success('Conta marcada como recebida');
