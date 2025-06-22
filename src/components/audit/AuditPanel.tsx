@@ -7,7 +7,7 @@ import { CheckCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useInterfaceAudit } from '@/hooks/useInterfaceAudit';
 
 const AuditPanel = memo(() => {
-  const { auditResult, runAudit, isHealthy } = useInterfaceAudit();
+  const { auditResult, runFullAudit, isHealthy } = useInterfaceAudit();
 
   const getStatusIcon = (isOk: boolean) => {
     return isOk ? (
@@ -37,7 +37,7 @@ const AuditPanel = memo(() => {
           <Button
             variant="outline"
             size="sm"
-            onClick={runAudit}
+            onClick={runFullAudit}
             className="flex items-center gap-2"
           >
             <RefreshCw className="h-4 w-4" />

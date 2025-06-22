@@ -14,10 +14,10 @@ import {
 } from 'lucide-react';
 
 export const SystemAuditPanel = () => {
-  const { auditResult, runAudit, isHealthy, performanceScore } = useInterfaceAudit();
+  const { auditResult, runFullAudit, isHealthy, performanceScore } = useInterfaceAudit();
 
   const handleRunAudit = () => {
-    runAudit();
+    runFullAudit();
   };
 
   return (

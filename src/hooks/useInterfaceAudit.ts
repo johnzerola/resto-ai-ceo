@@ -193,8 +193,21 @@ export function useInterfaceAudit(config?: AuditConfig) {
     };
   }, []);
 
+  // Calcular se o sistema está saudável
+  const isHealthy = auditResult.duplicateMenus.length === 0 && 
+                   auditResult.invalidRoutes.length === 0 && 
+                   auditResult.dataIntegrity && 
+                   auditResult.designConsistency;
+
+  // Calcular pontuação de performance
+  const performanceScore = auditResult.performanceMetrics.loadTime < 100 && 
+                          auditResult.performanceMetrics.consoleErrors < 3 ? 'good' : 'needs-improvement';
+
   return {
     auditResult,
-    runFullAudit
+    runFullAudit,
+    runAudit: runFullAudit, // Alias for backward compatibility
+    isHealthy,
+    performanceScore
   };
 }
