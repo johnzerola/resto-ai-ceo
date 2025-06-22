@@ -1,133 +1,79 @@
-import {
-  createBrowserRouter,
-  RouterProvider,
-  Route,
-  createRoutesFromElements,
-  Outlet,
-} from "react-router-dom";
-
-import Index from "./pages/Index";
-import { AssinaturaCompleta as Pricing } from "./pages/AssinaturaCompleta";
-import Login from "./pages/Login";
-import { Register } from "./pages/Register";
-import { Integracoes } from "./pages/Integracoes";
-import { AssinaturaCompleta as Subscription } from "./pages/AssinaturaCompleta";
-import Dashboard from "./pages/Dashboard";
-import { SystemMonitoring } from "@/pages/SystemMonitoring";
-import { AIAssistantPage } from "@/pages/AIAssistantPage";
-import { ProjecoesPagina } from "@/pages/ProjecoesPagina";
-import FluxoDeCaixa from "@/pages/FluxoDeCaixa";
-import NotFound from "./pages/NotFound";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { Toaster } from "@/components/ui/sonner";
+import { DataSync } from "@/components/restaurant/DataSync";
+import Dashboard from "./pages/Dashboard";
+import FichaTecnica from "./pages/FichaTecnica";
+import SystemValidation from "./pages/SystemValidation";
+import DreCmv from "./pages/DreCmv";
+import FluxoDeCaixa from "./pages/FluxoDeCaixa";
+import Simulador from "./pages/Simulador";
+import Metas from "./pages/Metas";
+import Estoque from "./pages/Estoque";
+import Cardapio from "./pages/Cardapio";
+import AKGunsAbas from "./pages/AKGunsAbas";
+import AiAssistant from "./pages/AiAssistant";
+import GerenciarUsuarios from "./pages/GerenciarUsuarios";
+import Assinatura from "./pages/Assinatura";
+import Configuracoes from "./pages/Configuracoes";
+import Documentacao from "./pages/Documentacao";
+import Privacidade from "./pages/Privacidade";
+import StatusSistema from "./pages/StatusSistema";
+import Vendas from "./pages/Vendas";
+import SecurityCenter from "./pages/SecurityCenter";
+import Admin from "./pages/Admin";
+import NotFound from "./pages/NotFound";
+import {ProtectedRoute} from "@/contexts/ProtectedRoute";
 
-// Importing existing pages - using named imports for components that don't have default exports
-import { CMV } from "@/pages/CMV";
-import { DRE } from "@/pages/DRE";
-import Estoque from "@/pages/Estoque";
-import FichaTecnica from "@/pages/FichaTecnica";
-import { Financeiro } from "@/pages/Financeiro";
-import { Receitas } from "@/pages/Receitas";
-import Simulador from "@/pages/Simulador";
-import { Metas } from "@/pages/Metas";
-import Promocoes from "@/pages/Promocoes";
-import Cardapio from "@/pages/Cardapio";
-import Marketing from "@/pages/Marketing";
-import Configuracoes from "@/pages/Configuracoes";
-import Onboarding from "@/pages/Onboarding";
+import SystemAuditPage from "./pages/SystemAuditPage";
 
-// For now, using Dashboard for missing pages until they're created
-const Settings = Dashboard;
-const Restaurant = Dashboard;
-const Restaurants = Dashboard;
-const ForgotPassword = Login;
-const ResetPassword = Login;
-const Logout = Login;
-
-// Simple layout components
-const AuthLayout = () => <Outlet />;
-const MainLayout = () => <Outlet />;
-const RestaurantLayout = () => <Outlet />;
-
-import SystemAuditPage from "@/pages/SystemAuditPage";
-import ConfiguracoesCompletas from "@/pages/ConfiguracoesCompletas";
-import PrecificacaoCompleta from "@/pages/PrecificacaoCompleta";
-import EstoqueCompleto from "@/pages/EstoqueCompleto";
-import FluxoCaixaCompleto from "@/pages/FluxoCaixaCompleto";
-
-// ... keep existing code until the routes section
-
-const router = createBrowserRouter(
-  createRoutesFromElements(
-    <>
-      {/* Public routes */}
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<Index />} />
-        <Route path="/pricing" element={<Pricing />} />
-      </Route>
-
-      {/* Auth routes - accessible without authentication */}
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/logout" element={<Logout />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-      </Route>
-
-      {/* Protected routes */}
-      <Route element={<MainLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/configuracoes" element={<Configuracoes />} />
-        <Route path="/configuracoes-completas" element={<ConfiguracoesCompletas />} />
-        <Route path="/integracoes" element={<Integracoes />} />
-        <Route path="/assinatura" element={<Subscription />} />
-        <Route path="/system-monitoring" element={<SystemMonitoring />} />
-        <Route path="/system-audit" element={<SystemAuditPage />} />
-        <Route path="/ai-assistant" element={<AIAssistantPage />} />
-        <Route path="/projecoes" element={<ProjecoesPagina />} />
-        <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
-        <Route path="/fluxo-de-caixa-completo" element={<FluxoCaixaCompleto />} />
-        
-        {/* Financial routes */}
-        <Route path="/cmv" element={<CMV />} />
-        <Route path="/dre" element={<DRE />} />
-        <Route path="/financeiro" element={<Financeiro />} />
-        <Route path="/precificacao-completa" element={<PrecificacaoCompleta />} />
-        
-        {/* Inventory and recipes */}
-        <Route path="/estoque" element={<Estoque />} />
-        <Route path="/estoque-completo" element={<EstoqueCompleto />} />
-        <Route path="/ficha-tecnica" element={<FichaTecnica />} />
-        <Route path="/receitas" element={<Receitas />} />
-        
-        {/* Business management */}
-        <Route path="/simulador" element={<Simulador />} />
-        <Route path="/metas" element={<Metas />} />
-        <Route path="/promocoes" element={<Promocoes />} />
-        <Route path="/cardapio" element={<Cardapio />} />
-        <Route path="/marketing" element={<Marketing />} />
-      </Route>
-
-      <Route element={<RestaurantLayout />}>
-        <Route path="/restaurants" element={<Restaurants />} />
-        <Route path="/restaurants/:id" element={<Restaurant />} />
-      </Route>
-
-      {/* 404 Route */}
-      <Route path="*" element={<NotFound />} />
-    </>
-  )
-);
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-      <Toaster />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <DataSync>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/projecoes" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/dre" element={<ProtectedRoute><DreCmv /></ProtectedRoute>} />
+                <Route path="/cmv" element={<ProtectedRoute><DreCmv /></ProtectedRoute>} />
+                <Route path="/dre-cmv" element={<ProtectedRoute><DreCmv /></ProtectedRoute>} />
+                <Route path="/fluxo-de-caixa" element={<ProtectedRoute><FluxoDeCaixa /></ProtectedRoute>} />
+                <Route path="/simulador" element={<ProtectedRoute><Simulador /></ProtectedRoute>} />
+                <Route path="/metas" element={<ProtectedRoute><Metas /></ProtectedRoute>} />
+                <Route path="/estoque" element={<ProtectedRoute><Estoque /></ProtectedRoute>} />
+                <Route path="/cardapio" element={<ProtectedRoute><Cardapio /></ProtectedRoute>} />
+                <Route path="/akguns-abas" element={<ProtectedRoute><AKGunsAbas /></ProtectedRoute>} />
+                <Route path="/ai-assistant" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
+                <Route path="/gerenciar-usuarios" element={<ProtectedRoute><GerenciarUsuarios /></ProtectedRoute>} />
+                <Route path="/assinatura" element={<ProtectedRoute><Assinatura /></ProtectedRoute>} />
+                <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
+                <Route path="/documentacao" element={<ProtectedRoute><Documentacao /></ProtectedRoute>} />
+                <Route path="/privacidade" element={<ProtectedRoute><Privacidade /></ProtectedRoute>} />
+                <Route path="/status-sistema" element={<ProtectedRoute><StatusSistema /></ProtectedRoute>} />
+                <Route path="/vendas" element={<ProtectedRoute><Vendas /></ProtectedRoute>} />
+                <Route path="/security-center" element={<ProtectedRoute><SecurityCenter /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+                <Route path="/ficha-tecnica-inteligente-completa" element={<ProtectedRoute><FichaTecnica /></ProtectedRoute>} />
+                <Route path="/system-validation" element={<ProtectedRoute><SystemValidation /></ProtectedRoute>} />
+                <Route path="*" element={<NotFound />} />
+                <Route path="/system-audit" element={<SystemAuditPage />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </DataSync>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 
