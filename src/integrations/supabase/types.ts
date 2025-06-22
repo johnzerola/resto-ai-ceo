@@ -280,6 +280,112 @@ export type Database = {
           },
         ]
       }
+      contas_a_pagar: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          fornecedor: string | null
+          id: string
+          observacoes: string | null
+          restaurant_id: string | null
+          status: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          fornecedor?: string | null
+          id?: string
+          observacoes?: string | null
+          restaurant_id?: string | null
+          status?: string
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          fornecedor?: string | null
+          id?: string
+          observacoes?: string | null
+          restaurant_id?: string | null
+          status?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_a_pagar_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_a_receber: {
+        Row: {
+          categoria: string
+          cliente: string | null
+          created_at: string | null
+          data_recebimento: string | null
+          data_vencimento: string
+          descricao: string
+          id: string
+          observacoes: string | null
+          restaurant_id: string | null
+          status: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          categoria?: string
+          cliente?: string | null
+          created_at?: string | null
+          data_recebimento?: string | null
+          data_vencimento: string
+          descricao: string
+          id?: string
+          observacoes?: string | null
+          restaurant_id?: string | null
+          status?: string
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          categoria?: string
+          cliente?: string | null
+          created_at?: string | null
+          data_recebimento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          id?: string
+          observacoes?: string | null
+          restaurant_id?: string | null
+          status?: string
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_a_receber_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       embalagens: {
         Row: {
           created_at: string | null
