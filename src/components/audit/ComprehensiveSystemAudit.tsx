@@ -124,13 +124,13 @@ export function ComprehensiveSystemAudit() {
     const checks: AuditCheck[] = [];
     
     try {
-      // Check fundamental tables that we know exist
+      // Check fundamental tables using proper table names from types
       const knownTables = ['restaurants', 'configuracoes_restaurante', 'cash_flow'];
       let tablesExist = 0;
       
       for (const table of knownTables) {
         try {
-          const { data, error } = await supabase.from(table).select('*').limit(1);
+          const { data, error } = await supabase.from(table as any).select('*').limit(1);
           if (!error) tablesExist++;
         } catch (e) {
           console.warn(`Tabela ${table} não encontrada`);
@@ -158,13 +158,20 @@ export function ComprehensiveSystemAudit() {
           .from('configuracoes_restaurante')
           .select('*')
           .eq('restaurant_id', currentRestaurant.id)
-          .single();
+          .maybeSingle();
         
         checks.push({
           name: 'Campos essenciais validados',
           status: config ? 'success' : 'warning',
           details: config ? 'Configurações encontradas' : 'Configurações não encontradas',
           percentage: config ? 100 : 60
+        });
+      } else {
+        checks.push({
+          name: 'Campos essenciais validados',
+          status: 'warning',
+          details: 'Restaurante não selecionado',
+          percentage: 50
         });
       }
 
