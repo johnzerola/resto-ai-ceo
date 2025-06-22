@@ -71,129 +71,130 @@ export function useInterfaceAudit(config?: AuditConfig) {
 
   // Verificar menus duplicados
   const checkDuplicateMenus = useCallback((): string[] => {
-    const menuItems = document.querySelectorAll('[data-sidebar-menu-item]');
-    const menuTexts: string[] = [];
+    const menuItems = document.querySelectorAll('[role="menuitem"], a[href], button');
+    const textMap = new Map<string, number>();
     const duplicates: string[] = [];
 
-    menuItems.forEach(item => {
-      const text = item.textContent?.trim() || '';
-      if (menuTexts.includes(text) && !duplicates.includes(text)) {
-        duplicates.push(text);
+    menuItems.forEach((item) => {
+      const text = item.textContent?.trim();
+      if (text && text.length > 2) {
+        const count = textMap.get(text) || 0;
+        textMap.set(text, count + 1);
+        if (count === 1) {
+          duplicates.push(text);
+        }
       }
-      menuTexts.push(text);
     });
 
     return duplicates;
   }, []);
 
-  // Verificar rotas inválidas
-  const checkInvalidRoutes = useCallback((): string[] => {
-    const menuLinks = document.querySelectorAll('[data-sidebar-menu-item] a');
-    const invalidRoutes: string[] = [];
-
-    menuLinks.forEach(link => {
-      const href = link.getAttribute('href');
-      if (href && !auditConfig.validRoutes.includes(href)) {
-        invalidRoutes.push(href);
-      }
-    });
-
-    return invalidRoutes;
-  }, [auditConfig.validRoutes]);
-
   // Verificar integridade dos dados
   const checkDataIntegrity = useCallback((): boolean => {
-    return auditConfig.requiredDataSelectors.every(selector => {
-      const element = document.querySelector(selector);
-      return element && element.textContent && element.textContent.trim().length > 0;
-    });
+    try {
+      // Verificar se elementos essenciais estão presentes
+      const hasRequiredElements = auditConfig.requiredDataSelectors.every(selector => {
+        return document.querySelector(selector) !== null;
+      });
+
+      // Verificar se há erros de console relacionados a dados
+      const consoleErrors = (window as any).__consoleErrors || 0;
+      
+      return hasRequiredElements && consoleErrors < 5;
+    } catch (error) {
+      console.warn('Erro na verificação de integridade:', error);
+      return false;
+    }
   }, [auditConfig.requiredDataSelectors]);
 
-  // Verificar consistência do design moderno
+  // Verificar consistência de design
   const checkDesignConsistency = useCallback((): boolean => {
-    const modernDesignElements = document.querySelectorAll('.dashboard-unificado, .bg-gradient-to-br');
-    const hasModernLayout = document.querySelector('.dashboard-unificado') !== null;
-    
-    return hasModernLayout && modernDesignElements.length > 0;
-  }, []);
+    try {
+      const buttons = document.querySelectorAll('button');
+      const inputs = document.querySelectorAll('input');
+      
+      // Verificar se botões têm classes consistentes
+      const buttonClasses = Array.from(buttons).map(btn => 
+        Array.from(btn.classList).filter(cls => cls.includes('btn') || cls.includes('button')).join(' ')
+      );
+      
+      const uniqueButtonClasses = new Set(buttonClasses);
+      const hasConsistentButtons = uniqueButtonClasses.size <= 3; // Máximo 3 tipos de botão
 
-  // Métricas de performance
-  const checkPerformanceMetrics = useCallback(() => {
-    const loadTime = performance.now();
-    const memoryUsage = (performance as any).memory?.usedJSHeapSize || 0;
-    const consoleErrors = (console as any).errorCount || 0;
+      // Verificar se inputs têm altura consistente
+      const inputHeights = Array.from(inputs).map(input => 
+        window.getComputedStyle(input).height
+      );
+      
+      const uniqueHeights = new Set(inputHeights);
+      const hasConsistentInputs = uniqueHeights.size <= 2; // Máximo 2 alturas diferentes
 
-    return {
-      loadTime,
-      memoryUsage,
-      consoleErrors
-    };
+      return hasConsistentButtons && hasConsistentInputs;
+    } catch (error) {
+      console.warn('Erro na verificação de design:', error);
+      return false;
+    }
   }, []);
 
   // Executar auditoria completa
-  const runAudit = useCallback(async () => {
-    console.log('🔍 Iniciando auditoria completa de interface...');
+  const runFullAudit = useCallback(async () => {
+    const startTime = performance.now();
+    
+    try {
+      const duplicateMenus = checkDuplicateMenus();
+      const dataIntegrity = checkDataIntegrity();
+      const designConsistency = checkDesignConsistency();
+      
+      // Verificar rotas inválidas
+      const currentRoute = location.pathname;
+      const invalidRoutes = auditConfig.validRoutes.includes(currentRoute) ? [] : [currentRoute];
+      
+      // Métricas de performance
+      const loadTime = performance.now() - startTime;
+      const memoryUsage = (performance as any).memory?.usedJSHeapSize || 0;
+      const consoleErrors = (window as any).__consoleErrors || 0;
 
-    const duplicateMenus = checkDuplicateMenus();
-    const invalidRoutes = checkInvalidRoutes();
-    const dataIntegrity = checkDataIntegrity();
-    const designConsistency = checkDesignConsistency();
-    const performanceMetrics = checkPerformanceMetrics();
+      setAuditResult({
+        duplicateMenus,
+        invalidRoutes,
+        dataIntegrity,
+        designConsistency,
+        lastAudit: new Date().toISOString(),
+        performanceMetrics: {
+          loadTime,
+          memoryUsage,
+          consoleErrors
+        }
+      });
 
-    const result: AuditResult = {
-      duplicateMenus,
-      invalidRoutes,
-      dataIntegrity,
-      designConsistency,
-      performanceMetrics,
-      lastAudit: new Date().toISOString()
+    } catch (error) {
+      console.error('Erro na auditoria:', error);
+    }
+  }, [location.pathname, checkDuplicateMenus, checkDataIntegrity, checkDesignConsistency, auditConfig.validRoutes]);
+
+  // Executar auditoria quando a rota mudar
+  useEffect(() => {
+    const timer = setTimeout(runFullAudit, 1000); // Aguardar 1s para a página carregar
+    return () => clearTimeout(timer);
+  }, [runFullAudit]);
+
+  // Monitorar erros de console
+  useEffect(() => {
+    const originalError = console.error;
+    (window as any).__consoleErrors = 0;
+
+    console.error = (...args) => {
+      (window as any).__consoleErrors++;
+      originalError.apply(console, args);
     };
 
-    setAuditResult(result);
-
-    // Log dos resultados
-    if (duplicateMenus.length > 0) {
-      console.warn('⚠️ Menus duplicados detectados:', duplicateMenus);
-    }
-
-    if (invalidRoutes.length > 0) {
-      console.warn('⚠️ Rotas inválidas detectadas:', invalidRoutes);
-    }
-
-    if (!dataIntegrity) {
-      console.error('❌ Alguns dados críticos não estão sendo carregados.');
-    } else {
-      console.log('✅ Dados operacionais carregados corretamente.');
-    }
-
-    if (!designConsistency) {
-      console.warn('⚠️ Design moderno não detectado corretamente.');
-    } else {
-      console.log('✅ Design moderno unificado aplicado.');
-    }
-
-    console.log('📊 Métricas de performance:', performanceMetrics);
-    console.log('✅ Auditoria completa concluída.');
-
-    return result;
-  }, [checkDuplicateMenus, checkInvalidRoutes, checkDataIntegrity, checkDesignConsistency, checkPerformanceMetrics]);
-
-  // Auto-auditoria quando a rota muda
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      runAudit();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [location.pathname, runAudit]);
+    return () => {
+      console.error = originalError;
+    };
+  }, []);
 
   return {
     auditResult,
-    runAudit,
-    isHealthy: auditResult.duplicateMenus.length === 0 && 
-               auditResult.invalidRoutes.length === 0 && 
-               auditResult.dataIntegrity && 
-               auditResult.designConsistency,
-    performanceScore: auditResult.performanceMetrics.loadTime < 2000 ? 'good' : 'needs-improvement'
+    runFullAudit
   };
 }
