@@ -3,8 +3,9 @@ import React from 'react';
 import { ModernLayout } from '@/components/restaurant/ModernLayout';
 import { ComprehensiveSystemAudit } from '@/components/audit/ComprehensiveSystemAudit';
 import { TechnicalQuestionsAudit } from '@/components/audit/TechnicalQuestionsAudit';
+import { FinalSystemValidation } from '@/components/audit/FinalSystemValidation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Brain, CheckSquare } from 'lucide-react';
+import { Shield, Brain, CheckSquare, Rocket } from 'lucide-react';
 
 export default function SystemAuditPage() {
   return (
@@ -22,17 +23,25 @@ export default function SystemAuditPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="comprehensive" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs defaultValue="final-validation" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="final-validation" className="flex items-center gap-2">
+              <Rocket className="h-4 w-4" />
+              Validação Final
+            </TabsTrigger>
             <TabsTrigger value="comprehensive" className="flex items-center gap-2">
               <CheckSquare className="h-4 w-4" />
               Auditoria Completa
             </TabsTrigger>
             <TabsTrigger value="questions" className="flex items-center gap-2">
               <Brain className="h-4 w-4" />
-              Análise Técnica Especializada
+              Análise Técnica
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="final-validation" className="space-y-6">
+            <FinalSystemValidation />
+          </TabsContent>
 
           <TabsContent value="comprehensive" className="space-y-6">
             <ComprehensiveSystemAudit />

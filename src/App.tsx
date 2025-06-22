@@ -24,6 +24,9 @@ import StatusSistema from "./pages/StatusSistema";
 import SecurityCenter from "./pages/SecurityCenter";
 import NotFound from "./pages/NotFound";
 import SystemAuditPage from "./pages/SystemAuditPage";
+import Login from "./pages/Login";
+import Vendas from "./pages/Vendas";
+import AiAssistant from "./pages/AiAssistant";
 
 const queryClient = new QueryClient();
 
@@ -37,14 +40,20 @@ function App() {
             <Sonner />
             <BrowserRouter>
               <Routes>
+                <Route path="/login" element={<Login />} />
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/dre-cmv" element={<DreCmv />} />
+                <Route path="/dre" element={<DreCmv />} />
+                <Route path="/cmv" element={<DreCmv />} />
                 <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
                 <Route path="/simulador" element={<Simulador />} />
                 <Route path="/metas" element={<Metas />} />
                 <Route path="/estoque" element={<Estoque />} />
                 <Route path="/cardapio" element={<Cardapio />} />
+                <Route path="/vendas" element={<Vendas />} />
+                <Route path="/assistente-ia" element={<AiAssistant />} />
+                <Route path="/ai-assistant" element={<AiAssistant />} />
                 <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
                 <Route path="/assinatura" element={<Assinatura />} />
                 <Route path="/configuracoes" element={<Configuracoes />} />
