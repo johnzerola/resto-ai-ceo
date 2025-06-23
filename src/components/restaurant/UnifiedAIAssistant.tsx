@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -145,26 +146,50 @@ export function UnifiedAIAssistant() {
     setIsLoading(true);
 
     try {
-      // Chamar a Edge Function melhorada
-      const { data, error } = await supabase.functions.invoke('restaurant-ai-analysis', {
-        body: {
-          message: inputMessage,
-          aiType: activeTab,
-          context: context,
-          conversationHistory: messages[activeTab].slice(-10),
-          restaurantId: context?.restaurantId
-        }
+      // Obter usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Preparar dados para a requisição
+      const requestPayload = {
+        userId: user.id,
+        restaurantId: context?.restaurantId || null,
+        message: inputMessage,
+        aiType: activeTab,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('Enviando requisição para IA externa:', requestPayload);
+
+      // Fazer requisição para o endpoint externo
+      const response = await fetch('https://restauria.app.n8n.cloud/webhook/ai-assistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload)
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Resposta da IA externa:', data);
+
+      // Extrair a resposta da IA
+      const aiResponseContent = data.response || data.reply || data.message || 'Desculpe, não consegui processar sua mensagem.';
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: data.reply || 'Desculpe, não consegui processar sua mensagem.',
+        content: aiResponseContent,
         timestamp: new Date(),
         aiType: activeTab,
-        queryType: data.type,
+        queryType: 'system_query',
         imageUrl: data.imageUrl
       };
 
@@ -173,28 +198,63 @@ export function UnifiedAIAssistant() {
         [activeTab]: [...prev[activeTab], aiMessage]
       }));
 
-      // Mostrar indicador se foi consulta do sistema
-      if (data.type === 'system_query') {
-        toast.success('Consulta realizada com dados do sistema!');
-      }
+      // Mostrar sucesso
+      toast.success('Resposta recebida da IA!');
 
     } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
-      toast.error('Erro ao comunicar com a IA. Tente novamente.');
+      console.error('Erro ao comunicar com a IA externa:', error);
       
-      // Mensagem de erro da IA
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'assistant',
-        content: 'Desculpe, estou enfrentando dificuldades técnicas. Pode tentar novamente em alguns instantes?',
-        timestamp: new Date(),
-        aiType: activeTab
-      };
+      // Fallback para a Edge Function do Supabase em caso de erro
+      console.log('Tentando fallback com Edge Function...');
+      
+      try {
+        const { data, error: supabaseError } = await supabase.functions.invoke('restaurant-ai-analysis', {
+          body: {
+            message: inputMessage,
+            aiType: activeTab,
+            context: context,
+            conversationHistory: messages[activeTab].slice(-10),
+            restaurantId: context?.restaurantId
+          }
+        });
 
-      setMessages(prev => ({
-        ...prev,
-        [activeTab]: [...prev[activeTab], errorMessage]
-      }));
+        if (supabaseError) throw supabaseError;
+
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: data.reply || 'Desculpe, não consegui processar sua mensagem.',
+          timestamp: new Date(),
+          aiType: activeTab,
+          queryType: data.type,
+          imageUrl: data.imageUrl
+        };
+
+        setMessages(prev => ({
+          ...prev,
+          [activeTab]: [...prev[activeTab], aiMessage]
+        }));
+
+        toast.success('Resposta recebida (via fallback)!');
+
+      } catch (fallbackError) {
+        console.error('Erro também no fallback:', fallbackError);
+        toast.error('Erro ao comunicar com a IA. Tente novamente.');
+        
+        // Mensagem de erro da IA
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: 'Desculpe, estou enfrentando dificuldades técnicas. Pode tentar novamente em alguns instantes?',
+          timestamp: new Date(),
+          aiType: activeTab
+        };
+
+        setMessages(prev => ({
+          ...prev,
+          [activeTab]: [...prev[activeTab], errorMessage]
+        }));
+      }
     } finally {
       setIsLoading(false);
     }
