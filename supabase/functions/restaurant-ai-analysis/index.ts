@@ -184,7 +184,17 @@ async function querySupabaseDirectly(message: string, restaurantId: string, aiTy
       logStep('Erro ao buscar receitas', { error: recipesError });
     }
 
-    // 5. Buscar metas
+    // 5. Buscar pratos completos
+    const { data: pratos, error: pratosError } = await supabase
+      .from('pratos')
+      .select('*')
+      .eq('restaurant_id', restaurantId);
+
+    if (pratosError) {
+      logStep('Erro ao buscar pratos', { error: pratosError });
+    }
+
+    // 6. Buscar metas
     const { data: goals, error: goalsError } = await supabase
       .from('goals')
       .select('*')
@@ -194,20 +204,46 @@ async function querySupabaseDirectly(message: string, restaurantId: string, aiTy
       logStep('Erro ao buscar metas', { error: goalsError });
     }
 
+    // 7. Buscar insumos
+    const { data: insumos, error: insumosError } = await supabase
+      .from('insumos')
+      .select('*')
+      .eq('restaurant_id', restaurantId);
+
+    if (insumosError) {
+      logStep('Erro ao buscar insumos', { error: insumosError });
+    }
+
+    // 8. Buscar configurações do restaurante
+    const { data: config, error: configError } = await supabase
+      .from('configuracoes_restaurante')
+      .select('*')
+      .eq('restaurant_id', restaurantId)
+      .single();
+
+    if (configError) {
+      logStep('Configurações não encontradas, usando padrões', { error: configError });
+    }
+
     // Compilar contexto estruturado
     const contextData = await compileRestaurantContext(
       restaurant,
       cashFlow || [],
       inventory || [],
       recipes || [],
-      goals || []
+      pratos || [],
+      goals || [],
+      insumos || [],
+      config
     );
 
     logStep('Contexto compilado', { 
       transacoes: cashFlow?.length || 0,
       itensEstoque: inventory?.length || 0,
       receitas: recipes?.length || 0,
-      metas: goals?.length || 0
+      pratos: pratos?.length || 0,
+      metas: goals?.length || 0,
+      insumos: insumos?.length || 0
     });
 
     // Gerar resposta com Groq
@@ -219,8 +255,17 @@ async function querySupabaseDirectly(message: string, restaurantId: string, aiTy
   }
 }
 
-// Função para compilar contexto do restaurante
-async function compileRestaurantContext(restaurant: any, cashFlow: any[], inventory: any[], recipes: any[], goals: any[]): Promise<any> {
+// Função para compilar contexto do restaurante com dados completos
+async function compileRestaurantContext(
+  restaurant: any, 
+  cashFlow: any[], 
+  inventory: any[], 
+  recipes: any[],
+  pratos: any[],
+  goals: any[],
+  insumos: any[],
+  config: any
+): Promise<any> {
   // Calcular métricas financeiras
   const receitas = cashFlow
     .filter(item => item.type === 'income')
@@ -240,51 +285,208 @@ async function compileRestaurantContext(restaurant: any, cashFlow: any[], invent
     total + (parseFloat(item.quantity || 0) * parseFloat(item.cost_per_unit || 0)), 0
   );
 
+  // Preparar dados completos dos pratos
+  const pratosCompletos = pratos.map(prato => ({
+    id: prato.id,
+    nome_prato: prato.nome_prato || 'Não informado',
+    categoria: prato.categoria || 'Geral',
+    custo_total: parseFloat(prato.custo_total || 0),
+    custo_por_porcao: parseFloat(prato.custo_por_porcao || 0),
+    preco_sugerido: parseFloat(prato.preco_sugerido || 0),
+    preco_praticado: parseFloat(prato.preco_praticado || 0),
+    lucro_estimado: parseFloat(prato.lucro_estimado || 0),
+    margem_percentual: parseFloat(prato.margem_percentual || 0),
+    rendimento_porcoes: parseFloat(prato.rendimento_porcoes || 1),
+    tempo_preparo_min: parseInt(prato.tempo_preparo_min || 15),
+    status_viabilidade: prato.status_viabilidade || 'não_calculado',
+    ativo: prato.ativo !== false,
+    vendas_dia: parseInt(prato.vendas_dia || 0),
+    created_at: prato.created_at,
+    updated_at: prato.updated_at
+  }));
+
+  // Preparar dados completos do inventário
+  const inventarioCompleto = inventory.map(item => ({
+    id: item.id,
+    name: item.name || 'Item sem nome',
+    quantity: parseFloat(item.quantity || 0),
+    unit: item.unit || 'un',
+    cost_per_unit: parseFloat(item.cost_per_unit || 0),
+    minimum_stock: parseFloat(item.minimum_stock || 0),
+    category: item.category || 'Geral',
+    valor_total: parseFloat(item.quantity || 0) * parseFloat(item.cost_per_unit || 0),
+    status_estoque: parseFloat(item.quantity || 0) <= parseFloat(item.minimum_stock || 0) ? 'baixo' : 'ok',
+    created_at: item.created_at,
+    updated_at: item.updated_at
+  }));
+
+  // Preparar dados completos do fluxo de caixa
+  const fluxoCaixaCompleto = cashFlow.map(transacao => ({
+    id: transacao.id,
+    type: transacao.type || 'expense',
+    description: transacao.description || 'Transação sem descrição',
+    amount: parseFloat(transacao.amount || 0),
+    date: transacao.date,
+    category: transacao.category || 'Geral',
+    payment_method: transacao.payment_method || 'dinheiro',
+    status: transacao.status || 'completed',
+    conta_tipo: transacao.conta_tipo || 'operacional',
+    centro_custo: transacao.centro_custo || null,
+    pessoa_responsavel: transacao.pessoa_responsavel || null,
+    created_at: transacao.created_at
+  }));
+
+  // Preparar dados completos das metas
+  const metasCompletas = goals.map(meta => ({
+    id: meta.id,
+    title: meta.title || 'Meta sem título',
+    description: meta.description || null,
+    target: parseFloat(meta.target || 0),
+    current: parseFloat(meta.current || 0),
+    unit: meta.unit || 'unidade',
+    category: meta.category || 'Geral',
+    completed: meta.completed === true,
+    deadline: meta.deadline,
+    percentual_atingido: parseFloat(meta.target || 0) > 0 ? 
+      (parseFloat(meta.current || 0) / parseFloat(meta.target || 0)) * 100 : 0,
+    status: meta.completed ? 'concluída' : 
+            (meta.deadline && new Date(meta.deadline) < new Date()) ? 'vencida' : 'em_andamento',
+    reward: meta.reward || null,
+    created_at: meta.created_at,
+    updated_at: meta.updated_at
+  }));
+
+  // Preparar dados dos insumos
+  const insumosCompletos = insumos.map(insumo => ({
+    id: insumo.id,
+    nome: insumo.nome || 'Insumo sem nome',
+    categoria: insumo.categoria || 'Geral',
+    preco_unitario: parseFloat(insumo.preco_unitario || 0),
+    preco_pago: parseFloat(insumo.preco_pago || 0),
+    volume_embalagem: parseFloat(insumo.volume_embalagem || 1),
+    unidade_medida: insumo.unidade_medida || 'un',
+    estoque_atual: parseFloat(insumo.estoque_atual || 0),
+    estoque_minimo: parseFloat(insumo.estoque_minimo || 0),
+    fornecedor: insumo.fornecedor || 'Não informado',
+    validade_dias: parseInt(insumo.validade_dias || 30),
+    perda_media_percentual: parseFloat(insumo.perda_media_percentual || 5),
+    status_estoque: parseFloat(insumo.estoque_atual || 0) <= parseFloat(insumo.estoque_minimo || 0) ? 'baixo' : 'ok',
+    created_at: insumo.created_at,
+    updated_at: insumo.updated_at
+  }));
+
+  // Preparar dados das receitas
+  const receitasCompletas = recipes.map(receita => ({
+    id: receita.id,
+    name: receita.name || 'Receita sem nome',
+    description: receita.description || null,
+    category: receita.category || 'Geral',
+    portion_size: parseFloat(receita.portion_size || 1),
+    portion_unit: receita.portion_unit || 'porção',
+    cost: parseFloat(receita.cost || 0),
+    selling_price: parseFloat(receita.selling_price || 0),
+    profit_margin: receita.selling_price > 0 && receita.cost > 0 ? 
+      ((parseFloat(receita.selling_price) - parseFloat(receita.cost)) / parseFloat(receita.selling_price)) * 100 : 0,
+    created_at: receita.created_at,
+    updated_at: receita.updated_at
+  }));
+
   return {
     restaurante: {
+      id: restaurant?.id,
       nome: restaurant?.name || 'Não informado',
       tipo: restaurant?.business_type || 'Não informado',
-      id: restaurant?.id
+      vendas_mensais_media: parseFloat(restaurant?.average_monthly_sales || 0),
+      despesas_fixas: parseFloat(restaurant?.fixed_expenses || 0),
+      despesas_variaveis: parseFloat(restaurant?.variable_expenses || 0),
+      margem_lucro_desejada: parseFloat(restaurant?.desired_profit_margin || 0),
+      meta_cmv_comida: parseFloat(restaurant?.target_food_cost || 0),
+      meta_cmv_bebida: parseFloat(restaurant?.target_beverage_cost || 0),
+      created_at: restaurant?.created_at,
+      updated_at: restaurant?.updated_at
     },
     financeiro: {
-      receitas: receitas,
-      despesas: despesas,
-      saldoAtual: receitas - despesas,
-      totalTransacoes: cashFlow.length,
-      ultimasTransacoes: cashFlow.slice(0, 10).map(t => ({
-        data: t.date,
-        tipo: t.type,
-        valor: t.amount,
-        categoria: t.category,
-        descricao: t.description
-      }))
+      receitas_total: receitas,
+      despesas_total: despesas,
+      saldo_atual: receitas - despesas,
+      total_transacoes: cashFlow.length,
+      receitas_mes_atual: fluxoCaixaCompleto
+        .filter(t => t.type === 'income' && new Date(t.date).getMonth() === new Date().getMonth())
+        .reduce((sum, t) => sum + t.amount, 0),
+      despesas_mes_atual: fluxoCaixaCompleto
+        .filter(t => t.type === 'expense' && new Date(t.date).getMonth() === new Date().getMonth())
+        .reduce((sum, t) => sum + t.amount, 0),
+      transacoes_detalhadas: fluxoCaixaCompleto.slice(0, 20)
     },
     estoque: {
-      totalItens: inventory.length,
-      itensComEstoqueBaixo: itensEstoqueBaixo.length,
-      valorTotalEstoque: valorTotalEstoque,
-      alertasEstoque: itensEstoqueBaixo.map(item => ({
+      total_itens: inventory.length,
+      itens_estoque_baixo: itensEstoqueBaixo.length,
+      valor_total_estoque: valorTotalEstoque,
+      categorias_estoque: [...new Set(inventarioCompleto.map(i => i.category))],
+      itens_detalhados: inventarioCompleto,
+      alertas_estoque: itensEstoqueBaixo.map(item => ({
         nome: item.name,
-        quantidadeAtual: item.quantity,
-        estoqueMinimo: item.minimum_stock
+        quantidade_atual: item.quantity,
+        estoque_minimo: item.minimum_stock,
+        categoria: item.category
       }))
     },
     cardapio: {
-      totalReceitas: recipes.length,
-      categorias: [...new Set(recipes.map(r => r.category).filter(Boolean))],
-      receitasRecentes: recipes.slice(0, 5).map(r => ({
-        nome: r.name,
-        categoria: r.category,
-        custo: r.cost,
-        precoVenda: r.selling_price
-      }))
+      total_pratos: pratos.length,
+      pratos_ativos: pratosCompletos.filter(p => p.ativo).length,
+      categorias: [...new Set(pratosCompletos.map(p => p.categoria))],
+      pratos_detalhados: pratosCompletos,
+      custo_medio_prato: pratosCompletos.length > 0 ? 
+        pratosCompletos.reduce((sum, p) => sum + p.custo_por_porcao, 0) / pratosCompletos.length : 0,
+      preco_medio_prato: pratosCompletos.length > 0 ? 
+        pratosCompletos.reduce((sum, p) => sum + p.preco_sugerido, 0) / pratosCompletos.length : 0,
+      margem_media: pratosCompletos.length > 0 ? 
+        pratosCompletos.reduce((sum, p) => sum + p.margem_percentual, 0) / pratosCompletos.length : 0,
+      pratos_prejuizo: pratosCompletos.filter(p => p.status_viabilidade === 'prejuizo').length,
+      pratos_margem_baixa: pratosCompletos.filter(p => p.status_viabilidade === 'margem_baixa').length
+    },
+    receitas: {
+      total_receitas: recipes.length,
+      receitas_detalhadas: receitasCompletas,
+      categorias_receitas: [...new Set(receitasCompletas.map(r => r.category))]
+    },
+    insumos: {
+      total_insumos: insumos.length,
+      insumos_detalhados: insumosCompletos,
+      categorias_insumos: [...new Set(insumosCompletos.map(i => i.categoria))],
+      fornecedores: [...new Set(insumosCompletos.map(i => i.fornecedor))],
+      valor_total_insumos: insumosCompletos.reduce((sum, i) => sum + (i.estoque_atual * i.preco_unitario), 0),
+      insumos_estoque_baixo: insumosCompletos.filter(i => i.status_estoque === 'baixo').length
     },
     metas: {
-      total: goals.length,
-      concluidas: goals.filter(m => m.completed).length,
-      pendentes: goals.filter(m => !m.completed).length,
-      porcentagemConclusao: goals.length > 0 ? 
-        (goals.filter(m => m.completed).length / goals.length) * 100 : 0
+      total_metas: goals.length,
+      metas_concluidas: metasCompletas.filter(m => m.completed).length,
+      metas_pendentes: metasCompletas.filter(m => !m.completed).length,
+      metas_vencidas: metasCompletas.filter(m => m.status === 'vencida').length,
+      percentual_conclusao_geral: goals.length > 0 ? 
+        (metasCompletas.filter(m => m.completed).length / goals.length) * 100 : 0,
+      metas_detalhadas: metasCompletas,
+      categorias_metas: [...new Set(metasCompletas.map(m => m.category))]
+    },
+    configuracoes: {
+      markup_padrao: parseFloat(config?.markup_padrao || 250),
+      margem_lucro_esperada: parseFloat(config?.margem_lucro_esperada || 30),
+      despesas_fixas_mensais: parseFloat(config?.despesas_fixas_mensais || 0),
+      despesas_variaveis_mensais: parseFloat(config?.despesas_variaveis_mensais || 0),
+      receita_mensal_esperada: parseFloat(config?.receita_mensal_esperada || 0),
+      taxa_ifood: parseFloat(config?.taxa_ifood || 15),
+      taxa_impostos: parseFloat(config?.taxa_impostos || 12),
+      ticket_medio_esperado: parseFloat(config?.ticket_medio_esperado || 0),
+      meta_vendas_diaria: parseFloat(config?.meta_vendas_diaria || 0)
+    },
+    metricas_calculadas: {
+      ticket_medio_real: receitas > 0 && fluxoCaixaCompleto.filter(t => t.type === 'income').length > 0 ? 
+        receitas / fluxoCaixaCompleto.filter(t => t.type === 'income').length : 0,
+      cmv_medio_percentual: pratosCompletos.length > 0 ? 
+        pratosCompletos.reduce((sum, p) => sum + (100 - p.margem_percentual), 0) / pratosCompletos.length : 0,
+      margem_lucro_real: receitas > 0 ? ((receitas - despesas) / receitas) * 100 : 0,
+      crescimento_mensal: 0, // Seria necessário dados históricos para calcular
+      produtividade_diaria: pratosCompletos.reduce((sum, p) => sum + p.vendas_dia, 0)
     }
   };
 }
@@ -423,7 +625,6 @@ async function queryWithN8n(message: string, restaurantId: string, aiType: strin
   }
 }
 
-// Função para resposta direta da IA
 async function directAIResponse(message: string, aiType: string, context: any, conversationHistory: any[]): Promise<string> {
   // Configuração de instruções para IA
   let systemPrompt = '';
