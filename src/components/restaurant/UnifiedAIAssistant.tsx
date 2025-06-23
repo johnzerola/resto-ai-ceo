@@ -127,7 +127,15 @@ export function UnifiedAIAssistant() {
   };
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    console.log('🚀 sendMessage chamada - Input:', inputMessage);
+    console.log('🚀 sendMessage chamada - Loading:', isLoading);
+    
+    if (!inputMessage.trim() || isLoading) {
+      console.log('❌ Condição de saída - Input vazio ou carregando');
+      return;
+    }
+
+    console.log('✅ Iniciando processo de envio da mensagem');
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -147,12 +155,17 @@ export function UnifiedAIAssistant() {
     setIsLoading(true);
 
     try {
+      console.log('🔐 Verificando autenticação...');
       // Obter usuário atual
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.log('❌ Usuário não autenticado');
         throw new Error('Usuário não autenticado');
       }
+
+      console.log('✅ Usuário autenticado:', user.id);
+      console.log('🏢 Context restaurant ID:', context?.restaurantId);
 
       // Preparar dados para a requisição com timestamp no formato correto
       const requestPayload = {
@@ -163,9 +176,12 @@ export function UnifiedAIAssistant() {
         timestamp: new Date().toISOString()
       };
 
-      console.log('Enviando requisição para IA externa:', requestPayload);
+      console.log('📤 Preparando requisição para IA externa...');
+      console.log('📤 Payload:', JSON.stringify(requestPayload, null, 2));
 
       // Fazer requisição para o endpoint externo
+      console.log('🌐 Fazendo requisição POST para:', 'https://restauria.app.n8n.cloud/webhook/ai-assistant');
+      
       const response = await fetch('https://restauria.app.n8n.cloud/webhook/ai-assistant', {
         method: 'POST',
         headers: {
@@ -174,46 +190,55 @@ export function UnifiedAIAssistant() {
         body: JSON.stringify(requestPayload)
       });
 
-      console.log('Status da resposta:', response.status);
-      console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
+      console.log('📨 Status da resposta:', response.status);
+      console.log('📨 Headers da resposta:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
+        console.log('❌ Resposta HTTP não OK:', response.status, response.statusText);
         throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
       }
 
       // Tentar ler a resposta como texto primeiro para debug
       const responseText = await response.text();
-      console.log('Resposta bruta:', responseText);
+      console.log('📥 Resposta bruta recebida:', responseText);
 
       let data;
       try {
         data = JSON.parse(responseText);
+        console.log('✅ JSON parseado com sucesso:', data);
       } catch (parseError) {
-        console.error('Erro ao fazer parse do JSON:', parseError);
+        console.error('❌ Erro ao fazer parse do JSON:', parseError);
+        console.error('❌ Texto que causou erro:', responseText);
         throw new Error('Resposta da API não é um JSON válido');
       }
-
-      console.log('Dados parseados da IA externa:', data);
 
       // Extrair a resposta da IA de diferentes possíveis campos
       let aiResponseContent = '';
       
       if (data.response) {
         aiResponseContent = data.response;
+        console.log('✅ Resposta encontrada no campo "response"');
       } else if (data.reply) {
         aiResponseContent = data.reply;
+        console.log('✅ Resposta encontrada no campo "reply"');
       } else if (data.message) {
         aiResponseContent = data.message;
+        console.log('✅ Resposta encontrada no campo "message"');
       } else if (data.content) {
         aiResponseContent = data.content;
+        console.log('✅ Resposta encontrada no campo "content"');
       } else if (data.answer) {
         aiResponseContent = data.answer;
+        console.log('✅ Resposta encontrada no campo "answer"');
       } else if (typeof data === 'string') {
         aiResponseContent = data;
+        console.log('✅ Resposta é uma string direta');
       } else {
-        console.warn('Estrutura de resposta não reconhecida:', data);
+        console.warn('⚠️ Estrutura de resposta não reconhecida:', data);
         aiResponseContent = 'Recebi uma resposta da IA, mas não consegui interpretá-la corretamente. Dados recebidos: ' + JSON.stringify(data);
       }
+
+      console.log('💬 Conteúdo da resposta da IA:', aiResponseContent);
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -230,14 +255,15 @@ export function UnifiedAIAssistant() {
         [activeTab]: [...prev[activeTab], aiMessage]
       }));
 
-      // Mostrar sucesso
+      console.log('✅ Resposta da IA adicionada às mensagens');
       toast.success('Resposta recebida da IA!');
 
     } catch (error) {
-      console.error('Erro ao comunicar com a IA externa:', error);
+      console.error('❌ Erro geral na função sendMessage:', error);
+      console.error('❌ Stack trace:', error.stack);
       
       // Fallback para a Edge Function do Supabase em caso de erro
-      console.log('Tentando fallback com Edge Function...');
+      console.log('🔄 Tentando fallback com Edge Function...');
       
       try {
         const { data, error: supabaseError } = await supabase.functions.invoke('restaurant-ai-analysis', {
@@ -250,7 +276,12 @@ export function UnifiedAIAssistant() {
           }
         });
 
-        if (supabaseError) throw supabaseError;
+        if (supabaseError) {
+          console.error('❌ Erro na Edge Function:', supabaseError);
+          throw supabaseError;
+        }
+
+        console.log('✅ Fallback funcionou:', data);
 
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -270,7 +301,7 @@ export function UnifiedAIAssistant() {
         toast.success('Resposta recebida (via fallback)!');
 
       } catch (fallbackError) {
-        console.error('Erro também no fallback:', fallbackError);
+        console.error('❌ Erro também no fallback:', fallbackError);
         toast.error('Erro ao comunicar com a IA. Tente novamente.');
         
         // Mensagem de erro da IA
@@ -292,6 +323,7 @@ Pode tentar novamente em alguns instantes?`,
         }));
       }
     } finally {
+      console.log('🏁 Finalizando sendMessage - setIsLoading(false)');
       setIsLoading(false);
     }
   };
