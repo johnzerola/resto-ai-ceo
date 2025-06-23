@@ -189,12 +189,7 @@ export function FinalSystemValidation() {
                   {result.icon}
                   <h3 className="font-semibold">{result.category}</h3>
                 </div>
-                {getStatusBadge(result.overallStatus, result.completion
-
-
-
-
-)}
+                {getStatusBadge(result.overallStatus, result.completionRate)}
               </div>
             </CardHeader>
             <CardContent>
