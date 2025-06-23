@@ -142,6 +142,7 @@ export function UnifiedAIAssistant() {
       [activeTab]: [...prev[activeTab], userMessage]
     }));
 
+    const currentInput = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
@@ -153,11 +154,11 @@ export function UnifiedAIAssistant() {
         throw new Error('Usuário não autenticado');
       }
 
-      // Preparar dados para a requisição
+      // Preparar dados para a requisição com timestamp no formato correto
       const requestPayload = {
         userId: user.id,
         restaurantId: context?.restaurantId || null,
-        message: inputMessage,
+        message: currentInput,
         aiType: activeTab,
         timestamp: new Date().toISOString()
       };
@@ -173,15 +174,46 @@ export function UnifiedAIAssistant() {
         body: JSON.stringify(requestPayload)
       });
 
+      console.log('Status da resposta:', response.status);
+      console.log('Headers da resposta:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
+        throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      console.log('Resposta da IA externa:', data);
+      // Tentar ler a resposta como texto primeiro para debug
+      const responseText = await response.text();
+      console.log('Resposta bruta:', responseText);
 
-      // Extrair a resposta da IA
-      const aiResponseContent = data.response || data.reply || data.message || 'Desculpe, não consegui processar sua mensagem.';
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Erro ao fazer parse do JSON:', parseError);
+        throw new Error('Resposta da API não é um JSON válido');
+      }
+
+      console.log('Dados parseados da IA externa:', data);
+
+      // Extrair a resposta da IA de diferentes possíveis campos
+      let aiResponseContent = '';
+      
+      if (data.response) {
+        aiResponseContent = data.response;
+      } else if (data.reply) {
+        aiResponseContent = data.reply;
+      } else if (data.message) {
+        aiResponseContent = data.message;
+      } else if (data.content) {
+        aiResponseContent = data.content;
+      } else if (data.answer) {
+        aiResponseContent = data.answer;
+      } else if (typeof data === 'string') {
+        aiResponseContent = data;
+      } else {
+        console.warn('Estrutura de resposta não reconhecida:', data);
+        aiResponseContent = 'Recebi uma resposta da IA, mas não consegui interpretá-la corretamente. Dados recebidos: ' + JSON.stringify(data);
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -210,7 +242,7 @@ export function UnifiedAIAssistant() {
       try {
         const { data, error: supabaseError } = await supabase.functions.invoke('restaurant-ai-analysis', {
           body: {
-            message: inputMessage,
+            message: currentInput,
             aiType: activeTab,
             context: context,
             conversationHistory: messages[activeTab].slice(-10),
@@ -223,11 +255,11 @@ export function UnifiedAIAssistant() {
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: 'assistant',
-          content: data.reply || 'Desculpe, não consegui processar sua mensagem.',
+          content: data?.reply || 'Desculpe, não consegui processar sua mensagem.',
           timestamp: new Date(),
           aiType: activeTab,
-          queryType: data.type,
-          imageUrl: data.imageUrl
+          queryType: data?.type || 'direct_ai',
+          imageUrl: data?.imageUrl
         };
 
         setMessages(prev => ({
@@ -245,7 +277,11 @@ export function UnifiedAIAssistant() {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           type: 'assistant',
-          content: 'Desculpe, estou enfrentando dificuldades técnicas. Pode tentar novamente em alguns instantes?',
+          content: `Desculpe, estou enfrentando dificuldades técnicas. 
+
+Detalhes do erro: ${error.message}
+
+Pode tentar novamente em alguns instantes?`,
           timestamp: new Date(),
           aiType: activeTab
         };
