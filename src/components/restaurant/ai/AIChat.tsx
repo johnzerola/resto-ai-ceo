@@ -86,10 +86,11 @@ export function AIChat({ aiType, context }: AIChatProps) {
         timestamp: new Date().toISOString()
       };
 
-      console.log('📦 [AIChat] Payload:', JSON.stringify(payload, null, 2));
+      console.log('📦 [AIChat] Payload preparado:', JSON.stringify(payload, null, 2));
 
       const webhookUrl = 'https://restauria.app.n8n.cloud/webhook/ai-assistant';
-      console.log('🌐 [AIChat] Fazendo requisição para:', webhookUrl);
+      console.log('🌐 [AIChat] Fazendo requisição POST para:', webhookUrl);
+      console.log('📡 [AIChat] Iniciando fetch...');
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -99,17 +100,18 @@ export function AIChat({ aiType, context }: AIChatProps) {
         body: JSON.stringify(payload)
       });
 
-      console.log('📨 [AIChat] Status da resposta:', response.status);
-      console.log('📨 [AIChat] Headers:', Object.fromEntries(response.headers.entries()));
+      console.log('📨 [AIChat] Response status:', response.status);
+      console.log('📨 [AIChat] Response statusText:', response.statusText);
+      console.log('📨 [AIChat] Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ [AIChat] Erro HTTP:', response.status, errorText);
-        throw new Error(`Erro HTTP ${response.status}: ${errorText}`);
+        console.error('❌ [AIChat] Erro HTTP:', response.status, response.statusText, errorText);
+        throw new Error(`Erro HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
 
       const responseText = await response.text();
-      console.log('📥 [AIChat] Resposta bruta:', responseText);
+      console.log('📥 [AIChat] Response text completo:', responseText);
 
       if (!responseText.trim()) {
         throw new Error('Resposta vazia do servidor');
@@ -118,13 +120,13 @@ export function AIChat({ aiType, context }: AIChatProps) {
       let responseData;
       try {
         responseData = JSON.parse(responseText);
-        console.log('✅ [AIChat] JSON parseado:', responseData);
+        console.log('✅ [AIChat] JSON parseado com sucesso:', responseData);
       } catch (parseError) {
-        console.error('❌ [AIChat] Erro no parse JSON:', parseError);
-        throw new Error(`Resposta inválida: ${responseText}`);
+        console.error('❌ [AIChat] Erro ao parsear JSON:', parseError);
+        console.log('📄 [AIChat] Texto da resposta que falhou no parse:', responseText);
+        throw new Error(`Resposta não é JSON válido: ${responseText.substring(0, 200)}...`);
       }
 
-      // Extrair conteúdo da resposta
       let aiContent = '';
       if (responseData.response) {
         aiContent = responseData.response;
@@ -137,10 +139,11 @@ export function AIChat({ aiType, context }: AIChatProps) {
       } else if (typeof responseData === 'string') {
         aiContent = responseData;
       } else {
-        aiContent = `Resposta recebida mas formato não reconhecido: ${JSON.stringify(responseData)}`;
+        console.log('⚠️ [AIChat] Formato de resposta não reconhecido:', responseData);
+        aiContent = `Resposta recebida: ${JSON.stringify(responseData, null, 2)}`;
       }
 
-      console.log('💬 [AIChat] Conteúdo da IA:', aiContent);
+      console.log('💬 [AIChat] Conteúdo final da IA:', aiContent);
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -151,22 +154,31 @@ export function AIChat({ aiType, context }: AIChatProps) {
         imageUrl: responseData.imageUrl
       };
 
+      console.log('✅ [AIChat] Adicionando resposta da IA:', aiMessage);
       setMessages(prev => [...prev, aiMessage]);
-      toast.success('Resposta recebida!');
+      toast.success('Resposta recebida da IA!');
 
     } catch (error) {
       console.error('❌ [AIChat] ERRO COMPLETO:', error);
+      console.error('❌ [AIChat] Stack trace:', error.stack);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: `Erro ao processar sua mensagem: ${error.message}`,
+        content: `❌ Erro ao processar sua mensagem: ${error.message}
+
+Detalhes técnicos:
+- URL: https://restauria.app.n8n.cloud/webhook/ai-assistant
+- Método: POST
+- Erro: ${error.message}
+
+Por favor, verifique os logs do console para mais detalhes.`,
         timestamp: new Date(),
         aiType: aiType
       };
 
       setMessages(prev => [...prev, errorMessage]);
-      toast.error(`Erro: ${error.message}`);
+      toast.error(`Erro na comunicação: ${error.message}`);
     } finally {
       setIsLoading(false);
       console.log('🏁 [AIChat] === FIM DO PROCESSAMENTO ===');
