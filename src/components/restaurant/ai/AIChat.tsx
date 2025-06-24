@@ -42,16 +42,16 @@ export function AIChat({ aiType, context }: AIChatProps) {
   }, [messages]);
 
   const sendMessage = async () => {
-    console.log('🚀 sendMessage iniciado - Input:', inputMessage);
-    console.log('🚀 Loading state:', isLoading);
+    console.log('🚀 [AIChat] sendMessage iniciado');
+    console.log('📝 [AIChat] Input da mensagem:', inputMessage);
+    console.log('🔄 [AIChat] Estado de loading:', isLoading);
     
     if (!inputMessage.trim() || isLoading) {
-      console.log('❌ Condição de saída - Input vazio ou carregando');
+      console.log('❌ [AIChat] Saindo - input vazio ou carregando');
       return;
     }
 
-    console.log('✅ Iniciando processo de envio da mensagem');
-
+    console.log('✅ [AIChat] Criando mensagem do usuário');
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -61,21 +61,20 @@ export function AIChat({ aiType, context }: AIChatProps) {
     };
 
     setMessages(prev => [...prev, userMessage]);
-
     const currentInput = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
     try {
-      console.log('🔐 Verificando autenticação...');
+      console.log('🔐 [AIChat] Verificando autenticação...');
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        console.log('❌ Usuário não autenticado');
+        console.log('❌ [AIChat] Usuário não autenticado');
         throw new Error('Usuário não autenticado');
       }
 
-      console.log('✅ Usuário autenticado:', user.id);
+      console.log('✅ [AIChat] Usuário autenticado:', user.id);
 
       const requestPayload = {
         userId: user.id,
@@ -85,10 +84,13 @@ export function AIChat({ aiType, context }: AIChatProps) {
         timestamp: new Date().toISOString()
       };
 
-      console.log('📤 Fazendo requisição para IA externa...');
-      console.log('📤 Payload:', JSON.stringify(requestPayload, null, 2));
+      console.log('📤 [AIChat] Payload da requisição:');
+      console.log(JSON.stringify(requestPayload, null, 2));
 
-      const response = await fetch('https://restauria.app.n8n.cloud/webhook/ai-assistant', {
+      const webhookUrl = 'https://restauria.app.n8n.cloud/webhook/ai-assistant';
+      console.log('🌐 [AIChat] Fazendo requisição POST para:', webhookUrl);
+
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,45 +98,58 @@ export function AIChat({ aiType, context }: AIChatProps) {
         body: JSON.stringify(requestPayload)
       });
 
-      console.log('📨 Status da resposta:', response.status);
+      console.log('📨 [AIChat] Status da resposta:', response.status);
+      console.log('📨 [AIChat] Headers da resposta:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        console.log('❌ Resposta HTTP não OK:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.log('❌ [AIChat] Erro HTTP:', response.status, response.statusText);
+        console.log('❌ [AIChat] Corpo do erro:', errorText);
         throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
       }
 
       const responseText = await response.text();
-      console.log('📥 Resposta bruta recebida:', responseText);
+      console.log('📥 [AIChat] Resposta bruta recebida:');
+      console.log(responseText);
 
       let data;
       try {
         data = JSON.parse(responseText);
-        console.log('✅ JSON parseado com sucesso:', data);
+        console.log('✅ [AIChat] JSON parseado com sucesso:');
+        console.log(JSON.stringify(data, null, 2));
       } catch (parseError) {
-        console.error('❌ Erro ao fazer parse do JSON:', parseError);
+        console.error('❌ [AIChat] Erro ao fazer parse do JSON:', parseError);
+        console.log('📄 [AIChat] Texto que falhou no parse:', responseText);
         throw new Error('Resposta da API não é um JSON válido');
       }
 
+      // Extrair a resposta da IA de diferentes formatos possíveis
       let aiResponseContent = '';
       
       if (data.response) {
         aiResponseContent = data.response;
+        console.log('✅ [AIChat] Resposta extraída de data.response');
       } else if (data.reply) {
         aiResponseContent = data.reply;
+        console.log('✅ [AIChat] Resposta extraída de data.reply');
       } else if (data.message) {
         aiResponseContent = data.message;
+        console.log('✅ [AIChat] Resposta extraída de data.message');
       } else if (data.content) {
         aiResponseContent = data.content;
+        console.log('✅ [AIChat] Resposta extraída de data.content');
       } else if (data.answer) {
         aiResponseContent = data.answer;
+        console.log('✅ [AIChat] Resposta extraída de data.answer');
       } else if (typeof data === 'string') {
         aiResponseContent = data;
+        console.log('✅ [AIChat] Resposta é string direta');
       } else {
-        console.warn('⚠️ Estrutura de resposta não reconhecida:', data);
-        aiResponseContent = 'Recebi uma resposta da IA, mas não consegui interpretá-la corretamente.';
+        console.warn('⚠️ [AIChat] Estrutura de resposta não reconhecida:', data);
+        aiResponseContent = 'Recebi uma resposta da IA, mas não consegui interpretá-la corretamente. Por favor, tente novamente.';
       }
 
-      console.log('💬 Conteúdo da resposta da IA:', aiResponseContent);
+      console.log('💬 [AIChat] Conteúdo final da resposta da IA:', aiResponseContent);
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -147,11 +162,12 @@ export function AIChat({ aiType, context }: AIChatProps) {
       };
 
       setMessages(prev => [...prev, aiMessage]);
-      console.log('✅ Resposta da IA adicionada às mensagens');
+      console.log('✅ [AIChat] Resposta da IA adicionada às mensagens');
       toast.success('Resposta recebida da IA!');
 
     } catch (error) {
-      console.error('❌ Erro na requisição:', error);
+      console.error('❌ [AIChat] Erro na requisição:', error);
+      console.error('❌ [AIChat] Stack trace:', error.stack);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -164,7 +180,7 @@ export function AIChat({ aiType, context }: AIChatProps) {
       setMessages(prev => [...prev, errorMessage]);
       toast.error('Erro ao comunicar com a IA. Tente novamente.');
     } finally {
-      console.log('🏁 Finalizando sendMessage');
+      console.log('🏁 [AIChat] Finalizando sendMessage');
       setIsLoading(false);
     }
   };

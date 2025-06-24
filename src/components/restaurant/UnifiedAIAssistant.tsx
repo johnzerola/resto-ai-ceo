@@ -30,17 +30,21 @@ export function UnifiedAIAssistant() {
   const [context, setContext] = useState<RestaurantContext | null>(null);
 
   useEffect(() => {
+    console.log('🚀 [UnifiedAIAssistant] Componente montado, carregando contexto...');
     loadRestaurantContext();
   }, []);
 
   const loadRestaurantContext = async () => {
     try {
+      console.log('📊 [UnifiedAIAssistant] Iniciando carregamento do contexto...');
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        console.log('Usuário não autenticado');
+        console.log('❌ [UnifiedAIAssistant] Usuário não autenticado');
         return;
       }
+
+      console.log('✅ [UnifiedAIAssistant] Usuário autenticado:', user.id);
 
       const { data: restaurants } = await supabase
         .from('restaurants')
@@ -51,6 +55,8 @@ export function UnifiedAIAssistant() {
       const restaurant = restaurants?.[0];
       const restaurantId = restaurant?.id;
 
+      console.log('🏪 [UnifiedAIAssistant] Restaurante encontrado:', restaurant?.name, 'ID:', restaurantId);
+
       const [cashFlowData, inventoryData, recipesData, goalsData] = await Promise.all([
         supabase.from('cash_flow').select('*').eq('restaurant_id', restaurantId).order('date', { ascending: false }).limit(50),
         supabase.from('inventory').select('*').eq('restaurant_id', restaurantId),
@@ -58,16 +64,20 @@ export function UnifiedAIAssistant() {
         supabase.from('goals').select('*').eq('restaurant_id', restaurantId)
       ]);
 
-      setContext({
+      const newContext = {
         restaurantData: restaurant || {},
         menuData: recipesData.data || [],
         financialData: cashFlowData.data || [],
         simulatorData: {},
         restaurantId: restaurantId
-      });
+      };
 
-      console.log('Contexto do restaurante carregado:', {
+      setContext(newContext);
+
+      console.log('✅ [UnifiedAIAssistant] Contexto carregado com sucesso:');
+      console.log('📊 [UnifiedAIAssistant] Dados:', {
         restaurant: restaurant?.name,
+        restaurantId: restaurantId,
         cashFlow: cashFlowData.data?.length || 0,
         inventory: inventoryData.data?.length || 0,
         recipes: recipesData.data?.length || 0,
@@ -75,17 +85,20 @@ export function UnifiedAIAssistant() {
       });
 
     } catch (error) {
-      console.error('Erro ao carregar contexto do restaurante:', error);
+      console.error('❌ [UnifiedAIAssistant] Erro ao carregar contexto:', error);
       toast.error('Erro ao carregar dados do restaurante');
     }
   };
 
   const exportHistory = () => {
-    // Implementação do export será adicionada quando necessário
     toast.success('Funcionalidade de exportação será implementada em breve!');
   };
 
+  console.log('🔍 [UnifiedAIAssistant] Verificando feature hasFullAIAssistant:', hasFeature('hasFullAIAssistant'));
+  console.log('📋 [UnifiedAIAssistant] Contexto atual:', context);
+
   if (!hasFeature('hasFullAIAssistant')) {
+    console.log('⚠️ [UnifiedAIAssistant] Usuário não tem acesso completo, mostrando versão limitada');
     return (
       <div className="space-y-4 sm:space-y-6 h-full flex flex-col">
         <div className="flex-1 min-h-0">
@@ -113,6 +126,8 @@ export function UnifiedAIAssistant() {
       </div>
     );
   }
+
+  console.log('✅ [UnifiedAIAssistant] Usuário tem acesso completo, mostrando versão completa');
 
   return (
     <div className="space-y-4 sm:space-y-6 h-full flex flex-col">
