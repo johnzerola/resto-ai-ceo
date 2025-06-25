@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Bot, Send, Sparkles, MessageCircle } from 'lucide-react';
+import { Bot, Send, Sparkles, MessageCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -28,7 +29,17 @@ export default function AiAssistant() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    console.log('🚀 [AiAssistant] === INICIANDO ENVIO DE MENSAGEM ===');
+    
+    if (!inputMessage.trim()) {
+      console.log('❌ [AiAssistant] Mensagem vazia');
+      return;
+    }
+
+    if (isLoading) {
+      console.log('❌ [AiAssistant] Já está processando');
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -37,22 +48,125 @@ export default function AiAssistant() {
       timestamp: new Date()
     };
 
+    console.log('✅ [AiAssistant] Adicionando mensagem do usuário:', userMessage.content);
     setMessages(prev => [...prev, userMessage]);
+
+    const messageToSend = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
-    // Simular resposta da IA
-    setTimeout(() => {
+    try {
+      console.log('🔐 [AiAssistant] Obtendo usuário autenticado...');
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      console.log('✅ [AiAssistant] Usuário:', user.email);
+
+      const payload = {
+        userId: user.id,
+        restaurantId: null, // Página genérica sem restaurante específico
+        message: messageToSend,
+        aiType: 'manager', // Tipo padrão para esta página
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('📦 [AiAssistant] Payload preparado:', JSON.stringify(payload, null, 2));
+
+      const webhookUrl = 'https://restauria.app.n8n.cloud/webhook/ai-assistant';
+      console.log('🌐 [AiAssistant] Fazendo requisição POST para:', webhookUrl);
+      console.log('📡 [AiAssistant] Iniciando fetch...');
+
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      console.log('📨 [AiAssistant] Response status:', response.status);
+      console.log('📨 [AiAssistant] Response statusText:', response.statusText);
+      console.log('📨 [AiAssistant] Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [AiAssistant] Erro HTTP:', response.status, response.statusText, errorText);
+        throw new Error(`Erro HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+      }
+
+      const responseText = await response.text();
+      console.log('📥 [AiAssistant] Response text completo:', responseText);
+
+      if (!responseText.trim()) {
+        throw new Error('Resposta vazia do servidor');
+      }
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+        console.log('✅ [AiAssistant] JSON parseado com sucesso:', responseData);
+      } catch (parseError) {
+        console.error('❌ [AiAssistant] Erro ao parsear JSON:', parseError);
+        console.log('📄 [AiAssistant] Texto da resposta que falhou no parse:', responseText);
+        throw new Error(`Resposta não é JSON válido: ${responseText.substring(0, 200)}...`);
+      }
+
+      let aiContent = '';
+      if (responseData.response) {
+        aiContent = responseData.response;
+      } else if (responseData.reply) {
+        aiContent = responseData.reply;
+      } else if (responseData.message) {
+        aiContent = responseData.message;
+      } else if (responseData.content) {
+        aiContent = responseData.content;
+      } else if (typeof responseData === 'string') {
+        aiContent = responseData;
+      } else {
+        console.log('⚠️ [AiAssistant] Formato de resposta não reconhecido:', responseData);
+        aiContent = `Resposta recebida: ${JSON.stringify(responseData, null, 2)}`;
+      }
+
+      console.log('💬 [AiAssistant] Conteúdo final da IA:', aiContent);
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: `Entendi sua pergunta sobre "${inputMessage}". Com base nos dados do seu restaurante, posso sugerir algumas estratégias personalizadas. Gostaria que eu analise algum aspecto específico como CMV, precificação ou rentabilidade?`,
+        content: aiContent,
         isUser: false,
         timestamp: new Date()
       };
       
+      console.log('✅ [AiAssistant] Adicionando resposta da IA:', aiResponse);
       setMessages(prev => [...prev, aiResponse]);
+      toast.success('Resposta recebida da IA!');
+
+    } catch (error) {
+      console.error('❌ [AiAssistant] ERRO COMPLETO:', error);
+      console.error('❌ [AiAssistant] Stack trace:', error.stack);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `❌ Erro ao processar sua mensagem: ${error.message}
+
+Detalhes técnicos:
+- URL: https://restauria.app.n8n.cloud/webhook/ai-assistant
+- Método: POST
+- Erro: ${error.message}
+
+Por favor, verifique os logs do console para mais detalhes.`,
+        isUser: false,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+      toast.error(`Erro na comunicação: ${error.message}`);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+      console.log('🏁 [AiAssistant] === FIM DO PROCESSAMENTO ===');
+    }
   };
 
   const quickActions = [
@@ -100,7 +214,7 @@ export default function AiAssistant() {
                           : 'bg-muted'
                       }`}
                     >
-                      <p className="text-sm">{message.content}</p>
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       <p className="text-xs opacity-70 mt-1">
                         {message.timestamp.toLocaleTimeString()}
                       </p>
@@ -112,8 +226,8 @@ export default function AiAssistant() {
                   <div className="flex justify-start">
                     <div className="bg-muted p-3 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                        <span className="text-sm">Analisando...</span>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Processando requisição...</span>
                       </div>
                     </div>
                   </div>
@@ -133,13 +247,18 @@ export default function AiAssistant() {
                     }
                   }}
                   className="min-h-[60px] resize-none"
+                  disabled={isLoading}
                 />
                 <Button
                   onClick={handleSendMessage}
                   disabled={!inputMessage.trim() || isLoading}
                   size="lg"
                 >
-                  <Send className="h-4 w-4" />
+                  {isLoading ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </CardContent>
