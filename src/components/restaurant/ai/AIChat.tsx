@@ -66,6 +66,51 @@ export function AIChat({ aiType, context }: AIChatProps) {
     initializeRestaurantId();
   }, []);
 
+  const forceLoadRestaurantId = async (userId: string): Promise<string> => {
+    console.log('🔄 [AIChat] Forçando carregamento do restaurantId...');
+    
+    // Tentar múltiplas vezes
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      console.log(`🔄 [AIChat] Tentativa ${attempt} de carregar restaurantId...`);
+      
+      try {
+        const { data: restaurants, error } = await supabase
+          .from('restaurants')
+          .select('id, name')
+          .eq('owner_id', userId)
+          .limit(1);
+
+        if (error) {
+          console.error(`❌ [AIChat] Erro na tentativa ${attempt}:`, error);
+          continue;
+        }
+
+        console.log(`📋 [AIChat] Tentativa ${attempt} - dados:`, restaurants);
+
+        if (restaurants && restaurants.length > 0) {
+          const restaurantId = restaurants[0].id;
+          setRestaurantId(restaurantId);
+          console.log(`✅ [AIChat] RestaurantId carregado na tentativa ${attempt}:`, restaurantId);
+          return restaurantId;
+        }
+        
+        console.log(`⚠️ [AIChat] Nenhum restaurante encontrado na tentativa ${attempt}`);
+        
+        // Aguardar antes da próxima tentativa
+        if (attempt < 5) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (error) {
+        console.error(`❌ [AIChat] Exceção na tentativa ${attempt}:`, error);
+        if (attempt < 5) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+    
+    throw new Error('Falha ao carregar restaurantId após 5 tentativas');
+  };
+
   const loadRestaurantId = async () => {
     try {
       console.log('🏪 [AIChat] Carregando restaurantId...');
@@ -125,6 +170,7 @@ export function AIChat({ aiType, context }: AIChatProps) {
 
   const sendMessage = async () => {
     console.log('🚀 [AIChat] === INICIANDO ENVIO DE MENSAGEM ===');
+    console.log('🔍 [AIChat] Estado atual do restaurantId:', restaurantId);
     
     if (!inputMessage.trim()) {
       console.log('❌ [AIChat] Mensagem vazia');
@@ -160,18 +206,35 @@ export function AIChat({ aiType, context }: AIChatProps) {
       }
 
       console.log('✅ [AIChat] Usuário:', user.email);
+      console.log('🆔 [AIChat] User ID:', user.id);
       
       // Garantir que temos o restaurantId
       let currentRestaurantId = restaurantId;
+      console.log('🔍 [AIChat] RestaurantId atual do estado:', currentRestaurantId);
+      
       if (!currentRestaurantId) {
-        console.log('🔄 [AIChat] RestaurantId não encontrado, carregando...');
-        currentRestaurantId = await loadRestaurantId();
-        if (currentRestaurantId) {
-          setRestaurantId(currentRestaurantId);
+        console.log('🔄 [AIChat] RestaurantId não encontrado, forçando carregamento...');
+        try {
+          currentRestaurantId = await forceLoadRestaurantId(user.id);
+          console.log('✅ [AIChat] RestaurantId carregado com sucesso:', currentRestaurantId);
+        } catch (error) {
+          console.error('❌ [AIChat] Erro ao forçar carregamento:', error);
+          throw new Error('Não foi possível obter o restaurantId');
         }
       }
 
-      console.log('🏪 [AIChat] RestaurantId final:', currentRestaurantId);
+      console.log('🏪 [AIChat] RestaurantId final para envio:', currentRestaurantId);
+
+      if (!currentRestaurantId) {
+        throw new Error('Não foi possível obter o restaurantId');
+      }
+
+      // Verificação final para garantir que é uma string válida
+      if (typeof currentRestaurantId !== 'string' || currentRestaurantId.trim() === '') {
+        throw new Error('RestaurantId inválido: deve ser uma string não vazia');
+      }
+
+      console.log('✅ [AIChat] RestaurantId validado:', currentRestaurantId);
 
       const payload = {
         userId: user.id,
@@ -182,6 +245,11 @@ export function AIChat({ aiType, context }: AIChatProps) {
       };
 
       console.log('📦 [AIChat] Payload preparado:', JSON.stringify(payload, null, 2));
+      console.log('🔍 [AIChat] Verificação do payload:');
+      console.log('  - userId:', typeof payload.userId, payload.userId);
+      console.log('  - restaurantId:', typeof payload.restaurantId, payload.restaurantId);
+      console.log('  - message:', typeof payload.message, payload.message);
+      console.log('  - aiType:', typeof payload.aiType, payload.aiType);
 
       const webhookUrl = 'https://restauria.app.n8n.cloud/webhook/ai-assistant';
       console.log('🌐 [AIChat] Fazendo requisição POST para:', webhookUrl);
@@ -468,3 +536,4 @@ Por favor, verifique os logs do console para mais detalhes.`,
     </Card>
   );
 }
+

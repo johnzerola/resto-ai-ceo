@@ -54,6 +54,51 @@ export default function AiAssistant() {
     initializeRestaurantId();
   }, []);
 
+  const forceLoadRestaurantId = async (userId: string): Promise<string> => {
+    console.log('🔄 [AiAssistant] Forçando carregamento do restaurantId...');
+    
+    // Tentar múltiplas vezes
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      console.log(`🔄 [AiAssistant] Tentativa ${attempt} de carregar restaurantId...`);
+      
+      try {
+        const { data: restaurants, error } = await supabase
+          .from('restaurants')
+          .select('id, name')
+          .eq('owner_id', userId)
+          .limit(1);
+
+        if (error) {
+          console.error(`❌ [AiAssistant] Erro na tentativa ${attempt}:`, error);
+          continue;
+        }
+
+        console.log(`📋 [AiAssistant] Tentativa ${attempt} - dados:`, restaurants);
+
+        if (restaurants && restaurants.length > 0) {
+          const restaurantId = restaurants[0].id;
+          setRestaurantId(restaurantId);
+          console.log(`✅ [AiAssistant] RestaurantId carregado na tentativa ${attempt}:`, restaurantId);
+          return restaurantId;
+        }
+        
+        console.log(`⚠️ [AiAssistant] Nenhum restaurante encontrado na tentativa ${attempt}`);
+        
+        // Aguardar antes da próxima tentativa
+        if (attempt < 5) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } catch (error) {
+        console.error(`❌ [AiAssistant] Exceção na tentativa ${attempt}:`, error);
+        if (attempt < 5) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+    
+    throw new Error('Falha ao carregar restaurantId após 5 tentativas');
+  };
+
   const loadRestaurantId = async () => {
     try {
       console.log('🏪 [AiAssistant] Carregando restaurantId...');
@@ -113,6 +158,7 @@ export default function AiAssistant() {
 
   const handleSendMessage = async () => {
     console.log('🚀 [AiAssistant] === INICIANDO ENVIO DE MENSAGEM ===');
+    console.log('🔍 [AiAssistant] Estado atual do restaurantId:', restaurantId);
     
     if (!inputMessage.trim()) {
       console.log('❌ [AiAssistant] Mensagem vazia');
@@ -147,18 +193,35 @@ export default function AiAssistant() {
       }
 
       console.log('✅ [AiAssistant] Usuário:', user.email);
+      console.log('🆔 [AiAssistant] User ID:', user.id);
       
       // Garantir que temos o restaurantId
       let currentRestaurantId = restaurantId;
+      console.log('🔍 [AiAssistant] RestaurantId atual do estado:', currentRestaurantId);
+      
       if (!currentRestaurantId) {
-        console.log('🔄 [AiAssistant] RestaurantId não encontrado, carregando...');
-        currentRestaurantId = await loadRestaurantId();
-        if (currentRestaurantId) {
-          setRestaurantId(currentRestaurantId);
+        console.log('🔄 [AiAssistant] RestaurantId não encontrado, forçando carregamento...');
+        try {
+          currentRestaurantId = await forceLoadRestaurantId(user.id);
+          console.log('✅ [AiAssistant] RestaurantId carregado com sucesso:', currentRestaurantId);
+        } catch (error) {
+          console.error('❌ [AiAssistant] Erro ao forçar carregamento:', error);
+          throw new Error('Não foi possível obter o restaurantId');
         }
       }
 
-      console.log('🏪 [AiAssistant] RestaurantId final:', currentRestaurantId);
+      console.log('🏪 [AiAssistant] RestaurantId final para envio:', currentRestaurantId);
+
+      if (!currentRestaurantId) {
+        throw new Error('Não foi possível obter o restaurantId');
+      }
+
+      // Verificação final para garantir que é uma string válida
+      if (typeof currentRestaurantId !== 'string' || currentRestaurantId.trim() === '') {
+        throw new Error('RestaurantId inválido: deve ser uma string não vazia');
+      }
+
+      console.log('✅ [AiAssistant] RestaurantId validado:', currentRestaurantId);
 
       const payload = {
         userId: user.id,
@@ -169,6 +232,11 @@ export default function AiAssistant() {
       };
 
       console.log('📦 [AiAssistant] Payload preparado:', JSON.stringify(payload, null, 2));
+      console.log('🔍 [AiAssistant] Verificação do payload:');
+      console.log('  - userId:', typeof payload.userId, payload.userId);
+      console.log('  - restaurantId:', typeof payload.restaurantId, payload.restaurantId);
+      console.log('  - message:', typeof payload.message, payload.message);
+      console.log('  - aiType:', typeof payload.aiType, payload.aiType);
 
       const webhookUrl = 'https://restauria.app.n8n.cloud/webhook/ai-assistant';
       console.log('🌐 [AiAssistant] Fazendo requisição POST para:', webhookUrl);
@@ -395,3 +463,4 @@ Por favor, verifique os logs do console para mais detalhes.`,
     </ModernLayout>
   );
 }
+
