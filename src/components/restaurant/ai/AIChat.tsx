@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,24 +51,36 @@ export function AIChat({ aiType, context }: AIChatProps) {
       
       if (authError || !user) {
         console.log('❌ [AIChat] Usuário não autenticado');
-        return;
+        return null;
       }
 
-      const { data: restaurants } = await supabase
+      console.log('✅ [AIChat] Usuário autenticado:', user.email);
+
+      const { data: restaurants, error: restaurantError } = await supabase
         .from('restaurants')
-        .select('id')
+        .select('id, name')
         .eq('owner_id', user.id)
         .limit(1);
+
+      if (restaurantError) {
+        console.error('❌ [AIChat] Erro ao buscar restaurantes:', restaurantError);
+        return null;
+      }
+
+      console.log('📋 [AIChat] Restaurantes encontrados:', restaurants);
 
       const restaurant = restaurants?.[0];
       if (restaurant) {
         setRestaurantId(restaurant.id);
-        console.log('✅ [AIChat] RestaurantId carregado:', restaurant.id);
+        console.log('✅ [AIChat] RestaurantId carregado:', restaurant.id, 'Nome:', restaurant.name);
+        return restaurant.id;
       } else {
         console.log('⚠️ [AIChat] Nenhum restaurante encontrado para o usuário');
+        return null;
       }
     } catch (error) {
       console.error('❌ [AIChat] Erro ao carregar restaurantId:', error);
+      return null;
     }
   };
 
@@ -84,6 +95,27 @@ export function AIChat({ aiType, context }: AIChatProps) {
     if (isLoading) {
       console.log('❌ [AIChat] Já está processando');
       return;
+    }
+
+    // Verificar se temos restaurantId antes de prosseguir
+    if (!restaurantId) {
+      console.log('⚠️ [AIChat] RestaurantId não disponível, tentando carregar...');
+      const loadedRestaurantId = await loadRestaurantId();
+      
+      if (!loadedRestaurantId) {
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          type: 'assistant',
+          content: `❌ Erro: Nenhum restaurante encontrado para sua conta.
+
+Para usar o ${aiType === 'manager' ? 'Gerente Virtual' : 'Social Media IA'}, você precisa ter um restaurante cadastrado em sua conta. Por favor, verifique se você criou um restaurante no sistema.`,
+          timestamp: new Date(),
+          aiType: aiType
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        toast.error('Nenhum restaurante encontrado para sua conta');
+        return;
+      }
     }
 
     const userMessage: Message = {
@@ -110,11 +142,32 @@ export function AIChat({ aiType, context }: AIChatProps) {
       }
 
       console.log('✅ [AIChat] Usuário:', user.email);
-      console.log('🏪 [AIChat] RestaurantId atual:', restaurantId);
+      
+      // Garantir que temos o restaurantId
+      let currentRestaurantId = restaurantId;
+      if (!currentRestaurantId) {
+        console.log('🔄 [AIChat] RestaurantId não encontrado, carregando novamente...');
+        const { data: restaurants } = await supabase
+          .from('restaurants')
+          .select('id')
+          .eq('owner_id', user.id)
+          .limit(1);
+
+        const restaurant = restaurants?.[0];
+        if (restaurant) {
+          currentRestaurantId = restaurant.id;
+          setRestaurantId(restaurant.id);
+          console.log('✅ [AIChat] RestaurantId carregado durante envio:', restaurant.id);
+        } else {
+          throw new Error('Nenhum restaurante encontrado para este usuário');
+        }
+      }
+
+      console.log('🏪 [AIChat] RestaurantId final:', currentRestaurantId);
 
       const payload = {
         userId: user.id,
-        restaurantId: restaurantId,
+        restaurantId: currentRestaurantId,
         message: messageToSend,
         aiType: aiType,
         timestamp: new Date().toISOString()
