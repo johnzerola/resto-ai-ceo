@@ -3,8 +3,6 @@ import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { UnifiedAIAssistant } from "@/components/restaurant/UnifiedAIAssistant";
 import { ProtectedFeature } from "@/components/subscription/ProtectedFeature";
 import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
-import { DemoDataService } from "@/services/DemoDataService";
-import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 
 export function AIAssistantPage() {
@@ -15,38 +13,13 @@ export function AIAssistantPage() {
     refreshSubscription();
   }, [refreshSubscription]);
 
-  // Verificar e popular dados automaticamente
-  useEffect(() => {
-    const checkAndPopulateData = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data: restaurants } = await supabase
-          .from('restaurants')
-          .select('id')
-          .eq('owner_id', user.id)
-          .limit(1);
-
-        const restaurantId = restaurants?.[0]?.id;
-        if (restaurantId) {
-          await DemoDataService.checkAndPopulateIfNeeded(restaurantId, user.id);
-        }
-      } catch (error) {
-        console.error('Erro ao verificar dados:', error);
-      }
-    };
-
-    checkAndPopulateData();
-  }, []);
-
   return (
     <ModernLayout>
       <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-2 sm:p-4 lg:p-6 bg-background min-h-screen max-w-full overflow-hidden">
         <div className="space-y-1">
           <h1 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight">Assistente de IA</h1>
           <p className="text-muted-foreground text-xs sm:text-sm">
-            Seu consultor pessoal para gestão inteligente
+            Seu consultor pessoal para gestão inteligente baseado em dados reais
           </p>
         </div>
 
@@ -54,7 +27,7 @@ export function AIAssistantPage() {
           <ProtectedFeature
             feature="hasFullAIAssistant"
             featureName="Assistente IA Completo"
-            description="Tenha acesso completo aos assistentes de IA: Gerente Virtual e Social Media IA com todas as funcionalidades."
+            description="Tenha acesso completo aos assistentes de IA: Gerente Virtual e Social Media IA com análises baseadas em dados reais."
           >
             <div className="h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] lg:h-[calc(100vh-220px)]">
               <UnifiedAIAssistant />
