@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Bot, Send, Sparkles, MessageCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
   id: string;
@@ -27,6 +28,7 @@ export default function AiAssistant() {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
+  const { currentRestaurant } = useAuth();
 
   useEffect(() => {
     const initializeRestaurantId = async () => {
@@ -56,6 +58,16 @@ export default function AiAssistant() {
 
   const forceLoadRestaurantId = async (userId: string): Promise<string> => {
     console.log('🔄 [AiAssistant] Forçando carregamento do restaurantId...');
+    
+    // Primeiro, tentar usar o restaurante do contexto de autenticação
+    if (currentRestaurant && currentRestaurant.id !== 'default') {
+      console.log('✅ [AiAssistant] Usando restaurante do contexto:', currentRestaurant.id);
+      setRestaurantId(currentRestaurant.id);
+      return currentRestaurant.id;
+    }
+    
+    // Se não tiver restaurante válido no contexto, buscar no banco
+    console.log('🔄 [AiAssistant] Buscando restaurante no banco de dados...');
     
     // Tentar múltiplas vezes
     for (let attempt = 1; attempt <= 5; attempt++) {
