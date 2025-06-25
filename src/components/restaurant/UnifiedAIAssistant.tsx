@@ -8,14 +8,15 @@ import {
   Brain, 
   Megaphone, 
   Download,
-  RefreshCw
+  RefreshCw,
+  Calculator
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
 import { supabase } from "@/integrations/supabase/client";
 import { AIChat } from "./ai/AIChat";
 import { AILimitedChat } from "./ai/AILimitedChat";
-import { DemoDataService } from "@/services/DemoDataService";
+import { AutoCalculationService } from "@/services/AutoCalculationService";
 
 interface RestaurantContext {
   restaurantData: any;
@@ -61,8 +62,8 @@ export function UnifiedAIAssistant() {
       console.log('🏪 [UnifiedAIAssistant] Restaurante encontrado:', restaurant?.name, 'ID:', restaurantId);
 
       if (restaurantId) {
-        // Verificar e popular dados se necessário
-        await DemoDataService.checkAndPopulateIfNeeded(restaurantId, user.id);
+        // Executar cálculos automáticos
+        await AutoCalculationService.runAllCalculations(restaurantId);
       }
 
       const [cashFlowData, inventoryData, recipesData, goalsData] = await Promise.all([
@@ -104,7 +105,7 @@ export function UnifiedAIAssistant() {
     toast.success('Funcionalidade de exportação será implementada em breve!');
   };
 
-  const populateDemoData = async () => {
+  const recalculateData = async () => {
     if (!context?.restaurantId) {
       toast.error('Nenhum restaurante encontrado');
       return;
@@ -112,13 +113,12 @@ export function UnifiedAIAssistant() {
 
     setIsLoadingData(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      await DemoDataService.populateRestaurantDemoData(context.restaurantId, user.id);
+      await AutoCalculationService.runAllCalculations(context.restaurantId);
       await loadRestaurantContext(); // Recarregar dados
+      toast.success('Cálculos automáticos executados com sucesso!');
     } catch (error) {
-      console.error('Erro ao popular dados:', error);
+      console.error('Erro ao recalcular dados:', error);
+      toast.error('Erro ao recalcular dados');
     } finally {
       setIsLoadingData(false);
     }
@@ -175,13 +175,13 @@ export function UnifiedAIAssistant() {
           </Button>
           <Button 
             variant="outline" 
-            onClick={populateDemoData} 
+            onClick={recalculateData} 
             size="sm"
             disabled={isLoadingData}
           >
-            <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Popular Dados</span>
-            <span className="sm:hidden">Popular</span>
+            <Calculator className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Recalcular Dados</span>
+            <span className="sm:hidden">Recalcular</span>
           </Button>
           <Button variant="outline" onClick={exportHistory} size="sm">
             <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -240,7 +240,7 @@ export function UnifiedAIAssistant() {
               <div>
                 <Badge variant="outline" className="text-xs">Status</Badge>
                 <p className="mt-1 text-xs sm:text-sm font-medium text-green-600">
-                  {isLoadingData ? 'Carregando...' : 'Ativo'}
+                  {isLoadingData ? 'Carregando...' : 'Calculado'}
                 </p>
               </div>
             </div>

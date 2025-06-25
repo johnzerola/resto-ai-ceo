@@ -1,76 +1,40 @@
-
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { DataSync } from "@/components/restaurant/DataSync";
-import Dashboard from "./pages/Dashboard";
-import FichaTecnicaInteligenteCompleta from "./pages/FichaTecnicaInteligenteCompleta";
-import SystemValidation from "./pages/SystemValidation";
-import DreCmv from "./pages/DreCmv";
-import FluxoDeCaixa from "./pages/FluxoDeCaixa";
-import Simulador from "./pages/Simulador";
-import { Metas } from "./pages/Metas";
-import Estoque from "./pages/Estoque";
-import Cardapio from "./pages/Cardapio";
-import GerenciarUsuarios from "./pages/GerenciarUsuarios";
-import { Assinatura } from "./pages/Assinatura";
-import Configuracoes from "./pages/Configuracoes";
-import Documentacao from "./pages/Documentacao";
-import { Privacidade } from "./pages/Privacidade";
-import StatusSistema from "./pages/StatusSistema";
-import SecurityCenter from "./pages/SecurityCenter";
-import NotFound from "./pages/NotFound";
-import SystemAuditPage from "./pages/SystemAuditPage";
-import Login from "./pages/Login";
-import Vendas from "./pages/Vendas";
-import AiAssistant from "./pages/AiAssistant";
-
-const queryClient = new QueryClient();
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { QueryClient } from 'react-query';
+import { AuthProvider } from './contexts/AuthContext';
+import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import LoginPage from './pages/LoginPage';
+import RestaurantPage from './pages/RestaurantPage';
+import DashboardPage from './pages/DashboardPage';
+import InventoryPage from './pages/InventoryPage';
+import FinancialPage from './pages/FinancialPage';
+import SettingsPage from './pages/SettingsPage';
+import PricingPage from './pages/PricingPage';
+import GoalsPage from './pages/GoalsPage';
+import AIAssistantPage from './pages/AIAssistantPage';
+import AiAssistant from './pages/AiAssistant';
+import { ProjecoesPagina } from "@/pages/ProjecoesPagina";
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <DataSync>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/dre-cmv" element={<DreCmv />} />
-                <Route path="/dre" element={<DreCmv />} />
-                <Route path="/cmv" element={<DreCmv />} />
-                <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
-                <Route path="/simulador" element={<Simulador />} />
-                <Route path="/metas" element={<Metas />} />
-                <Route path="/estoque" element={<Estoque />} />
-                <Route path="/cardapio" element={<Cardapio />} />
-                <Route path="/vendas" element={<Vendas />} />
-                <Route path="/assistente-ia" element={<AiAssistant />} />
-                <Route path="/ai-assistant" element={<AiAssistant />} />
-                <Route path="/gerenciar-usuarios" element={<GerenciarUsuarios />} />
-                <Route path="/assinatura" element={<Assinatura />} />
-                <Route path="/configuracoes" element={<Configuracoes />} />
-                <Route path="/documentacao" element={<Documentacao />} />
-                <Route path="/privacidade" element={<Privacidade />} />
-                <Route path="/status-sistema" element={<StatusSistema />} />
-                <Route path="/security-center" element={<SecurityCenter />} />
-                <Route path="/ficha-tecnica-inteligente-completa" element={<FichaTecnicaInteligenteCompleta />} />
-                <Route path="/system-validation" element={<SystemValidation />} />
-                <Route path="/system-audit" element={<SystemAuditPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </DataSync>
-      </AuthProvider>
-    </QueryClientProvider>
+    <QueryClient>
+      <Router>
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/restaurants" element={<RestaurantPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/financial" element={<FinancialPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/goals" element={<GoalsPage />} />
+          <Route path="/ai-assistant" element={<AIAssistantPage />} />
+          <Route path="/ai" element={<AiAssistant />} />
+          <Route path="/projecoes" element={<ProjecoesPagina />} />
+        </Routes>
+      </Router>
+    </QueryClient>
   );
 }
 
