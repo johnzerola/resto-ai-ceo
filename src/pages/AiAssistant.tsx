@@ -29,7 +29,29 @@ export default function AiAssistant() {
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadRestaurantId();
+    const initializeRestaurantId = async () => {
+      console.log('🚀 [AiAssistant] Inicializando carregamento do restaurantId...');
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        attempts++;
+        console.log(`🔄 [AiAssistant] Tentativa ${attempts} de carregar restaurantId...`);
+        
+        const loadedId = await loadRestaurantId();
+        if (loadedId) {
+          console.log('✅ [AiAssistant] RestaurantId carregado com sucesso na inicialização');
+          break;
+        }
+        
+        if (attempts < maxAttempts) {
+          console.log(`⏳ [AiAssistant] Aguardando antes da próxima tentativa...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    };
+    
+    initializeRestaurantId();
   }, []);
 
   const loadRestaurantId = async () => {
@@ -63,7 +85,24 @@ export default function AiAssistant() {
         console.log('✅ [AiAssistant] RestaurantId carregado:', restaurant.id, 'Nome:', restaurant.name);
         return restaurant.id;
       } else {
-        console.log('⚠️ [AiAssistant] Nenhum restaurante encontrado para o usuário');
+        console.log('⚠️ [AiAssistant] Nenhum restaurante encontrado, tentando novamente...');
+        // Tentar novamente após um pequeno delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { data: retryRestaurants } = await supabase
+          .from('restaurants')
+          .select('id, name')
+          .eq('owner_id', user.id)
+          .limit(1);
+          
+        const retryRestaurant = retryRestaurants?.[0];
+        if (retryRestaurant) {
+          setRestaurantId(retryRestaurant.id);
+          console.log('✅ [AiAssistant] RestaurantId carregado na segunda tentativa:', retryRestaurant.id, 'Nome:', retryRestaurant.name);
+          return retryRestaurant.id;
+        }
+        
+        console.log('❌ [AiAssistant] Falha ao carregar restaurantId após retry');
         return null;
       }
     } catch (error) {
@@ -83,26 +122,6 @@ export default function AiAssistant() {
     if (isLoading) {
       console.log('❌ [AiAssistant] Já está processando');
       return;
-    }
-
-    // Verificar se temos restaurantId antes de prosseguir
-    if (!restaurantId) {
-      console.log('⚠️ [AiAssistant] RestaurantId não disponível, tentando carregar...');
-      const loadedRestaurantId = await loadRestaurantId();
-      
-      if (!loadedRestaurantId) {
-        const errorMessage: Message = {
-          id: Date.now().toString(),
-          content: `❌ Erro: Nenhum restaurante encontrado para sua conta.
-
-Para usar o Assistente IA, você precisa ter um restaurante cadastrado em sua conta. Por favor, verifique se você criou um restaurante no sistema.`,
-          isUser: false,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, errorMessage]);
-        toast.error('Nenhum restaurante encontrado para sua conta');
-        return;
-      }
     }
 
     const userMessage: Message = {
@@ -132,20 +151,10 @@ Para usar o Assistente IA, você precisa ter um restaurante cadastrado em sua co
       // Garantir que temos o restaurantId
       let currentRestaurantId = restaurantId;
       if (!currentRestaurantId) {
-        console.log('🔄 [AiAssistant] RestaurantId não encontrado, carregando novamente...');
-        const { data: restaurants } = await supabase
-          .from('restaurants')
-          .select('id')
-          .eq('owner_id', user.id)
-          .limit(1);
-
-        const restaurant = restaurants?.[0];
-        if (restaurant) {
-          currentRestaurantId = restaurant.id;
-          setRestaurantId(restaurant.id);
-          console.log('✅ [AiAssistant] RestaurantId carregado durante envio:', restaurant.id);
-        } else {
-          throw new Error('Nenhum restaurante encontrado para este usuário');
+        console.log('🔄 [AiAssistant] RestaurantId não encontrado, carregando...');
+        currentRestaurantId = await loadRestaurantId();
+        if (currentRestaurantId) {
+          setRestaurantId(currentRestaurantId);
         }
       }
 

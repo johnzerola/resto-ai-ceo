@@ -41,7 +41,29 @@ export function AIChat({ aiType, context }: AIChatProps) {
   }, [messages]);
 
   useEffect(() => {
-    loadRestaurantId();
+    const initializeRestaurantId = async () => {
+      console.log('🚀 [AIChat] Inicializando carregamento do restaurantId...');
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        attempts++;
+        console.log(`🔄 [AIChat] Tentativa ${attempts} de carregar restaurantId...`);
+        
+        const loadedId = await loadRestaurantId();
+        if (loadedId) {
+          console.log('✅ [AIChat] RestaurantId carregado com sucesso na inicialização');
+          break;
+        }
+        
+        if (attempts < maxAttempts) {
+          console.log(`⏳ [AIChat] Aguardando antes da próxima tentativa...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    };
+    
+    initializeRestaurantId();
   }, []);
 
   const loadRestaurantId = async () => {
@@ -75,7 +97,24 @@ export function AIChat({ aiType, context }: AIChatProps) {
         console.log('✅ [AIChat] RestaurantId carregado:', restaurant.id, 'Nome:', restaurant.name);
         return restaurant.id;
       } else {
-        console.log('⚠️ [AIChat] Nenhum restaurante encontrado para o usuário');
+        console.log('⚠️ [AIChat] Nenhum restaurante encontrado, tentando novamente...');
+        // Tentar novamente após um pequeno delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const { data: retryRestaurants } = await supabase
+          .from('restaurants')
+          .select('id, name')
+          .eq('owner_id', user.id)
+          .limit(1);
+          
+        const retryRestaurant = retryRestaurants?.[0];
+        if (retryRestaurant) {
+          setRestaurantId(retryRestaurant.id);
+          console.log('✅ [AIChat] RestaurantId carregado na segunda tentativa:', retryRestaurant.id, 'Nome:', retryRestaurant.name);
+          return retryRestaurant.id;
+        }
+        
+        console.log('❌ [AIChat] Falha ao carregar restaurantId após retry');
         return null;
       }
     } catch (error) {
@@ -95,27 +134,6 @@ export function AIChat({ aiType, context }: AIChatProps) {
     if (isLoading) {
       console.log('❌ [AIChat] Já está processando');
       return;
-    }
-
-    // Verificar se temos restaurantId antes de prosseguir
-    if (!restaurantId) {
-      console.log('⚠️ [AIChat] RestaurantId não disponível, tentando carregar...');
-      const loadedRestaurantId = await loadRestaurantId();
-      
-      if (!loadedRestaurantId) {
-        const errorMessage: Message = {
-          id: Date.now().toString(),
-          type: 'assistant',
-          content: `❌ Erro: Nenhum restaurante encontrado para sua conta.
-
-Para usar o ${aiType === 'manager' ? 'Gerente Virtual' : 'Social Media IA'}, você precisa ter um restaurante cadastrado em sua conta. Por favor, verifique se você criou um restaurante no sistema.`,
-          timestamp: new Date(),
-          aiType: aiType
-        };
-        setMessages(prev => [...prev, errorMessage]);
-        toast.error('Nenhum restaurante encontrado para sua conta');
-        return;
-      }
     }
 
     const userMessage: Message = {
@@ -146,20 +164,10 @@ Para usar o ${aiType === 'manager' ? 'Gerente Virtual' : 'Social Media IA'}, voc
       // Garantir que temos o restaurantId
       let currentRestaurantId = restaurantId;
       if (!currentRestaurantId) {
-        console.log('🔄 [AIChat] RestaurantId não encontrado, carregando novamente...');
-        const { data: restaurants } = await supabase
-          .from('restaurants')
-          .select('id')
-          .eq('owner_id', user.id)
-          .limit(1);
-
-        const restaurant = restaurants?.[0];
-        if (restaurant) {
-          currentRestaurantId = restaurant.id;
-          setRestaurantId(restaurant.id);
-          console.log('✅ [AIChat] RestaurantId carregado durante envio:', restaurant.id);
-        } else {
-          throw new Error('Nenhum restaurante encontrado para este usuário');
+        console.log('🔄 [AIChat] RestaurantId não encontrado, carregando...');
+        currentRestaurantId = await loadRestaurantId();
+        if (currentRestaurantId) {
+          setRestaurantId(currentRestaurantId);
         }
       }
 
