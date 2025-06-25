@@ -15,6 +15,7 @@ import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
 import { supabase } from "@/integrations/supabase/client";
 import { AIChat } from "./ai/AIChat";
 import { AILimitedChat } from "./ai/AILimitedChat";
+import { DemoDataService } from "@/services/DemoDataService";
 
 interface RestaurantContext {
   restaurantData: any;
@@ -28,6 +29,7 @@ export function UnifiedAIAssistant() {
   const { hasFeature } = useSubscriptionPlan();
   const [activeTab, setActiveTab] = useState<'manager' | 'social'>('manager');
   const [context, setContext] = useState<RestaurantContext | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   useEffect(() => {
     console.log('🚀 [UnifiedAIAssistant] Componente montado, carregando contexto...');
@@ -35,6 +37,7 @@ export function UnifiedAIAssistant() {
   }, []);
 
   const loadRestaurantContext = async () => {
+    setIsLoadingData(true);
     try {
       console.log('📊 [UnifiedAIAssistant] Iniciando carregamento do contexto...');
       const { data: { user } } = await supabase.auth.getUser();
@@ -56,6 +59,11 @@ export function UnifiedAIAssistant() {
       const restaurantId = restaurant?.id;
 
       console.log('🏪 [UnifiedAIAssistant] Restaurante encontrado:', restaurant?.name, 'ID:', restaurantId);
+
+      if (restaurantId) {
+        // Verificar e popular dados se necessário
+        await DemoDataService.checkAndPopulateIfNeeded(restaurantId, user.id);
+      }
 
       const [cashFlowData, inventoryData, recipesData, goalsData] = await Promise.all([
         supabase.from('cash_flow').select('*').eq('restaurant_id', restaurantId).order('date', { ascending: false }).limit(50),
@@ -87,11 +95,33 @@ export function UnifiedAIAssistant() {
     } catch (error) {
       console.error('❌ [UnifiedAIAssistant] Erro ao carregar contexto:', error);
       toast.error('Erro ao carregar dados do restaurante');
+    } finally {
+      setIsLoadingData(false);
     }
   };
 
   const exportHistory = () => {
     toast.success('Funcionalidade de exportação será implementada em breve!');
+  };
+
+  const populateDemoData = async () => {
+    if (!context?.restaurantId) {
+      toast.error('Nenhum restaurante encontrado');
+      return;
+    }
+
+    setIsLoadingData(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await DemoDataService.populateRestaurantDemoData(context.restaurantId, user.id);
+      await loadRestaurantContext(); // Recarregar dados
+    } catch (error) {
+      console.error('Erro ao popular dados:', error);
+    } finally {
+      setIsLoadingData(false);
+    }
   };
 
   console.log('🔍 [UnifiedAIAssistant] Verificando feature hasFullAIAssistant:', hasFeature('hasFullAIAssistant'));
@@ -133,10 +163,25 @@ export function UnifiedAIAssistant() {
     <div className="space-y-4 sm:space-y-6 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 flex-shrink-0">
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadRestaurantContext} size="sm">
-            <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <Button 
+            variant="outline" 
+            onClick={loadRestaurantContext} 
+            size="sm"
+            disabled={isLoadingData}
+          >
+            <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isLoadingData ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Atualizar Contexto</span>
             <span className="sm:hidden">Atualizar</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={populateDemoData} 
+            size="sm"
+            disabled={isLoadingData}
+          >
+            <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Popular Dados</span>
+            <span className="sm:hidden">Popular</span>
           </Button>
           <Button variant="outline" onClick={exportHistory} size="sm">
             <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -175,7 +220,7 @@ export function UnifiedAIAssistant() {
           <CardHeader className="pb-2">
             <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
               <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-              Sistema Conectado
+              Sistema Conectado {isLoadingData && <RefreshCw className="h-3 w-3 animate-spin" />}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
@@ -194,7 +239,9 @@ export function UnifiedAIAssistant() {
               </div>
               <div>
                 <Badge variant="outline" className="text-xs">Status</Badge>
-                <p className="mt-1 text-xs sm:text-sm font-medium text-green-600">Ativo</p>
+                <p className="mt-1 text-xs sm:text-sm font-medium text-green-600">
+                  {isLoadingData ? 'Carregando...' : 'Ativo'}
+                </p>
               </div>
             </div>
           </CardContent>

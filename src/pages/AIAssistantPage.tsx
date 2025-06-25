@@ -3,6 +3,8 @@ import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { UnifiedAIAssistant } from "@/components/restaurant/UnifiedAIAssistant";
 import { ProtectedFeature } from "@/components/subscription/ProtectedFeature";
 import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
+import { DemoDataService } from "@/services/DemoDataService";
+import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 
 export function AIAssistantPage() {
@@ -12,6 +14,31 @@ export function AIAssistantPage() {
   useEffect(() => {
     refreshSubscription();
   }, [refreshSubscription]);
+
+  // Verificar e popular dados automaticamente
+  useEffect(() => {
+    const checkAndPopulateData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: restaurants } = await supabase
+          .from('restaurants')
+          .select('id')
+          .eq('owner_id', user.id)
+          .limit(1);
+
+        const restaurantId = restaurants?.[0]?.id;
+        if (restaurantId) {
+          await DemoDataService.checkAndPopulateIfNeeded(restaurantId, user.id);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar dados:', error);
+      }
+    };
+
+    checkAndPopulateData();
+  }, []);
 
   return (
     <ModernLayout>
