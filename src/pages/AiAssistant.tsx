@@ -7,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Bot, Send, Sparkles, MessageCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
   id: string;
@@ -28,88 +27,10 @@ export default function AiAssistant() {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
-  const { currentRestaurant } = useAuth();
 
   useEffect(() => {
-    const initializeRestaurantId = async () => {
-      console.log('🚀 [AiAssistant] Inicializando carregamento do restaurantId...');
-      let attempts = 0;
-      const maxAttempts = 3;
-      
-      while (attempts < maxAttempts) {
-        attempts++;
-        console.log(`🔄 [AiAssistant] Tentativa ${attempts} de carregar restaurantId...`);
-        
-        const loadedId = await loadRestaurantId();
-        if (loadedId) {
-          console.log('✅ [AiAssistant] RestaurantId carregado com sucesso na inicialização');
-          break;
-        }
-        
-        if (attempts < maxAttempts) {
-          console.log(`⏳ [AiAssistant] Aguardando antes da próxima tentativa...`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-    };
-    
-    initializeRestaurantId();
+    loadRestaurantId();
   }, []);
-
-  const forceLoadRestaurantId = async (userId: string): Promise<string> => {
-    console.log('🔄 [AiAssistant] Forçando carregamento do restaurantId...');
-    
-    // Primeiro, tentar usar o restaurante do contexto de autenticação
-    if (currentRestaurant && currentRestaurant.id !== 'default') {
-      console.log('✅ [AiAssistant] Usando restaurante do contexto:', currentRestaurant.id);
-      setRestaurantId(currentRestaurant.id);
-      return currentRestaurant.id;
-    }
-    
-    // Se não tiver restaurante válido no contexto, buscar no banco
-    console.log('🔄 [AiAssistant] Buscando restaurante no banco de dados...');
-    
-    // Tentar múltiplas vezes
-    for (let attempt = 1; attempt <= 5; attempt++) {
-      console.log(`🔄 [AiAssistant] Tentativa ${attempt} de carregar restaurantId...`);
-      
-      try {
-        const { data: restaurants, error } = await supabase
-          .from('restaurants')
-          .select('id, name')
-          .eq('owner_id', userId)
-          .limit(1);
-
-        if (error) {
-          console.error(`❌ [AiAssistant] Erro na tentativa ${attempt}:`, error);
-          continue;
-        }
-
-        console.log(`📋 [AiAssistant] Tentativa ${attempt} - dados:`, restaurants);
-
-        if (restaurants && restaurants.length > 0) {
-          const restaurantId = restaurants[0].id;
-          setRestaurantId(restaurantId);
-          console.log(`✅ [AiAssistant] RestaurantId carregado na tentativa ${attempt}:`, restaurantId);
-          return restaurantId;
-        }
-        
-        console.log(`⚠️ [AiAssistant] Nenhum restaurante encontrado na tentativa ${attempt}`);
-        
-        // Aguardar antes da próxima tentativa
-        if (attempt < 5) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      } catch (error) {
-        console.error(`❌ [AiAssistant] Exceção na tentativa ${attempt}:`, error);
-        if (attempt < 5) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-    }
-    
-    throw new Error('Falha ao carregar restaurantId após 5 tentativas');
-  };
 
   const loadRestaurantId = async () => {
     try {
@@ -142,24 +63,7 @@ export default function AiAssistant() {
         console.log('✅ [AiAssistant] RestaurantId carregado:', restaurant.id, 'Nome:', restaurant.name);
         return restaurant.id;
       } else {
-        console.log('⚠️ [AiAssistant] Nenhum restaurante encontrado, tentando novamente...');
-        // Tentar novamente após um pequeno delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const { data: retryRestaurants } = await supabase
-          .from('restaurants')
-          .select('id, name')
-          .eq('owner_id', user.id)
-          .limit(1);
-          
-        const retryRestaurant = retryRestaurants?.[0];
-        if (retryRestaurant) {
-          setRestaurantId(retryRestaurant.id);
-          console.log('✅ [AiAssistant] RestaurantId carregado na segunda tentativa:', retryRestaurant.id, 'Nome:', retryRestaurant.name);
-          return retryRestaurant.id;
-        }
-        
-        console.log('❌ [AiAssistant] Falha ao carregar restaurantId após retry');
+        console.log('⚠️ [AiAssistant] Nenhum restaurante encontrado para o usuário');
         return null;
       }
     } catch (error) {
@@ -170,7 +74,6 @@ export default function AiAssistant() {
 
   const handleSendMessage = async () => {
     console.log('🚀 [AiAssistant] === INICIANDO ENVIO DE MENSAGEM ===');
-    console.log('🔍 [AiAssistant] Estado atual do restaurantId:', restaurantId);
     
     if (!inputMessage.trim()) {
       console.log('❌ [AiAssistant] Mensagem vazia');
@@ -180,6 +83,26 @@ export default function AiAssistant() {
     if (isLoading) {
       console.log('❌ [AiAssistant] Já está processando');
       return;
+    }
+
+    // Verificar se temos restaurantId antes de prosseguir
+    if (!restaurantId) {
+      console.log('⚠️ [AiAssistant] RestaurantId não disponível, tentando carregar...');
+      const loadedRestaurantId = await loadRestaurantId();
+      
+      if (!loadedRestaurantId) {
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          content: `❌ Erro: Nenhum restaurante encontrado para sua conta.
+
+Para usar o Assistente IA, você precisa ter um restaurante cadastrado em sua conta. Por favor, verifique se você criou um restaurante no sistema.`,
+          isUser: false,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        toast.error('Nenhum restaurante encontrado para sua conta');
+        return;
+      }
     }
 
     const userMessage: Message = {
@@ -205,35 +128,28 @@ export default function AiAssistant() {
       }
 
       console.log('✅ [AiAssistant] Usuário:', user.email);
-      console.log('🆔 [AiAssistant] User ID:', user.id);
       
       // Garantir que temos o restaurantId
       let currentRestaurantId = restaurantId;
-      console.log('🔍 [AiAssistant] RestaurantId atual do estado:', currentRestaurantId);
-      
       if (!currentRestaurantId) {
-        console.log('🔄 [AiAssistant] RestaurantId não encontrado, forçando carregamento...');
-        try {
-          currentRestaurantId = await forceLoadRestaurantId(user.id);
-          console.log('✅ [AiAssistant] RestaurantId carregado com sucesso:', currentRestaurantId);
-        } catch (error) {
-          console.error('❌ [AiAssistant] Erro ao forçar carregamento:', error);
-          throw new Error('Não foi possível obter o restaurantId');
+        console.log('🔄 [AiAssistant] RestaurantId não encontrado, carregando novamente...');
+        const { data: restaurants } = await supabase
+          .from('restaurants')
+          .select('id')
+          .eq('owner_id', user.id)
+          .limit(1);
+
+        const restaurant = restaurants?.[0];
+        if (restaurant) {
+          currentRestaurantId = restaurant.id;
+          setRestaurantId(restaurant.id);
+          console.log('✅ [AiAssistant] RestaurantId carregado durante envio:', restaurant.id);
+        } else {
+          throw new Error('Nenhum restaurante encontrado para este usuário');
         }
       }
 
-      console.log('🏪 [AiAssistant] RestaurantId final para envio:', currentRestaurantId);
-
-      if (!currentRestaurantId) {
-        throw new Error('Não foi possível obter o restaurantId');
-      }
-
-      // Verificação final para garantir que é uma string válida
-      if (typeof currentRestaurantId !== 'string' || currentRestaurantId.trim() === '') {
-        throw new Error('RestaurantId inválido: deve ser uma string não vazia');
-      }
-
-      console.log('✅ [AiAssistant] RestaurantId validado:', currentRestaurantId);
+      console.log('🏪 [AiAssistant] RestaurantId final:', currentRestaurantId);
 
       const payload = {
         userId: user.id,
@@ -244,11 +160,6 @@ export default function AiAssistant() {
       };
 
       console.log('📦 [AiAssistant] Payload preparado:', JSON.stringify(payload, null, 2));
-      console.log('🔍 [AiAssistant] Verificação do payload:');
-      console.log('  - userId:', typeof payload.userId, payload.userId);
-      console.log('  - restaurantId:', typeof payload.restaurantId, payload.restaurantId);
-      console.log('  - message:', typeof payload.message, payload.message);
-      console.log('  - aiType:', typeof payload.aiType, payload.aiType);
 
       const webhookUrl = 'https://restauria.app.n8n.cloud/webhook/ai-assistant';
       console.log('🌐 [AiAssistant] Fazendo requisição POST para:', webhookUrl);
@@ -475,4 +386,3 @@ Por favor, verifique os logs do console para mais detalhes.`,
     </ModernLayout>
   );
 }
-

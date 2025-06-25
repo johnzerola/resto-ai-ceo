@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -340,8 +341,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      console.log('Criando restaurante:', name, 'para usuário:', user.id);
-
       // Criar restaurante via Supabase
       const { data, error } = await supabase
         .from('restaurants')
@@ -360,26 +359,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Erro ao criar restaurante no Supabase:', error);
-        toast.error('Erro ao criar restaurante no banco de dados');
-        return;
+        // Fallback para criar localmente
+        const newRestaurant: Restaurant = {
+          id: crypto.randomUUID(),
+          name,
+          user_id: user.id,
+          created_at: new Date().toISOString(),
+        };
+
+        setUserRestaurants(prev => [...prev, newRestaurant]);
+        setCurrentRestaurant(newRestaurant);
+      } else {
+        const newRestaurant: Restaurant = {
+          id: data.id,
+          name: data.name,
+          user_id: data.owner_id,
+          created_at: data.created_at,
+        };
+
+        setUserRestaurants(prev => [...prev, newRestaurant]);
+        setCurrentRestaurant(newRestaurant);
       }
-
-      console.log('Restaurante criado com sucesso no banco:', data);
-
-      const newRestaurant: Restaurant = {
-        id: data.id,
-        name: data.name,
-        user_id: data.owner_id,
-        created_at: data.created_at,
-      };
-
-      // Atualizar estado com o novo restaurante
-      setUserRestaurants(prev => {
-        const updated = [...prev.filter(r => r.id !== 'default'), newRestaurant];
-        console.log('Estado de restaurantes atualizado:', updated);
-        return updated;
-      });
-      setCurrentRestaurant(newRestaurant);
 
       toast.success('Restaurante criado com sucesso!');
     } catch (error) {
@@ -402,78 +402,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(currentSession.user);
           setUserRole(UserRole.OWNER); // Define role padrão
           
-          // Verificar se existe restaurante real no banco de dados
-          console.log('Verificando restaurantes existentes...');
-          const { data: existingRestaurants, error: restaurantError } = await supabase
-            .from('restaurants')
-            .select('id, name, created_at')
-            .eq('owner_id', currentSession.user.id)
-            .order('created_at', { ascending: true });
-
-          if (restaurantError) {
-            console.error('Erro ao buscar restaurantes:', restaurantError);
-          }
-
-          console.log('Restaurantes encontrados:', existingRestaurants);
-
-          if (existingRestaurants && existingRestaurants.length > 0) {
-            // Usar restaurante existente
-            const restaurant = existingRestaurants[0];
-            const realRestaurant: Restaurant = {
-              id: restaurant.id,
-              name: restaurant.name,
-              user_id: currentSession.user.id,
-              created_at: restaurant.created_at,
-            };
-            setUserRestaurants(existingRestaurants.map(r => ({
-              id: r.id,
-              name: r.name,
-              user_id: currentSession.user.id,
-              created_at: r.created_at,
-            })));
-            setCurrentRestaurant(realRestaurant);
-            console.log('Restaurante existente carregado:', realRestaurant);
-          } else {
-            // Criar restaurante automaticamente
-            console.log('Nenhum restaurante encontrado, criando automaticamente...');
-            const { data: newRestaurant, error: createError } = await supabase
-              .from('restaurants')
-              .insert([
-                {
-                  name: 'Meu Restaurante',
-                  owner_id: currentSession.user.id,
-                  business_type: 'Restaurante',
-                  target_food_cost: 30,
-                  target_beverage_cost: 25,
-                  desired_profit_margin: 50,
-                }
-              ])
-              .select()
-              .single();
-
-            if (createError) {
-              console.error('Erro ao criar restaurante automático:', createError);
-              // Fallback para restaurante local temporário
-              const defaultRestaurant: Restaurant = {
-                id: 'default',
-                name: 'Meu Restaurante',
-                user_id: currentSession.user.id,
-                created_at: new Date().toISOString(),
-              };
-              setUserRestaurants([defaultRestaurant]);
-              setCurrentRestaurant(defaultRestaurant);
-            } else {
-              const realRestaurant: Restaurant = {
-                id: newRestaurant.id,
-                name: newRestaurant.name,
-                user_id: newRestaurant.owner_id,
-                created_at: newRestaurant.created_at,
-              };
-              setUserRestaurants([realRestaurant]);
-              setCurrentRestaurant(realRestaurant);
-              console.log('Restaurante criado automaticamente:', realRestaurant);
-            }
-          }
+          // Setup restaurante padrão apenas para usuários autenticados
+          const defaultRestaurant: Restaurant = {
+            id: 'default',
+            name: 'Meu Restaurante',
+            user_id: currentSession.user.id,
+            created_at: new Date().toISOString(),
+          };
+          setUserRestaurants([defaultRestaurant]);
+          setCurrentRestaurant(defaultRestaurant);
         } else {
           console.log('Nenhuma sessão ativa encontrada');
           clearUserData();
@@ -509,78 +446,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentSession.user);
         setUserRole(UserRole.OWNER);
         
-        // Verificar se existe restaurante real no banco de dados
-        console.log('Verificando restaurantes existentes após login...');
-        const { data: existingRestaurants, error: restaurantError } = await supabase
-          .from('restaurants')
-          .select('id, name, created_at')
-          .eq('owner_id', currentSession.user.id)
-          .order('created_at', { ascending: true });
-
-        if (restaurantError) {
-          console.error('Erro ao buscar restaurantes após login:', restaurantError);
-        }
-
-        console.log('Restaurantes encontrados após login:', existingRestaurants);
-
-        if (existingRestaurants && existingRestaurants.length > 0) {
-          // Usar restaurante existente
-          const restaurant = existingRestaurants[0];
-          const realRestaurant: Restaurant = {
-            id: restaurant.id,
-            name: restaurant.name,
-            user_id: currentSession.user.id,
-            created_at: restaurant.created_at,
-          };
-          setUserRestaurants(existingRestaurants.map(r => ({
-            id: r.id,
-            name: r.name,
-            user_id: currentSession.user.id,
-            created_at: r.created_at,
-          })));
-          setCurrentRestaurant(realRestaurant);
-          console.log('Restaurante existente carregado após login:', realRestaurant);
-        } else {
-          // Criar restaurante automaticamente
-          console.log('Nenhum restaurante encontrado após login, criando automaticamente...');
-          const { data: newRestaurant, error: createError } = await supabase
-            .from('restaurants')
-            .insert([
-              {
-                name: 'Meu Restaurante',
-                owner_id: currentSession.user.id,
-                business_type: 'Restaurante',
-                target_food_cost: 30,
-                target_beverage_cost: 25,
-                desired_profit_margin: 50,
-              }
-            ])
-            .select()
-            .single();
-
-          if (createError) {
-            console.error('Erro ao criar restaurante automático após login:', createError);
-            // Fallback para restaurante local temporário
-            const defaultRestaurant: Restaurant = {
-              id: 'default',
-              name: 'Meu Restaurante',
-              user_id: currentSession.user.id,
-              created_at: new Date().toISOString(),
-            };
-            setUserRestaurants([defaultRestaurant]);
-            setCurrentRestaurant(defaultRestaurant);
-          } else {
-            const realRestaurant: Restaurant = {
-              id: newRestaurant.id,
-              name: newRestaurant.name,
-              user_id: newRestaurant.owner_id,
-              created_at: newRestaurant.created_at,
-            };
-            setUserRestaurants([realRestaurant]);
-            setCurrentRestaurant(realRestaurant);
-            console.log('Restaurante criado automaticamente após login:', realRestaurant);
-          }
-        }
+        const defaultRestaurant: Restaurant = {
+          id: 'default',
+          name: 'Meu Restaurante',
+          user_id: currentSession.user.id,
+          created_at: new Date().toISOString(),
+        };
+        setUserRestaurants([defaultRestaurant]);
+        setCurrentRestaurant(defaultRestaurant);
       } else {
         clearUserData();
       }

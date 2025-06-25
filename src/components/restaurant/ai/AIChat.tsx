@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   id: string;
@@ -36,92 +35,14 @@ export function AIChat({ aiType, context }: AIChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { currentRestaurant } = useAuth();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
-    const initializeRestaurantId = async () => {
-      console.log('🚀 [AIChat] Inicializando carregamento do restaurantId...');
-      let attempts = 0;
-      const maxAttempts = 3;
-      
-      while (attempts < maxAttempts) {
-        attempts++;
-        console.log(`🔄 [AIChat] Tentativa ${attempts} de carregar restaurantId...`);
-        
-        const loadedId = await loadRestaurantId();
-        if (loadedId) {
-          console.log('✅ [AIChat] RestaurantId carregado com sucesso na inicialização');
-          break;
-        }
-        
-        if (attempts < maxAttempts) {
-          console.log(`⏳ [AIChat] Aguardando antes da próxima tentativa...`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-    };
-    
-    initializeRestaurantId();
+    loadRestaurantId();
   }, []);
-
-  const forceLoadRestaurantId = async (userId: string): Promise<string> => {
-    console.log('🔄 [AIChat] Forçando carregamento do restaurantId...');
-    
-    // Primeiro, tentar usar o restaurante do contexto de autenticação
-    if (currentRestaurant && currentRestaurant.id !== 'default') {
-      console.log('✅ [AIChat] Usando restaurante do contexto:', currentRestaurant.id);
-      setRestaurantId(currentRestaurant.id);
-      return currentRestaurant.id;
-    }
-    
-    // Se não tiver restaurante válido no contexto, buscar no banco
-    console.log('🔄 [AIChat] Buscando restaurante no banco de dados...');
-    
-    // Tentar múltiplas vezes
-    for (let attempt = 1; attempt <= 5; attempt++) {
-      console.log(`🔄 [AIChat] Tentativa ${attempt} de carregar restaurantId...`);
-      
-      try {
-        const { data: restaurants, error } = await supabase
-          .from('restaurants')
-          .select('id, name')
-          .eq('owner_id', userId)
-          .limit(1);
-
-        if (error) {
-          console.error(`❌ [AIChat] Erro na tentativa ${attempt}:`, error);
-          continue;
-        }
-
-        console.log(`📋 [AIChat] Tentativa ${attempt} - dados:`, restaurants);
-
-        if (restaurants && restaurants.length > 0) {
-          const restaurantId = restaurants[0].id;
-          setRestaurantId(restaurantId);
-          console.log(`✅ [AIChat] RestaurantId carregado na tentativa ${attempt}:`, restaurantId);
-          return restaurantId;
-        }
-        
-        console.log(`⚠️ [AIChat] Nenhum restaurante encontrado na tentativa ${attempt}`);
-        
-        // Aguardar antes da próxima tentativa
-        if (attempt < 5) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      } catch (error) {
-        console.error(`❌ [AIChat] Exceção na tentativa ${attempt}:`, error);
-        if (attempt < 5) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-    }
-    
-    throw new Error('Falha ao carregar restaurantId após 5 tentativas');
-  };
 
   const loadRestaurantId = async () => {
     try {
@@ -154,24 +75,7 @@ export function AIChat({ aiType, context }: AIChatProps) {
         console.log('✅ [AIChat] RestaurantId carregado:', restaurant.id, 'Nome:', restaurant.name);
         return restaurant.id;
       } else {
-        console.log('⚠️ [AIChat] Nenhum restaurante encontrado, tentando novamente...');
-        // Tentar novamente após um pequeno delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const { data: retryRestaurants } = await supabase
-          .from('restaurants')
-          .select('id, name')
-          .eq('owner_id', user.id)
-          .limit(1);
-          
-        const retryRestaurant = retryRestaurants?.[0];
-        if (retryRestaurant) {
-          setRestaurantId(retryRestaurant.id);
-          console.log('✅ [AIChat] RestaurantId carregado na segunda tentativa:', retryRestaurant.id, 'Nome:', retryRestaurant.name);
-          return retryRestaurant.id;
-        }
-        
-        console.log('❌ [AIChat] Falha ao carregar restaurantId após retry');
+        console.log('⚠️ [AIChat] Nenhum restaurante encontrado para o usuário');
         return null;
       }
     } catch (error) {
@@ -182,7 +86,6 @@ export function AIChat({ aiType, context }: AIChatProps) {
 
   const sendMessage = async () => {
     console.log('🚀 [AIChat] === INICIANDO ENVIO DE MENSAGEM ===');
-    console.log('🔍 [AIChat] Estado atual do restaurantId:', restaurantId);
     
     if (!inputMessage.trim()) {
       console.log('❌ [AIChat] Mensagem vazia');
@@ -192,6 +95,27 @@ export function AIChat({ aiType, context }: AIChatProps) {
     if (isLoading) {
       console.log('❌ [AIChat] Já está processando');
       return;
+    }
+
+    // Verificar se temos restaurantId antes de prosseguir
+    if (!restaurantId) {
+      console.log('⚠️ [AIChat] RestaurantId não disponível, tentando carregar...');
+      const loadedRestaurantId = await loadRestaurantId();
+      
+      if (!loadedRestaurantId) {
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          type: 'assistant',
+          content: `❌ Erro: Nenhum restaurante encontrado para sua conta.
+
+Para usar o ${aiType === 'manager' ? 'Gerente Virtual' : 'Social Media IA'}, você precisa ter um restaurante cadastrado em sua conta. Por favor, verifique se você criou um restaurante no sistema.`,
+          timestamp: new Date(),
+          aiType: aiType
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        toast.error('Nenhum restaurante encontrado para sua conta');
+        return;
+      }
     }
 
     const userMessage: Message = {
@@ -218,35 +142,28 @@ export function AIChat({ aiType, context }: AIChatProps) {
       }
 
       console.log('✅ [AIChat] Usuário:', user.email);
-      console.log('🆔 [AIChat] User ID:', user.id);
       
       // Garantir que temos o restaurantId
       let currentRestaurantId = restaurantId;
-      console.log('🔍 [AIChat] RestaurantId atual do estado:', currentRestaurantId);
-      
       if (!currentRestaurantId) {
-        console.log('🔄 [AIChat] RestaurantId não encontrado, forçando carregamento...');
-        try {
-          currentRestaurantId = await forceLoadRestaurantId(user.id);
-          console.log('✅ [AIChat] RestaurantId carregado com sucesso:', currentRestaurantId);
-        } catch (error) {
-          console.error('❌ [AIChat] Erro ao forçar carregamento:', error);
-          throw new Error('Não foi possível obter o restaurantId');
+        console.log('🔄 [AIChat] RestaurantId não encontrado, carregando novamente...');
+        const { data: restaurants } = await supabase
+          .from('restaurants')
+          .select('id')
+          .eq('owner_id', user.id)
+          .limit(1);
+
+        const restaurant = restaurants?.[0];
+        if (restaurant) {
+          currentRestaurantId = restaurant.id;
+          setRestaurantId(restaurant.id);
+          console.log('✅ [AIChat] RestaurantId carregado durante envio:', restaurant.id);
+        } else {
+          throw new Error('Nenhum restaurante encontrado para este usuário');
         }
       }
 
-      console.log('🏪 [AIChat] RestaurantId final para envio:', currentRestaurantId);
-
-      if (!currentRestaurantId) {
-        throw new Error('Não foi possível obter o restaurantId');
-      }
-
-      // Verificação final para garantir que é uma string válida
-      if (typeof currentRestaurantId !== 'string' || currentRestaurantId.trim() === '') {
-        throw new Error('RestaurantId inválido: deve ser uma string não vazia');
-      }
-
-      console.log('✅ [AIChat] RestaurantId validado:', currentRestaurantId);
+      console.log('🏪 [AIChat] RestaurantId final:', currentRestaurantId);
 
       const payload = {
         userId: user.id,
@@ -257,11 +174,6 @@ export function AIChat({ aiType, context }: AIChatProps) {
       };
 
       console.log('📦 [AIChat] Payload preparado:', JSON.stringify(payload, null, 2));
-      console.log('🔍 [AIChat] Verificação do payload:');
-      console.log('  - userId:', typeof payload.userId, payload.userId);
-      console.log('  - restaurantId:', typeof payload.restaurantId, payload.restaurantId);
-      console.log('  - message:', typeof payload.message, payload.message);
-      console.log('  - aiType:', typeof payload.aiType, payload.aiType);
 
       const webhookUrl = 'https://restauria.app.n8n.cloud/webhook/ai-assistant';
       console.log('🌐 [AIChat] Fazendo requisição POST para:', webhookUrl);
@@ -548,4 +460,3 @@ Por favor, verifique os logs do console para mais detalhes.`,
     </Card>
   );
 }
-
