@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ModernLayout } from '@/components/restaurant/ModernLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,39 @@ export default function AiAssistant() {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadRestaurantId();
+  }, []);
+
+  const loadRestaurantId = async () => {
+    try {
+      console.log('🏪 [AiAssistant] Carregando restaurantId...');
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.log('❌ [AiAssistant] Usuário não autenticado');
+        return;
+      }
+
+      const { data: restaurants } = await supabase
+        .from('restaurants')
+        .select('id')
+        .eq('owner_id', user.id)
+        .limit(1);
+
+      const restaurant = restaurants?.[0];
+      if (restaurant) {
+        setRestaurantId(restaurant.id);
+        console.log('✅ [AiAssistant] RestaurantId carregado:', restaurant.id);
+      } else {
+        console.log('⚠️ [AiAssistant] Nenhum restaurante encontrado para o usuário');
+      }
+    } catch (error) {
+      console.error('❌ [AiAssistant] Erro ao carregar restaurantId:', error);
+    }
+  };
 
   const handleSendMessage = async () => {
     console.log('🚀 [AiAssistant] === INICIANDO ENVIO DE MENSAGEM ===');
@@ -64,12 +97,13 @@ export default function AiAssistant() {
       }
 
       console.log('✅ [AiAssistant] Usuário:', user.email);
+      console.log('🏪 [AiAssistant] RestaurantId atual:', restaurantId);
 
       const payload = {
         userId: user.id,
-        restaurantId: null, // Página genérica sem restaurante específico
+        restaurantId: restaurantId,
         message: messageToSend,
-        aiType: 'manager', // Tipo padrão para esta página
+        aiType: 'manager',
         timestamp: new Date().toISOString()
       };
 
@@ -187,6 +221,11 @@ Por favor, verifique os logs do console para mais detalhes.`,
           <p className="text-muted-foreground">
             Seu consultor inteligente para gestão estratégica do restaurante
           </p>
+          {restaurantId && (
+            <p className="text-xs text-green-600 mt-1">
+              Conectado ao restaurante: {restaurantId}
+            </p>
+          )}
         </div>
 
         <div className="grid gap-6">

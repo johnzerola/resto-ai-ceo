@@ -34,11 +34,44 @@ export function AIChat({ aiType, context }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    loadRestaurantId();
+  }, []);
+
+  const loadRestaurantId = async () => {
+    try {
+      console.log('🏪 [AIChat] Carregando restaurantId...');
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.log('❌ [AIChat] Usuário não autenticado');
+        return;
+      }
+
+      const { data: restaurants } = await supabase
+        .from('restaurants')
+        .select('id')
+        .eq('owner_id', user.id)
+        .limit(1);
+
+      const restaurant = restaurants?.[0];
+      if (restaurant) {
+        setRestaurantId(restaurant.id);
+        console.log('✅ [AIChat] RestaurantId carregado:', restaurant.id);
+      } else {
+        console.log('⚠️ [AIChat] Nenhum restaurante encontrado para o usuário');
+      }
+    } catch (error) {
+      console.error('❌ [AIChat] Erro ao carregar restaurantId:', error);
+    }
+  };
 
   const sendMessage = async () => {
     console.log('🚀 [AIChat] === INICIANDO ENVIO DE MENSAGEM ===');
@@ -77,10 +110,11 @@ export function AIChat({ aiType, context }: AIChatProps) {
       }
 
       console.log('✅ [AIChat] Usuário:', user.email);
+      console.log('🏪 [AIChat] RestaurantId atual:', restaurantId);
 
       const payload = {
         userId: user.id,
-        restaurantId: context?.restaurantId || null,
+        restaurantId: restaurantId,
         message: messageToSend,
         aiType: aiType,
         timestamp: new Date().toISOString()
@@ -236,7 +270,7 @@ Por favor, verifique os logs do console para mais detalhes.`,
           <span className="sm:hidden">
             {aiType === 'manager' ? 'Gerente Virtual' : 'Social Media IA'}
           </span>
-          {context?.restaurantId && (
+          {restaurantId && (
             <Badge variant="default" className="text-xs bg-green-600">
               Sistema Conectado
             </Badge>
@@ -248,6 +282,11 @@ Por favor, verifique os logs do console para mais detalhes.`,
             : 'Especialista em redes sociais, criação de conteúdo, imagens e campanhas.'
           }
         </p>
+        {restaurantId && (
+          <p className="text-xs text-green-600">
+            Conectado ao restaurante: {restaurantId}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="flex-1 min-h-0 p-2 sm:p-4 flex flex-col">
         <div className="border rounded-lg flex-1 min-h-0 flex flex-col">
