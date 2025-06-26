@@ -28,6 +28,7 @@ import Login from "./pages/Login";
 import Vendas from "./pages/Vendas";
 import AiAssistant from "./pages/AiAssistant";
 import { ProjecoesPagina } from "./pages/ProjecoesPagina";
+import Onboarding from "./pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<Login />} />
+                <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/dre-cmv" element={<DreCmv />} />
