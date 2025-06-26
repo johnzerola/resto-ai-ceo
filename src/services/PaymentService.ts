@@ -1,7 +1,10 @@
 
-import { supabase, VALID_TABLES, ExtendedTableName } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Tables } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+// Helper types for better type safety
+type Tables = Database['public']['Tables'];
 
 // Payment status types
 export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
