@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -88,7 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       'restaurantData',
       'currentUser',
       'inventory',
-      'recipes'
+      'recipes',
+      'currentRestaurant'
     ];
     
     keysToRemove.forEach(key => {
@@ -105,7 +107,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🏪 [AuthContext] Verificando se usuário tem restaurante:', userId);
       
-      // Verificar se já existe um restaurante para o usuário
+      // Primeiro verificar se há um restaurante no localStorage
+      const storedRestaurant = localStorage.getItem('currentRestaurant');
+      if (storedRestaurant) {
+        try {
+          const restaurant = JSON.parse(storedRestaurant);
+          setUserRestaurants([restaurant]);
+          setCurrentRestaurant(restaurant);
+          console.log('✅ [AuthContext] Restaurante carregado do localStorage:', restaurant.name);
+          return restaurant;
+        } catch (error) {
+          console.error('Erro ao parsear restaurante do localStorage:', error);
+          localStorage.removeItem('currentRestaurant');
+        }
+      }
+      
+      // Verificar se já existe um restaurante para o usuário no Supabase
       const { data: existingRestaurants, error: fetchError } = await supabase
         .from('restaurants')
         .select('*')
@@ -113,10 +130,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (fetchError) {
         console.error('❌ [AuthContext] Erro ao buscar restaurantes:', fetchError);
-        return null;
-      }
-
-      if (existingRestaurants && existingRestaurants.length > 0) {
+        // Não retornar aqui, continuar com fallback
+      } else if (existingRestaurants && existingRestaurants.length > 0) {
         console.log('✅ [AuthContext] Restaurante existente encontrado:', existingRestaurants[0].name);
         const restaurant = {
           id: existingRestaurants[0].id,
@@ -126,68 +141,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setUserRestaurants([restaurant]);
         setCurrentRestaurant(restaurant);
+        localStorage.setItem('currentRestaurant', JSON.stringify(restaurant));
         return restaurant;
       }
 
-      // Se não tem restaurante, criar um novo
-      console.log('🆕 [AuthContext] Criando restaurante padrão para novo usuário');
-      const { data: newRestaurant, error: createError } = await supabase
-        .from('restaurants')
-        .insert([
-          {
-            name: 'Meu Restaurante',
-            owner_id: userId,
-            business_type: 'Restaurante',
-            target_food_cost: 30,
-            target_beverage_cost: 25,
-            desired_profit_margin: 50,
-          }
-        ])
-        .select()
-        .single();
+      // Se não tem restaurante, não criar automaticamente
+      // Deixar que o usuário seja redirecionado para onboarding
+      console.log('🔄 [AuthContext] Nenhum restaurante encontrado - usuário deve fazer onboarding');
+      return null;
 
-      if (createError) {
-        console.error('❌ [AuthContext] Erro ao criar restaurante:', createError);
-        
-        // Fallback: criar restaurante local
-        const fallbackRestaurant: Restaurant = {
-          id: 'default-' + userId,
-          name: 'Meu Restaurante',
-          user_id: userId,
-          created_at: new Date().toISOString(),
-        };
-        setUserRestaurants([fallbackRestaurant]);
-        setCurrentRestaurant(fallbackRestaurant);
-        console.log('⚠️ [AuthContext] Usando restaurante fallback:', fallbackRestaurant.id);
-        return fallbackRestaurant;
-      }
-
-      const restaurant: Restaurant = {
-        id: newRestaurant.id,
-        name: newRestaurant.name,
-        user_id: newRestaurant.owner_id,
-        created_at: newRestaurant.created_at,
-      };
-
-      setUserRestaurants([restaurant]);
-      setCurrentRestaurant(restaurant);
-      console.log('✅ [AuthContext] Restaurante criado com sucesso:', restaurant.id);
-      toast.success('Restaurante configurado automaticamente!');
-      
-      return restaurant;
     } catch (error) {
-      console.error('❌ [AuthContext] Erro inesperado ao criar restaurante:', error);
-      
-      // Fallback final
-      const fallbackRestaurant: Restaurant = {
-        id: 'default-' + userId,
-        name: 'Meu Restaurante',
-        user_id: userId,
-        created_at: new Date().toISOString(),
-      };
-      setUserRestaurants([fallbackRestaurant]);
-      setCurrentRestaurant(fallbackRestaurant);
-      return fallbackRestaurant;
+      console.error('❌ [AuthContext] Erro inesperado ao verificar restaurante:', error);
+      return null;
     }
   };
 
@@ -432,7 +397,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       console.log('🏪 [createRestaurant] Iniciando criação do restaurante:', name);
 
-      // Criar restaurante via Supabase
+      // Tentar criar restaurante via Supabase
       const { data, error } = await supabase
         .from('restaurants')
         .insert([
@@ -450,20 +415,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('❌ [createRestaurant] Erro ao criar restaurante no Supabase:', error);
-        
-        // Fallback para criar localmente
-        const newRestaurant: Restaurant = {
-          id: 'local-' + crypto.randomUUID(),
-          name,
-          user_id: user.id,
-          created_at: new Date().toISOString(),
-        };
-
-        setUserRestaurants(prev => [...prev, newRestaurant]);
-        setCurrentRestaurant(newRestaurant);
-        console.log('⚠️ [createRestaurant] Restaurante criado localmente:', newRestaurant.id);
-        toast.success('Restaurante criado com sucesso!');
-        return;
+        throw error; // Deixar o onboarding tratar o fallback
       }
 
       const newRestaurant: Restaurant = {
@@ -475,11 +427,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUserRestaurants(prev => [...prev, newRestaurant]);
       setCurrentRestaurant(newRestaurant);
+      localStorage.setItem('currentRestaurant', JSON.stringify(newRestaurant));
+      
       console.log('✅ [createRestaurant] Restaurante criado com sucesso no Supabase:', newRestaurant.id);
       toast.success('Restaurante criado com sucesso!');
     } catch (error) {
       console.error('❌ [createRestaurant] Erro ao criar restaurante:', error);
-      toast.error('Erro ao criar restaurante: ' + (error as Error).message);
       throw error; // Re-throw para que o onboarding possa capturar
     }
   };
@@ -498,7 +451,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(currentSession.user);
           setUserRole(UserRole.OWNER); // Define role padrão
           
-          // Garantir que o usuário tenha um restaurante
+          // Verificar se o usuário tem restaurante
           await ensureUserHasRestaurant(currentSession.user.id);
         } else {
           console.log('Nenhuma sessão ativa encontrada');
@@ -535,7 +488,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentSession.user);
         setUserRole(UserRole.OWNER);
         
-        // Garantir que o usuário tenha um restaurante
+        // Verificar se o usuário tem restaurante
         await ensureUserHasRestaurant(currentSession.user.id);
       } else {
         clearUserData();
