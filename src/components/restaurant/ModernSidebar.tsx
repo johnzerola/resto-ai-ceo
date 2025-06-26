@@ -256,7 +256,7 @@ export function ModernSidebar({ className }: ModernSidebarProps) {
 
         {/* User Menu */}
         <div className="p-3 border-t border-gray-200">
-          <UserMenu isCollapsed={isCollapsed} />
+          <UserMenu />
         </div>
       </div>
     </div>
