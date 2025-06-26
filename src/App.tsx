@@ -27,6 +27,7 @@ import SystemAuditPage from "./pages/SystemAuditPage";
 import Login from "./pages/Login";
 import Vendas from "./pages/Vendas";
 import AiAssistant from "./pages/AiAssistant";
+import { ProjecoesPagina } from "./pages/ProjecoesPagina";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ function App() {
                 <Route path="/dre-cmv" element={<DreCmv />} />
                 <Route path="/dre" element={<DreCmv />} />
                 <Route path="/cmv" element={<DreCmv />} />
+                <Route path="/projecoes" element={<ProjecoesPagina />} />
                 <Route path="/fluxo-de-caixa" element={<FluxoDeCaixa />} />
                 <Route path="/simulador" element={<Simulador />} />
                 <Route path="/metas" element={<Metas />} />
