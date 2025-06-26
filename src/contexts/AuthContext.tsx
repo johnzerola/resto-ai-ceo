@@ -427,9 +427,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const createRestaurant = async (name: string): Promise<void> => {
     try {
       if (!user) {
-        toast.error('Usuário não autenticado');
-        return;
+        throw new Error('Usuário não autenticado');
       }
+
+      console.log('🏪 [createRestaurant] Iniciando criação do restaurante:', name);
 
       // Criar restaurante via Supabase
       const { data, error } = await supabase
@@ -448,10 +449,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
-        console.error('Erro ao criar restaurante no Supabase:', error);
+        console.error('❌ [createRestaurant] Erro ao criar restaurante no Supabase:', error);
+        
         // Fallback para criar localmente
         const newRestaurant: Restaurant = {
-          id: crypto.randomUUID(),
+          id: 'local-' + crypto.randomUUID(),
           name,
           user_id: user.id,
           created_at: new Date().toISOString(),
@@ -459,22 +461,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUserRestaurants(prev => [...prev, newRestaurant]);
         setCurrentRestaurant(newRestaurant);
-      } else {
-        const newRestaurant: Restaurant = {
-          id: data.id,
-          name: data.name,
-          user_id: data.owner_id,
-          created_at: data.created_at,
-        };
-
-        setUserRestaurants(prev => [...prev, newRestaurant]);
-        setCurrentRestaurant(newRestaurant);
+        console.log('⚠️ [createRestaurant] Restaurante criado localmente:', newRestaurant.id);
+        toast.success('Restaurante criado com sucesso!');
+        return;
       }
 
+      const newRestaurant: Restaurant = {
+        id: data.id,
+        name: data.name,
+        user_id: data.owner_id,
+        created_at: data.created_at,
+      };
+
+      setUserRestaurants(prev => [...prev, newRestaurant]);
+      setCurrentRestaurant(newRestaurant);
+      console.log('✅ [createRestaurant] Restaurante criado com sucesso no Supabase:', newRestaurant.id);
       toast.success('Restaurante criado com sucesso!');
     } catch (error) {
-      console.error('Erro ao criar restaurante:', error);
-      toast.error('Erro ao criar restaurante');
+      console.error('❌ [createRestaurant] Erro ao criar restaurante:', error);
+      toast.error('Erro ao criar restaurante: ' + (error as Error).message);
+      throw error; // Re-throw para que o onboarding possa capturar
     }
   };
 

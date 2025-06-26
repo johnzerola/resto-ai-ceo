@@ -45,15 +45,26 @@ const Onboarding = () => {
     setIsSubmitting(true);
     
     try {
+      console.log('Iniciando criação do restaurante:', values.restaurantName);
       await createRestaurant(values.restaurantName);
+      console.log('Restaurante criado com sucesso');
       toast.success("Seu restaurante foi configurado com sucesso!");
-      navigate("/");
+      
+      // Aguardar um pouco para garantir que o contexto foi atualizado
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
     } catch (error) {
       console.error("Erro ao configurar restaurante:", error);
-      toast.error("Erro ao configurar restaurante");
+      toast.error("Erro ao configurar restaurante. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSkip = () => {
+    toast.info("Você pode configurar seu restaurante depois nas configurações");
+    navigate("/dashboard");
   };
 
   return (
@@ -128,9 +139,24 @@ const Onboarding = () => {
                   )}
                 />
                 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Configurando..." : "Configurar Restaurante"}
-                </Button>
+                <div className="flex gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleSkip}
+                    className="flex-1"
+                    disabled={isSubmitting}
+                  >
+                    Pular
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    className="flex-1" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Configurando..." : "Configurar Restaurante"}
+                  </Button>
+                </div>
               </form>
             </Form>
           </CardContent>
