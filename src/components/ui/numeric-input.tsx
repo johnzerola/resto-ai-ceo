@@ -33,24 +33,21 @@ export function NumericInput({
   helpText,
   id
 }: NumericInputProps) {
-  const [displayValue, setDisplayValue] = React.useState(value.toString());
+  const [displayValue, setDisplayValue] = React.useState('');
   const [isFocused, setIsFocused] = React.useState(false);
 
   React.useEffect(() => {
     if (!isFocused) {
-      setDisplayValue(value.toString());
+      // Só mostrar o valor se não for 0, caso contrário deixar vazio para melhor UX
+      setDisplayValue(value === 0 ? '' : value.toString());
     }
   }, [value, isFocused]);
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(true);
-    // Se o valor for 0, limpar o campo para facilitar a digitação
-    if (value === 0) {
-      setDisplayValue('');
-      e.target.select();
-    } else {
-      e.target.select();
-    }
+    // Sempre limpar o campo quando focar para facilitar a digitação
+    setDisplayValue('');
+    e.target.select();
   };
 
   const handleBlur = () => {
@@ -58,8 +55,19 @@ export function NumericInput({
     // Se o campo estiver vazio, definir como 0
     if (displayValue === '' || isNaN(Number(displayValue))) {
       const newValue = 0;
-      setDisplayValue(newValue.toString());
+      setDisplayValue('');
       onChange(newValue);
+    } else {
+      // Aplicar o valor digitado
+      const numericValue = Number(displayValue);
+      let finalValue = numericValue;
+      if (min !== undefined && finalValue < min) {
+        finalValue = min;
+      }
+      if (max !== undefined && finalValue > max) {
+        finalValue = max;
+      }
+      onChange(finalValue);
     }
   };
 
@@ -102,7 +110,7 @@ export function NumericInput({
         onChange={handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        placeholder={placeholder}
+        placeholder={placeholder || "Digite um valor"}
         min={min}
         max={max}
         step={step}

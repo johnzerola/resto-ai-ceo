@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -15,8 +16,7 @@ import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfiguracaoEmpresarial } from "@/components/restaurant/ConfiguracaoEmpresarial";
 import { ConfiguracoesAvancadas } from "@/components/restaurant/ConfiguracoesAvancadas";
-import { Settings, Building2, Cog, AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Settings, Building2, Cog } from "lucide-react";
 
 interface ConfigForm {
   businessName: string;
@@ -30,7 +30,7 @@ const Configuracoes = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [configData, setConfigData] = useState<ConfigForm>({
-    businessName: "Meu Restaurante",
+    businessName: "",
     targetFoodCost: 30,
     targetBeverageCost: 25,
     averageMonthlyRevenue: 0
@@ -50,29 +50,44 @@ const Configuracoes = () => {
       const userId = session?.user?.id;
       
       if (userId) {
-        const storedData = localStorage.getItem("restaurantData");
+        const userRestaurantKey = `restaurantData_${userId}`;
+        const storedData = localStorage.getItem(userRestaurantKey);
         
         if (storedData) {
-          const parsedData = JSON.parse(storedData);
-          const newConfigData = {
-            businessName: parsedData.businessName || "Meu Restaurante",
-            targetFoodCost: parsedData.targetFoodCost || 30,
-            targetBeverageCost: parsedData.targetBeverageCost || 25,
-            averageMonthlyRevenue: parsedData.averageMonthlyRevenue || 0
-          };
-          setConfigData(newConfigData);
-          form.reset(newConfigData);
+          try {
+            const parsedData = JSON.parse(storedData);
+            const newConfigData = {
+              businessName: parsedData.name || parsedData.businessName || "",
+              targetFoodCost: parsedData.target_food_cost || parsedData.targetFoodCost || 30,
+              targetBeverageCost: parsedData.target_beverage_cost || parsedData.targetBeverageCost || 25,
+              averageMonthlyRevenue: parsedData.averageMonthlyRevenue || 0
+            };
+            setConfigData(newConfigData);
+            form.reset(newConfigData);
+            console.log('Dados carregados para configuração:', newConfigData);
+          } catch (error) {
+            console.error('Erro ao fazer parse dos dados:', error);
+          }
         } else {
-          const defaultData = {
-            businessName: "Meu Restaurante",
-            targetFoodCost: 30,
-            targetBeverageCost: 25,
-            averageMonthlyRevenue: 0,
-            isNewUser: true
-          };
-          localStorage.setItem("restaurantData", JSON.stringify(defaultData));
-          setConfigData(defaultData);
-          form.reset(defaultData);
+          // Verificar se há dados do onboarding
+          const globalRestaurantData = localStorage.getItem("restaurantData");
+          if (globalRestaurantData) {
+            try {
+              const parsedData = JSON.parse(globalRestaurantData);
+              const newConfigData = {
+                businessName: parsedData.name || parsedData.businessName || "",
+                targetFoodCost: parsedData.target_food_cost || parsedData.targetFoodCost || 30,
+                targetBeverageCost: parsedData.target_beverage_cost || parsedData.targetBeverageCost || 25,
+                averageMonthlyRevenue: parsedData.averageMonthlyRevenue || 0
+              };
+              setConfigData(newConfigData);
+              form.reset(newConfigData);
+              // Migrar para a chave específica do usuário
+              localStorage.setItem(userRestaurantKey, JSON.stringify(newConfigData));
+            } catch (error) {
+              console.error('Erro ao migrar dados do onboarding:', error);
+            }
+          }
         }
       }
     };
@@ -148,12 +163,17 @@ const Configuracoes = () => {
 
     try {
       const formData = form.getValues();
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
       
-      localStorage.setItem("restaurantData", JSON.stringify({
-        ...formData,
-        lastUpdate: new Date().toISOString(),
-        isNewUser: false
-      }));
+      if (userId) {
+        const userRestaurantKey = `restaurantData_${userId}`;
+        localStorage.setItem(userRestaurantKey, JSON.stringify({
+          ...formData,
+          lastUpdate: new Date().toISOString(),
+          isNewUser: false
+        }));
+      }
       
       window.dispatchEvent(new Event('configUpdated'));
       syncFinancialWithConfig();
@@ -191,14 +211,6 @@ const Configuracoes = () => {
             Gerencie todas as configurações do seu restaurante em um só lugar
           </p>
         </div>
-
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Nota:</strong> As configurações foram reorganizadas para evitar duplicações. 
-            Todas as configurações financeiras e de precificação estão agora centralizadas na aba "Empresarial".
-          </AlertDescription>
-        </Alert>
 
         <Tabs defaultValue="basicas" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
