@@ -8,15 +8,13 @@ import {
   Brain, 
   Megaphone, 
   Download,
-  RefreshCw,
-  Calculator
+  RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
 import { supabase } from "@/integrations/supabase/client";
 import { AIChat } from "./ai/AIChat";
 import { AILimitedChat } from "./ai/AILimitedChat";
-import { AutoCalculationService } from "@/services/AutoCalculationService";
 
 interface RestaurantContext {
   restaurantData: any;
@@ -30,7 +28,6 @@ export function UnifiedAIAssistant() {
   const { hasFeature } = useSubscriptionPlan();
   const [activeTab, setActiveTab] = useState<'manager' | 'social'>('manager');
   const [context, setContext] = useState<RestaurantContext | null>(null);
-  const [isLoadingData, setIsLoadingData] = useState(false);
 
   useEffect(() => {
     console.log('🚀 [UnifiedAIAssistant] Componente montado, carregando contexto...');
@@ -38,7 +35,6 @@ export function UnifiedAIAssistant() {
   }, []);
 
   const loadRestaurantContext = async () => {
-    setIsLoadingData(true);
     try {
       console.log('📊 [UnifiedAIAssistant] Iniciando carregamento do contexto...');
       const { data: { user } } = await supabase.auth.getUser();
@@ -91,33 +87,11 @@ export function UnifiedAIAssistant() {
     } catch (error) {
       console.error('❌ [UnifiedAIAssistant] Erro ao carregar contexto:', error);
       toast.error('Erro ao carregar dados do restaurante');
-    } finally {
-      setIsLoadingData(false);
     }
   };
 
   const exportHistory = () => {
     toast.success('Funcionalidade de exportação será implementada em breve!');
-  };
-
-  const recalculateData = async () => {
-    if (!context?.restaurantId) {
-      toast.error('Nenhum restaurante encontrado');
-      return;
-    }
-
-    setIsLoadingData(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      await AutoCalculationService.recalculateAllData(context.restaurantId, user.id);
-      await loadRestaurantContext(); // Recarregar dados após recálculo
-    } catch (error) {
-      console.error('Erro ao recalcular dados:', error);
-    } finally {
-      setIsLoadingData(false);
-    }
   };
 
   console.log('🔍 [UnifiedAIAssistant] Verificando feature hasFullAIAssistant:', hasFeature('hasFullAIAssistant'));
@@ -159,25 +133,10 @@ export function UnifiedAIAssistant() {
     <div className="space-y-4 sm:space-y-6 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 flex-shrink-0">
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={loadRestaurantContext} 
-            size="sm"
-            disabled={isLoadingData}
-          >
-            <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 ${isLoadingData ? 'animate-spin' : ''}`} />
+          <Button variant="outline" onClick={loadRestaurantContext} size="sm">
+            <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             <span className="hidden sm:inline">Atualizar Contexto</span>
             <span className="sm:hidden">Atualizar</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={recalculateData} 
-            size="sm"
-            disabled={isLoadingData}
-          >
-            <Calculator className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Recalcular Dados</span>
-            <span className="sm:hidden">Recalcular</span>
           </Button>
           <Button variant="outline" onClick={exportHistory} size="sm">
             <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -216,7 +175,7 @@ export function UnifiedAIAssistant() {
           <CardHeader className="pb-2">
             <CardTitle className="text-xs sm:text-sm flex items-center gap-2">
               <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-              Sistema Conectado {isLoadingData && <RefreshCw className="h-3 w-3 animate-spin" />}
+              Sistema Conectado
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
@@ -235,9 +194,7 @@ export function UnifiedAIAssistant() {
               </div>
               <div>
                 <Badge variant="outline" className="text-xs">Status</Badge>
-                <p className="mt-1 text-xs sm:text-sm font-medium text-green-600">
-                  {isLoadingData ? 'Carregando...' : 'Dados Reais'}
-                </p>
+                <p className="mt-1 text-xs sm:text-sm font-medium text-green-600">Ativo</p>
               </div>
             </div>
           </CardContent>

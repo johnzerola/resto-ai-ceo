@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ModernLayout } from '@/components/restaurant/ModernLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,36 +40,24 @@ export default function AiAssistant() {
       
       if (authError || !user) {
         console.log('❌ [AiAssistant] Usuário não autenticado');
-        return null;
+        return;
       }
 
-      console.log('✅ [AiAssistant] Usuário autenticado:', user.email);
-
-      const { data: restaurants, error: restaurantError } = await supabase
+      const { data: restaurants } = await supabase
         .from('restaurants')
-        .select('id, name')
+        .select('id')
         .eq('owner_id', user.id)
         .limit(1);
-
-      if (restaurantError) {
-        console.error('❌ [AiAssistant] Erro ao buscar restaurantes:', restaurantError);
-        return null;
-      }
-
-      console.log('📋 [AiAssistant] Restaurantes encontrados:', restaurants);
 
       const restaurant = restaurants?.[0];
       if (restaurant) {
         setRestaurantId(restaurant.id);
-        console.log('✅ [AiAssistant] RestaurantId carregado:', restaurant.id, 'Nome:', restaurant.name);
-        return restaurant.id;
+        console.log('✅ [AiAssistant] RestaurantId carregado:', restaurant.id);
       } else {
         console.log('⚠️ [AiAssistant] Nenhum restaurante encontrado para o usuário');
-        return null;
       }
     } catch (error) {
       console.error('❌ [AiAssistant] Erro ao carregar restaurantId:', error);
-      return null;
     }
   };
 
@@ -83,26 +72,6 @@ export default function AiAssistant() {
     if (isLoading) {
       console.log('❌ [AiAssistant] Já está processando');
       return;
-    }
-
-    // Verificar se temos restaurantId antes de prosseguir
-    if (!restaurantId) {
-      console.log('⚠️ [AiAssistant] RestaurantId não disponível, tentando carregar...');
-      const loadedRestaurantId = await loadRestaurantId();
-      
-      if (!loadedRestaurantId) {
-        const errorMessage: Message = {
-          id: Date.now().toString(),
-          content: `❌ Erro: Nenhum restaurante encontrado para sua conta.
-
-Para usar o Assistente IA, você precisa ter um restaurante cadastrado em sua conta. Por favor, verifique se você criou um restaurante no sistema.`,
-          isUser: false,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, errorMessage]);
-        toast.error('Nenhum restaurante encontrado para sua conta');
-        return;
-      }
     }
 
     const userMessage: Message = {
@@ -128,32 +97,11 @@ Para usar o Assistente IA, você precisa ter um restaurante cadastrado em sua co
       }
 
       console.log('✅ [AiAssistant] Usuário:', user.email);
-      
-      // Garantir que temos o restaurantId
-      let currentRestaurantId = restaurantId;
-      if (!currentRestaurantId) {
-        console.log('🔄 [AiAssistant] RestaurantId não encontrado, carregando novamente...');
-        const { data: restaurants } = await supabase
-          .from('restaurants')
-          .select('id')
-          .eq('owner_id', user.id)
-          .limit(1);
-
-        const restaurant = restaurants?.[0];
-        if (restaurant) {
-          currentRestaurantId = restaurant.id;
-          setRestaurantId(restaurant.id);
-          console.log('✅ [AiAssistant] RestaurantId carregado durante envio:', restaurant.id);
-        } else {
-          throw new Error('Nenhum restaurante encontrado para este usuário');
-        }
-      }
-
-      console.log('🏪 [AiAssistant] RestaurantId final:', currentRestaurantId);
+      console.log('🏪 [AiAssistant] RestaurantId atual:', restaurantId);
 
       const payload = {
         userId: user.id,
-        restaurantId: currentRestaurantId,
+        restaurantId: restaurantId,
         message: messageToSend,
         aiType: 'manager',
         timestamp: new Date().toISOString()

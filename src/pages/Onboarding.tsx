@@ -23,20 +23,8 @@ type OnboardingFormValues = z.infer<typeof onboardingSchema>;
 
 const Onboarding = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createRestaurant, user, currentRestaurant, needsOnboarding } = useAuth();
+  const { createRestaurant, user } = useAuth();
   const navigate = useNavigate();
-
-  // Se usuário não está autenticado, redirecionar para login
-  if (!user) {
-    navigate("/login");
-    return null;
-  }
-
-  // Se já tem restaurante e não precisa de onboarding, redirecionar para dashboard
-  if (currentRestaurant && !needsOnboarding) {
-    navigate("/dashboard");
-    return null;
-  }
 
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário';
 
@@ -49,58 +37,23 @@ const Onboarding = () => {
   });
 
   const onSubmit = async (values: OnboardingFormValues) => {
+    if (!user) {
+      toast.error("Você precisa estar logado para criar um restaurante");
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      console.log('Iniciando criação do restaurante:', values.restaurantName);
-      
       await createRestaurant(values.restaurantName);
-      
-      console.log('Restaurante criado com sucesso');
       toast.success("Seu restaurante foi configurado com sucesso!");
-      
-      // Redirecionar para o dashboard
-      navigate("/dashboard");
-      
+      navigate("/");
     } catch (error) {
       console.error("Erro ao configurar restaurante:", error);
-      
-      // Se falhar, criar um restaurante local temporário
-      try {
-        const tempRestaurant = {
-          id: 'temp-' + crypto.randomUUID(),
-          name: values.restaurantName,
-          user_id: user.id,
-          created_at: new Date().toISOString(),
-        };
-        
-        // Salvar no localStorage como fallback
-        localStorage.setItem('currentRestaurant', JSON.stringify(tempRestaurant));
-        
-        toast.success("Restaurante configurado localmente!");
-        navigate("/dashboard");
-        
-      } catch (fallbackError) {
-        console.error("Erro no fallback:", fallbackError);
-        toast.error("Erro ao configurar restaurante. Tente novamente.");
-      }
+      toast.error("Erro ao configurar restaurante");
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleSkip = () => {
-    // Criar um restaurante padrão temporário
-    const defaultRestaurant = {
-      id: 'default-' + (user?.id || crypto.randomUUID()),
-      name: 'Meu Restaurante',
-      user_id: user?.id || '',
-      created_at: new Date().toISOString(),
-    };
-    
-    localStorage.setItem('currentRestaurant', JSON.stringify(defaultRestaurant));
-    toast.info("Você pode configurar seu restaurante depois nas configurações");
-    navigate("/dashboard");
   };
 
   return (
@@ -175,24 +128,9 @@ const Onboarding = () => {
                   )}
                 />
                 
-                <div className="flex gap-3">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={handleSkip}
-                    className="flex-1"
-                    disabled={isSubmitting}
-                  >
-                    Pular
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1" 
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Configurando..." : "Configurar Restaurante"}
-                  </Button>
-                </div>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Configurando..." : "Configurar Restaurante"}
+                </Button>
               </form>
             </Form>
           </CardContent>

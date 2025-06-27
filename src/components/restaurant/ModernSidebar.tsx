@@ -1,264 +1,299 @@
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ModernNavItem } from "./ModernNavItem";
-import { UserMenu } from "./UserMenu";
-import { useAuth } from "@/contexts/AuthContext";
-import { SystemStatusWidget } from "./SystemStatusWidget";
 import { 
   LayoutDashboard, 
-  Calculator, 
   DollarSign, 
+  TrendingUp, 
+  Target, 
   Package, 
-  ShoppingCart, 
-  ClipboardList,
-  TrendingUp,
-  Target,
-  MessageSquare,
-  Settings,
-  FileText,
-  Users,
-  CreditCard,
+  Utensils,
+  Calculator,
+  Menu,
+  X,
   ChevronLeft,
   ChevronRight,
-  Home,
-  BarChart3
+  BarChart3,
+  Settings,
+  Bot,
+  HelpCircle,
+  Shield,
+  CreditCard
 } from "lucide-react";
+import { ModernNavItem } from "./ModernNavItem";
 
-interface ModernSidebarProps {
-  className?: string;
-}
+const navigation = [
+  {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    description: "Visão geral do negócio",
+    category: "overview"
+  },
+  {
+    title: "Projeções",
+    href: "/projecoes",
+    icon: TrendingUp,
+    description: "Planejamento e cenários futuros",
+    category: "analytics"
+  },
+  {
+    title: "Fluxo de Caixa",
+    href: "/fluxo-de-caixa",
+    icon: DollarSign,
+    description: "Controle financeiro",
+    category: "financial"
+  },
+  {
+    title: "DRE",
+    href: "/dre",
+    icon: BarChart3,
+    description: "Demonstração de resultados",
+    category: "financial"
+  },
+  {
+    title: "CMV",
+    href: "/cmv",
+    icon: Calculator,
+    description: "Custo da mercadoria vendida",
+    category: "financial"
+  },
+  {
+    title: "Simulador",
+    href: "/simulador",
+    icon: Calculator,
+    description: "Simulador de preços",
+    category: "tools"
+  },
+  {
+    title: "Metas",
+    href: "/metas",
+    icon: Target,
+    description: "Sistema de metas e objetivos",
+    category: "management"
+  },
+  {
+    title: "Estoque",
+    href: "/estoque",
+    icon: Package,
+    description: "Gestão de inventário",
+    category: "operations"
+  },
+  {
+    title: "Cardápio",
+    href: "/cardapio",
+    icon: Utensils,
+    description: "Gestão do cardápio",
+    category: "operations"
+  },
+  {
+    title: "Assistente IA",
+    href: "/ai-assistant",
+    icon: Bot,
+    description: "Suporte inteligente",
+    category: "ai"
+  },
+  {
+    title: "Assinatura",
+    href: "/assinatura",
+    icon: CreditCard,
+    description: "Planos e pagamentos",
+    category: "account"
+  },
+  {
+    title: "Configurações",
+    href: "/configuracoes",
+    icon: Settings,
+    description: "Configurações do sistema",
+    category: "account"
+  },
+  {
+    title: "Dados",
+    href: "/privacidade",
+    icon: Shield,
+    description: "Privacidade e segurança",
+    category: "support"
+  }
+];
 
-export function ModernSidebar({ className }: ModernSidebarProps) {
-  const { user, subscriptionInfo } = useAuth();
+const categories = {
+  overview: { label: "Visão Geral", color: "text-blue-600" },
+  analytics: { label: "Análises", color: "text-purple-600" },
+  financial: { label: "Financeiro", color: "text-green-600" },
+  tools: { label: "Ferramentas", color: "text-orange-600" },
+  operations: { label: "Operações", color: "text-blue-500" },
+  management: { label: "Gestão", color: "text-indigo-600" },
+  ai: { label: "Inteligência", color: "text-pink-600" },
+  account: { label: "Conta", color: "text-gray-600" },
+  support: { label: "Suporte", color: "text-gray-500" }
+};
+
+export function ModernSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const mainNavItems = [
-    {
-      title: "Dashboard",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-      description: "Visão geral do negócio"
-    },
-    {
-      title: "DRE/CMV",
-      href: "/dre-cmv",
-      icon: Calculator,
-      description: "Demonstração de resultados e custos",
-      badge: "Unificado"
-    },
-    {
-      title: "Projeções",
-      href: "/projecoes",
-      icon: TrendingUp,
-      description: "Análise de cenários futuros"
-    },
-    {
-      title: "Fluxo de Caixa",
-      href: "/fluxo-de-caixa",
-      icon: DollarSign,
-      description: "Controle financeiro"
-    },
-    {
-      title: "Simulador",
-      href: "/simulador",
-      icon: BarChart3,
-      description: "Simulações de preços"
-    }
-  ];
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMobileOpen(false);
+      }
+      // Auto-collapse on smaller screens
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+    
+    handleResize(); // Set initial state
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  const operationalNavItems = [
-    {
-      title: "Estoque",
-      href: "/estoque",
-      icon: Package,
-      description: "Controle de inventário"
-    },
-    {
-      title: "Cardápio",
-      href: "/cardapio",
-      icon: ClipboardList,
-      description: "Gestão de receitas"
-    },
-    {
-      title: "Vendas",
-      href: "/vendas",
-      icon: ShoppingCart,
-      description: "Registro de vendas"
-    },
-    {
-      title: "Metas",
-      href: "/metas",
-      icon: Target,
-      description: "Objetivos e conquistas"
-    }
-  ];
+  useEffect(() => {
+    const handleCloseMobileMenu = () => {
+      setIsMobileOpen(false);
+    };
+    
+    window.addEventListener('closeMobileMenu' as any, handleCloseMobileMenu);
+    return () => window.removeEventListener('closeMobileMenu' as any, handleCloseMobileMenu);
+  }, []);
 
-  const aiNavItems = [
-    {
-      title: "Assistente IA",
-      href: "/ai-assistant",
-      icon: MessageSquare,
-      description: "Consultoria inteligente",
-      badge: subscriptionInfo.subscribed ? "Pro" : "Básico"
-    }
-  ];
+  useEffect(() => {
+    const event = new CustomEvent('sidebarToggle', {
+      detail: { isCollapsed, isMobileOpen }
+    });
+    window.dispatchEvent(event);
+  }, [isCollapsed, isMobileOpen]);
 
-  const managementNavItems = [
-    {
-      title: "Usuários",
-      href: "/gerenciar-usuarios",
-      icon: Users,
-      description: "Gerenciar equipe"
-    },
-    {
-      title: "Assinatura",
-      href: "/assinatura",
-      icon: CreditCard,
-      description: "Planos e cobrança"
-    },
-    {
-      title: "Configurações",
-      href: "/configuracoes",
-      icon: Settings,
-      description: "Configurações gerais"
-    },
-    {
-      title: "Documentação",
-      href: "/documentacao",
-      icon: FileText,
-      description: "Guias e tutoriais"
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const toggleMobile = () => {
+    setIsMobileOpen(!isMobileOpen);
+  };
+
+  const groupedNavigation = navigation.reduce((groups, item) => {
+    const category = item.category;
+    if (!groups[category]) {
+      groups[category] = [];
     }
-  ];
+    groups[category].push(item);
+    return groups;
+  }, {} as Record<string, typeof navigation>);
 
   return (
-    <div className={cn(
-      "flex h-screen bg-white border-r border-gray-200 transition-all duration-300",
-      isCollapsed ? "w-16" : "w-64",
-      className
-    )}>
-      <div className="flex flex-col w-full">
+    <>
+      {/* Mobile Menu Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-3 left-3 z-50 md:hidden bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white/100 transition-all duration-200 border border-gray-200/50 dark:bg-gray-900/95 dark:border-gray-700/50 dark:hover:bg-gray-900/100"
+        onClick={toggleMobile}
+      >
+        {isMobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+      </Button>
+
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Solid background with improved dark mode visibility */}
+      <div
+        className={cn(
+          "fixed left-0 top-0 z-40 h-full border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
+          // Solid background with improved dark mode text visibility
+          "bg-white dark:bg-gray-900",
+          // Mobile: always show full width when open, hide when closed
+          "md:translate-x-0", // Always visible on desktop
+          isMobileOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full", // Mobile behavior
+          !isMobileOpen && isCollapsed && "md:w-16", // Collapsed state only on desktop
+          !isMobileOpen && !isCollapsed && "md:w-72" // Expanded state only on desktop
+        )}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          {!isCollapsed && (
-            <div className="flex items-center space-x-2">
-              <Home className="h-6 w-6 text-resto-blue-600" />
-              <span className="text-lg font-semibold text-gray-900">Restauria</span>
+        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-sidebar-border bg-gradient-to-r from-[#1B2C4F] to-[#2D4A7A] flex-shrink-0">
+          {(!isCollapsed || isMobileOpen) && (
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-[#00D887] to-[#1B2C4F] rounded-lg flex items-center justify-center flex-shrink-0">
+                <Utensils className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+              </div>
+              <h2 className="text-sm sm:text-lg font-bold text-white truncate">
+                RestaurIA
+              </h2>
             </div>
           )}
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="h-8 w-8"
+            onClick={toggleSidebar}
+            className="hidden md:flex text-white hover:bg-white/10 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
           >
             {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
             ) : (
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             )}
           </Button>
         </div>
 
-        {/* Navigation */}
-        <ScrollArea className="flex-1 px-3 py-4">
-          <div className="space-y-6">
-            {/* Analytics Section */}
-            <div>
-              {!isCollapsed && (
-                <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  Analytics
-                </h3>
-              )}
-              <nav className="space-y-1">
-                {mainNavItems.map((item) => (
-                  <ModernNavItem 
-                    key={item.href} 
-                    {...item} 
-                    isCollapsed={isCollapsed} 
-                  />
-                ))}
-              </nav>
+        {/* Scrollable Navigation Content */}
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full custom-scrollbar">
+            <nav className="px-2 sm:px-3 py-3 sm:py-4 space-y-4 sm:space-y-6">
+              {Object.entries(groupedNavigation).map(([categoryKey, items]) => {
+                const categoryInfo = categories[categoryKey as keyof typeof categories];
+                return (
+                  <div key={categoryKey} className="space-y-1 sm:space-y-2">
+                    {(!isCollapsed || isMobileOpen) && (
+                      <div className="px-2 sm:px-3 py-1 sm:py-2">
+                        <h3 className={cn(
+                          "text-xs font-semibold uppercase tracking-wider sidebar-category-label",
+                          categoryInfo.color,
+                          // Melhor visibilidade no dark mode
+                          "dark:text-gray-300"
+                        )}>
+                          {categoryInfo.label}
+                        </h3>
+                      </div>
+                    )}
+                    <div className="space-y-0.5 sm:space-y-1">
+                      {items.map((item) => (
+                        <ModernNavItem
+                          key={item.href}
+                          href={item.href}
+                          icon={item.icon}
+                          title={item.title}
+                          description={item.description}
+                          isCollapsed={isCollapsed && !isMobileOpen}
+                          category={categoryKey}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </nav>
+          </ScrollArea>
+        </div>
+
+        {/* Footer */}
+        {(!isCollapsed || isMobileOpen) && (
+          <div className="p-3 sm:p-4 border-t border-sidebar-border bg-gradient-to-r from-muted/50 to-card flex-shrink-0">
+            <div className="text-xs text-muted-foreground text-center dark:text-gray-300">
+              <p className="font-medium">RestaurIA v2.0</p>
+              <p className="hidden sm:block">Inteligência para seu restaurante</p>
             </div>
-
-            <Separator />
-
-            {/* Operations Section */}
-            <div>
-              {!isCollapsed && (
-                <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  Operações
-                </h3>
-              )}
-              <nav className="space-y-1">
-                {operationalNavItems.map((item) => (
-                  <ModernNavItem 
-                    key={item.href} 
-                    {...item} 
-                    isCollapsed={isCollapsed} 
-                  />
-                ))}
-              </nav>
-            </div>
-
-            <Separator />
-
-            {/* AI Section */}
-            <div>
-              {!isCollapsed && (
-                <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  Inteligência Artificial
-                </h3>
-              )}
-              <nav className="space-y-1">
-                {aiNavItems.map((item) => (
-                  <ModernNavItem 
-                    key={item.href} 
-                    {...item} 
-                    isCollapsed={isCollapsed} 
-                  />
-                ))}
-              </nav>
-            </div>
-
-            <Separator />
-
-            {/* Management Section */}
-            <div>
-              {!isCollapsed && (
-                <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                  Gerenciamento
-                </h3>
-              )}
-              <nav className="space-y-1">
-                {managementNavItems.map((item) => (
-                  <ModernNavItem 
-                    key={item.href} 
-                    {...item} 
-                    isCollapsed={isCollapsed} 
-                  />
-                ))}
-              </nav>
-            </div>
-          </div>
-        </ScrollArea>
-
-        {/* System Status */}
-        {!isCollapsed && (
-          <div className="px-3 py-2 border-t border-gray-200">
-            <SystemStatusWidget />
           </div>
         )}
-
-        {/* User Menu */}
-        <div className="p-3 border-t border-gray-200">
-          <UserMenu />
-        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -19,7 +19,7 @@ export function AIAssistantPage() {
         <div className="space-y-1">
           <h1 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight">Assistente de IA</h1>
           <p className="text-muted-foreground text-xs sm:text-sm">
-            Seu consultor pessoal para gestão inteligente baseado em dados reais
+            Seu consultor pessoal para gestão inteligente
           </p>
         </div>
 
@@ -27,7 +27,7 @@ export function AIAssistantPage() {
           <ProtectedFeature
             feature="hasFullAIAssistant"
             featureName="Assistente IA Completo"
-            description="Tenha acesso completo aos assistentes de IA: Gerente Virtual e Social Media IA com análises baseadas em dados reais."
+            description="Tenha acesso completo aos assistentes de IA: Gerente Virtual e Social Media IA com todas as funcionalidades."
           >
             <div className="h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)] lg:h-[calc(100vh-220px)]">
               <UnifiedAIAssistant />
