@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -7,6 +6,7 @@ import { startSync } from "@/services/SyncService";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
+import { NumericInput } from "@/components/ui/numeric-input";
 import { syncFinancialWithConfig } from "@/services/FinancialStorageService";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -15,7 +15,8 @@ import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfiguracaoEmpresarial } from "@/components/restaurant/ConfiguracaoEmpresarial";
 import { ConfiguracoesAvancadas } from "@/components/restaurant/ConfiguracoesAvancadas";
-import { Settings, Building2, Cog } from "lucide-react";
+import { Settings, Building2, Cog, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ConfigForm {
   businessName: string;
@@ -38,7 +39,7 @@ const Configuracoes = () => {
   const form = useForm<ConfigForm>({
     defaultValues: configData,
   });
-  
+
   useEffect(() => {
     const storedDarkMode = localStorage.getItem("darkMode") === "true";
     setDarkMode(storedDarkMode);
@@ -191,6 +192,14 @@ const Configuracoes = () => {
           </p>
         </div>
 
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Nota:</strong> As configurações foram reorganizadas para evitar duplicações. 
+            Todas as configurações financeiras e de precificação estão agora centralizadas na aba "Empresarial".
+          </AlertDescription>
+        </Alert>
+
         <Tabs defaultValue="basicas" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basicas" className="flex items-center gap-2">
@@ -203,7 +212,7 @@ const Configuracoes = () => {
             </TabsTrigger>
             <TabsTrigger value="avancadas" className="flex items-center gap-2">
               <Cog className="h-4 w-4" />
-              Avançadas
+              Sistema
             </TabsTrigger>
           </TabsList>
 
@@ -248,16 +257,15 @@ const Configuracoes = () => {
                         <FormItem>
                           <FormLabel>CMV Alvo - Alimentos (%)</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="30" 
-                              {...field}
-                              onChange={e => field.onChange(Number(e.target.value))}
+                            <NumericInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="30"
+                              min={10}
+                              max={50}
+                              helpText="Percentual ideal do custo de alimentos sobre as vendas. Recomendado: 28-35%"
                             />
                           </FormControl>
-                          <FormDescription>
-                            Percentual ideal do custo de alimentos sobre as vendas.
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -270,16 +278,15 @@ const Configuracoes = () => {
                         <FormItem>
                           <FormLabel>CMV Alvo - Bebidas (%)</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="25" 
-                              {...field}
-                              onChange={e => field.onChange(Number(e.target.value))}
+                            <NumericInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="25"
+                              min={10}
+                              max={50}
+                              helpText="Percentual ideal do custo de bebidas sobre as vendas. Recomendado: 20-30%"
                             />
                           </FormControl>
-                          <FormDescription>
-                            Percentual ideal do custo de bebidas sobre as vendas.
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -292,16 +299,14 @@ const Configuracoes = () => {
                         <FormItem>
                           <FormLabel>Receita Mensal Média (R$)</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="0" 
-                              {...field}
-                              onChange={e => field.onChange(Number(e.target.value))}
+                            <NumericInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="0"
+                              min={0}
+                              helpText="Usado para calcular projeções financeiras."
                             />
                           </FormControl>
-                          <FormDescription>
-                            Usado para calcular projeções financeiras.
-                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -327,7 +332,20 @@ const Configuracoes = () => {
           </TabsContent>
 
           <TabsContent value="avancadas">
-            <ConfiguracoesAvancadas />
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações do Sistema</CardTitle>
+                <CardDescription>
+                  Configurações técnicas e de integração do sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  As configurações avançadas foram simplificadas. Para configurações financeiras e de precificação, 
+                  use a aba "Empresarial".
+                </p>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
