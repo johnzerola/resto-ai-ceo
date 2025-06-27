@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +30,7 @@ interface AuthContextType {
   subscriptionInfo: SubscriptionInfo;
   userRestaurants: Restaurant[];
   currentRestaurant: Restaurant | null;
+  needsOnboarding: boolean;
   signIn: (email: string, password: string) => Promise<boolean>;
   signUp: (email: string, password: string, name: string) => Promise<boolean>;
   signOut: () => Promise<void>;
@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [userRestaurants, setUserRestaurants] = useState<Restaurant[]>([]);
   const [currentRestaurant, setCurrentRestaurant] = useState<Restaurant | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
     subscribed: false,
     subscription_tier: null,
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserRole(null);
     setUserRestaurants([]);
     setCurrentRestaurant(null);
+    setNeedsOnboarding(false);
     setSubscriptionInfo({
       subscribed: false,
       subscription_tier: null,
@@ -114,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const restaurant = JSON.parse(storedRestaurant);
           setUserRestaurants([restaurant]);
           setCurrentRestaurant(restaurant);
+          setNeedsOnboarding(false);
           console.log('✅ [AuthContext] Restaurante carregado do localStorage:', restaurant.name);
           return restaurant;
         } catch (error) {
@@ -130,8 +133,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (fetchError) {
         console.error('❌ [AuthContext] Erro ao buscar restaurantes:', fetchError);
-        // Não retornar aqui, continuar com fallback
-      } else if (existingRestaurants && existingRestaurants.length > 0) {
+        // Se der erro, marcar que precisa de onboarding
+        setNeedsOnboarding(true);
+        return null;
+      } 
+      
+      if (existingRestaurants && existingRestaurants.length > 0) {
         console.log('✅ [AuthContext] Restaurante existente encontrado:', existingRestaurants[0].name);
         const restaurant = {
           id: existingRestaurants[0].id,
@@ -141,17 +148,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         setUserRestaurants([restaurant]);
         setCurrentRestaurant(restaurant);
+        setNeedsOnboarding(false);
         localStorage.setItem('currentRestaurant', JSON.stringify(restaurant));
         return restaurant;
       }
 
-      // Se não tem restaurante, não criar automaticamente
-      // Deixar que o usuário seja redirecionado para onboarding
-      console.log('🔄 [AuthContext] Nenhum restaurante encontrado - usuário deve fazer onboarding');
+      // Se não tem restaurante, marcar que precisa de onboarding
+      console.log('🔄 [AuthContext] Nenhum restaurante encontrado - usuário precisa de onboarding');
+      setNeedsOnboarding(true);
       return null;
 
     } catch (error) {
       console.error('❌ [AuthContext] Erro inesperado ao verificar restaurante:', error);
+      setNeedsOnboarding(true);
       return null;
     }
   };
@@ -427,6 +436,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUserRestaurants(prev => [...prev, newRestaurant]);
       setCurrentRestaurant(newRestaurant);
+      setNeedsOnboarding(false);
       localStorage.setItem('currentRestaurant', JSON.stringify(newRestaurant));
       
       console.log('✅ [createRestaurant] Restaurante criado com sucesso no Supabase:', newRestaurant.id);
@@ -523,6 +533,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     subscriptionInfo,
     userRestaurants,
     currentRestaurant,
+    needsOnboarding,
     signIn,
     signUp,
     signOut,

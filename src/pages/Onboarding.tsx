@@ -23,11 +23,17 @@ type OnboardingFormValues = z.infer<typeof onboardingSchema>;
 
 const Onboarding = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createRestaurant, user, currentRestaurant } = useAuth();
+  const { createRestaurant, user, currentRestaurant, needsOnboarding } = useAuth();
   const navigate = useNavigate();
 
-  // Se já tem restaurante, redirecionar para dashboard
-  if (currentRestaurant && !isSubmitting) {
+  // Se usuário não está autenticado, redirecionar para login
+  if (!user) {
+    navigate("/login");
+    return null;
+  }
+
+  // Se já tem restaurante e não precisa de onboarding, redirecionar para dashboard
+  if (currentRestaurant && !needsOnboarding) {
     navigate("/dashboard");
     return null;
   }
@@ -43,23 +49,17 @@ const Onboarding = () => {
   });
 
   const onSubmit = async (values: OnboardingFormValues) => {
-    if (!user) {
-      toast.error("Você precisa estar logado para criar um restaurante");
-      return;
-    }
-
     setIsSubmitting(true);
     
     try {
       console.log('Iniciando criação do restaurante:', values.restaurantName);
       
-      // Tentar criar via Supabase primeiro
       await createRestaurant(values.restaurantName);
       
       console.log('Restaurante criado com sucesso');
       toast.success("Seu restaurante foi configurado com sucesso!");
       
-      // Redirecionar imediatamente
+      // Redirecionar para o dashboard
       navigate("/dashboard");
       
     } catch (error) {
