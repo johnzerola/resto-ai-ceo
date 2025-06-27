@@ -83,20 +83,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       amount: null,
     });
     
-    // Limpar localStorage de dados específicos do usuário (mantendo configurações globais)
-    const keysToRemove = [
-      'financialData',
-      'cashFlow',
-      'goals',
-      'restaurantData',
-      'currentUser',
-      'inventory',
-      'recipes'
-    ];
+    // Limpar TODOS os dados específicos do usuário do localStorage
+    const allKeys = Object.keys(localStorage);
+    const userSpecificKeys = allKeys.filter(key => 
+      key.includes('financialData_') ||
+      key.includes('cashFlowEntries_') ||
+      key.includes('restaurantData_') ||
+      key === 'financialData' ||
+      key === 'cashFlow' ||
+      key === 'cashFlowEntries' ||
+      key === 'goals' ||
+      key === 'restaurantData' ||
+      key === 'currentUser' ||
+      key === 'inventory' ||
+      key === 'recipes'
+    );
     
-    keysToRemove.forEach(key => {
+    userSpecificKeys.forEach(key => {
       try {
         localStorage.removeItem(key);
+        console.log(`Removido: ${key}`);
       } catch (error) {
         console.error(`Erro ao remover ${key} do localStorage:`, error);
       }
@@ -528,6 +534,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSubscription,
     createCheckoutSession,
     openCustomerPortal,
+  };
+
+  const checkUserRestaurants = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('owner_id', userId);
+
+      if (error) {
+        console.error('Erro ao buscar restaurantes:', error);
+        // Fallback - assumir que precisa de onboarding
+        setNeedsOnboarding(true);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const restaurants = data.map(r => ({
+          id: r.id,
+          name: r.name,
+          user_id: r.owner_id,
+          created_at: r.created_at,
+        }));
+        
+        setUserRestaurants(restaurants);
+        setCurrentRestaurant(restaurants[0]);
+        setNeedsOnboarding(false);
+      } else {
+        // Usuário não tem restaurante - precisa de onboarding
+        setNeedsOnboarding(true);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar restaurantes:', error);
+      setNeedsOnboarding(true);
+    }
   };
 
   return (

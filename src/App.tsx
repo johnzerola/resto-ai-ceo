@@ -29,6 +29,7 @@ import Login from "./pages/Login";
 import Vendas from "./pages/Vendas";
 import AiAssistant from "./pages/AiAssistant";
 import Onboarding from "./pages/Onboarding";
+import { ProjecoesPagina } from "./pages/ProjecoesPagina";
 
 const queryClient = new QueryClient();
 
@@ -111,6 +112,11 @@ function App() {
                 <Route path="/ai-assistant" element={
                   <ProtectedRoute>
                     <AiAssistant />
+                  </ProtectedRoute>
+                } />
+                <Route path="/projecoes" element={
+                  <ProtectedRoute>
+                    <ProjecoesPagina />
                   </ProtectedRoute>
                 } />
                 <Route path="/gerenciar-usuarios" element={

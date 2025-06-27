@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { FinancialData } from "@/types/financial-data";
 import { supabase } from "@/integrations/supabase/client";
@@ -172,5 +173,63 @@ export async function migrateUserFinancialData(): Promise<void> {
   } catch (error) {
     console.error("Erro na migração de dados financeiros:", error);
     // Não lançar erro, apenas logar
+  }
+}
+
+/**
+ * Função para garantir isolamento de dados do fluxo de caixa por usuário
+ */
+export async function getCashFlowEntries(): Promise<any[]> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      console.log('Usuário não autenticado, retornando dados vazios de fluxo de caixa');
+      return [];
+    }
+
+    const userKey = `cashFlowEntries_${session.user.id}`;
+    const savedData = localStorage.getItem(userKey);
+    
+    if (savedData) {
+      try {
+        return JSON.parse(savedData);
+      } catch (parseError) {
+        console.warn('Erro ao fazer parse dos dados de fluxo de caixa, retornando dados vazios:', parseError);
+        localStorage.setItem(userKey, JSON.stringify([]));
+        return [];
+      }
+    } else {
+      console.log('Criando dados vazios de fluxo de caixa para usuário:', session.user.id);
+      localStorage.setItem(userKey, JSON.stringify([]));
+      return [];
+    }
+  } catch (error) {
+    console.error("Erro ao obter dados de fluxo de caixa:", error);
+    return [];
+  }
+}
+
+/**
+ * Função para salvar dados do fluxo de caixa por usuário
+ */
+export async function saveCashFlowEntries(entries: any[]): Promise<void> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
+      console.warn('Usuário não autenticado, não é possível salvar dados de fluxo de caixa');
+      return;
+    }
+
+    const userKey = `cashFlowEntries_${session.user.id}`;
+    localStorage.setItem(userKey, JSON.stringify(entries));
+    console.log('Dados de fluxo de caixa salvos para usuário:', session.user.id);
+    
+    // Disparar evento para atualização da UI
+    window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: entries }));
+    
+  } catch (error) {
+    console.error("Erro ao salvar dados de fluxo de caixa:", error);
   }
 }

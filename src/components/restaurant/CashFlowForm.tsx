@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, X, ArrowLeft } from "lucide-react";
+import { getCashFlowEntries, saveCashFlowEntries } from "@/services/FinancialStorageService";
 
 export interface CashFlowEntry {
   id: string;
@@ -105,8 +106,8 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
 
       console.log("Entrada a ser salva:", entry);
 
-      // Salvar no localStorage
-      const existingEntries = JSON.parse(localStorage.getItem('cashFlowEntries') || '[]');
+      // Usar as novas funções de isolamento por usuário
+      const existingEntries = await getCashFlowEntries();
       let updatedEntries;
       
       if (editingEntry) {
@@ -123,11 +124,10 @@ export const CashFlowForm: React.FC<CashFlowFormProps> = ({
         toast.success("Entrada adicionada com sucesso!");
       }
       
-      localStorage.setItem('cashFlowEntries', JSON.stringify(updatedEntries));
-      console.log("Entradas salvas no localStorage:", updatedEntries);
+      await saveCashFlowEntries(updatedEntries);
+      console.log("Entradas salvas para o usuário atual:", updatedEntries);
 
       // Disparar eventos para atualização do dashboard
-      window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedEntries }));
       window.dispatchEvent(new CustomEvent('financialDataUpdated'));
 
       onEntryAdded(entry);
