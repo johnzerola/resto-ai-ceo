@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +27,7 @@ interface AuthContextType {
   userRole: UserRole | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  needsOnboarding: boolean;
   subscriptionInfo: SubscriptionInfo;
   userRestaurants: Restaurant[];
   currentRestaurant: Restaurant | null;
@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [userRestaurants, setUserRestaurants] = useState<Restaurant[]>([]);
   const [currentRestaurant, setCurrentRestaurant] = useState<Restaurant | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
     subscribed: false,
     subscription_tier: null,
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserRole(null);
     setUserRestaurants([]);
     setCurrentRestaurant(null);
+    setNeedsOnboarding(false);
     setSubscriptionInfo({
       subscribed: false,
       subscription_tier: null,
@@ -369,6 +371,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUserRestaurants(prev => [...prev, newRestaurant]);
         setCurrentRestaurant(newRestaurant);
+        setNeedsOnboarding(false);
       } else {
         const newRestaurant: Restaurant = {
           id: data.id,
@@ -379,12 +382,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUserRestaurants(prev => [...prev, newRestaurant]);
         setCurrentRestaurant(newRestaurant);
+        setNeedsOnboarding(false);
       }
 
       toast.success('Restaurante criado com sucesso!');
     } catch (error) {
       console.error('Erro ao criar restaurante:', error);
       toast.error('Erro ao criar restaurante');
+    }
+  };
+
+  const checkUserRestaurants = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('owner_id', userId);
+
+      if (error) {
+        console.error('Erro ao buscar restaurantes:', error);
+        // Fallback - assumir que precisa de onboarding
+        setNeedsOnboarding(true);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const restaurants = data.map(r => ({
+          id: r.id,
+          name: r.name,
+          user_id: r.owner_id,
+          created_at: r.created_at,
+        }));
+        
+        setUserRestaurants(restaurants);
+        setCurrentRestaurant(restaurants[0]);
+        setNeedsOnboarding(false);
+      } else {
+        // Usuário não tem restaurante - precisa de onboarding
+        setNeedsOnboarding(true);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar restaurantes:', error);
+      setNeedsOnboarding(true);
     }
   };
 
@@ -400,17 +439,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('Sessão encontrada:', currentSession.user.email);
           setSession(currentSession);
           setUser(currentSession.user);
-          setUserRole(UserRole.OWNER); // Define role padrão
+          setUserRole(UserRole.OWNER);
           
-          // Setup restaurante padrão apenas para usuários autenticados
-          const defaultRestaurant: Restaurant = {
-            id: 'default',
-            name: 'Meu Restaurante',
-            user_id: currentSession.user.id,
-            created_at: new Date().toISOString(),
-          };
-          setUserRestaurants([defaultRestaurant]);
-          setCurrentRestaurant(defaultRestaurant);
+          // Verificar se o usuário tem restaurantes
+          await checkUserRestaurants(currentSession.user.id);
         } else {
           console.log('Nenhuma sessão ativa encontrada');
           clearUserData();
@@ -446,14 +478,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentSession.user);
         setUserRole(UserRole.OWNER);
         
-        const defaultRestaurant: Restaurant = {
-          id: 'default',
-          name: 'Meu Restaurante',
-          user_id: currentSession.user.id,
-          created_at: new Date().toISOString(),
-        };
-        setUserRestaurants([defaultRestaurant]);
-        setCurrentRestaurant(defaultRestaurant);
+        // Verificar se o usuário tem restaurantes
+        setTimeout(() => {
+          checkUserRestaurants(currentSession.user.id);
+        }, 100);
       } else {
         clearUserData();
       }
@@ -484,6 +512,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userRole,
     isLoading,
     isAuthenticated,
+    needsOnboarding,
     subscriptionInfo,
     userRestaurants,
     currentRestaurant,

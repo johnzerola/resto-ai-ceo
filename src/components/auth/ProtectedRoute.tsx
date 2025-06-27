@@ -15,12 +15,13 @@ export function ProtectedRoute({
   requiredRole, 
   requireAuth = true 
 }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, userRole, user } = useAuth();
+  const { isAuthenticated, isLoading, userRole, user, needsOnboarding } = useAuth();
   const location = useLocation();
 
   console.log('ProtectedRoute - Estado:', {
     isAuthenticated,
     isLoading,
+    needsOnboarding,
     pathname: location.pathname,
     userRole: userRole || 'undefined',
     userId: user?.id
@@ -39,6 +40,12 @@ export function ProtectedRoute({
   if (requireAuth && !isAuthenticated) {
     console.log('ProtectedRoute: Redirecionando para login - usuário não autenticado');
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Se está autenticado mas precisa de onboarding e não está na página de onboarding
+  if (isAuthenticated && needsOnboarding && location.pathname !== '/onboarding') {
+    console.log('ProtectedRoute: Redirecionando para onboarding - usuário precisa configurar restaurante');
+    return <Navigate to="/onboarding" replace />;
   }
 
   // Se especifica um papel específico, verificar permissões
