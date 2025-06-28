@@ -56,6 +56,56 @@ export type Database = {
           },
         ]
       }
+      alertas_sistema: {
+        Row: {
+          created_at: string | null
+          dados_contexto: Json | null
+          data_criacao: string | null
+          data_resolucao: string | null
+          id: string
+          mensagem: string
+          prioridade: string
+          resolvido: boolean | null
+          restaurant_id: string | null
+          tipo_alerta: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string | null
+          dados_contexto?: Json | null
+          data_criacao?: string | null
+          data_resolucao?: string | null
+          id?: string
+          mensagem: string
+          prioridade: string
+          resolvido?: boolean | null
+          restaurant_id?: string | null
+          tipo_alerta: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string | null
+          dados_contexto?: Json | null
+          data_criacao?: string | null
+          data_resolucao?: string | null
+          id?: string
+          mensagem?: string
+          prioridade?: string
+          resolvido?: boolean | null
+          restaurant_id?: string | null
+          tipo_alerta?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_sistema_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canais_venda: {
         Row: {
           ativo: boolean | null
@@ -379,6 +429,92 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "contas_a_receber_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dre_mensal: {
+        Row: {
+          ano: number
+          cmv_alimentos: number | null
+          cmv_bebidas: number | null
+          cmv_total: number | null
+          created_at: string | null
+          deducoes_vendas: number | null
+          despesas_administrativas: number | null
+          despesas_aluguel: number | null
+          despesas_delivery: number | null
+          despesas_marketing: number | null
+          despesas_outras: number | null
+          despesas_pessoal: number | null
+          ebitda: number | null
+          id: string
+          lucro_bruto: number | null
+          margem_bruta_percentual: number | null
+          margem_liquida_percentual: number | null
+          mes: number
+          receita_bruta: number | null
+          receita_liquida: number | null
+          restaurant_id: string | null
+          resultado_liquido: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ano: number
+          cmv_alimentos?: number | null
+          cmv_bebidas?: number | null
+          cmv_total?: number | null
+          created_at?: string | null
+          deducoes_vendas?: number | null
+          despesas_administrativas?: number | null
+          despesas_aluguel?: number | null
+          despesas_delivery?: number | null
+          despesas_marketing?: number | null
+          despesas_outras?: number | null
+          despesas_pessoal?: number | null
+          ebitda?: number | null
+          id?: string
+          lucro_bruto?: number | null
+          margem_bruta_percentual?: number | null
+          margem_liquida_percentual?: number | null
+          mes: number
+          receita_bruta?: number | null
+          receita_liquida?: number | null
+          restaurant_id?: string | null
+          resultado_liquido?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ano?: number
+          cmv_alimentos?: number | null
+          cmv_bebidas?: number | null
+          cmv_total?: number | null
+          created_at?: string | null
+          deducoes_vendas?: number | null
+          despesas_administrativas?: number | null
+          despesas_aluguel?: number | null
+          despesas_delivery?: number | null
+          despesas_marketing?: number | null
+          despesas_outras?: number | null
+          despesas_pessoal?: number | null
+          ebitda?: number | null
+          id?: string
+          lucro_bruto?: number | null
+          margem_bruta_percentual?: number | null
+          margem_liquida_percentual?: number | null
+          mes?: number
+          receita_bruta?: number | null
+          receita_liquida?: number | null
+          restaurant_id?: string | null
+          resultado_liquido?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dre_mensal_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -720,6 +856,74 @@ export type Database = {
           },
         ]
       }
+      kpis_diarios: {
+        Row: {
+          cmv_dia: number | null
+          cmv_percentual: number | null
+          created_at: string | null
+          data: string
+          despesas_dia: number | null
+          id: string
+          lucro_dia: number | null
+          margem_dia: number | null
+          meta_receita: number | null
+          percentual_meta_atingido: number | null
+          quantidade_pratos_vendidos: number | null
+          receita_delivery: number | null
+          receita_total: number | null
+          restaurant_id: string | null
+          taxa_delivery_paga: number | null
+          ticket_medio: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          cmv_dia?: number | null
+          cmv_percentual?: number | null
+          created_at?: string | null
+          data: string
+          despesas_dia?: number | null
+          id?: string
+          lucro_dia?: number | null
+          margem_dia?: number | null
+          meta_receita?: number | null
+          percentual_meta_atingido?: number | null
+          quantidade_pratos_vendidos?: number | null
+          receita_delivery?: number | null
+          receita_total?: number | null
+          restaurant_id?: string | null
+          taxa_delivery_paga?: number | null
+          ticket_medio?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          cmv_dia?: number | null
+          cmv_percentual?: number | null
+          created_at?: string | null
+          data?: string
+          despesas_dia?: number | null
+          id?: string
+          lucro_dia?: number | null
+          margem_dia?: number | null
+          meta_receita?: number | null
+          percentual_meta_atingido?: number | null
+          quantidade_pratos_vendidos?: number | null
+          receita_delivery?: number | null
+          receita_total?: number | null
+          restaurant_id?: string | null
+          taxa_delivery_paga?: number | null
+          ticket_medio?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpis_diarios_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metas_lucro_individual: {
         Row: {
           ativo: boolean | null
@@ -810,6 +1014,66 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "metas_vendas_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimentacao_estoque: {
+        Row: {
+          created_at: string | null
+          data_movimento: string | null
+          documento: string | null
+          id: string
+          insumo_id: string | null
+          motivo: string | null
+          preco_unitario: number | null
+          quantidade: number
+          restaurant_id: string | null
+          tipo_movimento: string
+          usuario_responsavel: string | null
+          valor_total: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_movimento?: string | null
+          documento?: string | null
+          id?: string
+          insumo_id?: string | null
+          motivo?: string | null
+          preco_unitario?: number | null
+          quantidade: number
+          restaurant_id?: string | null
+          tipo_movimento: string
+          usuario_responsavel?: string | null
+          valor_total?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data_movimento?: string | null
+          documento?: string | null
+          id?: string
+          insumo_id?: string | null
+          motivo?: string | null
+          preco_unitario?: number | null
+          quantidade?: number
+          restaurant_id?: string | null
+          tipo_movimento?: string
+          usuario_responsavel?: string | null
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacao_estoque_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacao_estoque_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -1648,6 +1912,10 @@ export type Database = {
           status_viabilidade: string
         }[]
       }
+      calcular_dre_mensal: {
+        Args: { restaurant_uuid: string; mes_param: number; ano_param: number }
+        Returns: undefined
+      }
       calcular_meta_diaria: {
         Args: { restaurant_uuid: string }
         Returns: {
@@ -1664,6 +1932,10 @@ export type Database = {
           trial_end_date: string
           plan_status: string
         }[]
+      }
+      gerar_alertas_automaticos: {
+        Args: { restaurant_uuid: string }
+        Returns: undefined
       }
       gtrgm_compress: {
         Args: { "": unknown }
