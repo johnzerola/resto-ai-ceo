@@ -8,7 +8,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardPerformance } from "@/hooks/useDashboardPerformance";
 import { useGlobalSync } from "@/hooks/useGlobalSync";
-import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 
 const QuickAccessGrid = React.lazy(() => import('./QuickAccessGrid'));
 const MetricsGrid = React.lazy(() => import('./MetricsGrid'));
@@ -30,6 +30,8 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
   const { dashboardStats, isLoading, performanceMetrics } = useDashboardPerformance();
   const { syncState } = useGlobalSync();
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  console.log('OptimizedDashboard rendering...', { isLoading, subscriptionInfo });
 
   // Update time every second
   useEffect(() => {
@@ -56,13 +58,13 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen dashboard-unificado">
+      <div className="min-h-screen dashboard-unificado bg-background">
         {/* Header */}
         <div className="border-b border-border/60 bg-card/80 backdrop-blur-xl sticky top-0 z-10">
           <div className="px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
               <div className="space-y-1">
-                <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-restauria-blue-tech to-restauria-green-profit bg-clip-text text-transparent">
+                <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
                   RestaurIA CEO
                 </h1>
                 <p className="text-muted-foreground text-xs sm:text-sm">

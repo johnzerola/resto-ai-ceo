@@ -37,7 +37,14 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              {/* Sistema Financeiro Completo - NOVA ROTA */}
+              {/* Rota dashboard - mesmo conteúdo que a principal */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              
+              {/* Sistema Financeiro Completo */}
               <Route path="/financeiro" element={
                 <ProtectedRoute>
                   <FinancialDashboardPage />

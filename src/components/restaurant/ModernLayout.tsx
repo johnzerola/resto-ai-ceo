@@ -46,6 +46,8 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   const [sidebarState, setSidebarState] = useState<'open' | 'closed'>('open');
   const [isInitialized, setIsInitialized] = useState(false);
   
+  console.log('ModernLayout rendering...', { isAuthenticated, isLoading, currentRestaurant });
+  
   useEffect(() => {
     const handleSidebarToggle = (e: CustomEvent) => {
       setSidebarState(e.detail.isCollapsed ? 'closed' : 'open');
@@ -77,28 +79,34 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timeout);
   }, [isInitialized]);
   
-  if (isLoading && !isInitialized) {
+  if (isLoading) {
+    console.log('ModernLayout: Still loading...');
     return <LoadingSpinner message="Carregando RestaurIA..." />;
   }
   
   if (!isAuthenticated) {
+    console.log('ModernLayout: Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
   
   if (userRestaurants.length === 0) {
+    console.log('ModernLayout: No restaurants found, redirecting to onboarding');
     return <Navigate to="/onboarding" replace />;
   }
   
   if (!currentRestaurant && userRestaurants.length > 0) {
+    console.log('ModernLayout: No current restaurant selected');
     return <LoadingSpinner message="Configurando restaurante..." />;
   }
+
+  console.log('ModernLayout: Rendering main layout');
 
   return (
     <div className="flex min-h-screen w-full bg-background">
       <ModernSidebar isCollapsed={sidebarState === 'closed'} />
       
       <main className={cn(
-        "flex-1 transition-all duration-300 ease-out min-h-screen",
+        "flex-1 transition-all duration-300 ease-out min-h-screen bg-background",
         "pt-16 md:pt-0",
         sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
       )}>
@@ -126,6 +134,7 @@ class ErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error) {
+    console.error('ErrorBoundary caught error:', error);
     return { hasError: true, error };
   }
 
