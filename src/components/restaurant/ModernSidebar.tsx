@@ -115,47 +115,74 @@ export function ModernSidebar({ isCollapsed = false }: ModernSidebarProps) {
   ];
 
   const renderNavigation = () => (
-    <div className="flex flex-col h-full">
-      <div className="px-3 py-2 flex items-center justify-between">
-        <span className="font-bold text-md">
-          {currentRestaurant?.name || "Seu Restaurante"}
-        </span>
-        {user && (
-          <Avatar className="w-8 h-8">
-            <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
-        )}
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700">
+      <div className="px-3 py-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-3">
+          {!isCollapsed && (
+            <div>
+              <h2 className="font-bold text-lg text-slate-900 dark:text-white">
+                {currentRestaurant?.name || "RestaurIA"}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Gestão Inteligente
+              </p>
+            </div>
+          )}
+          {user && (
+            <Avatar className="w-8 h-8 ring-2 ring-blue-500/20">
+              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white font-semibold">
+                {user.email?.charAt(0).toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </div>
       </div>
-      <Separator />
-      <ScrollArea className="flex-1">
+      
+      <ScrollArea className="flex-1 px-2 py-4">
         <div className="space-y-1">
           {navigationItems.map((item) => (
             <Link to={item.href} key={item.href}>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2"
-                style={{ paddingLeft: isCollapsed ? '12px' : '24px' }}
+                className="w-full justify-start gap-3 h-12 px-3 text-left hover:bg-blue-50 dark:hover:bg-slate-800 group transition-all duration-200"
               >
-                <item.icon className="h-4 w-4" />
-                {!isCollapsed && <span>{item.title}</span>}
-                {item.badge && !isCollapsed && (
-                  <Badge variant="secondary" className="ml-auto">
-                    {item.badge}
-                  </Badge>
+                <item.icon className="h-5 w-5 text-slate-600 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+                {!isCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm text-slate-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300">
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {item.description}
+                        </p>
+                      </div>
+                      {item.badge && (
+                        <Badge 
+                          variant="secondary" 
+                          className="ml-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-xs px-2 py-0.5"
+                        >
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 )}
               </Button>
             </Link>
           ))}
         </div>
       </ScrollArea>
-      <Separator />
+      
+      <Separator className="border-slate-200 dark:border-slate-700" />
       <div className="p-3">
         <Button
           variant="outline"
-          className="w-full justify-center"
+          className="w-full justify-center hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-800 transition-all duration-200"
           onClick={triggerLogout}
         >
-          Sair
+          {!isCollapsed ? 'Sair da Conta' : '↗'}
         </Button>
       </div>
     </div>
@@ -166,19 +193,19 @@ export function ModernSidebar({ isCollapsed = false }: ModernSidebarProps) {
       {isMobileView ? (
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="sm" className="px-2">
+            <Button variant="ghost" size="sm" className="fixed top-4 left-4 z-50 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border shadow-sm">
               <Menu className="w-5 h-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0">
-            <SheetHeader className="pl-0 justify-start">
-              <SheetTitle>Menu</SheetTitle>
+          <SheetContent side="left" className="p-0 w-72">
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle className="text-left">Menu RestaurIA</SheetTitle>
             </SheetHeader>
             {renderNavigation()}
           </SheetContent>
         </Sheet>
       ) : (
-        <div className={`flex flex-col ${isCollapsed ? 'w-16' : 'w-60'} border-r border-border`}>
+        <div className={`${isCollapsed ? 'w-16' : 'w-72'} transition-all duration-300 ease-in-out`}>
           {renderNavigation()}
         </div>
       )}

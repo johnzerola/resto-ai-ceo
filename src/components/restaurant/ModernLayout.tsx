@@ -7,33 +7,33 @@ import { EmailConfirmationBanner } from "../auth/EmailConfirmationBanner";
 import { cn } from "@/lib/utils";
 
 const LoadingSpinner = memo(({ message }: { message: string }) => (
-  <div className="flex h-screen w-screen items-center justify-center bg-gradient-to-br from-background to-muted/20">
+  <div className="flex h-screen w-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
     <div className="text-center">
       <div className="relative mx-auto w-12 h-12 mb-6">
-        <div className="w-12 h-12 rounded-full border-4 border-muted"></div>
-        <div className="w-12 h-12 rounded-full border-4 border-[#00D887] border-t-transparent absolute top-0 left-0 animate-spin"></div>
+        <div className="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700"></div>
+        <div className="w-12 h-12 rounded-full border-4 border-blue-500 border-t-transparent absolute top-0 left-0 animate-spin"></div>
       </div>
-      <p className="text-lg font-medium text-foreground">{message}</p>
-      <p className="text-sm text-muted-foreground mt-2">Preparando sua experiência inteligente</p>
+      <p className="text-lg font-medium text-slate-900 dark:text-slate-100">{message}</p>
+      <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">Preparando sua experiência RestaurIA</p>
     </div>
   </div>
 ));
 
 const ErrorFallback = memo(() => (
-  <div className="flex items-center justify-center min-h-[400px] text-center bg-card rounded-2xl shadow-lg mx-4 my-8">
-    <div className="space-y-6 p-8">
-      <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto">
+  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 to-pink-100 dark:from-slate-900 dark:to-red-900 p-4">
+    <div className="text-center bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 max-w-md w-full">
+      <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
         <span className="text-white text-2xl">⚠️</span>
       </div>
-      <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Oops! Algo deu errado</h2>
-        <p className="text-muted-foreground max-w-md">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Oops! Algo deu errado</h2>
+        <p className="text-slate-600 dark:text-slate-300">
           Ocorreu um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver.
         </p>
       </div>
       <button
         onClick={() => window.location.reload()}
-        className="px-6 py-3 bg-gradient-to-r from-[#00D887] to-[#00B572] text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-medium"
+        className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-medium"
       >
         Recarregar Página
       </button>
@@ -102,11 +102,11 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   console.log('ModernLayout: Rendering main layout');
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
       <ModernSidebar isCollapsed={sidebarState === 'closed'} />
       
       <main className={cn(
-        "flex-1 transition-all duration-300 ease-out min-h-screen bg-background",
+        "flex-1 transition-all duration-300 ease-out min-h-screen",
         "pt-16 md:pt-0",
         sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
       )}>

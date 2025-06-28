@@ -18,7 +18,14 @@ import FinancialDashboardPage from './pages/FinancialDashboardPage';
 import { DRE } from './pages/DRE';
 import PrecificacaoCompleta from './pages/PrecificacaoCompleta';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (

@@ -14,14 +14,14 @@ const QuickAccessGrid = React.lazy(() => import('./QuickAccessGrid'));
 const MetricsGrid = React.lazy(() => import('./MetricsGrid'));
 
 const DashboardSkeleton = memo(() => (
-  <div className="space-y-4 sm:space-y-6 animate-pulse">
-    <div className="h-16 sm:h-20 bg-muted rounded-lg"></div>
+  <div className="space-y-4 sm:space-y-6 animate-pulse p-6">
+    <div className="h-16 sm:h-20 bg-white/70 dark:bg-slate-800/70 rounded-xl shadow-sm"></div>
     <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-20 sm:h-24 bg-muted rounded-lg"></div>
+        <div key={i} className="h-20 sm:h-24 bg-white/70 dark:bg-slate-800/70 rounded-xl shadow-sm"></div>
       ))}
     </div>
-    <div className="h-48 sm:h-64 bg-muted rounded-lg"></div>
+    <div className="h-48 sm:h-64 bg-white/70 dark:bg-slate-800/70 rounded-xl shadow-sm"></div>
   </div>
 ));
 
@@ -49,8 +49,8 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
     return {
       icon: isOnline ? <Wifi className="h-3 w-3 sm:h-4 sm:w-4" /> : <WifiOff className="h-3 w-3 sm:h-4 sm:w-4" />,
       status: isOnline ? 'Online' : 'Offline',
-      color: isOnline ? 'text-green-600' : 'text-red-600',
-      bgColor: isOnline ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950',
+      color: isOnline ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400',
+      bgColor: isOnline ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30',
       lastUpdate: lastUpdateTime,
       isSyncing: syncStatus === 'syncing'
     };
@@ -58,16 +58,16 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen dashboard-unificado bg-background">
+      <div className="min-h-screen bg-transparent">
         {/* Header */}
-        <div className="border-b border-border/60 bg-card/80 backdrop-blur-xl sticky top-0 z-10">
+        <div className="border-b border-white/20 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl sticky top-0 z-10 shadow-sm">
           <div className="px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
               <div className="space-y-1">
                 <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
                   RestaurIA CEO
                 </h1>
-                <p className="text-muted-foreground text-xs sm:text-sm">
+                <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm">
                   Dashboard inteligente para gestão completa do seu restaurante
                 </p>
               </div>
@@ -79,7 +79,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
                     <span className={`text-xs sm:text-sm font-medium ${syncStatusDisplay.color}`}>
                       {syncStatusDisplay.status}
                     </span>
-                    <span className="text-xs text-muted-foreground hidden sm:inline">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline">
                       {currentTime.toLocaleTimeString()}
                     </span>
                   </div>
@@ -97,8 +97,8 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
             ) : (
               <div className="space-y-4 sm:space-y-6">
                 <ErrorBoundary fallback={
-                  <Card className="p-4 sm:p-6 text-center">
-                    <p className="text-muted-foreground text-sm">Erro ao carregar acesso rápido</p>
+                  <Card className="p-4 sm:p-6 text-center bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm">Erro ao carregar acesso rápido</p>
                   </Card>
                 }>
                   <div data-testid="quick-access">
@@ -107,8 +107,8 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
                 </ErrorBoundary>
                 
                 <ErrorBoundary fallback={
-                  <Card className="p-4 sm:p-6 text-center">
-                    <p className="text-muted-foreground text-sm">Erro ao carregar métricas</p>
+                  <Card className="p-4 sm:p-6 text-center bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm">Erro ao carregar métricas</p>
                   </Card>
                 }>
                   <div data-testid="dashboard-metrics">
