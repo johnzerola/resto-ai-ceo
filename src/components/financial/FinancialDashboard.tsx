@@ -96,11 +96,11 @@ export function FinancialDashboard() {
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <h4 className="font-semibold text-red-800 mb-2">🚨 Sinais de Alerta</h4>
                 <ul className="text-sm text-red-700 space-y-1">
-                  <li>• CMV > 40%</li>
-                  <li>• Margem líquida < 5%</li>
-                  <li>• Receita em queda > 3 meses</li>
-                  <li>• Estoque parado > 15 dias</li>
-                  <li>• Despesas > 60% da receita</li>
+                  <li>• CMV maior que 40%</li>
+                  <li>• Margem líquida menor que 5%</li>
+                  <li>• Receita em queda por mais de 3 meses</li>
+                  <li>• Estoque parado por mais de 15 dias</li>
+                  <li>• Despesas maiores que 60% da receita</li>
                 </ul>
               </div>
 
