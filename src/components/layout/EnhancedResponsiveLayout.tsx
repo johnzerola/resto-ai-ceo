@@ -19,7 +19,6 @@ export function EnhancedResponsiveLayout({ children }: EnhancedResponsiveLayoutP
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
-  // Auto-close sidebar on mobile when route changes
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
@@ -28,7 +27,6 @@ export function EnhancedResponsiveLayout({ children }: EnhancedResponsiveLayoutP
     }
   }, [isMobile]);
 
-  // Close sidebar when clicking outside on mobile
   const handleOverlayClick = () => {
     if (isMobile) {
       setSidebarOpen(false);
@@ -60,7 +58,6 @@ export function EnhancedResponsiveLayout({ children }: EnhancedResponsiveLayoutP
 
   return (
     <div className="flex min-h-screen w-full bg-background overflow-x-hidden">
-      {/* Mobile menu button */}
       {isMobile && (
         <Button
           variant="ghost"
@@ -72,7 +69,6 @@ export function EnhancedResponsiveLayout({ children }: EnhancedResponsiveLayoutP
         </Button>
       )}
 
-      {/* Overlay for mobile */}
       {isMobile && sidebarOpen && (
         <div 
           className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
@@ -80,7 +76,6 @@ export function EnhancedResponsiveLayout({ children }: EnhancedResponsiveLayoutP
         />
       )}
 
-      {/* Sidebar */}
       <div className={cn(
         "transition-all duration-300 ease-in-out z-40",
         isMobile ? [
@@ -91,14 +86,12 @@ export function EnhancedResponsiveLayout({ children }: EnhancedResponsiveLayoutP
           sidebarOpen ? "w-72" : "w-16"
         ]
       )}>
-        <ModernSidebar />
+        <ModernSidebar isCollapsed={!sidebarOpen} />
       </div>
 
-      {/* Main content */}
       <main className={cn(
         "flex-1 transition-all duration-300 ease-out min-h-screen",
         "w-full max-w-full overflow-x-hidden",
-        // Mobile spacing
         isMobile ? "pt-16" : "pt-0"
       )}>
         <EmailConfirmationBanner />

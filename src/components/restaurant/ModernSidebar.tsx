@@ -1,3 +1,4 @@
+
 import {
   LayoutDashboard,
   FileText,
@@ -34,25 +35,20 @@ import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ModernSidebarProps {
-  isCollapsed: boolean;
+  isCollapsed?: boolean;
 }
 
-export function ModernSidebar({ isCollapsed }: ModernSidebarProps) {
+export function ModernSidebar({ isCollapsed = false }: ModernSidebarProps) {
   const { user, logout, currentRestaurant } = useAuth();
   const [isMobileView, setIsMobileView] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileView(window.innerWidth < 768); // Adjust breakpoint as needed
+      setIsMobileView(window.innerWidth < 768);
     };
 
-    // Set initial value
     handleResize();
-
-    // Listen for window resize events
     window.addEventListener('resize', handleResize);
-
-    // Clean up the event listener
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -105,18 +101,6 @@ export function ModernSidebar({ isCollapsed }: ModernSidebarProps) {
       description: "Controle de ingredientes"
     },
     {
-      title: "Metas",
-      href: "/metas",
-      icon: Target,
-      description: "Objetivos e conquistas"
-    },
-    {
-      title: "Relatórios",
-      href: "/relatorios",
-      icon: BarChart3,
-      description: "Análises detalhadas"
-    },
-    {
       title: "Auditoria",
       href: "/auditoria",
       icon: Shield,
@@ -138,7 +122,6 @@ export function ModernSidebar({ isCollapsed }: ModernSidebarProps) {
         </span>
         {user && (
           <Avatar className="w-8 h-8">
-            <AvatarImage src={user.avatar_url} />
             <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
         )}
@@ -154,8 +137,8 @@ export function ModernSidebar({ isCollapsed }: ModernSidebarProps) {
                 style={{ paddingLeft: isCollapsed ? '12px' : '24px' }}
               >
                 <item.icon className="h-4 w-4" />
-                <span>{item.title}</span>
-                {item.badge && (
+                {!isCollapsed && <span>{item.title}</span>}
+                {item.badge && !isCollapsed && (
                   <Badge variant="secondary" className="ml-auto">
                     {item.badge}
                   </Badge>
@@ -195,7 +178,7 @@ export function ModernSidebar({ isCollapsed }: ModernSidebarProps) {
           </SheetContent>
         </Sheet>
       ) : (
-        <div className={`flex flex-col w-60 border-r border-border`}>
+        <div className={`flex flex-col ${isCollapsed ? 'w-16' : 'w-60'} border-r border-border`}>
           {renderNavigation()}
         </div>
       )}

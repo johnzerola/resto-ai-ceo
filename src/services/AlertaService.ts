@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -28,7 +27,10 @@ export class AlertaService {
 
       if (error) throw error;
 
-      return data || [];
+      return (data || []).map(item => ({
+        ...item,
+        prioridade: item.prioridade as 'baixa' | 'media' | 'alta' | 'critica'
+      }));
     } catch (error) {
       console.error('Erro ao buscar alertas:', error);
       return [];
@@ -43,7 +45,6 @@ export class AlertaService {
 
       if (error) throw error;
 
-      // Mostrar toast baseado na prioridade
       if (alerta.prioridade === 'critica') {
         toast.error(alerta.titulo + ': ' + alerta.mensagem);
       } else if (alerta.prioridade === 'alta') {
@@ -92,14 +93,12 @@ export class AlertaService {
     }
   }
 
-  // Análise preditiva de alertas (MIT Machine Learning)
   static async analisarRiscosProativos(restaurantId: string): Promise<{
     riscos_identificados: string[];
     probabilidade_problemas: number;
     acoes_preventivas: string[];
   }> {
     try {
-      // Buscar dados históricos
       const { data: kpis } = await supabase
         .from('kpis_diarios')
         .select('*')
@@ -119,7 +118,6 @@ export class AlertaService {
       const acoes_preventivas: string[] = [];
       let probabilidade_problemas = 0;
 
-      // Análise de tendências de KPIs
       if (kpis && kpis.length >= 7) {
         const ultimaSemana = kpis.slice(0, 7);
         const margemMedia = ultimaSemana.reduce((acc, kpi) => acc + kpi.margem_dia, 0) / 7;
@@ -141,7 +139,6 @@ export class AlertaService {
         }
       }
 
-      // Análise de DRE
       if (dres && dres.length >= 2) {
         const dreAtual = dres[0];
         const dreAnterior = dres[1];
@@ -153,7 +150,6 @@ export class AlertaService {
         }
       }
 
-      // Limitar probabilidade a 100%
       probabilidade_problemas = Math.min(probabilidade_problemas, 100);
 
       return {

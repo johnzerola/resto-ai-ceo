@@ -95,11 +95,10 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      <ModernSidebar />
+      <ModernSidebar isCollapsed={sidebarState === 'closed'} />
       
       <main className={cn(
         "flex-1 transition-all duration-300 ease-out min-h-screen",
-        // Add top margin on mobile to prevent overlap with menu button
         "pt-16 md:pt-0",
         sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
       )}>
