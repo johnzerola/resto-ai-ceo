@@ -183,7 +183,7 @@ export function EnhancedSystemStatusWidget() {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => navigate('/fluxo-caixa')}
+              onClick={() => navigate('/fluxo-de-caixa')}
               className="flex items-center gap-2 h-10"
             >
               <DollarSign className="h-4 w-4" />

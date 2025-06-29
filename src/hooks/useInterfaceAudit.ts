@@ -43,7 +43,7 @@ export function useInterfaceAudit(config?: AuditConfig) {
       '/dre',
       '/cmv',
       '/dre-cmv',
-      '/fluxo-caixa',
+      '/fluxo-de-caixa',
       '/simulador',
       '/metas',
       '/estoque',

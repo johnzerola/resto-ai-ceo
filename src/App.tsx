@@ -49,7 +49,7 @@ function App() {
                 }
               />
               <Route
-                path="/fluxo-caixa"
+                path="/fluxo-de-caixa"
                 element={
                   <ProtectedRoute>
                     <FluxoCaixa />
