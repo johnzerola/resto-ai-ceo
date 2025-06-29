@@ -24,9 +24,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import { FinancialDataService } from "@/services/FinancialDataService";
+import { getCashFlowEntries, saveCashFlowEntries } from "@/services/FinancialStorageService";
 
-// Interface for cash flow entry
 export interface CashFlowEntry {
   id: string;
   date: string;
@@ -44,7 +43,6 @@ interface CashFlowOverviewProps {
   onEdit: (entryId: string) => void;
 }
 
-// Tradução das categorias
 const categoryTranslations: { [key: string]: string } = {
   "sales": "Vendas",
   "food": "Alimentação",
@@ -69,7 +67,6 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedView, setSelectedView] = useState("list");
   
-  // Cash flow summary state
   const [summary, setSummary] = useState({
     totalIncome: 0,
     totalExpense: 0,
@@ -78,44 +75,45 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
     pendingExpense: 0
   });
 
-  // Load cash flow data from localStorage
-  const loadCashFlowData = () => {
-    const savedCashFlow = localStorage.getItem("cashFlowEntries");
-    if (savedCashFlow) {
-      const parsedCashFlow = JSON.parse(savedCashFlow);
-      setCashFlow(parsedCashFlow);
-      calculateSummary(parsedCashFlow);
-      console.log("Cash flow data loaded:", parsedCashFlow.length, "entries");
-    } else {
+  const loadCashFlowData = async () => {
+    try {
+      console.log('Carregando dados do fluxo de caixa...');
+      const entries = await getCashFlowEntries();
+      console.log('Dados carregados:', entries.length, 'entradas');
+      setCashFlow(entries);
+      calculateSummary(entries);
+    } catch (error) {
+      console.error('Erro ao carregar dados do fluxo de caixa:', error);
       setCashFlow([]);
       calculateSummary([]);
-      console.log("No cash flow data found in localStorage");
     }
   };
 
-  // Load cash flow data
   useEffect(() => {
     loadCashFlowData();
   }, []);
 
-  // Add listeners for cash flow updates
   useEffect(() => {
     const handleCashFlowUpdate = (event: CustomEvent) => {
-      console.log("Cash flow updated event received:", event.detail);
-      loadCashFlowData(); // Recarregar dados do localStorage
+      console.log('Evento de atualização do fluxo de caixa recebido:', event.detail);
+      if (Array.isArray(event.detail)) {
+        setCashFlow(event.detail);
+        calculateSummary(event.detail);
+      } else {
+        // Se não for array, recarregar os dados
+        loadCashFlowData();
+      }
     };
 
     const handleDataSync = () => {
-      console.log("Data sync event received");
-      loadCashFlowData(); // Recarregar dados do localStorage
+      console.log('Evento de sincronização de dados recebido');
+      loadCashFlowData();
     };
 
-    // Adicionar listeners para eventos de atualização
     window.addEventListener('cashFlowUpdated', handleCashFlowUpdate as EventListener);
     window.addEventListener('dataSync', handleDataSync);
     window.addEventListener('financialDataUpdated', handleDataSync);
 
-    // Cleanup listeners
     return () => {
       window.removeEventListener('cashFlowUpdated', handleCashFlowUpdate as EventListener);
       window.removeEventListener('dataSync', handleDataSync);
@@ -123,7 +121,6 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
     };
   }, []);
 
-  // Calculate summary data
   const calculateSummary = (entries: CashFlowEntry[]) => {
     const completedEntries = entries.filter(entry => entry.status === "completed");
     const pendingEntries = entries.filter(entry => entry.status === "pending");
@@ -153,14 +150,11 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
     });
   };
 
-  // Filter cash flow based on search and filters
   const getFilteredCashFlow = () => {
     return cashFlow.filter((entry) => {
-      // Text search filter
       const matchesSearch = entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          categoryTranslations[entry.category]?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      // Date filter
       let matchesDate = true;
       if (dateFilter !== "all") {
         const today = new Date();
@@ -182,35 +176,33 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
         }
       }
       
-      // Type filter
       let matchesType = true;
       if (typeFilter !== "all") {
         matchesType = entry.type === typeFilter;
       }
       
       return matchesSearch && matchesDate && matchesType;
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Ordenar do mais recente para o mais antigo
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
-  // Delete cash flow entry
-  const deleteEntry = (entryId: string) => {
+  const deleteEntry = async (entryId: string) => {
     if (confirm("Tem certeza que deseja excluir esta transação?")) {
-      const updatedCashFlow = cashFlow.filter((entry) => entry.id !== entryId);
-      setCashFlow(updatedCashFlow);
-      localStorage.setItem("cashFlowEntries", JSON.stringify(updatedCashFlow));
-      calculateSummary(updatedCashFlow);
-      
-      // Atualizar dados financeiros após exclusão de transação
-      FinancialDataService.updateFinancialData(updatedCashFlow);
-      
-      // Disparar evento para atualização do dashboard
-      window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedCashFlow }));
-      
-      toast.success("Transação excluída com sucesso!");
+      try {
+        const updatedCashFlow = cashFlow.filter((entry) => entry.id !== entryId);
+        setCashFlow(updatedCashFlow);
+        await saveCashFlowEntries(updatedCashFlow);
+        calculateSummary(updatedCashFlow);
+        
+        window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedCashFlow }));
+        
+        toast.success("Transação excluída com sucesso!");
+      } catch (error) {
+        console.error('Erro ao excluir transação:', error);
+        toast.error("Erro ao excluir transação");
+      }
     }
   };
 
-  // Format currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -218,18 +210,15 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
     }).format(value);
   };
 
-  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('pt-BR').format(date);
   };
 
-  // Generate monthly data for chart
   const generateMonthlyData = () => {
     const currentYear = new Date().getFullYear();
     const monthlyData = [];
     
-    // Initialize month data
     for (let month = 0; month < 6; month++) {
       const date = new Date(currentYear, new Date().getMonth() - 5 + month);
       monthlyData.push({
@@ -240,7 +229,6 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
       });
     }
     
-    // Sum up entries by month
     cashFlow.forEach(entry => {
       if (entry.status !== "completed") return;
       
@@ -432,9 +420,17 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
               ) : (
                 <div className="p-10 text-center">
                   <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-muted-foreground">Nenhuma transação cadastrada ainda</p>
+                  <p className="text-muted-foreground">
+                    {cashFlow.length === 0 
+                      ? "Nenhuma transação cadastrada ainda" 
+                      : "Nenhuma transação encontrada com os filtros aplicados"
+                    }
+                  </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Clique em "Nova Transação" para começar
+                    {cashFlow.length === 0 
+                      ? "Clique em 'Nova Transação' para começar"
+                      : "Tente ajustar os filtros de busca"
+                    }
                   </p>
                 </div>
               )}

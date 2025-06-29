@@ -65,9 +65,6 @@ export async function saveFinancialData(data: FinancialData): Promise<void> {
   }
 }
 
-/**
- * Sincronizar dados financeiros com configurações do restaurante
- */
 export async function syncFinancialWithConfig(): Promise<void> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -96,9 +93,6 @@ export async function syncFinancialWithConfig(): Promise<void> {
   }
 }
 
-/**
- * Sincronizar dados financeiros com configurações do restaurante
- */
 async function syncWithRestaurantData(financialData: FinancialData): Promise<void> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -126,9 +120,6 @@ async function syncWithRestaurantData(financialData: FinancialData): Promise<voi
   }
 }
 
-/**
- * Limpar dados financeiros do usuário atual
- */
 export async function clearFinancialData(): Promise<void> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -176,9 +167,6 @@ export async function migrateUserFinancialData(): Promise<void> {
   }
 }
 
-/**
- * Função para garantir isolamento de dados do fluxo de caixa por usuário
- */
 export async function getCashFlowEntries(): Promise<any[]> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -193,14 +181,16 @@ export async function getCashFlowEntries(): Promise<any[]> {
     
     if (savedData) {
       try {
-        return JSON.parse(savedData);
+        const entries = JSON.parse(savedData);
+        console.log('Dados de fluxo de caixa carregados para usuário:', session.user.id, 'Total:', entries.length);
+        return entries;
       } catch (parseError) {
         console.warn('Erro ao fazer parse dos dados de fluxo de caixa, retornando dados vazios:', parseError);
         localStorage.setItem(userKey, JSON.stringify([]));
         return [];
       }
     } else {
-      console.log('Criando dados vazios de fluxo de caixa para usuário:', session.user.id);
+      console.log('Nenhum dado de fluxo de caixa encontrado para usuário:', session.user.id, 'criando array vazio');
       localStorage.setItem(userKey, JSON.stringify([]));
       return [];
     }
@@ -210,9 +200,6 @@ export async function getCashFlowEntries(): Promise<any[]> {
   }
 }
 
-/**
- * Função para salvar dados do fluxo de caixa por usuário
- */
 export async function saveCashFlowEntries(entries: any[]): Promise<void> {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -224,7 +211,7 @@ export async function saveCashFlowEntries(entries: any[]): Promise<void> {
 
     const userKey = `cashFlowEntries_${session.user.id}`;
     localStorage.setItem(userKey, JSON.stringify(entries));
-    console.log('Dados de fluxo de caixa salvos para usuário:', session.user.id);
+    console.log('Dados de fluxo de caixa salvos para usuário:', session.user.id, 'Total entries:', entries.length);
     
     // Disparar evento para atualização da UI
     window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: entries }));
