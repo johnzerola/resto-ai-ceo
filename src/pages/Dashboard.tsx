@@ -1,13 +1,12 @@
 
-import React from "react";
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { OptimizedDashboard } from "@/components/dashboard/OptimizedDashboard";
+import { ModernLayout } from "@/components/restaurant/ModernLayout";
+import { EnhancedDashboard } from "@/components/restaurant/EnhancedDashboard";
 
 const Dashboard = () => {
   return (
-    <DashboardLayout>
-      <OptimizedDashboard />
-    </DashboardLayout>
+    <ModernLayout>
+      <EnhancedDashboard />
+    </ModernLayout>
   );
 };
 
