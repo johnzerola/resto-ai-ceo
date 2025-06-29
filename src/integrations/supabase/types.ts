@@ -106,6 +106,56 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          restaurant_id: string | null
+          table_name: string
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          restaurant_id?: string | null
+          table_name: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          restaurant_id?: string | null
+          table_name?: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canais_venda: {
         Row: {
           ativo: boolean | null
@@ -150,14 +200,18 @@ export type Database = {
       cash_flow: {
         Row: {
           amount: number
+          categoria_customizada: string | null
           category: string
           centro_custo: string | null
+          conta_origem_id: string | null
           conta_tipo: string | null
           created_at: string | null
           date: string
           description: string | null
           documento: string | null
           id: string
+          impacta_cmv: boolean | null
+          impacta_dre: boolean | null
           payment_method: string | null
           pessoa_responsavel: string | null
           recorrente: boolean | null
@@ -168,14 +222,18 @@ export type Database = {
         }
         Insert: {
           amount: number
+          categoria_customizada?: string | null
           category: string
           centro_custo?: string | null
+          conta_origem_id?: string | null
           conta_tipo?: string | null
           created_at?: string | null
           date: string
           description?: string | null
           documento?: string | null
           id?: string
+          impacta_cmv?: boolean | null
+          impacta_dre?: boolean | null
           payment_method?: string | null
           pessoa_responsavel?: string | null
           recorrente?: boolean | null
@@ -186,14 +244,18 @@ export type Database = {
         }
         Update: {
           amount?: number
+          categoria_customizada?: string | null
           category?: string
           centro_custo?: string | null
+          conta_origem_id?: string | null
           conta_tipo?: string | null
           created_at?: string | null
           date?: string
           description?: string | null
           documento?: string | null
           id?: string
+          impacta_cmv?: boolean | null
+          impacta_dre?: boolean | null
           payment_method?: string | null
           pessoa_responsavel?: string | null
           recorrente?: boolean | null
@@ -205,6 +267,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "cash_flow_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categorias_despesas: {
+        Row: {
+          ativa: boolean | null
+          cor: string | null
+          created_at: string | null
+          icone: string | null
+          id: string
+          impacta_cmv: boolean | null
+          impacta_dre: boolean | null
+          nome: string
+          restaurant_id: string | null
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativa?: boolean | null
+          cor?: string | null
+          created_at?: string | null
+          icone?: string | null
+          id?: string
+          impacta_cmv?: boolean | null
+          impacta_dre?: boolean | null
+          nome: string
+          restaurant_id?: string | null
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativa?: boolean | null
+          cor?: string | null
+          created_at?: string | null
+          icone?: string | null
+          id?: string
+          impacta_cmv?: boolean | null
+          impacta_dre?: boolean | null
+          nome?: string
+          restaurant_id?: string | null
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_despesas_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -337,8 +449,11 @@ export type Database = {
           data_pagamento: string | null
           data_vencimento: string
           descricao: string
+          forma_pagamento: string | null
           fornecedor: string | null
           id: string
+          notificacao_enviada_1_dia: boolean | null
+          notificacao_enviada_vencimento: boolean | null
           observacoes: string | null
           restaurant_id: string | null
           status: string
@@ -351,8 +466,11 @@ export type Database = {
           data_pagamento?: string | null
           data_vencimento: string
           descricao: string
+          forma_pagamento?: string | null
           fornecedor?: string | null
           id?: string
+          notificacao_enviada_1_dia?: boolean | null
+          notificacao_enviada_vencimento?: boolean | null
           observacoes?: string | null
           restaurant_id?: string | null
           status?: string
@@ -365,8 +483,11 @@ export type Database = {
           data_pagamento?: string | null
           data_vencimento?: string
           descricao?: string
+          forma_pagamento?: string | null
           fornecedor?: string | null
           id?: string
+          notificacao_enviada_1_dia?: boolean | null
+          notificacao_enviada_vencimento?: boolean | null
           observacoes?: string | null
           restaurant_id?: string | null
           status?: string
@@ -391,7 +512,10 @@ export type Database = {
           data_recebimento: string | null
           data_vencimento: string
           descricao: string
+          forma_recebimento: string | null
           id: string
+          notificacao_enviada_1_dia: boolean | null
+          notificacao_enviada_vencimento: boolean | null
           observacoes: string | null
           restaurant_id: string | null
           status: string
@@ -405,7 +529,10 @@ export type Database = {
           data_recebimento?: string | null
           data_vencimento: string
           descricao: string
+          forma_recebimento?: string | null
           id?: string
+          notificacao_enviada_1_dia?: boolean | null
+          notificacao_enviada_vencimento?: boolean | null
           observacoes?: string | null
           restaurant_id?: string | null
           status?: string
@@ -419,7 +546,10 @@ export type Database = {
           data_recebimento?: string | null
           data_vencimento?: string
           descricao?: string
+          forma_recebimento?: string | null
           id?: string
+          notificacao_enviada_1_dia?: boolean | null
+          notificacao_enviada_vencimento?: boolean | null
           observacoes?: string | null
           restaurant_id?: string | null
           status?: string
@@ -1800,6 +1930,47 @@ export type Database = {
         }
         Relationships: []
       }
+      taxas_delivery: {
+        Row: {
+          ativa: boolean | null
+          created_at: string | null
+          id: string
+          plataforma: string
+          restaurant_id: string | null
+          tipo_taxa: string
+          updated_at: string | null
+          valor_taxa: number
+        }
+        Insert: {
+          ativa?: boolean | null
+          created_at?: string | null
+          id?: string
+          plataforma: string
+          restaurant_id?: string | null
+          tipo_taxa: string
+          updated_at?: string | null
+          valor_taxa?: number
+        }
+        Update: {
+          ativa?: boolean | null
+          created_at?: string | null
+          id?: string
+          plataforma?: string
+          restaurant_id?: string | null
+          tipo_taxa?: string
+          updated_at?: string | null
+          valor_taxa?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taxas_delivery_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unidades_medida: {
         Row: {
           created_at: string | null
@@ -1972,6 +2143,10 @@ export type Database = {
       show_trgm: {
         Args: { "": string }
         Returns: string[]
+      }
+      system_healthcheck: {
+        Args: { restaurant_uuid: string }
+        Returns: Json
       }
       validate_password_strength: {
         Args: { password_text: string }
