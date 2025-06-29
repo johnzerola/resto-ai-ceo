@@ -28,10 +28,19 @@ export class AuditService {
 
       if (error) throw error;
       
-      // Type casting para garantir compatibilidade
+      // Type casting com tratamento adequado de tipos nullable
       return (data || []).map(item => ({
-        ...item,
-        action: item.action as AuditLog['action']
+        id: item.id,
+        restaurant_id: item.restaurant_id || '',
+        user_id: item.user_id || undefined,
+        action: item.action as AuditLog['action'],
+        table_name: item.table_name,
+        record_id: item.record_id || undefined,
+        old_values: item.old_values,
+        new_values: item.new_values,
+        timestamp: item.timestamp || new Date().toISOString(),
+        ip_address: item.ip_address ? String(item.ip_address) : undefined,
+        user_agent: item.user_agent || undefined
       }));
     } catch (error) {
       console.error('Erro ao carregar logs de auditoria:', error);
