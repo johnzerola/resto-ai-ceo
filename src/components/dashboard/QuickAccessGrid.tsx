@@ -5,114 +5,73 @@ import {
   TrendingUp, 
   DollarSign, 
   Target, 
-  BarChart3,
-  Calculator,
-  FileText,
-  Package,
-  Wallet
+  BarChart3
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const quickAccessCards = [
   {
-    title: "Sistema Financeiro",
-    description: "DRE + KPIs + Alertas",
-    icon: Calculator,
-    href: "/financeiro",
-    gradient: "from-blue-500 to-blue-600",
-    iconBg: "bg-blue-100 dark:bg-blue-900/30",
-    iconColor: "text-blue-600 dark:text-blue-400",
-    badge: "NOVO"
-  },
-  {
-    title: "Ficha Técnica", 
-    description: "Receitas e custos",
-    icon: FileText,
-    href: "/ficha-tecnica",
-    gradient: "from-green-500 to-green-600",
-    iconBg: "bg-green-100 dark:bg-green-900/30", 
-    iconColor: "text-green-600 dark:text-green-400"
-  },
-  {
-    title: "Precificação",
-    description: "Calcular preços ideais",
-    icon: DollarSign,
-    href: "/precificacao", 
+    title: "Projeções",
+    description: "Planejamento estratégico",
+    icon: TrendingUp,
+    href: "/projecoes",
     gradient: "from-purple-500 to-purple-600",
-    iconBg: "bg-purple-100 dark:bg-purple-900/30",
-    iconColor: "text-purple-600 dark:text-purple-400"
+    iconBg: "bg-purple-100",
+    iconColor: "text-purple-600"
   },
   {
-    title: "DRE & CMV",
-    description: "Análise financeira",
+    title: "Fluxo de Caixa", 
+    description: "Gestão financeira",
+    icon: DollarSign,
+    href: "/fluxo-de-caixa",
+    gradient: "from-green-500 to-green-600",
+    iconBg: "bg-green-100", 
+    iconColor: "text-green-600"
+  },
+  {
+    title: "Metas",
+    description: "Objetivos e resultados",
+    icon: Target,
+    href: "/metas", 
+    gradient: "from-blue-500 to-blue-600",
+    iconBg: "bg-blue-100",
+    iconColor: "text-blue-600"
+  },
+  {
+    title: "Relatórios",
+    description: "Análises detalhadas",
     icon: BarChart3,
-    href: "/dre-cmv",
+    href: "/dre",
     gradient: "from-orange-500 to-orange-600", 
-    iconBg: "bg-orange-100 dark:bg-orange-900/30",
-    iconColor: "text-orange-600 dark:text-orange-400"
-  },
-  {
-    title: "Fluxo de Caixa",
-    description: "Entradas e saídas",
-    icon: Wallet,
-    href: "/fluxo-caixa",
-    gradient: "from-emerald-500 to-emerald-600",
-    iconBg: "bg-emerald-100 dark:bg-emerald-900/30",
-    iconColor: "text-emerald-600 dark:text-emerald-400"
-  },
-  {
-    title: "Estoque",
-    description: "Controle de ingredientes",
-    icon: Package,
-    href: "/estoque",
-    gradient: "from-amber-500 to-amber-600",
-    iconBg: "bg-amber-100 dark:bg-amber-900/30",
-    iconColor: "text-amber-600 dark:text-amber-400"
+    iconBg: "bg-orange-100",
+    iconColor: "text-orange-600"
   }
 ];
 
 export default function QuickAccessGrid() {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          Acesso Rápido
-        </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Principais funcionalidades
-        </p>
-      </div>
-      
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {quickAccessCards.map((card) => (
-          <Link key={card.href} to={card.href} className="group">
-            <Card className="h-full border border-slate-200/60 dark:border-slate-700/60 shadow-sm hover:shadow-lg transition-all duration-300 transform group-hover:scale-[1.02] bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className={`p-2.5 rounded-xl ${card.iconBg}`}>
-                      <card.icon className={`h-5 w-5 ${card.iconColor}`} />
-                    </div>
-                    {card.badge && (
-                      <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full font-medium">
-                        {card.badge}
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-sm text-slate-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
-                      {card.title}
-                    </h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-                      {card.description}
-                    </p>
-                  </div>
+    <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+      {quickAccessCards.map((card) => (
+        <Link key={card.href} to={card.href} className="group">
+          <Card className="h-full border-0 shadow-sm hover:shadow-lg transition-all duration-300 transform group-hover:scale-[1.02] bg-white/70 backdrop-blur-sm">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className={`p-2 sm:p-2.5 rounded-xl ${card.iconBg}`}>
+                  <card.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${card.iconColor}`} />
                 </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-slate-900 group-hover:text-slate-700 transition-colors truncate">
+                    {card.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 truncate">
+                    {card.description}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      ))}
     </div>
   );
 }

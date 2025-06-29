@@ -1,91 +1,57 @@
 
-import { ModernLayout } from "@/components/restaurant/ModernLayout";
-import { SystemAuditReport } from "@/components/system/SystemAuditReport";
-import { SystemFeatures } from "@/components/seo/SystemFeatures";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Search, BarChart3 } from "lucide-react";
+import React from 'react';
+import { ModernLayout } from '@/components/restaurant/ModernLayout';
+import { ComprehensiveSystemAudit } from '@/components/audit/ComprehensiveSystemAudit';
+import { TechnicalQuestionsAudit } from '@/components/audit/TechnicalQuestionsAudit';
+import { FinalSystemValidation } from '@/components/audit/FinalSystemValidation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Shield, Brain, CheckSquare, Rocket } from 'lucide-react';
 
-const SystemAuditPage = () => {
+export default function SystemAuditPage() {
   return (
     <ModernLayout>
-      <div className="space-y-6 p-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Shield className="h-8 w-8" />
-            Auditoria do Sistema
-          </h1>
-          <p className="text-muted-foreground">
-            Análise completa por especialistas Harvard/Oxford/MIT + Otimização SEO
-          </p>
+      <div className="container mx-auto p-4 space-y-6">
+        <div className="flex items-center gap-2">
+          <Shield className="h-8 w-8 text-purple-600" />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Auditoria Técnica Completa
+            </h1>
+            <p className="text-muted-foreground">
+              Validação 100% do sistema por especialista Harvard + Engenharia de Software
+            </p>
+          </div>
         </div>
 
-        <Tabs defaultValue="audit" className="w-full">
+        <Tabs defaultValue="final-validation" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="audit" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Auditoria Técnica
+            <TabsTrigger value="final-validation" className="flex items-center gap-2">
+              <Rocket className="h-4 w-4" />
+              Validação Final
             </TabsTrigger>
-            <TabsTrigger value="features" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Funcionalidades
+            <TabsTrigger value="comprehensive" className="flex items-center gap-2">
+              <CheckSquare className="h-4 w-4" />
+              Auditoria Completa
             </TabsTrigger>
-            <TabsTrigger value="seo" className="flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              SEO & Marketing
+            <TabsTrigger value="questions" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              Análise Técnica
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="audit" className="space-y-6">
-            <SystemAuditReport />
+          <TabsContent value="final-validation" className="space-y-6">
+            <FinalSystemValidation />
           </TabsContent>
 
-          <TabsContent value="features" className="space-y-6">
-            <SystemFeatures />
+          <TabsContent value="comprehensive" className="space-y-6">
+            <ComprehensiveSystemAudit />
           </TabsContent>
 
-          <TabsContent value="seo" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Palavras-chave Primárias</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    'sistema para restaurante',
-                    'controle financeiro restaurante', 
-                    'precificação restaurante',
-                    'DRE restaurante',
-                    'CMV restaurante',
-                    'fluxo de caixa restaurante'
-                  ].map((keyword, index) => (
-                    <div key={index} className="bg-blue-100 text-blue-800 px-3 py-2 rounded text-sm">
-                      {keyword}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Long Tail Keywords</h3>
-                <div className="space-y-2">
-                  {[
-                    'como calcular preço de venda restaurante',
-                    'sistema para calcular CMV',
-                    'controle financeiro para bares',
-                    'gestão de custos food service',
-                    'precificar cardápio restaurante',
-                    'como ter restaurante lucrativo'
-                  ].map((keyword, index) => (
-                    <div key={index} className="bg-green-100 text-green-800 px-3 py-2 rounded text-sm">
-                      {keyword}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+          <TabsContent value="questions" className="space-y-6">
+            <TechnicalQuestionsAudit />
           </TabsContent>
         </Tabs>
       </div>
     </ModernLayout>
   );
-};
-
-export default SystemAuditPage;
+}
