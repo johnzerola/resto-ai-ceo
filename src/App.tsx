@@ -12,6 +12,7 @@ import Login from "@/pages/Login";
 import FluxoCaixa from "@/pages/FluxoCaixa";
 import DreCmv from "@/pages/DreCmv";
 import SystemAuditPage from "@/pages/SystemAuditPage";
+import { ProjecoesPagina } from "@/pages/ProjecoesPagina";
 
 // Additional pages
 import { ContasAPagar } from "@/pages/ContasAPagar";
@@ -43,7 +44,7 @@ function App() {
                 path="/projecoes"
                 element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <ProjecoesPagina />
                   </ProtectedRoute>
                 }
               />
