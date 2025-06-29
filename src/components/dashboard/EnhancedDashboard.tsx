@@ -47,10 +47,10 @@ const quickAccessCards = [
     iconColor: "text-purple-600"
   },
   {
-    title: "Fluxo de Caixa", 
+    title: "Fluxo de Caixa",
     description: "Gestão financeira",
     icon: DollarSign,
-    href: "/fluxo-de-caixa",
+    href: "/fluxo-caixa",
     gradient: "from-blue-500 to-blue-600",
     iconBg: "bg-blue-100", 
     iconColor: "text-blue-600"
