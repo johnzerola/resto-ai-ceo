@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,24 +114,28 @@ export function EnhancedOnboarding() {
         return;
       }
 
-      // Criar restaurante no Supabase
-      const { data: restaurantData, error: restaurantError } = await supabase
+      // Ensure name is always present and not undefined
+      const restaurantData = {
+        ...validation.data,
+        name: validation.data.name || "", // Fallback to empty string if somehow undefined
+        owner_id: user.id,
+      };
+
+      // Criar restaurante no Supabase - insert single object, not array
+      const { data: restaurantResult, error: restaurantError } = await supabase
         .from('restaurants')
-        .insert([{
-          ...validation.data,
-          owner_id: user.id,
-        }])
+        .insert(restaurantData) // Remove array wrapper
         .select()
         .single();
 
       if (restaurantError) throw restaurantError;
 
       // Criar configurações avançadas
-      if (restaurantData) {
+      if (restaurantResult) {
         await supabase
           .from('configuracoes_restaurante')
-          .insert([{
-            restaurant_id: restaurantData.id,
+          .insert({
+            restaurant_id: restaurantResult.id,
             receita_mensal_esperada: validation.data.average_monthly_sales,
             markup_padrao: 250,
             margem_lucro_esperada: validation.data.desired_profit_margin || 30,
@@ -142,13 +145,13 @@ export function EnhancedOnboarding() {
             pratos_vendidos_dia_meta: Math.ceil((validation.data.average_monthly_sales / 30) / 35),
             despesas_fixas_mensais: validation.data.fixed_expenses || 0,
             despesas_variaveis_mensais: validation.data.variable_expenses || 0,
-          }]);
+          });
 
         // Salvar também no localStorage para compatibilidade
         const userRestaurantKey = `restaurantData_${user.id}`;
         localStorage.setItem(userRestaurantKey, JSON.stringify({
           ...validation.data,
-          id: restaurantData.id,
+          id: restaurantResult.id,
           lastUpdate: new Date().toISOString(),
           isNewUser: false
         }));
