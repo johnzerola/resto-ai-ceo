@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { CashFlowOverview } from "@/components/restaurant/CashFlowOverview";
@@ -307,7 +306,6 @@ const FluxoCaixa = () => {
                 setEditingEntry(null);
                 toast.success("Transação salva com sucesso");
               }}
-              onCancel={handleBackToList}
             />
           ) : (
             <CashFlowOverview 
