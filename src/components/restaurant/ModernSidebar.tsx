@@ -41,7 +41,7 @@ const navigation = [
   },
   {
     title: "Fluxo de Caixa",
-    href: "/fluxo-caixa",
+    href: "/fluxo-de-caixa",
     icon: DollarSign,
     description: "Controle financeiro",
     category: "financial"

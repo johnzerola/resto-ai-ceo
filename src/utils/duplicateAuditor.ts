@@ -174,7 +174,7 @@ export class DuplicateAuditor {
   private auditRouteDuplicates(): string[] {
     // Verificar rotas duplicadas no sistema
     const routes = [
-      '/dashboard', '/projecoes', '/dre', '/cmv', '/fluxo-caixa',
+      '/dashboard', '/projecoes', '/dre', '/cmv', '/fluxo-de-caixa',
       '/simulador', '/metas', '/estoque', '/cardapio', '/ai-assistant'
     ];
 
