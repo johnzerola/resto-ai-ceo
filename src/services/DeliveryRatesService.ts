@@ -24,7 +24,12 @@ export class DeliveryRatesService {
         .order('plataforma');
 
       if (error) throw error;
-      return data || [];
+      
+      // Type casting para garantir compatibilidade
+      return (data || []).map(item => ({
+        ...item,
+        tipo_taxa: item.tipo_taxa as DeliveryRate['tipo_taxa']
+      }));
     } catch (error) {
       console.error('Erro ao carregar taxas de delivery:', error);
       toast.error('Erro ao carregar taxas de delivery');

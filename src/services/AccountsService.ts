@@ -50,7 +50,12 @@ export class AccountsService {
         .order('data_vencimento', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Type casting para garantir compatibilidade
+      return (data || []).map(item => ({
+        ...item,
+        status: item.status as AccountPayable['status']
+      }));
     } catch (error) {
       console.error('Erro ao carregar contas a pagar:', error);
       toast.error('Erro ao carregar contas a pagar');
@@ -135,7 +140,12 @@ export class AccountsService {
         .order('data_vencimento', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Type casting para garantir compatibilidade
+      return (data || []).map(item => ({
+        ...item,
+        status: item.status as AccountReceivable['status']
+      }));
     } catch (error) {
       console.error('Erro ao carregar contas a receber:', error);
       toast.error('Erro ao carregar contas a receber');

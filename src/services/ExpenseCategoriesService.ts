@@ -27,7 +27,12 @@ export class ExpenseCategoriesService {
         .order('nome');
 
       if (error) throw error;
-      return data || [];
+      
+      // Type casting para garantir compatibilidade
+      return (data || []).map(item => ({
+        ...item,
+        tipo: item.tipo as ExpenseCategory['tipo']
+      }));
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
       toast.error('Erro ao carregar categorias de despesas');

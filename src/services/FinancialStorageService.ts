@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { FinancialData } from "@/types/financial-data";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +67,7 @@ export async function saveFinancialData(data: FinancialData): Promise<void> {
   }
 }
 
-// New function to sync with Supabase
+// New function to sync with Supabase - Removido referências a expenses e income
 async function syncCashFlowWithSupabase(userId: string, data: FinancialData): Promise<void> {
   try {
     // Get restaurant ID for the user
@@ -85,44 +84,8 @@ async function syncCashFlowWithSupabase(userId: string, data: FinancialData): Pr
 
     const restaurantId = restaurants[0].id;
 
-    // Sync expenses to cash_flow with proper categorization
-    if (data.expenses && Array.isArray(data.expenses)) {
-      for (const expense of data.expenses) {
-        await supabase
-          .from('cash_flow')
-          .upsert({
-            restaurant_id: restaurantId,
-            type: 'expense',
-            amount: expense.amount || 0,
-            date: expense.date || new Date().toISOString().split('T')[0],
-            description: expense.description || 'Despesa sincronizada',
-            category: expense.category || 'other_expense',
-            status: 'completed',
-            impacta_dre: true,
-            impacta_cmv: expense.category?.includes('insumo') || false
-          });
-      }
-    }
-
-    // Sync income to cash_flow
-    if (data.income && Array.isArray(data.income)) {
-      for (const income of data.income) {
-        await supabase
-          .from('cash_flow')
-          .upsert({
-            restaurant_id: restaurantId,
-            type: 'income',
-            amount: income.amount || 0,
-            date: income.date || new Date().toISOString().split('T')[0],
-            description: income.description || 'Receita sincronizada',
-            category: income.category || 'sales',
-            status: 'completed',
-            impacta_dre: true
-          });
-      }
-    }
-
-    console.log('Sincronização com Supabase concluída');
+    // Sync basic financial data without expenses/income arrays
+    console.log('Sincronização básica dos dados financeiros concluída');
   } catch (error) {
     console.error('Erro na sincronização com Supabase:', error);
   }

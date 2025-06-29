@@ -27,7 +27,12 @@ export class AuditService {
         .limit(limit);
 
       if (error) throw error;
-      return data || [];
+      
+      // Type casting para garantir compatibilidade
+      return (data || []).map(item => ({
+        ...item,
+        action: item.action as AuditLog['action']
+      }));
     } catch (error) {
       console.error('Erro ao carregar logs de auditoria:', error);
       toast.error('Erro ao carregar histórico de alterações');
