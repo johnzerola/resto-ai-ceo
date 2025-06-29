@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import Login from "@/pages/Login";
 import FluxoCaixa from "@/pages/FluxoCaixa";
 import DreCmv from "@/pages/DreCmv";
 import SystemAuditPage from "@/pages/SystemAuditPage";
+import NotFound from "@/pages/NotFound";
 
 // Additional pages
 import { ContasAPagar } from "@/pages/ContasAPagar";
@@ -170,8 +171,8 @@ function App() {
                 }
               />
               
-              {/* Catch-all route - only redirect unknown paths to dashboard if authenticated */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              {/* Catch-all route - display a 404 page for unknown paths */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
           <Toaster />
