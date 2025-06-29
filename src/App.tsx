@@ -13,7 +13,7 @@ import FluxoCaixa from "@/pages/FluxoCaixa";
 import DreCmv from "@/pages/DreCmv";
 import SystemAuditPage from "@/pages/SystemAuditPage";
 
-// New pages
+// Additional pages
 import { ContasAPagar } from "@/pages/ContasAPagar";
 import { AuditoriaSistema } from "@/pages/AuditoriaSistema";
 import { Precificacao } from "@/pages/Precificacao";
@@ -29,8 +29,18 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
+              
+              {/* Protected Routes matching sidebar navigation */}
               <Route
                 path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/projecoes"
                 element={
                   <ProtectedRoute>
                     <Dashboard />
@@ -54,6 +64,88 @@ function App() {
                 }
               />
               <Route
+                path="/cmv"
+                element={
+                  <ProtectedRoute>
+                    <DreCmv />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/simulador"
+                element={
+                  <ProtectedRoute>
+                    <Precificacao />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/metas"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/estoque"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/cardapio"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/ai-assistant"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/assinatura"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/configuracoes"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/auditoria"
+                element={
+                  <ProtectedRoute>
+                    <SystemAuditPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/privacidade"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Legacy routes for backward compatibility */}
+              <Route
                 path="/contas"
                 element={
                   <ProtectedRoute>
@@ -70,14 +162,6 @@ function App() {
                 }
               />
               <Route
-                path="/auditoria"
-                element={
-                  <ProtectedRoute>
-                    <AuditoriaSistema />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/audit"
                 element={
                   <ProtectedRoute>
@@ -85,7 +169,9 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              
+              {/* Catch-all route - only redirect unknown paths to dashboard if authenticated */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>
           <Toaster />

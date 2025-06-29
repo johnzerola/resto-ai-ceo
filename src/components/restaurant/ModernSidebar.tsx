@@ -41,7 +41,7 @@ const navigation = [
   },
   {
     title: "Fluxo de Caixa",
-    href: "/fluxo-de-caixa",
+    href: "/fluxo-caixa",
     icon: DollarSign,
     description: "Controle financeiro",
     category: "financial"
@@ -108,6 +108,13 @@ const navigation = [
     icon: Settings,
     description: "Configurações do sistema",
     category: "account"
+  },
+  {
+    title: "Auditoria",
+    href: "/auditoria",
+    icon: Shield,
+    description: "Auditoria do sistema",
+    category: "support"
   },
   {
     title: "Dados",
@@ -218,7 +225,7 @@ export function ModernSidebar() {
           !isMobileOpen && !isCollapsed && "md:w-72" // Expanded state only on desktop
         )}
       >
-        {/* Header */}
+        {/* Header with RestaurIA branding and collapse button */}
         <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-sidebar-border bg-gradient-to-r from-[#1B2C4F] to-[#2D4A7A] flex-shrink-0">
           {(!isCollapsed || isMobileOpen) && (
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -230,11 +237,14 @@ export function ModernSidebar() {
               </h2>
             </div>
           )}
+          
+          {/* Collapse Arrow Button - Always visible on desktop */}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
             className="hidden md:flex text-white hover:bg-white/10 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
+            title={isCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
           >
             {isCollapsed ? (
               <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />

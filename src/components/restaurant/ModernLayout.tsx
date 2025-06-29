@@ -15,8 +15,8 @@ export function ModernLayout({ children }: ModernLayoutProps) {
   
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b">
+      {/* Mobile Header - Hidden as ModernSidebar handles mobile menu */}
+      <div className="lg:hidden flex items-center justify-between p-4 border-b" style={{ display: 'none' }}>
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -68,8 +68,8 @@ export function ModernLayout({ children }: ModernLayoutProps) {
             </div>
           )}
 
-          {/* Page Content */}
-          <main className="flex-1">
+          {/* Page Content with proper spacing for mobile sidebar */}
+          <main className="flex-1 lg:ml-0">
             {children}
           </main>
         </div>
