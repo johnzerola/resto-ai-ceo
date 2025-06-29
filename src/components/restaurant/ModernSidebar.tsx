@@ -176,7 +176,11 @@ export function ModernSidebar() {
   }, [isCollapsed, isMobileOpen]);
 
   const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+    if (isMobileOpen) {
+      setIsMobileOpen(false);
+    } else {
+      setIsCollapsed(!isCollapsed);
+    }
   };
 
   const toggleMobile = () => {
@@ -238,12 +242,12 @@ export function ModernSidebar() {
             </div>
           )}
           
-          {/* Collapse Arrow Button - Always visible on desktop */}
+          {/* Collapse Arrow Button */}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="hidden md:flex text-white hover:bg-white/10 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
+            className="flex text-white hover:bg-white/10 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
             title={isCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
           >
             {isCollapsed ? (
