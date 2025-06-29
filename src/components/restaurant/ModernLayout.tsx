@@ -3,8 +3,7 @@ import { useState } from "react";
 import { ModernSidebar } from "./ModernSidebar";
 import { SystemHealthIndicator } from "@/components/system/SystemHealthIndicator";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Activity } from "lucide-react";
+import { Activity } from "lucide-react";
 
 interface ModernLayoutProps {
   children: React.ReactNode;
@@ -15,30 +14,6 @@ export function ModernLayout({ children }: ModernLayoutProps) {
   
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Header - Hidden as ModernSidebar handles mobile menu */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b" style={{ display: 'none' }}>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0">
-            <ModernSidebar />
-          </SheetContent>
-        </Sheet>
-        
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowHealthIndicator(!showHealthIndicator)}
-          >
-            <Activity className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
       <div className="lg:grid lg:grid-cols-[280px_1fr]">
         {/* Desktop Sidebar */}
         <div className="hidden lg:block border-r bg-muted/10">
