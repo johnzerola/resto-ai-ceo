@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,12 +19,7 @@ import {
 
 export default function Index() {
   return (
-    <>
-      <SEO
-        title="RestaurIA CEO - Gestão Inteligente para Restaurantes"
-        description="Plataforma de IA que transforma dados em lucro para o seu restaurante"
-      />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       {/* Header */}
       <header className="relative z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200/60">
         <div className="container mx-auto px-6 py-4">
@@ -336,6 +330,5 @@ export default function Index() {
         </div>
       </footer>
     </div>
-    </>
   );
 }

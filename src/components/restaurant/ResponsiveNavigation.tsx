@@ -19,16 +19,8 @@ export function ResponsiveNavigation({ children, trigger }: ResponsiveNavigation
     return <>{children}</>;
   }
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    // Emit close event for sidebar integration
-    if (!open) {
-      window.dispatchEvent(new CustomEvent('closeMobileMenu'));
-    }
-  };
-
   return (
-    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         {trigger || (
           <Button variant="ghost" size="icon" className="md:hidden">
@@ -36,7 +28,7 @@ export function ResponsiveNavigation({ children, trigger }: ResponsiveNavigation
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent side="left" className="w-72 p-0">
+      <SheetContent side="left" className="w-72">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b">
             <h2 className="font-semibold">Menu</h2>

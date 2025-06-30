@@ -24,23 +24,8 @@ export class DataService {
     return DataService.instance;
   }
 
-  private getCacheKey(table: string, params: Record<string, any> = {}): string {
-    const stable = (value: any): any => {
-      if (Array.isArray(value)) {
-        return value.map((v) => stable(v));
-      }
-      if (value && typeof value === 'object') {
-        return Object.keys(value)
-          .sort()
-          .reduce((acc: Record<string, any>, key) => {
-            acc[key] = stable(value[key]);
-            return acc;
-          }, {});
-      }
-      return value;
-    };
-
-    return `${table}_${JSON.stringify(stable(params))}`;
+  private getCacheKey(table: string, filters: Record<string, any> = {}): string {
+    return `${table}_${JSON.stringify(filters)}`;
   }
 
   private getFromCache<T>(key: string): T | null {

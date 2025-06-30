@@ -1,184 +1,179 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { DataSync } from "@/components/restaurant/DataSync";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import Dashboard from "./pages/Dashboard";
+import FichaTecnicaInteligenteCompleta from "./pages/FichaTecnicaInteligenteCompleta";
+import SystemValidation from "./pages/SystemValidation";
+import DreCmv from "./pages/DreCmv";
+import FluxoDeCaixa from "./pages/FluxoDeCaixa";
+import Simulador from "./pages/Simulador";
+import { Metas } from "./pages/Metas";
+import Estoque from "./pages/Estoque";
+import Cardapio from "./pages/Cardapio";
+import GerenciarUsuarios from "./pages/GerenciarUsuarios";
+import { Assinatura } from "./pages/Assinatura";
+import Configuracoes from "./pages/Configuracoes";
+import Documentacao from "./pages/Documentacao";
+import { Privacidade } from "./pages/Privacidade";
+import StatusSistema from "./pages/StatusSistema";
+import SecurityCenter from "./pages/SecurityCenter";
+import NotFound from "./pages/NotFound";
+import SystemAuditPage from "./pages/SystemAuditPage";
+import Login from "./pages/Login";
+import Vendas from "./pages/Vendas";
+import AiAssistant from "./pages/AiAssistant";
+import Onboarding from "./pages/Onboarding";
+import { ProjecoesPagina } from "./pages/ProjecoesPagina";
 
-// Page imports
-import Index from "@/pages/Index";
-import Dashboard from "@/pages/Dashboard";
-import Login from "@/pages/Login";
-import FluxoCaixa from "@/pages/FluxoCaixa";
-import DreCmv from "@/pages/DreCmv";
-import SystemAuditPage from "@/pages/SystemAuditPage";
-import { ProjecoesPagina } from "@/pages/ProjecoesPagina";
-
-// Additional pages
-import { ContasAPagar } from "@/pages/ContasAPagar";
-import { AuditoriaSistema } from "@/pages/AuditoriaSistema";
-import Precificacao from "@/pages/Precificacao";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutos
-      cacheTime: 1000 * 60 * 10, // 10 minutos
-      retry: 3,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-background">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected Routes matching sidebar navigation */}
-              <Route
-                path="/dashboard"
-                element={
+        <DataSync>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/onboarding" element={
+                  <ProtectedRoute>
+                    <Onboarding />
+                  </ProtectedRoute>
+                } />
+                <Route path="/" element={
                   <ProtectedRoute>
                     <Dashboard />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/projecoes"
-                element={
+                } />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/dre-cmv" element={
+                  <ProtectedRoute>
+                    <DreCmv />
+                  </ProtectedRoute>
+                } />
+                <Route path="/dre" element={
+                  <ProtectedRoute>
+                    <DreCmv />
+                  </ProtectedRoute>
+                } />
+                <Route path="/cmv" element={
+                  <ProtectedRoute>
+                    <DreCmv />
+                  </ProtectedRoute>
+                } />
+                <Route path="/fluxo-de-caixa" element={
+                  <ProtectedRoute>
+                    <FluxoDeCaixa />
+                  </ProtectedRoute>
+                } />
+                <Route path="/simulador" element={
+                  <ProtectedRoute>
+                    <Simulador />
+                  </ProtectedRoute>
+                } />
+                <Route path="/metas" element={
+                  <ProtectedRoute>
+                    <Metas />
+                  </ProtectedRoute>
+                } />
+                <Route path="/estoque" element={
+                  <ProtectedRoute>
+                    <Estoque />
+                  </ProtectedRoute>
+                } />
+                <Route path="/cardapio" element={
+                  <ProtectedRoute>
+                    <Cardapio />
+                  </ProtectedRoute>
+                } />
+                <Route path="/vendas" element={
+                  <ProtectedRoute>
+                    <Vendas />
+                  </ProtectedRoute>
+                } />
+                <Route path="/assistente-ia" element={
+                  <ProtectedRoute>
+                    <AiAssistant />
+                  </ProtectedRoute>
+                } />
+                <Route path="/ai-assistant" element={
+                  <ProtectedRoute>
+                    <AiAssistant />
+                  </ProtectedRoute>
+                } />
+                <Route path="/projecoes" element={
                   <ProtectedRoute>
                     <ProjecoesPagina />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/fluxo-de-caixa"
-                element={
+                } />
+                <Route path="/gerenciar-usuarios" element={
                   <ProtectedRoute>
-                    <FluxoCaixa />
+                    <GerenciarUsuarios />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dre"
-                element={
+                } />
+                <Route path="/assinatura" element={
                   <ProtectedRoute>
-                    <DreCmv />
+                    <Assinatura />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/cmv"
-                element={
+                } />
+                <Route path="/configuracoes" element={
                   <ProtectedRoute>
-                    <DreCmv />
+                    <Configuracoes />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/simulador"
-                element={
+                } />
+                <Route path="/documentacao" element={
                   <ProtectedRoute>
-                    <Precificacao />
+                    <Documentacao />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/metas"
-                element={
+                } />
+                <Route path="/privacidade" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <Privacidade />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/estoque"
-                element={
+                } />
+                <Route path="/status-sistema" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <StatusSistema />
                   </ProtectedRoute>
-                }
-              />
-              {/* Cardápio unificado com Precificação */}
-              <Route
-                path="/cardapio"
-                element={
+                } />
+                <Route path="/security-center" element={
                   <ProtectedRoute>
-                    <Precificacao />
+                    <SecurityCenter />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/ai-assistant"
-                element={
+                } />
+                <Route path="/ficha-tecnica-inteligente-completa" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <FichaTecnicaInteligenteCompleta />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/assinatura"
-                element={
+                } />
+                <Route path="/system-validation" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <SystemValidation />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/configuracoes"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/auditoria"
-                element={
+                } />
+                <Route path="/system-audit" element={
                   <ProtectedRoute>
                     <SystemAuditPage />
                   </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/privacidade"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Legacy routes for backward compatibility */}
-              <Route
-                path="/precificacao"
-                element={
-                  <ProtectedRoute>
-                    <Precificacao />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/audit"
-                element={
-                  <ProtectedRoute>
-                    <SystemAuditPage />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </div>
-          <Toaster />
-        </Router>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </DataSync>
       </AuthProvider>
     </QueryClientProvider>
   );
