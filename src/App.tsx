@@ -17,7 +17,7 @@ import { ProjecoesPagina } from "@/pages/ProjecoesPagina";
 // Additional pages
 import { ContasAPagar } from "@/pages/ContasAPagar";
 import { AuditoriaSistema } from "@/pages/AuditoriaSistema";
-import { Precificacao } from "@/pages/Precificacao";
+import Precificacao from "@/pages/Precificacao";
 
 const queryClient = new QueryClient();
 
