@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,6 @@ import {
   BarChart3,
   Calculator,
   Zap,
-  Search,
   Crown,
   CreditCard,
   Activity
@@ -22,7 +22,6 @@ import { MobileOptimizedLayout } from "@/components/mobile/MobileOptimizedLayout
 import { MobileButton } from "@/components/mobile/MobileButton";
 import { SystemHealthDashboard } from "@/components/audit/SystemHealthDashboard";
 
-// Optimized quick access cards with better visual hierarchy
 const quickAccessCards = [
   {
     title: "Projeções",
@@ -71,7 +70,6 @@ export function StreamlinedDashboard() {
     checkSubscription();
   }, []);
 
-  // Memoized calculations for performance
   const dashboardMetrics = useMemo(() => {
     const todaysSales = financialData.length > 0 ? financialData[0]?.daily_sales || 0 : 0;
     const averageTicket = financialData.length > 0 ? financialData[0]?.average_ticket || 0 : 0;
@@ -116,16 +114,16 @@ export function StreamlinedDashboard() {
 
   return (
     <MobileOptimizedLayout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-        {/* Modern Header */}
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 ml-0 md:ml-72">
+        {/* Header */}
         <div className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
-          <div className="px-4 lg:px-6 py-4">
+          <div className="px-6 py-4">
             <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
               <div className="space-y-1">
-                <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
                   RestaurIA CEO
                 </h1>
-                <p className="text-slate-600 text-xs lg:text-sm">
+                <p className="text-slate-600 text-sm">
                   Sistema inteligente de gestão empresarial
                 </p>
               </div>
@@ -156,7 +154,7 @@ export function StreamlinedDashboard() {
               </Card>
             </div>
 
-            {/* Enhanced Tab Navigation */}
+            {/* Tab Navigation */}
             <div className="mt-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid w-full grid-cols-4 bg-slate-100/50 h-12">
@@ -164,7 +162,7 @@ export function StreamlinedDashboard() {
                     <TabsTrigger 
                       key={tab.id}
                       value={tab.id} 
-                      className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200 text-xs lg:text-sm"
+                      className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all duration-200"
                     >
                       <tab.icon className="h-4 w-4" />
                       <span className="hidden sm:inline">{tab.label}</span>
@@ -175,21 +173,21 @@ export function StreamlinedDashboard() {
                 {/* Tab Contents */}
                 <div className="mt-6">
                   <TabsContent value="overview" className="space-y-6">
-                    {/* Quick Access Cards - Mobile Optimized */}
+                    {/* Quick Access Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       {quickAccessCards.map((card, index) => (
                         <Link key={index} to={card.href} className="block">
                           <Card className="group hover:shadow-lg transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm hover:scale-105">
-                            <CardContent className="p-4 lg:p-6">
-                              <div className="flex items-start gap-4">
+                            <CardContent className="p-6">
+                              <div className="flex items-center gap-4">
                                 <div className={`${card.iconBg} p-3 rounded-lg group-hover:scale-110 transition-transform`}>
-                                  <card.icon className={`h-5 w-5 lg:h-6 lg:w-6 ${card.iconColor}`} />
+                                  <card.icon className={`h-6 w-6 ${card.iconColor}`} />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-semibold text-slate-900 text-sm lg:text-base group-hover:text-blue-600 transition-colors">
+                                <div className="flex-1">
+                                  <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                                     {card.title}
                                   </h3>
-                                  <p className="text-xs lg:text-sm text-slate-600 mt-1">
+                                  <p className="text-sm text-slate-600 mt-1">
                                     {card.description}
                                   </p>
                                 </div>
@@ -200,7 +198,7 @@ export function StreamlinedDashboard() {
                       ))}
                     </div>
 
-                    {/* Dashboard Metrics - Mobile Optimized */}
+                    {/* Dashboard Metrics */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
                         <CardContent className="p-4">
@@ -209,7 +207,7 @@ export function StreamlinedDashboard() {
                               <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">
                                 Vendas Hoje
                               </p>
-                              <p className="text-xl lg:text-2xl font-bold text-blue-900">
+                              <p className="text-2xl font-bold text-blue-900">
                                 R$ {dashboardMetrics.todaysSales.toFixed(2)}
                               </p>
                             </div>
@@ -225,7 +223,7 @@ export function StreamlinedDashboard() {
                               <p className="text-xs font-medium text-green-600 uppercase tracking-wide">
                                 Ticket Médio
                               </p>
-                              <p className="text-xl lg:text-2xl font-bold text-green-900">
+                              <p className="text-2xl font-bold text-green-900">
                                 R$ {dashboardMetrics.averageTicket.toFixed(2)}
                               </p>
                             </div>
@@ -241,7 +239,7 @@ export function StreamlinedDashboard() {
                               <p className="text-xs font-medium text-purple-600 uppercase tracking-wide">
                                 Metas
                               </p>
-                              <p className="text-xl lg:text-2xl font-bold text-purple-900">
+                              <p className="text-2xl font-bold text-purple-900">
                                 {dashboardMetrics.completedGoals}/{dashboardMetrics.totalGoals}
                               </p>
                             </div>
@@ -257,7 +255,7 @@ export function StreamlinedDashboard() {
                               <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">
                                 Taxa Conclusão
                               </p>
-                              <p className="text-xl lg:text-2xl font-bold text-orange-900">
+                              <p className="text-2xl font-bold text-orange-900">
                                 {dashboardMetrics.goalCompletionRate.toFixed(1)}%
                               </p>
                             </div>

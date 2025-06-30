@@ -1,13 +1,8 @@
 
-import { ModernLayout } from "@/components/restaurant/ModernLayout";
-import { EnhancedDashboard } from "@/components/restaurant/EnhancedDashboard";
+import { StreamlinedDashboard } from "@/components/dashboard/StreamlinedDashboard";
 
 const Dashboard = () => {
-  return (
-    <ModernLayout>
-      <EnhancedDashboard />
-    </ModernLayout>
-  );
+  return <StreamlinedDashboard />;
 };
 
 export default Dashboard;
