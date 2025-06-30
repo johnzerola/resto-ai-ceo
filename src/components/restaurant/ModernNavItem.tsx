@@ -10,7 +10,7 @@ interface ModernNavItemProps {
   title: string;
   description: string;
   isCollapsed: boolean;
-  category: string;
+  category?: string; // Made optional since it's not being used
 }
 
 export const ModernNavItem: React.FC<ModernNavItemProps> = ({
