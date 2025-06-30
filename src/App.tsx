@@ -96,11 +96,12 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Cardápio agora unificado com Precificação */}
               <Route
                 path="/cardapio"
                 element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <Precificacao />
                   </ProtectedRoute>
                 }
               />
@@ -145,7 +146,7 @@ function App() {
                 }
               />
               
-              {/* Legacy routes for backward compatibility */}
+              {/* Contas route adicionada */}
               <Route
                 path="/contas"
                 element={
@@ -154,6 +155,8 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              
+              {/* Legacy routes for backward compatibility */}
               <Route
                 path="/precificacao"
                 element={
@@ -171,7 +174,7 @@ function App() {
                 }
               />
               
-              {/* Catch-all route - only redirect unknown paths to dashboard if authenticated */}
+              {/* Catch-all route */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>

@@ -19,7 +19,8 @@ import {
   Settings,
   Bot,
   Shield,
-  CreditCard
+  CreditCard,
+  Receipt
 } from "lucide-react";
 import { ModernNavItem } from "./ModernNavItem";
 
@@ -43,16 +44,10 @@ const navigation = [
     description: "Controle financeiro"
   },
   {
-    title: "DRE",
+    title: "DRE & CMV",
     href: "/dre",
     icon: BarChart3,
     description: "Demonstração de resultados"
-  },
-  {
-    title: "CMV",
-    href: "/cmv",
-    icon: Calculator,
-    description: "Custo da mercadoria vendida"
   },
   {
     title: "Simulador",
@@ -73,10 +68,10 @@ const navigation = [
     description: "Gestão de inventário"
   },
   {
-    title: "Cardápio",
+    title: "Cardápio & Precificação",
     href: "/cardapio",
     icon: Utensils,
-    description: "Gestão do cardápio"
+    description: "Gestão do cardápio e preços"
   },
   {
     title: "Assistente IA",
@@ -101,6 +96,18 @@ const navigation = [
     href: "/auditoria",
     icon: Shield,
     description: "Auditoria do sistema"
+  },
+  {
+    title: "Privacidade",
+    href: "/privacidade",
+    icon: Shield,
+    description: "Políticas e privacidade"
+  },
+  {
+    title: "Contas",
+    href: "/contas",
+    icon: Receipt,
+    description: "Contas a pagar e receber"
   }
 ];
 
@@ -157,13 +164,13 @@ export function ModernSidebar() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Corrigido o posicionamento e tamanho */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full border-r bg-white transition-all duration-300 flex flex-col",
-          isMobileOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full md:translate-x-0",
+          "fixed left-0 top-0 z-40 h-full border-r bg-white transition-all duration-300 flex flex-col shadow-sm",
+          isMobileOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full md:translate-x-0",
           !isMobileOpen && isCollapsed && "md:w-16",
-          !isMobileOpen && !isCollapsed && "md:w-72"
+          !isMobileOpen && !isCollapsed && "md:w-64"
         )}
       >
         {/* Header */}
@@ -181,7 +188,7 @@ export function ModernSidebar() {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="text-white hover:bg-white/10 h-8 w-8"
+            className="text-white hover:bg-white/10 h-8 w-8 hidden md:flex"
           >
             {isCollapsed ? (
               <ChevronRight className="h-4 w-4" />
@@ -194,7 +201,7 @@ export function ModernSidebar() {
         {/* Navigation */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
-            <nav className="px-3 py-4 space-y-2">
+            <nav className="px-3 py-4 space-y-1">
               {navigation.map((item) => (
                 <ModernNavItem
                   key={item.href}
@@ -211,7 +218,7 @@ export function ModernSidebar() {
 
         {/* Footer */}
         {(!isCollapsed || isMobileOpen) && (
-          <div className="p-4 border-t bg-muted/50">
+          <div className="p-4 border-t bg-muted/30">
             <div className="text-xs text-muted-foreground text-center">
               <p className="font-medium">RestaurIA v2.0</p>
               <p>Inteligência para seu restaurante</p>

@@ -26,35 +26,35 @@ export const ModernNavItem: React.FC<ModernNavItemProps> = ({
     <Link
       to={href}
       className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group sidebar-nav-item",
-        "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground",
+        "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group sidebar-nav-item",
+        "hover:bg-blue-50 hover:text-blue-700",
         "dark:text-gray-200 dark:hover:text-white dark:hover:bg-gray-700/80",
-        isActive && "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm border border-sidebar-border/50",
-        isActive && "dark:bg-gray-700 dark:text-white dark:border-gray-600",
+        isActive && "bg-blue-50 text-blue-700 shadow-sm border border-blue-200",
+        isActive && "dark:bg-blue-700 dark:text-white dark:border-blue-600",
         isCollapsed ? "justify-center px-2" : "justify-start"
       )}
       title={isCollapsed ? title : undefined}
     >
       <Icon className={cn(
-        "h-4 w-4 flex-shrink-0 transition-colors",
-        isActive ? "text-sidebar-primary" : "text-sidebar-foreground/70",
+        "h-5 w-5 flex-shrink-0 transition-colors",
+        isActive ? "text-blue-600" : "text-gray-600",
         isActive && "dark:text-white",
-        "group-hover:text-sidebar-accent-foreground dark:group-hover:text-white"
+        "group-hover:text-blue-600 dark:group-hover:text-white"
       )} />
       
       {!isCollapsed && (
         <div className="flex flex-col min-w-0 flex-1">
           <span className={cn(
             "text-sm font-medium truncate transition-colors",
-            isActive ? "text-sidebar-primary" : "text-sidebar-foreground",
+            isActive ? "text-blue-700" : "text-gray-700",
             isActive && "dark:text-white",
-            "group-hover:text-sidebar-accent-foreground dark:group-hover:text-white"
+            "group-hover:text-blue-700 dark:group-hover:text-white"
           )}>
             {title}
           </span>
           <span className={cn(
-            "text-xs text-sidebar-foreground/60 truncate transition-colors",
-            "group-hover:text-sidebar-accent-foreground/70",
+            "text-xs text-gray-500 truncate transition-colors",
+            "group-hover:text-blue-600/80",
             "dark:text-gray-400 dark:group-hover:text-gray-300"
           )}>
             {description}
@@ -63,7 +63,7 @@ export const ModernNavItem: React.FC<ModernNavItemProps> = ({
       )}
       
       {isActive && !isCollapsed && (
-        <div className="w-1 h-1 bg-sidebar-primary rounded-full flex-shrink-0 dark:bg-white" />
+        <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 dark:bg-white" />
       )}
     </Link>
   );
