@@ -71,7 +71,7 @@ const navigation = [
     title: "Cardápio & Precificação",
     href: "/cardapio",
     icon: Utensils,
-    description: "Gestão do cardápio e preços"
+    description: "Gestão completa do cardápio"
   },
   {
     title: "Assistente IA",
@@ -102,12 +102,6 @@ const navigation = [
     href: "/privacidade",
     icon: Shield,
     description: "Políticas e privacidade"
-  },
-  {
-    title: "Contas",
-    href: "/contas",
-    icon: Receipt,
-    description: "Contas a pagar e receber"
   }
 ];
 
@@ -164,7 +158,7 @@ export function ModernSidebar() {
         />
       )}
 
-      {/* Sidebar - Corrigido o posicionamento e tamanho */}
+      {/* Sidebar - Otimizado sem espaçamento excessivo */}
       <div
         className={cn(
           "fixed left-0 top-0 z-40 h-full border-r bg-white transition-all duration-300 flex flex-col shadow-sm",

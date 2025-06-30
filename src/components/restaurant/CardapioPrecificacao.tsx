@@ -1,9 +1,10 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { 
   Utensils, 
   Calculator, 
@@ -12,7 +13,10 @@ import {
   Trash2, 
   DollarSign,
   Target,
-  TrendingUp
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  Receipt
 } from "lucide-react";
 
 interface MenuItem {
@@ -44,28 +48,61 @@ const mockMenuItems: MenuItem[] = [
     cost: 14.20,
     margin: 59.4,
     category: "Pizzas"
+  },
+  {
+    id: "3",
+    name: "Frango Grelhado",
+    description: "Peito de frango grelhado com legumes",
+    price: 22.50,
+    cost: 8.80,
+    margin: 60.9,
+    category: "Pratos Principais"
   }
 ];
 
 export function CardapioPrecificacao() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
   const [activeTab, setActiveTab] = useState("cardapio");
+  const [calculatorValues, setCalculatorValues] = useState({
+    cost: "",
+    margin: "",
+    suggestedPrice: 0
+  });
 
   const calculateMargin = (price: number, cost: number) => {
     return ((price - cost) / price) * 100;
   };
 
   const getMarginColor = (margin: number) => {
-    if (margin >= 60) return "text-green-600 bg-green-50";
-    if (margin >= 40) return "text-yellow-600 bg-yellow-50";
-    return "text-red-600 bg-red-50";
+    if (margin >= 60) return "text-green-600 bg-green-50 border-green-200";
+    if (margin >= 40) return "text-yellow-600 bg-yellow-50 border-yellow-200";
+    return "text-red-600 bg-red-50 border-red-200";
+  };
+
+  const getStatusIcon = (margin: number) => {
+    if (margin >= 60) return <CheckCircle className="h-4 w-4 text-green-600" />;
+    if (margin >= 40) return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+    return <AlertTriangle className="h-4 w-4 text-red-600" />;
+  };
+
+  const handleCalculate = () => {
+    const cost = parseFloat(calculatorValues.cost);
+    const margin = parseFloat(calculatorValues.margin);
+    
+    if (cost > 0 && margin > 0) {
+      const suggestedPrice = cost / (1 - margin / 100);
+      setCalculatorValues(prev => ({
+        ...prev,
+        suggestedPrice: suggestedPrice
+      }));
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Cardápio & Precificação</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Cardápio & Precificação</h1>
           <p className="text-gray-600 mt-1">
             Gerencie seu cardápio e calcule preços inteligentemente
           </p>
@@ -77,18 +114,22 @@ export function CardapioPrecificacao() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="cardapio" className="flex items-center gap-2">
             <Utensils className="h-4 w-4" />
-            Cardápio
+            <span className="hidden sm:inline">Cardápio</span>
           </TabsTrigger>
           <TabsTrigger value="precificacao" className="flex items-center gap-2">
             <Calculator className="h-4 w-4" />
-            Precificação
+            <span className="hidden sm:inline">Calculadora</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
-            Análises
+            <span className="hidden sm:inline">Análises</span>
+          </TabsTrigger>
+          <TabsTrigger value="contas" className="flex items-center gap-2">
+            <Receipt className="h-4 w-4" />
+            <span className="hidden sm:inline">Contas</span>
           </TabsTrigger>
         </TabsList>
 
@@ -115,9 +156,12 @@ export function CardapioPrecificacao() {
                       <span className="text-2xl font-bold text-green-600">
                         R$ {item.price.toFixed(2)}
                       </span>
-                      <Badge className={getMarginColor(item.margin)}>
-                        {item.margin.toFixed(1)}% margem
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(item.margin)}
+                        <Badge className={getMarginColor(item.margin)}>
+                          {item.margin.toFixed(1)}%
+                        </Badge>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" className="flex-1">
@@ -140,7 +184,7 @@ export function CardapioPrecificacao() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calculator className="h-5 w-5" />
-                Calculadora de Preços
+                Calculadora de Preços Inteligente
               </CardTitle>
               <CardDescription>
                 Calcule o preço ideal baseado nos custos e margem desejada
@@ -149,39 +193,59 @@ export function CardapioPrecificacao() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Custo Total (R$)
-                  </label>
-                  <input
+                  <Label htmlFor="cost">Custo Total (R$)</Label>
+                  <Input
+                    id="cost"
                     type="number"
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    value={calculatorValues.cost}
+                    onChange={(e) => setCalculatorValues(prev => ({
+                      ...prev,
+                      cost: e.target.value
+                    }))}
                     placeholder="0.00"
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Margem Desejada (%)
-                  </label>
-                  <input
+                  <Label htmlFor="margin">Margem Desejada (%)</Label>
+                  <Input
+                    id="margin"
                     type="number"
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    value={calculatorValues.margin}
+                    onChange={(e) => setCalculatorValues(prev => ({
+                      ...prev,
+                      margin: e.target.value
+                    }))}
                     placeholder="60"
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Preço Sugerido (R$)
-                  </label>
-                  <div className="w-full px-3 py-2 border rounded-lg bg-gray-50 text-lg font-bold text-green-600">
-                    R$ 0.00
+                  <Label>Preço Sugerido (R$)</Label>
+                  <div className="mt-1 p-3 border rounded-lg bg-green-50 text-lg font-bold text-green-600">
+                    R$ {calculatorValues.suggestedPrice.toFixed(2)}
                   </div>
                 </div>
               </div>
               
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button 
+                onClick={handleCalculate}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
                 <Target className="h-4 w-4 mr-2" />
                 Calcular Preço
               </Button>
+
+              {calculatorValues.suggestedPrice > 0 && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-semibold text-blue-800 mb-2">Análise do Preço:</h4>
+                  <div className="space-y-1 text-sm text-blue-700">
+                    <p>• Lucro por item: R$ {(calculatorValues.suggestedPrice - parseFloat(calculatorValues.cost || "0")).toFixed(2)}</p>
+                    <p>• Margem real: {calculatorValues.margin}%</p>
+                    <p>• Status: {parseFloat(calculatorValues.margin) >= 60 ? "🟢 Excelente" : parseFloat(calculatorValues.margin) >= 40 ? "🟡 Bom" : "🔴 Atenção"}</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -189,7 +253,10 @@ export function CardapioPrecificacao() {
             {menuItems.map((item) => (
               <Card key={item.id}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{item.name}</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    {item.name}
+                    {getStatusIcon(item.margin)}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
@@ -286,6 +353,62 @@ export function CardapioPrecificacao() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="contas" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-green-600">Contas a Receber</CardTitle>
+                <CardDescription>Valores pendentes de recebimento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Total em aberto:</span>
+                    <span className="font-bold text-green-600">R$ 2.450,00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Vencendo hoje:</span>
+                    <span className="font-bold text-orange-600">R$ 350,00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Em atraso:</span>
+                    <span className="font-bold text-red-600">R$ 180,00</span>
+                  </div>
+                </div>
+                <Button className="w-full mt-4" variant="outline">
+                  Ver Detalhes
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-red-600">Contas a Pagar</CardTitle>
+                <CardDescription>Compromissos financeiros</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Total em aberto:</span>
+                    <span className="font-bold text-red-600">R$ 1.890,00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Vencendo hoje:</span>
+                    <span className="font-bold text-orange-600">R$ 420,00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Em atraso:</span>
+                    <span className="font-bold text-red-600">R$ 120,00</span>
+                  </div>
+                </div>
+                <Button className="w-full mt-4" variant="outline">
+                  Ver Detalhes
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

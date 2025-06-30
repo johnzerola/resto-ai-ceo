@@ -27,13 +27,18 @@ export const ModernNavItem: React.FC<ModernNavItemProps> = ({
       to={href}
       className={cn(
         "flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group sidebar-nav-item",
-        "hover:bg-blue-50 hover:text-blue-700",
+        "hover:bg-blue-50 hover:text-blue-700 active:scale-95",
         "dark:text-gray-200 dark:hover:text-white dark:hover:bg-gray-700/80",
+        "touch-manipulation select-none", // Otimização mobile
         isActive && "bg-blue-50 text-blue-700 shadow-sm border border-blue-200",
         isActive && "dark:bg-blue-700 dark:text-white dark:border-blue-600",
         isCollapsed ? "justify-center px-2" : "justify-start"
       )}
       title={isCollapsed ? title : undefined}
+      style={{
+        WebkitTapHighlightColor: 'transparent', // Remove highlight azul no iOS
+        touchAction: 'manipulation'
+      }}
     >
       <Icon className={cn(
         "h-5 w-5 flex-shrink-0 transition-colors",

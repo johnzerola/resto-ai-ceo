@@ -12,9 +12,9 @@ export function ModernLayout({ children }: ModernLayoutProps) {
         {/* Sidebar */}
         <ModernSidebar />
 
-        {/* Main Content - Corrigido o espaçamento excessivo */}
-        <main className="flex-1 ml-0 md:ml-64 transition-all duration-300">
-          <div className="p-4 md:p-6">
+        {/* Main Content - Corrigido o espaçamento excessivo completamente */}
+        <main className="flex-1 transition-all duration-300 ease-in-out">
+          <div className="p-3 sm:p-4 lg:p-6">
             {children}
           </div>
         </main>

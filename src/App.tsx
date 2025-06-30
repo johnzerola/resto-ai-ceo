@@ -19,7 +19,16 @@ import { ContasAPagar } from "@/pages/ContasAPagar";
 import { AuditoriaSistema } from "@/pages/AuditoriaSistema";
 import Precificacao from "@/pages/Precificacao";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutos
+      cacheTime: 1000 * 60 * 10, // 10 minutos
+      retry: 3,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
@@ -96,7 +105,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              {/* Cardápio agora unificado com Precificação */}
+              {/* Cardápio unificado com Precificação */}
               <Route
                 path="/cardapio"
                 element={
@@ -142,16 +151,6 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Contas route adicionada */}
-              <Route
-                path="/contas"
-                element={
-                  <ProtectedRoute>
-                    <ContasAPagar />
                   </ProtectedRoute>
                 }
               />
