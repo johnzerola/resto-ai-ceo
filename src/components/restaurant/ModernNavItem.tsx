@@ -10,7 +10,6 @@ interface ModernNavItemProps {
   title: string;
   description: string;
   isCollapsed: boolean;
-  category?: string; // Made optional since it's not being used
 }
 
 export const ModernNavItem: React.FC<ModernNavItemProps> = ({
@@ -18,8 +17,7 @@ export const ModernNavItem: React.FC<ModernNavItemProps> = ({
   icon: Icon,
   title,
   description,
-  isCollapsed,
-  category
+  isCollapsed
 }) => {
   const location = useLocation();
   const isActive = location.pathname === href;
@@ -30,7 +28,6 @@ export const ModernNavItem: React.FC<ModernNavItemProps> = ({
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group sidebar-nav-item",
         "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground",
-        // Melhor visibilidade no dark mode
         "dark:text-gray-200 dark:hover:text-white dark:hover:bg-gray-700/80",
         isActive && "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm border border-sidebar-border/50",
         isActive && "dark:bg-gray-700 dark:text-white dark:border-gray-600",

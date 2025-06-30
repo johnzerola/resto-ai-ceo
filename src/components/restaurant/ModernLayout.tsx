@@ -13,7 +13,7 @@ export function ModernLayout({ children }: ModernLayoutProps) {
         <ModernSidebar />
 
         {/* Main Content */}
-        <main className="flex-1">
+        <main className="flex-1 ml-0 md:ml-72">
           {children}
         </main>
       </div>
