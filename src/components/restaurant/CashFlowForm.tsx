@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { getCashFlowEntries, saveCashFlowEntries } from "@/services/FinancialStorageService";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import type { CashFlowEntry } from "./CashFlowOverview";
 
 interface CashFlowFormProps {
@@ -17,6 +19,7 @@ interface CashFlowFormProps {
 }
 
 export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: CashFlowFormProps) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: "",
@@ -33,18 +36,18 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
 
   useEffect(() => {
     if (editingEntry) {
-      // Corrigir formatação da data para formato correto do input
-      const dateForInput = editingEntry.date.includes('T') 
-        ? editingEntry.date.split('T')[0] 
-        : editingEntry.date;
+      console.log('Configurando formulário para edição:', editingEntry);
+      
+      // Garantir que a data esteja no formato correto para o input
+      const dateForInput = editingEntry.date ? editingEntry.date.split('T')[0] : new Date().toISOString().split('T')[0];
         
       setFormData({
         date: dateForInput,
-        description: editingEntry.description,
-        category: editingEntry.category,
-        amount: editingEntry.amount,
-        type: editingEntry.type,
-        status: editingEntry.status,
+        description: editingEntry.description || "",
+        category: editingEntry.category || "",
+        amount: editingEntry.amount || 0,
+        type: editingEntry.type || "income",
+        status: editingEntry.status || "completed",
         paymentMethod: editingEntry.paymentMethod || "cash",
         recurring: false,
         notes: editingEntry.notes || ""
@@ -73,45 +76,51 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
       return;
     }
 
+    if (!user) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
     console.log('Tentando salvar entrada:', formData);
     setIsSubmitting(true);
 
     try {
-      const existingEntries = await getCashFlowEntries();
-      
-      const newEntry: CashFlowEntry = {
-        id: editingEntry?.id || Date.now().toString(),
-        date: formData.date, // Usar a data exatamente como inserida no form
+      const entryData = {
+        restaurant_id: user.id, // Usando o ID do usuário como restaurant_id temporariamente
+        type: formData.type,
+        amount: formData.amount,
+        date: formData.date,
         description: formData.description,
         category: formData.category,
-        amount: formData.amount,
-        type: formData.type,
-        status: formData.status,
-        paymentMethod: formData.paymentMethod,
-        notes: formData.notes
+        status: formData.status === 'completed' ? 'paid' : formData.status,
+        payment_method: formData.paymentMethod,
+        documento: formData.notes || null
       };
 
-      console.log('Entrada a ser salva:', newEntry);
+      console.log('Dados que serão salvos no Supabase:', entryData);
 
-      let updatedEntries;
       if (editingEntry) {
         // Editando entrada existente
-        updatedEntries = existingEntries.map(entry => 
-          entry.id === editingEntry.id ? newEntry : entry
-        );
-        console.log('Editando entrada existente');
+        const { error } = await supabase
+          .from('cash_flow')
+          .update(entryData)
+          .eq('id', editingEntry.id);
+
+        if (error) throw error;
+        
+        console.log('Entrada editada com sucesso');
+        toast.success("Transação editada com sucesso!");
       } else {
         // Adicionando nova entrada
-        updatedEntries = [newEntry, ...existingEntries];
-        console.log('Adicionando nova entrada');
+        const { error } = await supabase
+          .from('cash_flow')
+          .insert(entryData);
+
+        if (error) throw error;
+
+        console.log('Nova entrada adicionada com sucesso');
+        toast.success("Transação adicionada com sucesso!");
       }
-
-      await saveCashFlowEntries(updatedEntries);
-      console.log('Entradas salvas para o usuário atual:', updatedEntries);
-
-      // Disparar evento de atualização
-      window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedEntries }));
-      window.dispatchEvent(new CustomEvent('dataSync'));
 
       // Reset form apenas quando não está editando
       if (!editingEntry) {
@@ -127,8 +136,6 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
           notes: ""
         });
       }
-
-      toast.success(editingEntry ? "Transação editada com sucesso!" : "Transação adicionada com sucesso!");
       
       if (editingEntry && onEditComplete) {
         onEditComplete();
@@ -137,7 +144,7 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
       }
     } catch (error) {
       console.error('Erro ao salvar entrada:', error);
-      toast.error("Erro ao salvar transação");
+      toast.error("Erro ao salvar transação: " + (error as Error).message);
     } finally {
       setIsSubmitting(false);
     }

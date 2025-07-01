@@ -49,16 +49,8 @@ function App() {
                     <Onboarding />
                   </ProtectedRoute>
                 } />
-                <Route path="/" element={
-                  <ProtectedRoute requireAuth={false}>
-                    <Vendas />
-                  </ProtectedRoute>
-                } />
-                <Route path="/vendas" element={
-                  <ProtectedRoute requireAuth={false}>
-                    <Vendas />
-                  </ProtectedRoute>
-                } />
+                <Route path="/" element={<Vendas />} />
+                <Route path="/vendas" element={<Vendas />} />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
                     <Dashboard />

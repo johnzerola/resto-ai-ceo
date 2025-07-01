@@ -219,8 +219,12 @@ export function ModernSidebar() {
         <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-sidebar-border bg-gradient-to-r from-[#1B2C4F] to-[#2D4A7A] flex-shrink-0">
           {(!isCollapsed || isMobileOpen) && (
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-[#00D887] to-[#1B2C4F] rounded-lg flex items-center justify-center flex-shrink-0">
-                <Utensils className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+              <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-content flex-shrink-0">
+                <img 
+                  src="/lovable-uploads/633ccea0-b0be-4e1b-8596-7c25ee217aba.png" 
+                  alt="RestaurIA Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <h2 className="text-sm sm:text-lg font-bold text-white truncate">
                 RestaurIA
