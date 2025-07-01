@@ -1,192 +1,395 @@
 
-import { useState } from "react";
-import { ModernLayout } from "@/components/restaurant/ModernLayout";
-import { FichaTecnicaForm } from "@/components/restaurant/FichaTecnicaForm";
-import { FichaTecnicaList } from "@/components/restaurant/FichaTecnicaList";
-import { InsumosManager } from "@/components/restaurant/InsumosManager";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import React, { useState, useEffect } from 'react';
+import { ModernLayout } from '@/components/restaurant/ModernLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, 
-  FileText, 
-  Package, 
+  Search, 
+  Edit, 
+  Trash2, 
   Calculator,
-  TrendingUp,
-  AlertTriangle,
-  Lightbulb,
-  Target,
-  DollarSign
-} from "lucide-react";
+  DollarSign,
+  Utensils,
+  Star
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-const Cardapio = () => {
-  const [activeTab, setActiveTab] = useState("fichas-cadastradas");
+interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  cost: number;
+  margin: number;
+  ingredients: Ingredient[];
+  image?: string;
+  isActive: boolean;
+}
+
+interface Ingredient {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  cost: number;
+}
+
+export default function Cardapio() {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [newItem, setNewItem] = useState<Partial<MenuItem>>({
+    name: '',
+    description: '',
+    category: 'entrada',
+    price: 0,
+    cost: 0,
+    margin: 0,
+    ingredients: [],
+    isActive: true
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('todos');
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const categories = [
+    { value: 'todos', label: 'Todos' },
+    { value: 'entrada', label: 'Entradas' },
+    { value: 'prato-principal', label: 'Pratos Principais' },
+    { value: 'sobremesa', label: 'Sobremesas' },
+    { value: 'bebida', label: 'Bebidas' },
+    { value: 'lanche', label: 'Lanches' }
+  ];
+
+  useEffect(() => {
+    // Mock data para demonstração
+    setMenuItems([
+      {
+        id: '1',
+        name: 'Hambúrguer Artesanal',
+        description: 'Hambúrguer com carne bovina, queijo, alface e tomate',
+        category: 'lanche',
+        price: 25.90,
+        cost: 12.50,
+        margin: 51.7,
+        ingredients: [
+          { id: '1', name: 'Pão de hambúrguer', quantity: 1, unit: 'un', cost: 2.50 },
+          { id: '2', name: 'Carne bovina 150g', quantity: 150, unit: 'g', cost: 8.00 },
+          { id: '3', name: 'Queijo', quantity: 1, unit: 'fatia', cost: 1.50 },
+          { id: '4', name: 'Alface', quantity: 2, unit: 'folhas', cost: 0.30 },
+          { id: '5', name: 'Tomate', quantity: 2, unit: 'fatias', cost: 0.20 }
+        ],
+        isActive: true
+      }
+    ]);
+  }, []);
+
+  const calculatePrice = async () => {
+    if (!newItem.cost || newItem.cost <= 0) {
+      toast.error('Informe o custo do item para calcular o preço');
+      return;
+    }
+
+    setIsCalculating(true);
+    
+    // Simular cálculo inteligente de preço
+    setTimeout(() => {
+      const targetMargin = 60; // Margem desejada de 60%
+      const suggestedPrice = newItem.cost! / (1 - targetMargin / 100);
+      const calculatedMargin = ((suggestedPrice - newItem.cost!) / suggestedPrice) * 100;
+
+      setNewItem(prev => ({
+        ...prev,
+        price: Math.round(suggestedPrice * 100) / 100,
+        margin: Math.round(calculatedMargin * 100) / 100
+      }));
+
+      toast.success('Preço calculado com base na margem de 60%');
+      setIsCalculating(false);
+    }, 1500);
+  };
+
+  const addMenuItem = () => {
+    if (!newItem.name || !newItem.price || !newItem.cost) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    const item: MenuItem = {
+      id: Date.now().toString(),
+      name: newItem.name,
+      description: newItem.description || '',
+      category: newItem.category || 'entrada',
+      price: newItem.price,
+      cost: newItem.cost,
+      margin: ((newItem.price - newItem.cost) / newItem.price) * 100,
+      ingredients: newItem.ingredients || [],
+      isActive: true
+    };
+
+    setMenuItems(prev => [...prev, item]);
+    setNewItem({
+      name: '',
+      description: '',
+      category: 'entrada',
+      price: 0,
+      cost: 0,
+      margin: 0,
+      ingredients: [],
+      isActive: true
+    });
+
+    toast.success('Item adicionado ao cardápio!');
+  };
+
+  const filteredItems = menuItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'todos' || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  const getMarginColor = (margin: number) => {
+    if (margin >= 50) return 'text-green-600';
+    if (margin >= 30) return 'text-yellow-600';
+    return 'text-red-600';
+  };
 
   return (
     <ModernLayout>
-      <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-2 sm:p-4 lg:p-6 bg-background min-h-screen max-w-full overflow-hidden">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
-          <div className="space-y-1 min-w-0 flex-1">
-            <h1 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight truncate">Ficha Técnica</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm truncate">
-              Sistema de precificação baseado na sua realidade
+      <div className="container mx-auto p-4 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Cardápio & Precificação</h1>
+            <p className="text-muted-foreground">
+              Gerencie seu cardápio e calcule preços automaticamente
             </p>
           </div>
         </div>
 
-        {/* Alerta Informativo Principal */}
-        <Alert className="border-blue-200 bg-blue-50 p-2 sm:p-3">
-          <Calculator className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-          <AlertTitle className="text-blue-800 text-xs sm:text-sm">Precificação Profissional</AlertTitle>
-          <AlertDescription className="text-blue-700 text-xs">
-            Nossa IA calcula o <strong>CMV</strong>, aplica margem personalizada e determina a <strong>viabilidade</strong> do prato.
-          </AlertDescription>
-        </Alert>
+        <Tabs defaultValue="cardapio" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="cardapio" className="flex items-center gap-2">
+              <Utensils className="h-4 w-4" />
+              Cardápio
+            </TabsTrigger>
+            <TabsTrigger value="precificacao" className="flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              Precificação
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Tabs de Navegação */}
-        <div className="w-full min-w-0 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4">
-            <div className="w-full overflow-x-auto">
-              <TabsList className="grid w-full grid-cols-3 min-w-[280px] h-8 sm:h-10">
-                <TabsTrigger value="fichas-cadastradas" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-2">
-                  <FileText className="h-3 w-3 flex-shrink-0" />
-                  <span className="truncate">Fichas</span>
-                </TabsTrigger>
-                <TabsTrigger value="nova-ficha" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-2">
-                  <Plus className="h-3 w-3 flex-shrink-0" />
-                  <span className="truncate">Nova</span>
-                </TabsTrigger>
-                <TabsTrigger value="insumos" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-2">
-                  <Package className="h-3 w-3 flex-shrink-0" />
-                  <span className="truncate">Insumos</span>
-                </TabsTrigger>
-              </TabsList>
+          <TabsContent value="cardapio" className="space-y-6">
+            {/* Filtros */}
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex gap-4 flex-wrap">
+                  <div className="flex-1 min-w-64">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                      <Input
+                        placeholder="Buscar itens do cardápio..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="px-3 py-2 border rounded-md bg-background"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lista de Itens */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filteredItems.map((item) => (
+                <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{item.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {item.description}
+                        </p>
+                      </div>
+                      <Badge variant={item.isActive ? 'default' : 'secondary'}>
+                        {item.isActive ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Preço de Venda:</span>
+                        <span className="text-lg font-bold text-green-600">
+                          R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Custo:</span>
+                        <span className="text-sm">
+                          R$ {item.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Margem:</span>
+                        <span className={`text-sm font-bold ${getMarginColor(item.margin)}`}>
+                          {item.margin.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      <div className="flex gap-2 pt-2">
+                        <Button variant="outline" size="sm" className="flex-1">
+                          <Edit className="h-4 w-4 mr-1" />
+                          Editar
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1">
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Remover
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
+          </TabsContent>
 
-            <TabsContent value="fichas-cadastradas" className="space-y-3 sm:space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-sm sm:text-base font-semibold truncate">Fichas Técnicas</h2>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Visualize e gerencie fichas técnicas
-                  </p>
+          <TabsContent value="precificacao" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5" />
+                  Calculadora de Preços Inteligente
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="itemName">Nome do Item *</Label>
+                    <Input
+                      id="itemName"
+                      value={newItem.name || ''}
+                      onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Ex: Hambúrguer Artesanal"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="category">Categoria</Label>
+                    <select
+                      id="category"
+                      value={newItem.category || 'entrada'}
+                      onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value }))}
+                      className="w-full px-3 py-2 border rounded-md bg-background"
+                    >
+                      {categories.slice(1).map(cat => (
+                        <option key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <Button onClick={() => setActiveTab("nova-ficha")} size="sm" className="text-xs h-7 sm:h-8 whitespace-nowrap">
-                  <Plus className="mr-1 h-3 w-3" />
-                  <span>Nova Ficha</span>
-                </Button>
-              </div>
-              <div className="w-full overflow-x-auto">
-                <div className="min-w-[280px] w-full">
-                  <FichaTecnicaList />
+
+                <div>
+                  <Label htmlFor="description">Descrição</Label>
+                  <Textarea
+                    id="description"
+                    value={newItem.description || ''}
+                    onChange={(e) => setNewItem(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Descreva o item do cardápio..."
+                    rows={2}
+                  />
                 </div>
-              </div>
-            </TabsContent>
 
-            <TabsContent value="nova-ficha" className="space-y-3 sm:space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-sm sm:text-base font-semibold truncate">Nova Ficha Técnica</h2>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Preencha os dados do prato
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="cost">Custo Total (R$) *</Label>
+                    <Input
+                      id="cost"
+                      type="number"
+                      step="0.01"
+                      value={newItem.cost || ''}
+                      onChange={(e) => setNewItem(prev => ({ ...prev, cost: parseFloat(e.target.value) || 0 }))}
+                      placeholder="0,00"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="price">Preço de Venda (R$) *</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      value={newItem.price || ''}
+                      onChange={(e) => setNewItem(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                      placeholder="0,00"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Margem Calculada</Label>
+                    <div className="mt-2 p-2 bg-muted rounded-md">
+                      <span className={`text-lg font-bold ${getMarginColor(newItem.margin || 0)}`}>
+                        {newItem.price && newItem.cost 
+                          ? (((newItem.price - newItem.cost) / newItem.price) * 100).toFixed(1)
+                          : '0.0'
+                        }%
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              {/* Guia Rápido - Versão compacta para mobile */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-                <Alert className="border-green-200 bg-green-50 p-2">
-                  <Target className="h-3 w-3 flex-shrink-0" />
-                  <AlertDescription className="text-green-700 text-xs">
-                    <strong>1:</strong> Preencha dados básicos
-                  </AlertDescription>
-                </Alert>
-                
-                <Alert className="border-orange-200 bg-orange-50 p-2">
-                  <Package className="h-3 w-3 flex-shrink-0" />
-                  <AlertDescription className="text-orange-700 text-xs">
-                    <strong>2:</strong> Adicione ingredientes
-                  </AlertDescription>
-                </Alert>
-                
-                <Alert className="border-purple-200 bg-purple-50 p-2">
-                  <DollarSign className="h-3 w-3 flex-shrink-0" />
-                  <AlertDescription className="text-purple-700 text-xs">
-                    <strong>3:</strong> Analise cálculos
-                  </AlertDescription>
-                </Alert>
-              </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={calculatePrice} 
+                    disabled={isCalculating || !newItem.cost}
+                    className="flex items-center gap-2"
+                  >
+                    <Calculator className="h-4 w-4" />
+                    {isCalculating ? 'Calculando...' : 'Calcular Preço'}
+                  </Button>
 
-              <div className="w-full overflow-x-auto">
-                <div className="min-w-[280px] w-full">
-                  <FichaTecnicaForm />
+                  <Button onClick={addMenuItem} variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar ao Cardápio
+                  </Button>
                 </div>
-              </div>
-            </TabsContent>
 
-            <TabsContent value="insumos" className="space-y-3 sm:space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-sm sm:text-base font-semibold truncate">Gestão de Insumos</h2>
-                  <p className="text-xs text-muted-foreground truncate">
-                    Cadastre insumos com preços reais
-                  </p>
+                {/* Dicas de Precificação */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                  <h4 className="font-semibold text-blue-900 mb-2">💡 Dicas de Precificação</h4>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• Margem ideal para restaurantes: 60-70%</li>
+                    <li>• Considere custos fixos (aluguel, funcionários, energia)</li>
+                    <li>• Analise preços da concorrência</li>
+                    <li>• Teste diferentes preços e monitore as vendas</li>
+                  </ul>
                 </div>
-              </div>
-
-              {/* Dica simplificada para mobile */}
-              <Alert className="border-yellow-200 bg-yellow-50 p-2">
-                <Lightbulb className="h-3 w-3 flex-shrink-0" />
-                <AlertDescription className="text-yellow-700 text-xs">
-                  Mantenha preços atualizados para cálculos precisos.
-                </AlertDescription>
-              </Alert>
-
-              <div className="w-full overflow-x-auto">
-                <div className="min-w-[280px] w-full">
-                  <InsumosManager />
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Cards de Orientação com versão simplificada para mobile */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-          <div className="p-2 sm:p-3 border rounded-lg bg-green-50 border-green-200">
-            <div className="flex items-center gap-1 mb-1">
-              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 flex-shrink-0" />
-              <h3 className="font-medium text-green-800 text-xs sm:text-sm truncate">Status Saudável</h3>
-            </div>
-            <p className="text-xs text-green-700">
-              Margem ≥ 20%. Boa rentabilidade.
-            </p>
-          </div>
-
-          <div className="p-2 sm:p-3 border rounded-lg bg-yellow-50 border-yellow-200">
-            <div className="flex items-center gap-1 mb-1">
-              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-600 flex-shrink-0" />
-              <h3 className="font-medium text-yellow-800 text-xs sm:text-sm truncate">Margem Baixa</h3>
-            </div>
-            <p className="text-xs text-yellow-700">
-              0-20%. Otimize custos ou preço.
-            </p>
-          </div>
-
-          <div className="p-2 sm:p-3 border rounded-lg bg-red-50 border-red-200">
-            <div className="flex items-center gap-1 mb-1">
-              <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600 flex-shrink-0" />
-              <h3 className="font-medium text-red-800 text-xs sm:text-sm truncate">Prejuízo</h3>
-            </div>
-            <p className="text-xs text-red-700">
-              Margem negativa. Revisar urgente.
-            </p>
-          </div>
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </ModernLayout>
   );
-};
-
-export default Cardapio;
+}

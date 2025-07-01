@@ -50,8 +50,13 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/" element={
-                  <ProtectedRoute>
-                    <Dashboard />
+                  <ProtectedRoute requireAuth={false}>
+                    <Vendas />
+                  </ProtectedRoute>
+                } />
+                <Route path="/vendas" element={
+                  <ProtectedRoute requireAuth={false}>
+                    <Vendas />
                   </ProtectedRoute>
                 } />
                 <Route path="/dashboard" element={
@@ -97,11 +102,6 @@ function App() {
                 <Route path="/cardapio" element={
                   <ProtectedRoute>
                     <Cardapio />
-                  </ProtectedRoute>
-                } />
-                <Route path="/vendas" element={
-                  <ProtectedRoute>
-                    <Vendas />
                   </ProtectedRoute>
                 } />
                 <Route path="/assistente-ia" element={

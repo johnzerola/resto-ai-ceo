@@ -18,13 +18,20 @@ import {
   BarChart3,
   Settings,
   Bot,
-  HelpCircle,
   Shield,
-  CreditCard
+  CreditCard,
+  ShoppingCart
 } from "lucide-react";
 import { ModernNavItem } from "./ModernNavItem";
 
 const navigation = [
+  {
+    title: "Vendas",
+    href: "/vendas",
+    icon: ShoppingCart,
+    description: "Sistema de vendas",
+    category: "overview"
+  },
   {
     title: "Dashboard",
     href: "/dashboard",
@@ -47,17 +54,10 @@ const navigation = [
     category: "financial"
   },
   {
-    title: "DRE",
-    href: "/dre",
+    title: "DRE & CMV",
+    href: "/dre-cmv",
     icon: BarChart3,
-    description: "Demonstração de resultados",
-    category: "financial"
-  },
-  {
-    title: "CMV",
-    href: "/cmv",
-    icon: Calculator,
-    description: "Custo da mercadoria vendida",
+    description: "Demonstração e custo",
     category: "financial"
   },
   {
@@ -85,7 +85,7 @@ const navigation = [
     title: "Cardápio",
     href: "/cardapio",
     icon: Utensils,
-    description: "Gestão do cardápio",
+    description: "Gestão do cardápio e preços",
     category: "operations"
   },
   {
@@ -139,7 +139,6 @@ export function ModernSidebar() {
       if (window.innerWidth >= 768) {
         setIsMobileOpen(false);
       }
-      // Auto-collapse on smaller screens
       if (window.innerWidth < 1024) {
         setIsCollapsed(true);
       } else {
@@ -147,7 +146,7 @@ export function ModernSidebar() {
       }
     };
     
-    handleResize(); // Set initial state
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -205,17 +204,15 @@ export function ModernSidebar() {
         />
       )}
 
-      {/* Sidebar - Solid background with improved dark mode visibility */}
+      {/* Sidebar */}
       <div
         className={cn(
           "fixed left-0 top-0 z-40 h-full border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
-          // Solid background with improved dark mode text visibility
           "bg-white dark:bg-gray-900",
-          // Mobile: always show full width when open, hide when closed
-          "md:translate-x-0", // Always visible on desktop
-          isMobileOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full", // Mobile behavior
-          !isMobileOpen && isCollapsed && "md:w-16", // Collapsed state only on desktop
-          !isMobileOpen && !isCollapsed && "md:w-72" // Expanded state only on desktop
+          "md:translate-x-0",
+          isMobileOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full",
+          !isMobileOpen && isCollapsed && "md:w-16",
+          !isMobileOpen && !isCollapsed && "md:w-72"
         )}
       >
         {/* Header */}
@@ -257,7 +254,6 @@ export function ModernSidebar() {
                         <h3 className={cn(
                           "text-xs font-semibold uppercase tracking-wider sidebar-category-label",
                           categoryInfo.color,
-                          // Melhor visibilidade no dark mode
                           "dark:text-gray-300"
                         )}>
                           {categoryInfo.label}

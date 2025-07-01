@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,8 +33,13 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
 
   useEffect(() => {
     if (editingEntry) {
+      // Corrigir formatação da data para formato correto do input
+      const dateForInput = editingEntry.date.includes('T') 
+        ? editingEntry.date.split('T')[0] 
+        : editingEntry.date;
+        
       setFormData({
-        date: editingEntry.date,
+        date: dateForInput,
         description: editingEntry.description,
         category: editingEntry.category,
         amount: editingEntry.amount,
@@ -44,6 +48,19 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
         paymentMethod: editingEntry.paymentMethod || "cash",
         recurring: false,
         notes: editingEntry.notes || ""
+      });
+    } else {
+      // Reset form quando não está editando
+      setFormData({
+        date: new Date().toISOString().split('T')[0],
+        description: "",
+        category: "",
+        amount: 0,
+        type: "income",
+        status: "completed",
+        paymentMethod: "cash",
+        recurring: false,
+        notes: ""
       });
     }
   }, [editingEntry]);
@@ -64,7 +81,7 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
       
       const newEntry: CashFlowEntry = {
         id: editingEntry?.id || Date.now().toString(),
-        date: formData.date,
+        date: formData.date, // Usar a data exatamente como inserida no form
         description: formData.description,
         category: formData.category,
         amount: formData.amount,
@@ -96,18 +113,20 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
       window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedEntries }));
       window.dispatchEvent(new CustomEvent('dataSync'));
 
-      // Reset form
-      setFormData({
-        date: new Date().toISOString().split('T')[0],
-        description: "",
-        category: "",
-        amount: 0,
-        type: "income",
-        status: "completed",
-        paymentMethod: "cash",
-        recurring: false,
-        notes: ""
-      });
+      // Reset form apenas quando não está editando
+      if (!editingEntry) {
+        setFormData({
+          date: new Date().toISOString().split('T')[0],
+          description: "",
+          category: "",
+          amount: 0,
+          type: "income",
+          status: "completed",
+          paymentMethod: "cash",
+          recurring: false,
+          notes: ""
+        });
+      }
 
       toast.success(editingEntry ? "Transação editada com sucesso!" : "Transação adicionada com sucesso!");
       
