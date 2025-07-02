@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ModernLayout } from '@/components/restaurant/ModernLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CSVImportDialog } from '@/components/cardapio/CSVImportDialog';
 import { 
   Plus, 
   Search, 
@@ -16,7 +16,8 @@ import {
   Calculator,
   DollarSign,
   Utensils,
-  Star
+  Upload,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -56,6 +57,7 @@ export default function Cardapio() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('todos');
   const [isCalculating, setIsCalculating] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
 
   const categories = [
     { value: 'todos', label: 'Todos' },
@@ -147,6 +149,32 @@ export default function Cardapio() {
     toast.success('Item adicionado ao cardápio!');
   };
 
+  const handleCSVImport = (importedItems: any[]) => {
+    const newItems: MenuItem[] = importedItems.map(item => ({
+      ...item,
+      margin: item.price > 0 ? ((item.price - item.cost) / item.price) * 100 : 0
+    }));
+    
+    setMenuItems(prev => [...prev, ...newItems]);
+  };
+
+  const exportToCSV = () => {
+    const csvContent = [
+      'nome,descricao,categoria,preco,custo',
+      ...menuItems.map(item => 
+        `"${item.name}","${item.description}","${item.category}",${item.price},${item.cost}`
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'cardapio_export.csv';
+    link.click();
+    
+    toast.success('Cardápio exportado com sucesso!');
+  };
+
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -169,6 +197,16 @@ export default function Cardapio() {
             <p className="text-muted-foreground">
               Gerencie seu cardápio e calcule preços automaticamente
             </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={exportToCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Exportar CSV
+            </Button>
+            <Button variant="outline" onClick={() => setShowCSVImport(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Importar CSV
+            </Button>
           </div>
         </div>
 
@@ -389,6 +427,12 @@ export default function Cardapio() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <CSVImportDialog 
+          open={showCSVImport}
+          onOpenChange={setShowCSVImport}
+          onImportComplete={handleCSVImport}
+        />
       </div>
     </ModernLayout>
   );
