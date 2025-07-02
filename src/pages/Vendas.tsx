@@ -1,18 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { 
   TrendingUp, 
   DollarSign, 
   ShoppingCart, 
   Calendar,
-  Plus,
-  Eye,
-  Filter,
   LogIn,
   UserPlus,
   Star,
@@ -23,96 +18,12 @@ import {
   Users,
   Clock,
   Shield,
-  Zap
+  Zap,
+  Quote
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
-interface Sale {
-  id: string;
-  date: string;
-  amount: number;
-  items: number;
-  paymentMethod: string;
-  status: 'completed' | 'pending' | 'cancelled';
-  customer?: string;
-}
-
 export default function Vendas() {
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [filter, setFilter] = useState<string>('all');
-  const [dateFilter, setDateFilter] = useState<string>('today');
-
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockSales: Sale[] = [
-      {
-        id: '1',
-        date: new Date().toISOString(),
-        amount: 85.50,
-        items: 3,
-        paymentMethod: 'credit',
-        status: 'completed',
-        customer: 'João Silva'
-      },
-      {
-        id: '2',
-        date: new Date(Date.now() - 3600000).toISOString(),
-        amount: 42.00,
-        items: 2,
-        paymentMethod: 'pix',
-        status: 'completed'
-      },
-      {
-        id: '3',
-        date: new Date(Date.now() - 7200000).toISOString(),
-        amount: 156.75,
-        items: 5,
-        paymentMethod: 'debit',
-        status: 'pending'
-      }
-    ];
-    setSales(mockSales);
-  }, []);
-
-  const totalRevenue = sales
-    .filter(sale => sale.status === 'completed')
-    .reduce((sum, sale) => sum + sale.amount, 0);
-
-  const totalSales = sales.filter(sale => sale.status === 'completed').length;
-
-  const averageTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
-
-  const getStatusBadge = (status: Sale['status']) => {
-    const variants = {
-      completed: 'default',
-      pending: 'secondary',
-      cancelled: 'destructive'
-    } as const;
-
-    const labels = {
-      completed: 'Concluída',
-      pending: 'Pendente',
-      cancelled: 'Cancelada'
-    };
-
-    return (
-      <Badge variant={variants[status]}>
-        {labels[status]}
-      </Badge>
-    );
-  };
-
-  const getPaymentMethodLabel = (method: string) => {
-    const labels: Record<string, string> = {
-      credit: 'Cartão de Crédito',
-      debit: 'Cartão de Débito',
-      pix: 'PIX',
-      cash: 'Dinheiro'
-    };
-    return labels[method] || method;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       {/* Header público */}
@@ -197,6 +108,120 @@ export default function Vendas() {
               <CheckCircle className="h-4 w-4 text-[#00D887]" />
               <span>Suporte especializado</span>
             </div>
+          </div>
+        </section>
+
+        {/* Números de Sucesso */}
+        <section className="py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Resultados que Falam por Si
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Milhares de restaurantes já transformaram seus negócios com o RestaurIA
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Card className="text-center border-2 hover:border-[#00D887]/30 transition-all">
+              <CardContent className="p-8">
+                <div className="text-4xl font-bold text-[#00D887] mb-2">2.500+</div>
+                <div className="text-lg font-semibold mb-1">Restaurantes Ativos</div>
+                <div className="text-sm text-muted-foreground">Em todo o Brasil</div>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center border-2 hover:border-[#00D887]/30 transition-all">
+              <CardContent className="p-8">
+                <div className="text-4xl font-bold text-[#00D887] mb-2">40%</div>
+                <div className="text-lg font-semibold mb-1">Aumento no Lucro</div>
+                <div className="text-sm text-muted-foreground">Média dos clientes</div>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center border-2 hover:border-[#00D887]/30 transition-all">
+              <CardContent className="p-8">
+                <div className="text-4xl font-bold text-[#00D887] mb-2">8h</div>
+                <div className="text-lg font-semibold mb-1">Economizadas/Semana</div>
+                <div className="text-sm text-muted-foreground">Em gestão manual</div>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center border-2 hover:border-[#00D887]/30 transition-all">
+              <CardContent className="p-8">
+                <div className="text-4xl font-bold text-[#00D887] mb-2">99.8%</div>
+                <div className="text-lg font-semibold mb-1">Uptime</div>
+                <div className="text-sm text-muted-foreground">Disponibilidade garantida</div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Depoimentos */}
+        <section className="py-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              O que nossos clientes dizem
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Histórias reais de transformação e sucesso
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <Card className="relative">
+              <CardContent className="p-8">
+                <Quote className="h-8 w-8 text-[#00D887] mb-4" />
+                <p className="text-lg mb-6 leading-relaxed">
+                  "O RestaurIA revolucionou nossa operação. Conseguimos reduzir custos em 35% e aumentar nossa margem de lucro significativamente."
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-[#00D887] to-[#00B572] rounded-full flex items-center justify-center text-white font-bold">
+                    M
+                  </div>
+                  <div>
+                    <div className="font-semibold">Maria Silva</div>
+                    <div className="text-sm text-muted-foreground">Proprietária - Cantina da Maria</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="relative">
+              <CardContent className="p-8">
+                <Quote className="h-8 w-8 text-[#00D887] mb-4" />
+                <p className="text-lg mb-6 leading-relaxed">
+                  "A análise financeira automática me deu visibilidade total do negócio. Agora sei exatamente onde posso melhorar."
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-[#00D887] to-[#00B572] rounded-full flex items-center justify-center text-white font-bold">
+                    C
+                  </div>
+                  <div>
+                    <div className="font-semibold">Carlos Mendes</div>
+                    <div className="text-sm text-muted-foreground">Chef - Bistrô do Carlos</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="relative">
+              <CardContent className="p-8">
+                <Quote className="h-8 w-8 text-[#00D887] mb-4" />
+                <p className="text-lg mb-6 leading-relaxed">
+                  "Economizo mais de 10 horas por semana em tarefas administrativas. Posso focar no que realmente importa: meus clientes."
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-[#00D887] to-[#00B572] rounded-full flex items-center justify-center text-white font-bold">
+                    A
+                  </div>
+                  <div>
+                    <div className="font-semibold">Ana Rodrigues</div>
+                    <div className="text-sm text-muted-foreground">Gerente - Pizzaria Bella</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
@@ -298,190 +323,32 @@ export default function Vendas() {
           </div>
         </section>
 
-        {/* Demo Section */}
+        {/* Empresas que Confiam */}
         <section className="py-16">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">Demo - Controle de Vendas</h2>
-              <p className="text-muted-foreground text-lg mt-2">
-                Veja como seria o controle de vendas do seu restaurante
-              </p>
-            </div>
-            <Button disabled className="opacity-60">
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Venda (Faça login)
-            </Button>
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              Empresas que confiam no RestaurIA
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              De pequenos bistrôs a grandes redes de restaurantes
+            </p>
           </div>
 
-          {/* Métricas */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-            <Card className="bg-gradient-to-br from-white to-[#00D887]/5 border-[#00D887]/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Receita Total
-                </CardTitle>
-                <DollarSign className="h-4 w-4 text-[#00D887]" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-[#00D887]">
-                  R$ {totalRevenue.toFixed(2)}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-items-center opacity-60">
+            {[
+              'Bistrô Gourmet', 'Pizzaria Bella', 'Cantina Maria', 
+              'Sushi House', 'Burger Palace', 'Café Central'
+            ].map((name, index) => (
+              <div key={index} className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl flex items-center justify-center mb-2">
+                  <span className="text-2xl font-bold text-gray-600">
+                    {name.split(' ').map(word => word[0]).join('')}
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                  +15.2% vs. mês anterior
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-white to-blue-50 border-blue-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total de Vendas
-                </CardTitle>
-                <ShoppingCart className="h-4 w-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{totalSales}</div>
-                <p className="text-xs text-muted-foreground">
-                  +8 vendas hoje
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-white to-purple-50 border-purple-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Ticket Médio
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-purple-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-600">
-                  R$ {averageTicket.toFixed(2)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  +5.1% vs. semana passada
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-white to-orange-50 border-orange-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Vendas Hoje
-                </CardTitle>
-                <Calendar className="h-4 w-4 text-orange-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">
-                  {sales.filter(sale => {
-                    const today = new Date().toDateString();
-                    const saleDate = new Date(sale.date).toDateString();
-                    return today === saleDate;
-                  }).length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Meta: 25 vendas/dia
-                </p>
-              </CardContent>
-            </Card>
+                <div className="text-sm font-medium text-gray-600">{name}</div>
+              </div>
+            ))}
           </div>
-
-          {/* Filtros */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filtros (Demo)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4 flex-wrap">
-                <Select value={filter} onValueChange={setFilter} disabled>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Status da venda" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as vendas</SelectItem>
-                    <SelectItem value="completed">Concluídas</SelectItem>
-                    <SelectItem value="pending">Pendentes</SelectItem>
-                    <SelectItem value="cancelled">Canceladas</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={dateFilter} onValueChange={setDateFilter} disabled>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Período" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="today">Hoje</SelectItem>
-                    <SelectItem value="week">Esta semana</SelectItem>
-                    <SelectItem value="month">Este mês</SelectItem>
-                    <SelectItem value="all">Todos os períodos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Lista de Vendas */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Vendas (Demo)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {sales.map((sale) => (
-                  <div
-                    key={sale.id}
-                    className="flex items-center justify-between p-6 border rounded-xl hover:bg-muted/30 transition-all duration-200 hover:shadow-md"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-[#00D887]/10 to-[#00B572]/10 rounded-lg flex items-center justify-center">
-                        <ShoppingCart className="h-5 w-5 text-[#00D887]" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-lg">
-                          Venda #{sale.id}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(sale.date).toLocaleString('pt-BR')}
-                        </p>
-                        {sale.customer && (
-                          <p className="text-sm text-muted-foreground">
-                            Cliente: {sale.customer}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="text-right">
-                      <div className="flex items-center gap-6">
-                        <div>
-                          <p className="font-bold text-xl text-[#00D887]">
-                            R$ {sale.amount.toFixed(2)}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {sale.items} {sale.items === 1 ? 'item' : 'itens'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {getPaymentMethodLabel(sale.paymentMethod)}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          {getStatusBadge(sale.status)}
-                          <Button variant="ghost" size="sm" disabled className="opacity-50">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </section>
 
         {/* Call to Action Final */}
