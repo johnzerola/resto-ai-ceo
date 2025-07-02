@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -276,7 +277,7 @@ export function useSubscriptionPlan() {
       return hasAccess;
     }
 
-    if (subscription.status !== 'active' && subscription.status !== 'trial') {
+    if (!['active', 'trial'].includes(subscription.status)) {
       console.log('🔒 [Feature Check] Assinatura inativa, negando acesso a:', feature);
       return false;
     }
@@ -328,7 +329,7 @@ export function useSubscriptionPlan() {
       return planHierarchy[PlanType.ESSENCIAL] >= planHierarchy[requiredPlan];
     }
     
-    if (subscription.status !== 'active' && subscription.status !== 'trial') return false;
+    if (!['active', 'trial'].includes(subscription.status)) return false;
     
     const planHierarchy = {
       [PlanType.FREE]: 0,
