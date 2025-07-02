@@ -149,6 +149,19 @@ export default function Cardapio() {
     toast.success('Item adicionado ao cardápio!');
   };
 
+  const removeMenuItem = (itemId: string) => {
+    setMenuItems(prev => prev.filter(item => item.id !== itemId));
+    toast.success('Item removido do cardápio!');
+  };
+
+  const editMenuItem = (itemId: string) => {
+    const item = menuItems.find(item => item.id === itemId);
+    if (item) {
+      setNewItem(item);
+      toast.info('Item carregado para edição');
+    }
+  };
+
   const handleCSVImport = (importedItems: any[]) => {
     const newItems: MenuItem[] = importedItems.map(item => ({
       ...item,
@@ -295,11 +308,21 @@ export default function Cardapio() {
                       </div>
 
                       <div className="flex gap-2 pt-2">
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => editMenuItem(item.id)}
+                        >
                           <Edit className="h-4 w-4 mr-1" />
                           Editar
                         </Button>
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => removeMenuItem(item.id)}
+                        >
                           <Trash2 className="h-4 w-4 mr-1" />
                           Remover
                         </Button>
@@ -312,6 +335,7 @@ export default function Cardapio() {
           </TabsContent>
 
           <TabsContent value="precificacao" className="space-y-6">
+            
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

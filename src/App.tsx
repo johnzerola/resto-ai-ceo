@@ -49,7 +49,7 @@ function App() {
                     <Onboarding />
                   </ProtectedRoute>
                 } />
-                {/* Página inicial de vendas sem proteção */}
+                {/* Página inicial de vendas SEM proteção - página pública */}
                 <Route path="/" element={<Vendas />} />
                 <Route path="/vendas" element={<Vendas />} />
                 <Route path="/dashboard" element={
