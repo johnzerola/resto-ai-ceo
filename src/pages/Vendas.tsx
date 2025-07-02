@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { ModernLayout } from '@/components/restaurant/ModernLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,10 +12,12 @@ import {
   Calendar,
   Plus,
   Eye,
-  Filter
+  Filter,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 
 interface Sale {
   id: string;
@@ -29,7 +30,6 @@ interface Sale {
 }
 
 export default function Vendas() {
-  const { currentRestaurant } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('today');
@@ -105,18 +105,71 @@ export default function Vendas() {
   };
 
   return (
-    <ModernLayout>
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+      {/* Header público */}
+      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-[#00D887] to-[#00B572] rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">R</span>
+            </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00D887] to-[#00B572] bg-clip-text text-transparent">
+              RestaurIA
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" asChild>
+              <Link to="/login">
+                <LogIn className="h-4 w-4 mr-2" />
+                Entrar
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link to="/login">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Começar Grátis
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
       <div className="container mx-auto p-4 space-y-6">
+        {/* Banner de apresentação */}
+        <div className="text-center py-12 space-y-4">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+            Gestão Inteligente para 
+            <span className="bg-gradient-to-r from-[#00D887] to-[#00B572] bg-clip-text text-transparent"> Restaurantes</span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Controle completo de vendas, estoque, cardápio e financeiro em uma única plataforma. 
+            Comece seu trial gratuito de 14 dias agora!
+          </p>
+          <div className="flex gap-4 justify-center mt-8">
+            <Button size="lg" asChild>
+              <Link to="/login">
+                Começar Trial Gratuito
+              </Link>
+            </Button>
+            <Button variant="outline" size="lg" asChild>
+              <Link to="/login">
+                Fazer Login
+              </Link>
+            </Button>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Vendas</h1>
+            <h2 className="text-3xl font-bold tracking-tight">Demo - Controle de Vendas</h2>
             <p className="text-muted-foreground">
-              Controle e análise de vendas do restaurante
+              Veja como seria o controle de vendas do seu restaurante
             </p>
           </div>
-          <Button>
+          <Button disabled>
             <Plus className="h-4 w-4 mr-2" />
-            Nova Venda
+            Nova Venda (Faça login)
           </Button>
         </div>
 
@@ -198,12 +251,12 @@ export default function Vendas() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              Filtros
+              Filtros (Demo)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4 flex-wrap">
-              <Select value={filter} onValueChange={setFilter}>
+              <Select value={filter} onValueChange={setFilter} disabled>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Status da venda" />
                 </SelectTrigger>
@@ -215,7 +268,7 @@ export default function Vendas() {
                 </SelectContent>
               </Select>
 
-              <Select value={dateFilter} onValueChange={setDateFilter}>
+              <Select value={dateFilter} onValueChange={setDateFilter} disabled>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Período" />
                 </SelectTrigger>
@@ -233,7 +286,7 @@ export default function Vendas() {
         {/* Lista de Vendas */}
         <Card>
           <CardHeader>
-            <CardTitle>Histórico de Vendas</CardTitle>
+            <CardTitle>Histórico de Vendas (Demo)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -274,7 +327,7 @@ export default function Vendas() {
                       
                       <div className="flex items-center gap-2">
                         {getStatusBadge(sale.status)}
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" disabled>
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
@@ -285,7 +338,23 @@ export default function Vendas() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Call to Action Final */}
+        <Card className="bg-gradient-to-r from-[#00D887]/10 to-[#00B572]/10 border-[#00D887]/20">
+          <CardContent className="p-8 text-center">
+            <h3 className="text-2xl font-bold mb-4">Pronto para transformar seu restaurante?</h3>
+            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+              Comece agora com 14 dias grátis e veja como o RestaurIA pode revolucionar a gestão do seu negócio.
+              Sem compromisso, sem cartão de crédito.
+            </p>
+            <Button size="lg" asChild>
+              <Link to="/login">
+                Começar Agora - Grátis por 14 dias
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    </ModernLayout>
+    </div>
   );
 }
