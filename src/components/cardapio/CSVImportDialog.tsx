@@ -27,24 +27,55 @@ export function CSVImportDialog({ open, onOpenChange, onImportComplete }: CSVImp
     }
   };
 
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    result.push(current.trim());
+    return result.map(field => field.replace(/^"|"$/g, ''));
+  };
+
   const previewCSV = async (csvFile: File) => {
     try {
       const text = await csvFile.text();
       const lines = text.split('\n').filter(line => line.trim());
-      const headers = lines[0].split(',').map(h => h.trim());
+      
+      if (lines.length === 0) {
+        toast.error('Arquivo CSV vazio');
+        return;
+      }
+
+      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
       
       // Preview first 3 rows
       const preview = lines.slice(1, 4).map((line, index) => {
-        const values = line.split(',').map(v => v.trim());
+        const values = parseCSVLine(line);
         const item: any = { id: index };
+        
         headers.forEach((header, i) => {
           item[header] = values[i] || '';
         });
+        
         return item;
       });
       
       setPreviewData(preview);
     } catch (error) {
+      console.error('Erro ao ler arquivo CSV:', error);
       toast.error('Erro ao ler arquivo CSV');
     }
   };
@@ -56,22 +87,87 @@ export function CSVImportDialog({ open, onOpenChange, onImportComplete }: CSVImp
     try {
       const text = await file.text();
       const lines = text.split('\n').filter(line => line.trim());
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      
+      if (lines.length <= 1) {
+        toast.error('Arquivo CSV deve conter pelo menos uma linha de dados além do cabeçalho');
+        setIsProcessing(false);
+        return;
+      }
+
+      const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
       
       const items = lines.slice(1).map((line, index) => {
-        const values = line.split(',').map(v => v.trim());
+        const values = parseCSVLine(line);
         
+        // Buscar campos com nomes alternativos
+        const getName = () => {
+          const nameFields = ['nome', 'name', 'produto', 'item'];
+          for (const field of nameFields) {
+            const idx = headers.indexOf(field);
+            if (idx !== -1 && values[idx]) return values[idx];
+          }
+          return '';
+        };
+
+        const getDescription = () => {
+          const descFields = ['descricao', 'description', 'desc'];
+          for (const field of descFields) {
+            const idx = headers.indexOf(field);
+            if (idx !== -1 && values[idx]) return values[idx];
+          }
+          return '';
+        };
+
+        const getCategory = () => {
+          const catFields = ['categoria', 'category', 'cat'];
+          for (const field of catFields) {
+            const idx = headers.indexOf(field);
+            if (idx !== -1 && values[idx]) return values[idx];
+          }
+          return 'geral';
+        };
+
+        const getPrice = () => {
+          const priceFields = ['preco', 'price', 'valor'];
+          for (const field of priceFields) {
+            const idx = headers.indexOf(field);
+            if (idx !== -1 && values[idx]) {
+              const price = parseFloat(values[idx].replace(',', '.'));
+              return isNaN(price) ? 0 : price;
+            }
+          }
+          return 0;
+        };
+
+        const getCost = () => {
+          const costFields = ['custo', 'cost', 'custo_unitario'];
+          for (const field of costFields) {
+            const idx = headers.indexOf(field);
+            if (idx !== -1 && values[idx]) {
+              const cost = parseFloat(values[idx].replace(',', '.'));
+              return isNaN(cost) ? 0 : cost;
+            }
+          }
+          return 0;
+        };
+
         return {
           id: Date.now().toString() + index,
-          name: values[headers.indexOf('nome')] || values[headers.indexOf('name')] || '',
-          description: values[headers.indexOf('descricao')] || values[headers.indexOf('description')] || '',
-          category: values[headers.indexOf('categoria')] || values[headers.indexOf('category')] || 'geral',
-          price: parseFloat(values[headers.indexOf('preco')] || values[headers.indexOf('price')] || '0'),
-          cost: parseFloat(values[headers.indexOf('custo')] || values[headers.indexOf('cost')] || '0'),
+          name: getName(),
+          description: getDescription(),
+          category: getCategory(),
+          price: getPrice(),
+          cost: getCost(),
           ingredients: [],
           isActive: true
         };
-      }).filter(item => item.name); // Remove empty entries
+      }).filter(item => item.name.trim() !== ''); // Remove entradas vazias
+
+      if (items.length === 0) {
+        toast.error('Nenhum item válido encontrado no arquivo CSV');
+        setIsProcessing(false);
+        return;
+      }
 
       onImportComplete(items);
       toast.success(`${items.length} itens importados com sucesso!`);
@@ -79,7 +175,8 @@ export function CSVImportDialog({ open, onOpenChange, onImportComplete }: CSVImp
       setFile(null);
       setPreviewData([]);
     } catch (error) {
-      toast.error('Erro ao processar arquivo CSV');
+      console.error('Erro ao processar arquivo CSV:', error);
+      toast.error('Erro ao processar arquivo CSV. Verifique se o formato está correto.');
     } finally {
       setIsProcessing(false);
     }
@@ -111,11 +208,11 @@ export function CSVImportDialog({ open, onOpenChange, onImportComplete }: CSVImp
                   <li>• <strong>nome</strong>: Nome do prato (obrigatório)</li>
                   <li>• <strong>descricao</strong>: Descrição do prato</li>
                   <li>• <strong>categoria</strong>: Categoria (entrada, prato-principal, sobremesa, bebida, lanche)</li>
-                  <li>• <strong>preco</strong>: Preço de venda (use ponto para decimais)</li>
-                  <li>• <strong>custo</strong>: Custo do prato (use ponto para decimais)</li>
+                  <li>• <strong>preco</strong>: Preço de venda (use ponto ou vírgula para decimais)</li>
+                  <li>• <strong>custo</strong>: Custo do prato (use ponto ou vírgula para decimais)</li>
                 </ul>
                 <p className="text-sm text-gray-600 mt-2">
-                  <strong>Importante:</strong> Use vírgula para separar as colunas e ponto para números decimais.
+                  <strong>Importante:</strong> Use vírgula para separar as colunas. Para números decimais, pode usar ponto ou vírgula.
                 </p>
               </div>
             </AlertDescription>

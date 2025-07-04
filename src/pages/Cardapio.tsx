@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ModernLayout } from '@/components/restaurant/ModernLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,28 +69,24 @@ export default function Cardapio() {
     { value: 'lanche', label: 'Lanches' }
   ];
 
+  // Carregar dados do localStorage quando o componente for montado
   useEffect(() => {
-    // Mock data para demonstração
-    setMenuItems([
-      {
-        id: '1',
-        name: 'Hambúrguer Artesanal',
-        description: 'Hambúrguer com carne bovina, queijo, alface e tomate',
-        category: 'lanche',
-        price: 25.90,
-        cost: 12.50,
-        margin: 51.7,
-        ingredients: [
-          { id: '1', name: 'Pão de hambúrguer', quantity: 1, unit: 'un', cost: 2.50 },
-          { id: '2', name: 'Carne bovina 150g', quantity: 150, unit: 'g', cost: 8.00 },
-          { id: '3', name: 'Queijo', quantity: 1, unit: 'fatia', cost: 1.50 },
-          { id: '4', name: 'Alface', quantity: 2, unit: 'folhas', cost: 0.30 },
-          { id: '5', name: 'Tomate', quantity: 2, unit: 'fatias', cost: 0.20 }
-        ],
-        isActive: true
+    const savedMenuItems = localStorage.getItem('menuItems');
+    if (savedMenuItems) {
+      try {
+        const parsedItems = JSON.parse(savedMenuItems);
+        setMenuItems(parsedItems);
+      } catch (error) {
+        console.error('Erro ao carregar itens do cardápio:', error);
+        setMenuItems([]);
       }
-    ]);
+    }
   }, []);
+
+  // Salvar dados no localStorage sempre que menuItems for alterado
+  useEffect(() => {
+    localStorage.setItem('menuItems', JSON.stringify(menuItems));
+  }, [menuItems]);
 
   const calculatePrice = async () => {
     if (!newItem.cost || newItem.cost <= 0) {
@@ -269,73 +266,81 @@ export default function Cardapio() {
 
             {/* Lista de Itens */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredItems.map((item) => (
-                <Card key={item.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{item.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {item.description}
-                        </p>
+              {filteredItems.length === 0 ? (
+                <div className="col-span-full text-center py-10">
+                  <p className="text-muted-foreground">Nenhum item encontrado no cardápio</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Adicione itens usando a aba "Precificação" ou importe um arquivo CSV
+                  </p>
+                </div>
+              ) : (
+                filteredItems.map((item) => (
+                  <Card key={item.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{item.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {item.description}
+                          </p>
+                        </div>
+                        <Badge variant={item.isActive ? 'default' : 'secondary'}>
+                          {item.isActive ? 'Ativo' : 'Inativo'}
+                        </Badge>
                       </div>
-                      <Badge variant={item.isActive ? 'default' : 'secondary'}>
-                        {item.isActive ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Preço de Venda:</span>
-                        <span className="text-lg font-bold text-green-600">
-                          R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Custo:</span>
-                        <span className="text-sm">
-                          R$ {item.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Margem:</span>
-                        <span className={`text-sm font-bold ${getMarginColor(item.margin)}`}>
-                          {item.margin.toFixed(1)}%
-                        </span>
-                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Preço de Venda:</span>
+                          <span className="text-lg font-bold text-green-600">
+                            R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Custo:</span>
+                          <span className="text-sm">
+                            R$ {item.cost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium">Margem:</span>
+                          <span className={`text-sm font-bold ${getMarginColor(item.margin)}`}>
+                            {item.margin.toFixed(1)}%
+                          </span>
+                        </div>
 
-                      <div className="flex gap-2 pt-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => editMenuItem(item.id)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Editar
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="flex-1"
-                          onClick={() => removeMenuItem(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Remover
-                        </Button>
+                        <div className="flex gap-2 pt-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => editMenuItem(item.id)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Editar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1"
+                            onClick={() => removeMenuItem(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Remover
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="precificacao" className="space-y-6">
-            
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
