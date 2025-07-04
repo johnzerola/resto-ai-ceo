@@ -32,14 +32,14 @@ export function SubscriptionBanner() {
     );
   }
 
-  // Banner para plano essencial
-  if (planType === 'essencial') {
+  // Banner para plano básico
+  if (planType === 'basico') {
     return (
       <Alert className="border-purple-200 bg-purple-50 mb-4">
         <Crown className="h-4 w-4 text-purple-600" />
         <AlertDescription className="flex items-center justify-between">
           <span className="text-purple-800">
-            Plano <strong>Essencial</strong> ativo. Faça upgrade para <strong>Profissional</strong> e tenha acesso ao Assistente IA completo!
+            Plano <strong>Básico</strong> ativo. Faça upgrade para <strong>Profissional</strong> e tenha acesso ao Assistente IA completo!
           </span>
           <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
             <Link to="/assinatura">

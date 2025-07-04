@@ -89,7 +89,7 @@ export function FeaturesList() {
           <div className="text-sm font-medium mb-1">Plano Atual: {planType.toUpperCase()}</div>
           <div className="text-xs text-muted-foreground">
             {planType === 'profissional' && 'Acesso completo a todas as funcionalidades'}
-            {planType === 'essencial' && 'Acesso limitado - algumas funcionalidades requerem upgrade'}
+            {planType === 'basico' && 'Acesso a funcionalidades básicas - algumas funcionalidades requerem upgrade'}
             {planType === 'free' && 'Plano gratuito com funcionalidades básicas'}
           </div>
         </div>
