@@ -33,9 +33,11 @@ serve(async (req) => {
     }
     logStep("Stripe key found");
 
-    const { priceId } = await req.json();
-    if (!priceId) throw new Error("Price ID is required");
-    logStep("Price ID received", { priceId });
+    const { productId, planId } = await req.json();
+    if (!productId || !planId) {
+      throw new Error("Product ID and Plan ID are required");
+    }
+    logStep("Product and Plan IDs received", { productId, planId });
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
@@ -47,6 +49,25 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    
+    // Buscar o produto e seus preços
+    const product = await stripe.products.retrieve(productId);
+    logStep("Product retrieved", { productName: product.name });
+    
+    const prices = await stripe.prices.list({
+      product: productId,
+      active: true,
+      type: 'recurring'
+    });
+    
+    if (prices.data.length === 0) {
+      throw new Error("No active recurring prices found for this product");
+    }
+    
+    // Usar o primeiro preço encontrado (ou você pode implementar lógica para escolher)
+    const price = prices.data[0];
+    logStep("Price selected", { priceId: price.id, amount: price.unit_amount });
+
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     
@@ -57,20 +78,25 @@ serve(async (req) => {
       logStep("Creating new customer");
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = req.headers.get("origin") || "https://llndccqumkrblpgystom.supabase.co";
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: priceId,
+          price: price.id,
           quantity: 1,
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/assinatura?success=true`,
+      success_url: `${origin}/assinatura?success=true&plan=${planId}`,
       cancel_url: `${origin}/assinatura?canceled=true`,
+      metadata: {
+        user_id: user.id,
+        plan_id: planId,
+        product_id: productId
+      }
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
