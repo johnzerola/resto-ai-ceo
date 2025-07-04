@@ -10,7 +10,6 @@ import { getSyncStatus, SYNC_EVENT } from "@/services/SyncService";
 const DreCmv = () => {
   const [activeTab, setActiveTab] = useState("dre");
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
-  const [configData, setConfigData] = useState<any>(null);
   
   // Monitorar atualizações de sincronização
   useEffect(() => {
@@ -18,29 +17,16 @@ const DreCmv = () => {
     const status = getSyncStatus();
     setLastUpdate(status.lastSync);
     
-    // Carregar configurações
-    const loadConfig = () => {
-      const restaurantData = localStorage.getItem("restaurantData");
-      if (restaurantData) {
-        setConfigData(JSON.parse(restaurantData));
-      }
-    };
-    
-    loadConfig();
-    
     // Listener para atualizações de sincronização
     const handleSyncComplete = (e: Event) => {
       const customEvent = e as CustomEvent;
       setLastUpdate(customEvent.detail.timestamp);
-      loadConfig(); // Recarregar configurações após sincronização
     };
     
     window.addEventListener(`${SYNC_EVENT}Complete`, handleSyncComplete);
-    window.addEventListener("financialDataUpdated", loadConfig);
     
     return () => {
       window.removeEventListener(`${SYNC_EVENT}Complete`, handleSyncComplete);
-      window.removeEventListener("financialDataUpdated", loadConfig);
     };
   }, []);
   
@@ -77,25 +63,6 @@ const DreCmv = () => {
             )}
           </p>
         </div>
-
-        {configData && (
-          <div className="mb-4 text-sm">
-            <p className="text-muted-foreground">
-              Utilizando configurações de: 
-              <span className="ml-1 font-medium">{configData.businessName || "Seu Restaurante"}</span>
-              {configData.targetFoodCost && (
-                <span className="ml-2 text-green-600">
-                  • CMV Alvo (Alimentos): {configData.targetFoodCost}%
-                </span>
-              )}
-              {configData.targetBeverageCost && (
-                <span className="ml-2 text-green-600">
-                  • CMV Alvo (Bebidas): {configData.targetBeverageCost}%
-                </span>
-              )}
-            </p>
-          </div>
-        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">

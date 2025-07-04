@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,19 +18,11 @@ import {
   Settings,
   Bot,
   Shield,
-  CreditCard,
-  ShoppingCart
+  CreditCard
 } from "lucide-react";
 import { ModernNavItem } from "./ModernNavItem";
 
 const navigation = [
-  {
-    title: "Vendas",
-    href: "/vendas",
-    icon: ShoppingCart,
-    description: "Sistema de vendas",
-    category: "overview"
-  },
   {
     title: "Dashboard",
     href: "/dashboard",

@@ -85,8 +85,26 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
     setIsSubmitting(true);
 
     try {
+      // Get the user's restaurant ID
+      const { data: restaurants, error: restaurantError } = await supabase
+        .from('restaurants')
+        .select('id')
+        .eq('owner_id', user.id)
+        .limit(1);
+
+      if (restaurantError) {
+        console.error('Erro ao buscar restaurante:', restaurantError);
+        throw new Error('Erro ao buscar dados do restaurante');
+      }
+
+      if (!restaurants || restaurants.length === 0) {
+        throw new Error('Nenhum restaurante encontrado para este usuário');
+      }
+
+      const restaurantId = restaurants[0].id;
+
       const entryData = {
-        restaurant_id: user.id, // Usando o ID do usuário como restaurant_id temporariamente
+        restaurant_id: restaurantId,
         type: formData.type,
         amount: formData.amount,
         date: formData.date,
