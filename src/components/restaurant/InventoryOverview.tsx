@@ -57,17 +57,25 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
     if (savedInventory) {
       try {
         const parsedInventory = JSON.parse(savedInventory);
-        setInventory(parsedInventory);
+        const processedInventory = parsedInventory.map((item: any) => ({
+          ...item,
+          costPerUnit: parseFloat(item.costPerUnit) || 0,
+          quantity: parseFloat(item.quantity) || 0,
+          minStockLevel: parseFloat(item.minStockLevel) || 0,
+          totalCost: (parseFloat(item.quantity) || 0) * (parseFloat(item.costPerUnit) || 0)
+        }));
+        
+        setInventory(processedInventory);
         
         // Calculate low stock items
-        const lowStock = parsedInventory.filter(
+        const lowStock = processedInventory.filter(
           (item: InventoryItem) => item.quantity <= item.minStockLevel
         );
         setLowStockItems(lowStock);
         
         // Calculate total inventory cost
-        const totalCost = parsedInventory.reduce(
-          (sum: number, item: InventoryItem) => sum + (item.totalCost || item.quantity * item.costPerUnit),
+        const totalCost = processedInventory.reduce(
+          (sum: number, item: InventoryItem) => sum + item.totalCost,
           0
         );
         setTotalInventoryCost(totalCost);
@@ -112,7 +120,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
     
     // Update total inventory cost
     const totalCost = updatedInventory.reduce(
-      (sum: number, item: InventoryItem) => sum + (item.totalCost || item.quantity * item.costPerUnit),
+      (sum: number, item: InventoryItem) => sum + item.totalCost,
       0
     );
     setTotalInventoryCost(totalCost);
@@ -135,7 +143,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
       
       // Update total inventory cost
       const totalCost = updatedInventory.reduce(
-        (sum: number, item: InventoryItem) => sum + (item.totalCost || item.quantity * item.costPerUnit),
+        (sum: number, item: InventoryItem) => sum + item.totalCost,
         0
       );
       setTotalInventoryCost(totalCost);
@@ -146,6 +154,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
 
   // Format currency
   const formatCurrency = (value: number) => {
+    if (isNaN(value)) return "R$ 0,00";
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
@@ -296,7 +305,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
                       </div>
                     </TableCell>
                     <TableCell>{formatCurrency(item.costPerUnit)}</TableCell>
-                    <TableCell>{formatCurrency(item.totalCost || item.quantity * item.costPerUnit)}</TableCell>
+                    <TableCell>{formatCurrency(item.totalCost)}</TableCell>
                     <TableCell>{formatDate(item.lastUpdated)}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button

@@ -4,65 +4,75 @@ import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { DREOverview } from "@/components/restaurant/DREOverview";
 import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SyncIndicator } from "@/components/restaurant/SyncIndicator";
-import { getSyncStatus, SYNC_EVENT } from "@/services/SyncService";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const DreCmv = () => {
   const [activeTab, setActiveTab] = useState("dre");
-  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
+  const [configData, setConfigData] = useState<any>(null);
+  const { user } = useAuth();
   
-  // Monitorar atualizações de sincronização
+  // Carregar configurações do restaurante
   useEffect(() => {
-    // Obter status inicial
-    const status = getSyncStatus();
-    setLastUpdate(status.lastSync);
-    
-    // Listener para atualizações de sincronização
-    const handleSyncComplete = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      setLastUpdate(customEvent.detail.timestamp);
+    const loadRestaurantConfig = async () => {
+      if (!user) return;
+
+      try {
+        // Buscar o restaurante do usuário
+        const { data: restaurants, error: restaurantError } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('owner_id', user.id)
+          .limit(1);
+
+        if (restaurantError) {
+          console.error('Erro ao buscar restaurante:', restaurantError);
+          return;
+        }
+
+        if (restaurants && restaurants.length > 0) {
+          const restaurant = restaurants[0];
+          setConfigData({
+            businessName: restaurant.name,
+            targetFoodCost: restaurant.target_food_cost,
+            targetBeverageCost: restaurant.target_beverage_cost
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+      }
     };
-    
-    window.addEventListener(`${SYNC_EVENT}Complete`, handleSyncComplete);
-    
-    return () => {
-      window.removeEventListener(`${SYNC_EVENT}Complete`, handleSyncComplete);
-    };
-  }, []);
-  
-  // Formatar data de última atualização
-  const getFormattedDate = () => {
-    if (!lastUpdate) return "";
-    
-    try {
-      const date = new Date(lastUpdate);
-      return new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(date);
-    } catch (error) {
-      return "";
-    }
-  };
+
+    loadRestaurantConfig();
+  }, [user]);
 
   return (
     <ModernLayout>
       <div className="main-content-padding space-y-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold tracking-tight">DRE & CMV</h1>
-          <p className="text-muted-foreground flex items-center gap-2">
+          <p className="text-muted-foreground">
             Demonstrativo de Resultados e Custo de Mercadoria Vendida
-            <SyncIndicator />
-            {lastUpdate && (
-              <span className="text-xs text-muted-foreground ml-2">
-                Última atualização: {getFormattedDate()}
-              </span>
-            )}
           </p>
         </div>
+
+        {configData && (configData.targetFoodCost || configData.targetBeverageCost) && (
+          <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              Metas de CMV configuradas:
+              {configData.targetFoodCost && (
+                <span className="ml-2 text-green-600 font-medium">
+                  • CMV Alvo (Alimentos): {configData.targetFoodCost}%
+                </span>
+              )}
+              {configData.targetBeverageCost && (
+                <span className="ml-2 text-green-600 font-medium">
+                  • CMV Alvo (Bebidas): {configData.targetBeverageCost}%
+                </span>
+              )}
+            </p>
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
