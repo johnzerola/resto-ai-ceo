@@ -57,7 +57,7 @@ export function StockSectorManager() {
       // Extrair setores únicos baseado em categoria (temporário)
       const setoresUnicos = [...new Set(insumosData?.map(i => i.categoria).filter(Boolean) || [])];
       const setoresData: Setor[] = setoresUnicos.map((nomeSetor, index) => {
-        const produtosCount = insumosData?.filter(i => i.setor === nomeSetor).length || 0;
+        const produtosCount = insumosData?.filter(i => i.categoria === nomeSetor).length || 0;
         return {
           id: `setor-${index}`,
           nome: nomeSetor,
@@ -68,7 +68,7 @@ export function StockSectorManager() {
       });
 
       // Adicionar setor "Sem Setor" para produtos não categorizados
-      const produtosSemSetor = insumosData?.filter(i => !i.setor).length || 0;
+      const produtosSemSetor = insumosData?.filter(i => !i.categoria).length || 0;
       if (produtosSemSetor > 0) {
         setoresData.push({
           id: 'sem-setor',
@@ -135,9 +135,9 @@ export function StockSectorManager() {
 
   const getInsumosDoSetor = (setorNome: string) => {
     if (setorNome === 'Sem Setor') {
-      return insumos.filter(i => !i.setor);
+      return insumos.filter(i => !i.categoria);
     }
-    return insumos.filter(i => i.setor === setorNome);
+    return insumos.filter(i => i.categoria === setorNome);
   };
 
   const getTotalEstoqueSetor = (setorNome: string) => {
@@ -339,14 +339,14 @@ export function StockSectorManager() {
                 <div key={insumo.id} className="flex justify-between items-center p-3 border rounded">
                   <div>
                     <p className="font-medium">{insumo.nome}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Setor atual: {insumo.setor || 'Sem setor'} • {insumo.categoria}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      className="text-sm border rounded px-2 py-1"
-                      value={insumo.setor || 'Sem Setor'}
+                     <p className="text-sm text-muted-foreground">
+                       Setor atual: {insumo.categoria || 'Sem setor'}
+                     </p>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <select
+                       className="text-sm border rounded px-2 py-1"
+                       value={insumo.categoria || 'Sem Setor'}
                       onChange={(e) => assignProductToSetor(insumo.id, e.target.value)}
                     >
                       <option value="Sem Setor">Sem Setor</option>
