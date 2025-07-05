@@ -31,12 +31,18 @@ export function TaskManager() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Form states
-  const [novaTask, setNovaTask] = useState({
+  const [novaTask, setNovaTask] = useState<{
+    titulo: string;
+    descricao: string;
+    dataLimite: string;
+    responsavel: string;
+    prioridade: 'baixa' | 'media' | 'alta';
+  }>({
     titulo: '',
     descricao: '',
     dataLimite: '',
     responsavel: '',
-    prioridade: 'media' as const
+    prioridade: 'media'
   });
 
   useEffect(() => {

@@ -2,7 +2,7 @@
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { TaskManager } from "@/components/restaurant/TaskManager";
 
-export function Configuracoes() {
+export default function Configuracoes() {
   return (
     <ModernLayout>
       <div className="main-content-padding space-y-4 sm:space-y-6 bg-background min-h-screen">

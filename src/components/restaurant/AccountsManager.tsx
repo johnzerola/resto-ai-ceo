@@ -208,7 +208,7 @@ export function AccountsManager() {
             Gerencie seus pagamentos e recebimentos
           </p>
         </div>
-        <Dialog open={isDialogOpen} onValueChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />
