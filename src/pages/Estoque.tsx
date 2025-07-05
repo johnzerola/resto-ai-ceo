@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { InventoryOverview } from "@/components/restaurant/InventoryOverview";
 import { InventoryForm } from "@/components/restaurant/InventoryForm";
+import { PurchaseListGenerator } from "@/components/restaurant/PurchaseListGenerator";
 import { Button } from "@/components/ui/button";
-import { Plus, FileDown } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, FileDown, ShoppingCart, Package } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from 'jspdf';
 
@@ -26,6 +28,7 @@ const Estoque = () => {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     loadInventoryItems();
@@ -209,14 +212,14 @@ const Estoque = () => {
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start">
           <div className="space-y-1 min-w-0 flex-1">
             <h1 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight text-foreground truncate">
-              Gestão de Estoque
+              Gestão de Estoque Inteligente
             </h1>
             <p className="text-muted-foreground text-xs sm:text-sm truncate">
-              Controle completo do seu inventário
+              Controle completo de inventário com lista de compras automática
             </p>
           </div>
           <div className="flex gap-1 sm:gap-2 flex-wrap w-full sm:w-auto">
-            {!isAddingItem && (
+            {!isAddingItem && activeTab === "overview" && (
               <>
                 <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs h-7 sm:h-8 flex-1 sm:flex-none min-w-0">
                   <FileDown className="mr-1 h-3 w-3" />
@@ -242,9 +245,28 @@ const Estoque = () => {
                   onSuccess={handleFormSuccess}
                 />
               ) : (
-                <InventoryOverview 
-                  onEdit={editItem}
-                />
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <div className="border-b px-4 py-2">
+                    <TabsList className="grid w-full grid-cols-2 max-w-md">
+                      <TabsTrigger value="overview" className="flex items-center gap-2 text-xs sm:text-sm">
+                        <Package className="h-4 w-4" />
+                        Estoque
+                      </TabsTrigger>
+                      <TabsTrigger value="shopping" className="flex items-center gap-2 text-xs sm:text-sm">
+                        <ShoppingCart className="h-4 w-4" />
+                        Lista de Compras
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+
+                  <TabsContent value="overview" className="p-4">
+                    <InventoryOverview onEdit={editItem} />
+                  </TabsContent>
+
+                  <TabsContent value="shopping" className="p-4">
+                    <PurchaseListGenerator />
+                  </TabsContent>
+                </Tabs>
               )}
             </div>
           </div>

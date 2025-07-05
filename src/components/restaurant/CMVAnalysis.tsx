@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Calculator, Package, FileDown } from "lucide-react";
+import { TrendingUp, Calculator, Package, FileDown, ShoppingCart, AlertTriangle } from "lucide-react";
 import jsPDF from 'jspdf';
 import { toast } from "sonner";
+import { CMVStockOverview } from "./CMVStockOverview";
+import { PurchaseListGenerator } from "./PurchaseListGenerator";
 
 export function CMVAnalysis() {
   const [cmvData, setCmvData] = useState<any>(null);
@@ -236,9 +238,9 @@ export function CMVAnalysis() {
     <div className="space-y-3 sm:space-y-4 lg:space-y-6 w-full overflow-hidden p-2 sm:p-4 lg:p-6">
       <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start">
         <div className="min-w-0 flex-1">
-          <h2 className="text-base sm:text-lg lg:text-xl font-bold truncate">Análise CMV</h2>
+          <h2 className="text-base sm:text-lg lg:text-xl font-bold truncate">Análise CMV Completa</h2>
           <p className="text-muted-foreground text-xs sm:text-sm truncate">
-            Custo da Mercadoria Vendida atualizado automaticamente
+            Controle total de custos, estoque e compras
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={exportToPDF} className="text-xs h-7 sm:h-8 whitespace-nowrap">
@@ -306,41 +308,88 @@ export function CMVAnalysis() {
         </Card>
       </div>
 
-      {/* Charts */}
-      <Tabs defaultValue="categorias" className="w-full">
+      {/* Enhanced Tabs */}
+      <Tabs defaultValue="resumo" className="w-full">
         <div className="w-full overflow-x-auto mb-3 sm:mb-4">
-          <TabsList className="grid w-full grid-cols-2 min-w-[200px] h-8 sm:h-10">
-            <TabsTrigger value="categorias" className="text-xs sm:text-sm px-1 sm:px-2">
-              Por Categorias
+          <TabsList className="grid w-full grid-cols-4 min-w-[400px] h-8 sm:h-10">
+            <TabsTrigger value="resumo" className="text-xs sm:text-sm px-1 sm:px-2">
+              📊 Resumo
+            </TabsTrigger>
+            <TabsTrigger value="estoque" className="text-xs sm:text-sm px-1 sm:px-2">
+              📦 Estoque & CMV
+            </TabsTrigger>
+            <TabsTrigger value="compras" className="text-xs sm:text-sm px-1 sm:px-2">
+              🛒 Lista de Compras
             </TabsTrigger>
             <TabsTrigger value="tendencia" className="text-xs sm:text-sm px-1 sm:px-2">
-              Tendência Mensal
+              📈 Tendências
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="categorias" className="w-full overflow-hidden">
-          <Card className="w-full">
-            <CardHeader className="p-3 sm:p-4">
-              <CardTitle className="text-sm sm:text-base lg:text-lg">Distribuição de Custos</CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-4 pt-0 w-full overflow-hidden">
-              <div className="w-full overflow-x-auto">
-                <div className="min-w-[280px] w-full h-[200px] sm:h-[250px] lg:h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={cmvData.categoryData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" fontSize={10} />
-                      <YAxis fontSize={10} />
-                      <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
-                      <Legend />
-                      <Bar dataKey="valor" fill="#3b82f6" name="Custo Real" />
-                    </BarChart>
-                  </ResponsiveContainer>
+        <TabsContent value="resumo" className="w-full overflow-hidden">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+            <Card className="w-full">
+              <CardHeader className="p-3 sm:p-4">
+                <CardTitle className="text-sm sm:text-base lg:text-lg">Distribuição de Custos</CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 sm:p-4 pt-0 w-full overflow-hidden">
+                <div className="w-full overflow-x-auto">
+                  <div className="min-w-[280px] w-full h-[200px] sm:h-[250px] lg:h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={cmvData.categoryData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" fontSize={10} />
+                        <YAxis fontSize={10} />
+                        <Tooltip formatter={(value: any) => formatCurrency(Number(value))} />
+                        <Legend />
+                        <Bar dataKey="valor" fill="#3b82f6" name="Custo Real" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            <Card className="w-full">
+              <CardHeader className="p-3 sm:p-4">
+                <CardTitle className="text-sm sm:text-base lg:text-lg">Status das Metas</CardTitle>
+              </CardHeader>
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <div className="space-y-4">
+                  {cmvData.categoryData.map((category: any, index: number) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">{category.name}</span>
+                        <Badge variant={category.percentual <= category.meta ? "default" : "destructive"}>
+                          {category.percentual.toFixed(1)}%
+                        </Badge>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full ${category.percentual <= category.meta ? 'bg-green-500' : 'bg-red-500'}`}
+                          style={{
+                            width: `${Math.min((category.percentual / category.meta) * 100, 100)}%`
+                          }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Meta: {category.meta}% | Atual: {category.percentual.toFixed(1)}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="estoque" className="w-full overflow-hidden">
+          <CMVStockOverview />
+        </TabsContent>
+
+        <TabsContent value="compras" className="w-full overflow-hidden">
+          <PurchaseListGenerator />
         </TabsContent>
 
         <TabsContent value="tendencia" className="w-full overflow-hidden">
