@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { Package, TrendingDown, AlertTriangle, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
@@ -181,6 +181,11 @@ export function CMVStockOverview() {
     return `${value.toFixed(1)}%`;
   };
 
+  // Função para determinar a cor baseada no desperdício
+  const getWasteColor = (desperdicioPercentual: number) => {
+    return desperdicioPercentual > 10 ? "#ef4444" : "#10b981";
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -312,8 +317,11 @@ export function CMVStockOverview() {
                     yAxisId="right"
                     dataKey="desperdicioPercentual" 
                     name="Desperdício %"
-                    fill={(entry: any) => entry.desperdicioPercentual > 10 ? "#ef4444" : "#10b981"}
-                  />
+                  >
+                    {stockData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={getWasteColor(entry.desperdicioPercentual)} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
