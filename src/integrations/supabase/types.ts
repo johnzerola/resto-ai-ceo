@@ -1619,6 +1619,68 @@ export type Database = {
         }
         Relationships: []
       }
+      projecoes_financeiras: {
+        Row: {
+          cenario_selecionado: string | null
+          created_at: string | null
+          dados_mensais: Json | null
+          despesas_mensais_atuais: number
+          id: string
+          lucro_projetado_final: number | null
+          margem_final_percentual: number | null
+          nome_projecao: string
+          observacoes: string | null
+          periodo_meses: number
+          receita_mensal_atual: number
+          receita_projetada_final: number | null
+          restaurant_id: string | null
+          taxa_crescimento_anual: number
+          updated_at: string | null
+        }
+        Insert: {
+          cenario_selecionado?: string | null
+          created_at?: string | null
+          dados_mensais?: Json | null
+          despesas_mensais_atuais?: number
+          id?: string
+          lucro_projetado_final?: number | null
+          margem_final_percentual?: number | null
+          nome_projecao: string
+          observacoes?: string | null
+          periodo_meses?: number
+          receita_mensal_atual?: number
+          receita_projetada_final?: number | null
+          restaurant_id?: string | null
+          taxa_crescimento_anual?: number
+          updated_at?: string | null
+        }
+        Update: {
+          cenario_selecionado?: string | null
+          created_at?: string | null
+          dados_mensais?: Json | null
+          despesas_mensais_atuais?: number
+          id?: string
+          lucro_projetado_final?: number | null
+          margem_final_percentual?: number | null
+          nome_projecao?: string
+          observacoes?: string | null
+          periodo_meses?: number
+          receita_mensal_atual?: number
+          receita_projetada_final?: number | null
+          restaurant_id?: string | null
+          taxa_crescimento_anual?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projecoes_financeiras_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipe_ingredients: {
         Row: {
           cost_per_unit: number | null
