@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 import type { CashFlowEntry } from "./CashFlowOverview";
 
 interface CashFlowFormProps {
@@ -20,6 +21,7 @@ interface CashFlowFormProps {
 
 export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: CashFlowFormProps) {
   const { user } = useAuth();
+  const { getIncomeCategories, getExpenseCategories } = useFinancialCategories();
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: "",
@@ -168,25 +170,15 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
     }
   };
 
-  const incomeCategories = [
-    { value: "sales", label: "Vendas" },
-    { value: "food", label: "Alimentação" },
-    { value: "beverage", label: "Bebidas" },
-    { value: "delivery", label: "Delivery" },
-    { value: "other_income", label: "Outras Receitas" }
-  ];
+  const incomeCategories = getIncomeCategories().map(cat => ({ 
+    value: cat.nome, 
+    label: cat.nome 
+  }));
 
-  const expenseCategories = [
-    { value: "food_supplies", label: "Insumos Alimentares" },
-    { value: "beverage_supplies", label: "Insumos Bebidas" },
-    { value: "supplies", label: "Suprimentos" },
-    { value: "rent", label: "Aluguel" },
-    { value: "utilities", label: "Utilidades" },
-    { value: "salaries", label: "Salários" },
-    { value: "marketing", label: "Marketing" },
-    { value: "maintenance", label: "Manutenção" },
-    { value: "other_expense", label: "Outras Despesas" }
-  ];
+  const expenseCategories = getExpenseCategories().map(cat => ({ 
+    value: cat.nome, 
+    label: cat.nome 
+  }));
 
   const paymentMethods = [
     { value: "cash", label: "Dinheiro" },

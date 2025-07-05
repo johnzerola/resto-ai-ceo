@@ -324,6 +324,56 @@ export type Database = {
           },
         ]
       }
+      categorias_financeiras: {
+        Row: {
+          ativa: boolean
+          cor: string | null
+          created_at: string | null
+          icone: string | null
+          id: string
+          impacta_cmv: boolean
+          impacta_dre: boolean
+          nome: string
+          restaurant_id: string | null
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativa?: boolean
+          cor?: string | null
+          created_at?: string | null
+          icone?: string | null
+          id?: string
+          impacta_cmv?: boolean
+          impacta_dre?: boolean
+          nome: string
+          restaurant_id?: string | null
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativa?: boolean
+          cor?: string | null
+          created_at?: string | null
+          icone?: string | null
+          id?: string
+          impacta_cmv?: boolean
+          impacta_dre?: boolean
+          nome?: string
+          restaurant_id?: string | null
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_financeiras_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       configuracoes_precificacao: {
         Row: {
           created_at: string | null
@@ -2285,6 +2335,17 @@ export type Database = {
           meta_receita: number
           meta_pratos: number
           ticket_medio: number
+        }[]
+      }
+      calcular_metricas_financeiras: {
+        Args: { restaurant_uuid: string }
+        Returns: {
+          cmv_valor: number
+          cmv_percentual: number
+          receita_total: number
+          despesas_operacionais: number
+          lucro_bruto: number
+          margem_bruta_percentual: number
         }[]
       }
       check_trial_status: {

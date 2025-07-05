@@ -13,7 +13,8 @@ import {
   TrendingUp,
   TrendingDown,
   FileText,
-  Bell
+  Bell,
+  Settings
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,8 @@ import { CashFlowOverview } from "./CashFlowOverview";
 import { CashFlowForm } from "./CashFlowForm";
 import { AccountsPayableManager } from "./AccountsPayableManager";
 import { AccountsReceivableManager } from "./AccountsReceivableManager";
+import { FinancialCategoriesManager } from "./FinancialCategoriesManager";
+import { FinancialMetricsWidget } from "./FinancialMetricsWidget";
 
 interface AlertData {
   id: string;
@@ -243,6 +246,9 @@ export function IntegratedCashFlowManager() {
 
   return (
     <div className="space-y-6">
+      {/* Métricas Financeiras */}
+      <FinancialMetricsWidget />
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -363,11 +369,12 @@ export function IntegratedCashFlowManager() {
       {/* Tabs principais */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex items-center justify-between">
-          <TabsList className="grid w-full max-w-md grid-cols-4">
+          <TabsList className="grid w-full max-w-2xl grid-cols-5">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="payables">A Pagar</TabsTrigger>
             <TabsTrigger value="receivables">A Receber</TabsTrigger>
             <TabsTrigger value="transactions">Transações</TabsTrigger>
+            <TabsTrigger value="categories">Categorias</TabsTrigger>
           </TabsList>
           
           <Button onClick={() => setShowForm(true)} className="ml-4">
@@ -390,6 +397,10 @@ export function IntegratedCashFlowManager() {
 
         <TabsContent value="transactions">
           <CashFlowOverview onEdit={handleEditEntry} />
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <FinancialCategoriesManager />
         </TabsContent>
       </Tabs>
 
