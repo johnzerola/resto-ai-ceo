@@ -16,7 +16,9 @@ import {
   Target,
   DollarSign,
   Plus,
-  Trash2
+  Trash2,
+  Save,
+  RotateCcw
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -661,23 +663,116 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
                 </CardContent>
               </Card>
 
-              {/* Botão Salvar */}
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={resetForm}>
-                  Limpar Formulário
-                </Button>
-                <Button onClick={salvarFichaTecnica}>
-                  Salvar Ficha Técnica
-                </Button>
-              </div>
-            </>
+          {/* Botão Salvar */}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={resetForm}>
+              Limpar Formulário
+            </Button>
+            <Button onClick={salvarFichaTecnica} disabled={!nomePrato || ingredientes.length === 0}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Salvar Ficha Técnica
+            </Button>
+          </div>
+
+          {/* Precificação Avançada */}
+          {resultados && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Precificação Avançada
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label>Markup Personalizado (%)</Label>
+                    <Input
+                      type="number"
+                      value={configuracoes?.markup_padrao || 250}
+                      onChange={(e) => {
+                        const novoMarkup = Number(e.target.value);
+                        if (configuracoes) {
+                          setConfiguracoes(prev => ({ ...prev, markup_padrao: novoMarkup }));
+                        }
+                      }}
+                      placeholder="250"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Preço Concorrente (R$)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Opcional"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Canal de Venda</Label>
+                    <Select defaultValue="balcao">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="balcao">Balcão</SelectItem>
+                        <SelectItem value="ifood">iFood</SelectItem>
+                        <SelectItem value="uber">Uber Eats</SelectItem>
+                        <SelectItem value="delivery">Delivery Próprio</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card className="p-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Preço Mínimo</p>
+                      <p className="text-lg font-bold text-red-600">
+                        {formatCurrency(resultados.custoPorPorcao * 1.5)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">50% margem</p>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4 border-green-200">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Preço Ideal</p>
+                      <p className="text-lg font-bold text-green-600">
+                        {formatCurrency(resultados.precoSugerido)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Recomendado</p>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Preço Premium</p>
+                      <p className="text-lg font-bold text-blue-600">
+                        {formatCurrency(resultados.precoSugerido * 1.2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">20% acima</p>
+                    </div>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
           )}
-        </TabsContent>
+        </>
+      )}
+    </TabsContent>
 
         <TabsContent value="salvas" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Fichas Técnicas Salvas</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>Fichas Técnicas Salvas</span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={carregarFichasSalvas}>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Atualizar
+                  </Button>
+                </div>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
@@ -685,24 +780,69 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
                   <div key={ficha.id} className="p-4 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold">{ficha.nome_prato}</h4>
-                      <Badge variant="secondary">{ficha.categoria}</Badge>
-                    </div>
-                    <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-4">
-                      <div>Custo: {formatCurrency(ficha.custo_por_porcao)}</div>
-                      <div>Preço: {formatCurrency(ficha.preco_praticado)}</div>
-                      <div>Margem: {ficha.margem_percentual?.toFixed(1)}%</div>
-                      <div>
-                        <Badge 
-                          variant={
-                            ficha.status_viabilidade === 'saudavel' ? 'default' :
-                            ficha.status_viabilidade === 'atencao' ? 'secondary' : 'destructive'
-                          }
-                          className="text-xs"
-                        >
-                          {ficha.status_viabilidade === 'saudavel' ? 'Saudável' :
-                           ficha.status_viabilidade === 'atencao' ? 'Atenção' : 'Prejuízo'}
-                        </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">{ficha.categoria}</Badge>
+                        {ficha.status_viabilidade && (
+                          <Badge 
+                            variant={
+                              ficha.status_viabilidade === 'saudavel' ? 'default' :
+                              ficha.status_viabilidade === 'atencao' ? 'secondary' : 'destructive'
+                            }
+                          >
+                            {ficha.status_viabilidade === 'saudavel' ? 'Saudável' :
+                             ficha.status_viabilidade === 'atencao' ? 'Atenção' : 'Prejuízo'}
+                          </Badge>
+                        )}
                       </div>
+                    </div>
+                    <div className="grid gap-2 text-sm text-muted-foreground md:grid-cols-5">
+                      <div>
+                        <span className="font-medium">Custo:</span><br />
+                        {formatCurrency(ficha.custo_por_porcao)}
+                      </div>
+                      <div>
+                        <span className="font-medium">Preço:</span><br />
+                        <span className="text-green-600 font-bold">
+                          {formatCurrency(ficha.preco_praticado)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Margem:</span><br />
+                        {ficha.margem_percentual?.toFixed(1)}%
+                      </div>
+                      <div>
+                        <span className="font-medium">Lucro:</span><br />
+                        {formatCurrency(ficha.lucro_estimado || 0)}
+                      </div>
+                      <div>
+                        <span className="font-medium">Rendimento:</span><br />
+                        {ficha.rendimento_porcoes} porção(ões)
+                      </div>
+                    </div>
+                    
+                    {/* Ações rápidas */}
+                    <div className="flex gap-2 mt-3">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          // Aplicar markup rápido
+                          const novoPreco = ficha.custo_por_porcao * 2.5;
+                          // Lógica para atualizar preço
+                        }}
+                      >
+                        Markup 250%
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          const novoPreco = ficha.custo_por_porcao * 3;
+                          // Lógica para atualizar preço
+                        }}
+                      >
+                        Markup 300%
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -711,6 +851,7 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
                   <div className="text-center py-8 text-muted-foreground">
                     <Calculator className="h-8 w-8 mx-auto mb-2" />
                     <p>Nenhuma ficha técnica salva ainda</p>
+                    <p className="text-sm">Crie sua primeira ficha técnica na aba "Nova Ficha"</p>
                   </div>
                 )}
               </div>

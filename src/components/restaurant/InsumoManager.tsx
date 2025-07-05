@@ -27,9 +27,10 @@ interface Insumo {
 
 interface InsumoManagerProps {
   onInsumoUpdate?: (insumos: Insumo[]) => void;
+  onCascadeEffect?: (insumoId: string, novoPreco: number) => void;
 }
 
-export function InsumoManager({ onInsumoUpdate }: InsumoManagerProps) {
+export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManagerProps) {
   const { currentRestaurant } = useAuth();
   const [insumos, setInsumos] = useState<Insumo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -93,6 +94,7 @@ export function InsumoManager({ onInsumoUpdate }: InsumoManagerProps) {
     }
 
     const preco_unitario = formData.preco_pago / formData.volume_embalagem;
+    const precoAnterior = editingInsumo?.preco_unitario || 0;
     
     try {
       if (editingInsumo) {
@@ -113,7 +115,14 @@ export function InsumoManager({ onInsumoUpdate }: InsumoManagerProps) {
           .eq('id', editingInsumo.id);
 
         if (error) throw error;
-        toast.success('Insumo atualizado com sucesso!');
+        
+        // Efeito cascata se preço mudou
+        if (Math.abs(preco_unitario - precoAnterior) > 0.01) {
+          onCascadeEffect?.(editingInsumo.id, preco_unitario);
+          toast.success(`Insumo atualizado! Preços afetados serão recalculados automaticamente.`);
+        } else {
+          toast.success('Insumo atualizado com sucesso!');
+        }
       } else {
         // Criar
         const { error } = await supabase

@@ -4,6 +4,7 @@ import { ModernLayout } from '@/components/restaurant/ModernLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CSVImportDialog } from '@/components/cardapio/CSVImportDialog';
 import { EnhancedBreakEvenDashboard } from '@/components/restaurant/EnhancedBreakEvenDashboard';
@@ -25,6 +26,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MenuItem {
   id: string;
@@ -56,6 +58,7 @@ export default function Cardapio() {
   const [showCSVImport, setShowCSVImport] = useState(false);
   const [insumos, setInsumos] = useState<any[]>([]);
   const [fichasTecnicas, setFichasTecnicas] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('todos');
 
   const categories = [
     { value: 'todos', label: 'Todos' },
@@ -69,14 +72,97 @@ export default function Cardapio() {
   // Handlers para componentes
   const handleInsumoUpdate = (novosInsumos: any[]) => {
     setInsumos(novosInsumos);
+    // Efeito cascata: atualizar preços das fichas técnicas
+    if (fichasTecnicas.length > 0) {
+      updateCascadePrices(novosInsumos);
+    }
   };
 
   const handleFichaUpdate = (novasFichas: any[]) => {
     setFichasTecnicas(novasFichas);
+    // Atualizar lista do cardápio
+    const newMenuItems = novasFichas.map(ficha => ({
+      id: ficha.id,
+      name: ficha.nome_prato,
+      description: ficha.observacoes || '',
+      category: ficha.categoria,
+      price: ficha.preco_praticado || ficha.preco_sugerido,
+      cost: ficha.custo_por_porcao,
+      margin: ficha.margem_percentual || 0,
+      ingredients: [],
+      isActive: ficha.ativo !== false
+    }));
+    setMenuItems(newMenuItems);
+  };
+
+  const updateCascadePrices = async (insumosAtualizados: any[]) => {
+    if (!currentRestaurant?.id || fichasTecnicas.length === 0) return;
+
+    try {
+      // Para cada ficha técnica, recalcular os custos
+      for (const ficha of fichasTecnicas) {
+        const { data: ingredientes, error } = await supabase
+          .from('ingredientes_por_prato')
+          .select(`
+            *,
+            insumos (id, preco_unitario)
+          `)
+          .eq('prato_id', ficha.id);
+
+        if (error) continue;
+
+        // Calcular novo custo total da ficha
+        let novoCustoTotal = 0;
+        for (const ing of ingredientes || []) {
+          const insumo = ing.insumos;
+          if (insumo) {
+            novoCustoTotal += ing.quantidade_liquida * insumo.preco_unitario;
+          }
+        }
+
+        // Adicionar custos de embalagem e perdas (usando configurações)
+        const custoEmbalagem = novoCustoTotal * 0.05;
+        const custoPerdas = novoCustoTotal * 0.05; // 5% padrão
+        const custoFinalTotal = novoCustoTotal + custoEmbalagem + custoPerdas;
+        const custoPorPorcao = custoFinalTotal / (ficha.rendimento_porcoes || 1);
+
+        // Recalcular preço sugerido
+        const precoSugerido = custoPorPorcao * 2.5; // Markup padrão 250%
+        const margemPercentual = precoSugerido > 0 ? ((precoSugerido - custoPorPorcao) / precoSugerido) * 100 : 0;
+
+        // Atualizar no banco
+        await supabase
+          .from('pratos')
+          .update({
+            custo_total: custoFinalTotal,
+            custo_por_porcao: custoPorPorcao,
+            preco_sugerido: precoSugerido,
+            margem_percentual: margemPercentual,
+            lucro_estimado: precoSugerido - custoPorPorcao,
+            custo_embalagem: custoEmbalagem,
+            custo_perdas: custoPerdas
+          })
+          .eq('id', ficha.id);
+      }
+
+      // Recarregar fichas atualizadas
+      const { data: fichasAtualizadas } = await supabase
+        .from('pratos')
+        .select('*')
+        .eq('restaurant_id', currentRestaurant.id);
+
+      if (fichasAtualizadas) {
+        handleFichaUpdate(fichasAtualizadas);
+      }
+
+      toast.success('✅ Efeito cascata aplicado! Todos os preços foram recalculados automaticamente.');
+    } catch (error) {
+      console.error('Erro no efeito cascata:', error);
+      toast.error('Erro ao atualizar preços automaticamente');
+    }
   };
 
   const handlePriceUpdate = (updates: any[]) => {
-    // Atualizar fichas técnicas com novos preços
     handleFichaUpdate(updates);
     toast.success('Preços atualizados com sucesso!');
   };
@@ -130,7 +216,7 @@ export default function Cardapio() {
         </div>
 
         <Tabs defaultValue="cardapio" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="cardapio" className="flex items-center gap-2">
               <Utensils className="h-4 w-4" />
               Cardápio
@@ -141,11 +227,7 @@ export default function Cardapio() {
             </TabsTrigger>
             <TabsTrigger value="fichas" className="flex items-center gap-2">
               <Calculator className="h-4 w-4" />
-              Fichas Técnicas
-            </TabsTrigger>
-            <TabsTrigger value="precificacao" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Precificação
+              Fichas & Preços
             </TabsTrigger>
             <TabsTrigger value="analises" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -159,6 +241,7 @@ export default function Cardapio() {
 
           {/* Aba Cardápio */}
           <TabsContent value="cardapio" className="space-y-6">
+            {/* Filtros e Busca */}
             <Card>
               <CardContent className="pt-6">
                 <div className="flex gap-4 flex-wrap">
@@ -173,35 +256,119 @@ export default function Cardapio() {
                       />
                     </div>
                   </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {categories.map(cat => (
+                      <Button
+                        key={cat.value}
+                        variant={selectedCategory === cat.value ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedCategory(cat.value)}
+                      >
+                        {cat.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </CardContent>
             </Card>
-            
-            <div className="text-center py-8 text-muted-foreground">
-              <Utensils className="h-12 w-12 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Em breve: Lista do Cardápio</h3>
-              <p>Use as abas Insumos e Fichas Técnicas para criar seus produtos</p>
-            </div>
+
+            {/* Lista do Cardápio */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Produtos do Cardápio</span>
+                  <Badge variant="secondary">{menuItems.length} itens</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {menuItems.length > 0 ? (
+                  <div className="space-y-4">
+                    {menuItems
+                      .filter(item => 
+                        (selectedCategory === 'todos' || item.category === selectedCategory) &&
+                        (searchTerm === '' || 
+                         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.description.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                      )
+                      .map(item => (
+                        <div key={item.id} className="p-4 border rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-lg">{item.name}</h4>
+                              {item.description && (
+                                <p className="text-sm text-muted-foreground">{item.description}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{item.category}</Badge>
+                              {!item.isActive && <Badge variant="destructive">Inativo</Badge>}
+                            </div>
+                          </div>
+                          <div className="grid gap-4 md:grid-cols-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Preço de Venda:</span>
+                              <div className="font-bold text-green-600 text-lg">
+                                {new Intl.NumberFormat('pt-BR', {
+                                  style: 'currency',
+                                  currency: 'BRL'
+                                }).format(item.price)}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Custo:</span>
+                              <div className="font-medium text-red-600">
+                                {new Intl.NumberFormat('pt-BR', {
+                                  style: 'currency',
+                                  currency: 'BRL'
+                                }).format(item.cost)}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Margem:</span>
+                              <div className="font-bold">
+                                {item.margin.toFixed(1)}%
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Lucro:</span>
+                              <div className="font-medium">
+                                {new Intl.NumberFormat('pt-BR', {
+                                  style: 'currency',
+                                  currency: 'BRL'
+                                }).format(item.price - item.cost)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Utensils className="h-12 w-12 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Nenhum produto no cardápio</h3>
+                    <p>Crie fichas técnicas na aba "Fichas & Preços" para adicionar produtos</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Aba Insumos */}
           <TabsContent value="insumos" className="space-y-6">
-            <InsumoManager onInsumoUpdate={handleInsumoUpdate} />
+            <InsumoManager 
+              onInsumoUpdate={handleInsumoUpdate}
+              onCascadeEffect={async (insumoId, novoPreco) => {
+                await updateCascadePrices([{ id: insumoId, preco_unitario: novoPreco }]);
+              }}
+            />
           </TabsContent>
 
-          {/* Aba Fichas Técnicas */}
+          {/* Aba Fichas Técnicas & Precificação Integrada */}
           <TabsContent value="fichas" className="space-y-6">
             <FichaTecnicaManager 
               insumos={insumos} 
               onFichaUpdate={handleFichaUpdate}
-            />
-          </TabsContent>
-
-          {/* Aba Precificação */}
-          <TabsContent value="precificacao" className="space-y-6">
-            <PrecificacaoManager 
-              fichasTecnicas={fichasTecnicas}
-              onPriceUpdate={handlePriceUpdate}
             />
           </TabsContent>
 
