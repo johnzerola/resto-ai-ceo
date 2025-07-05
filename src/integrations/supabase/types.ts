@@ -793,6 +793,54 @@ export type Database = {
           },
         ]
       }
+      historico_rupturas: {
+        Row: {
+          created_at: string | null
+          data_ruptura: string
+          dias_sem_estoque: number | null
+          id: string
+          impacto_vendas: number | null
+          insumo_id: string | null
+          motivo: string | null
+          restaurant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_ruptura: string
+          dias_sem_estoque?: number | null
+          id?: string
+          impacto_vendas?: number | null
+          insumo_id?: string | null
+          motivo?: string | null
+          restaurant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_ruptura?: string
+          dias_sem_estoque?: number | null
+          id?: string
+          impacto_vendas?: number | null
+          insumo_id?: string | null
+          motivo?: string | null
+          restaurant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_rupturas_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historico_rupturas_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ia_usage: {
         Row: {
           created_at: string | null
@@ -877,7 +925,10 @@ export type Database = {
       insumos: {
         Row: {
           categoria: string | null
+          ciclo_compra_dias: number | null
           codigo: number | null
+          consumo_medio_diario: number | null
+          conversoes_unidade: Json | null
           created_at: string | null
           estoque_atual: number | null
           estoque_minimo: number | null
@@ -886,8 +937,11 @@ export type Database = {
           nome: string
           perda_media_percentual: number | null
           preco_pago: number
+          preco_ultima_compra: number | null
           preco_unitario: number | null
           restaurant_id: string | null
+          tempo_entrega_dias: number | null
+          ultima_compra: string | null
           unidade_medida: string
           updated_at: string | null
           validade_dias: number | null
@@ -895,7 +949,10 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
+          ciclo_compra_dias?: number | null
           codigo?: number | null
+          consumo_medio_diario?: number | null
+          conversoes_unidade?: Json | null
           created_at?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
@@ -904,8 +961,11 @@ export type Database = {
           nome: string
           perda_media_percentual?: number | null
           preco_pago: number
+          preco_ultima_compra?: number | null
           preco_unitario?: number | null
           restaurant_id?: string | null
+          tempo_entrega_dias?: number | null
+          ultima_compra?: string | null
           unidade_medida: string
           updated_at?: string | null
           validade_dias?: number | null
@@ -913,7 +973,10 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
+          ciclo_compra_dias?: number | null
           codigo?: number | null
+          consumo_medio_diario?: number | null
+          conversoes_unidade?: Json | null
           created_at?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
@@ -922,8 +985,11 @@ export type Database = {
           nome?: string
           perda_media_percentual?: number | null
           preco_pago?: number
+          preco_ultima_compra?: number | null
           preco_unitario?: number | null
           restaurant_id?: string | null
+          tempo_entrega_dias?: number | null
+          ultima_compra?: string | null
           unidade_medida?: string
           updated_at?: string | null
           validade_dias?: number | null
@@ -1971,6 +2037,66 @@ export type Database = {
           },
         ]
       }
+      tendencias_estoque: {
+        Row: {
+          created_at: string | null
+          data_analise: string
+          dias_para_ruptura: number | null
+          entradas_periodo: number | null
+          estoque_final: number | null
+          estoque_inicial: number | null
+          id: string
+          insumo_id: string | null
+          restaurant_id: string | null
+          saidas_periodo: number | null
+          taxa_consumo_diaria: number | null
+          tendencia: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_analise?: string
+          dias_para_ruptura?: number | null
+          entradas_periodo?: number | null
+          estoque_final?: number | null
+          estoque_inicial?: number | null
+          id?: string
+          insumo_id?: string | null
+          restaurant_id?: string | null
+          saidas_periodo?: number | null
+          taxa_consumo_diaria?: number | null
+          tendencia?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_analise?: string
+          dias_para_ruptura?: number | null
+          entradas_periodo?: number | null
+          estoque_final?: number | null
+          estoque_inicial?: number | null
+          id?: string
+          insumo_id?: string | null
+          restaurant_id?: string | null
+          saidas_periodo?: number | null
+          taxa_consumo_diaria?: number | null
+          tendencia?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tendencias_estoque_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tendencias_estoque_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unidades_medida: {
         Row: {
           created_at: string | null
@@ -2087,6 +2213,10 @@ export type Database = {
         Args: { restaurant_uuid: string; mes_param: number; ano_param: number }
         Returns: undefined
       }
+      calcular_estoque_minimo_automatico: {
+        Args: { insumo_uuid: string }
+        Returns: number
+      }
       calcular_meta_diaria: {
         Args: { restaurant_uuid: string }
         Returns: {
@@ -2103,6 +2233,10 @@ export type Database = {
           trial_end_date: string
           plan_status: string
         }[]
+      }
+      detectar_tendencias_estoque: {
+        Args: { restaurant_uuid: string }
+        Returns: undefined
       }
       gerar_alertas_automaticos: {
         Args: { restaurant_uuid: string }
