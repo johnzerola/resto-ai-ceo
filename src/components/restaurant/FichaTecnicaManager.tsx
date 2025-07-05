@@ -65,6 +65,11 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
   const [resultados, setResultados] = useState<ResultadosCalculados | null>(null);
   const [alertas, setAlertas] = useState<string[]>([]);
   const [fichasSalvas, setFichasSalvas] = useState<any[]>([]);
+  const [despesasFixas, setDespesasFixas] = useState(0);
+  const [despesasVariaveis, setDespesasVariaveis] = useState(0);
+  const [canalVenda, setCanalVenda] = useState('balcao');
+  const [precoCompeticao, setPrecoCompeticao] = useState(0);
+  const [salvando, setSalvando] = useState(false);
 
   const categorias = [
     { value: 'entrada', label: 'Entradas' },
@@ -85,7 +90,7 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
     if (ingredientes.length > 0 && configuracoes) {
       calcularResultados();
     }
-  }, [ingredientes, precoDesejado, metaLucroPercentual, configuracoes, rendimento]);
+  }, [ingredientes, precoDesejado, metaLucroPercentual, configuracoes, rendimento, despesasFixas, despesasVariaveis, canalVenda]);
 
   const carregarConfiguracoes = async () => {
     if (!currentRestaurant?.id) return;
@@ -185,14 +190,36 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
     // Custo de perdas
     const custoPerdas = custoTotalIngredientes * (configuracoes.perda_media_percentual / 100);
     
-    // Custo final
-    const custoFinal = custoTotalIngredientes + custoEmbalagem + custoPerdas;
+    // Despesas por porção (baseado no rendimento)
+    const despesasPorPorcao = (despesasFixas + despesasVariaveis) / Math.max(rendimento, 1);
     
-    // Custo por porção
+    // Custo final incluindo despesas
+    const custoFinal = custoTotalIngredientes + custoEmbalagem + custoPerdas + (despesasFixas + despesasVariaveis);
+    
+    // Custo por porção incluindo despesas
     const custoPorPorcao = custoFinal / Math.max(rendimento, 1);
     
-    // Preço sugerido baseado no markup
-    const precoSugerido = custoPorPorcao * (configuracoes.markup_padrao / 100);
+    // Aplicar taxas por canal de venda
+    let taxaCanal = 0;
+    switch (canalVenda) {
+      case 'ifood':
+        taxaCanal = 0.15; // 15% de taxa do iFood
+        break;
+      case 'uber':
+        taxaCanal = 0.12; // 12% de taxa do Uber
+        break;
+      case 'delivery':
+        taxaCanal = 0.05; // 5% de taxa delivery próprio
+        break;
+      default:
+        taxaCanal = 0; // Balcão sem taxa
+    }
+    
+    // Preço sugerido considerando markup e taxa do canal
+    let precoSugerido = custoPorPorcao * (configuracoes.markup_padrao / 100);
+    if (taxaCanal > 0) {
+      precoSugerido = precoSugerido / (1 - taxaCanal); // Ajustar para cobrir a taxa
+    }
     
     // Cálculos de margem
     const precoFinal = precoDesejado > 0 ? precoDesejado : precoSugerido;
@@ -256,58 +283,74 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
   };
 
   const salvarFichaTecnica = async () => {
-    if (!currentRestaurant?.id || !nomePrato || !resultados) {
-      toast.error('Preencha todos os campos obrigatórios');
+    if (!currentRestaurant?.id || !nomePrato || !resultados || ingredientes.length === 0) {
+      toast.error('Preencha todos os campos obrigatórios (nome, ingredientes)');
       return;
     }
 
+    setSalvando(true);
+    
     try {
+      // Dados da ficha técnica com precificação completa
+      const fichaData = {
+        nome_prato: nomePrato,
+        categoria,
+        rendimento_porcoes: rendimento,
+        restaurant_id: currentRestaurant.id,
+        custo_total: resultados.custoFinal,
+        custo_por_porcao: resultados.custoPorPorcao,
+        preco_sugerido: resultados.precoSugerido,
+        preco_praticado: precoDesejado > 0 ? precoDesejado : resultados.precoSugerido,
+        margem_percentual: resultados.margemLiquida,
+        lucro_estimado: resultados.lucroEstimado,
+        status_viabilidade: resultados.statusViabilidade,
+        custo_embalagem: resultados.custoEmbalagem,
+        custo_perdas: resultados.custoPerdas,
+        preco_concorrente: precoCompeticao > 0 ? precoCompeticao : null,
+        observacoes: `Canal: ${canalVenda}${despesasFixas > 0 ? ` | Desp. Fixas: R$${despesasFixas.toFixed(2)}` : ''}${despesasVariaveis > 0 ? ` | Desp. Variáveis: R$${despesasVariaveis.toFixed(2)}` : ''}`
+      };
+
       const { data, error } = await supabase
         .from('pratos')
-        .insert({
-          nome_prato: nomePrato,
-          categoria,
-          rendimento_porcoes: rendimento,
-          restaurant_id: currentRestaurant.id,
-          custo_total: resultados.custoFinal,
-          custo_por_porcao: resultados.custoPorPorcao,
-          preco_sugerido: resultados.precoSugerido,
-          preco_praticado: precoDesejado > 0 ? precoDesejado : resultados.precoSugerido,
-          margem_percentual: resultados.margemLiquida,
-          lucro_estimado: resultados.lucroEstimado,
-          status_viabilidade: resultados.statusViabilidade,
-          custo_embalagem: resultados.custoEmbalagem,
-          custo_perdas: resultados.custoPerdas
-        })
+        .insert(fichaData)
         .select()
         .single();
 
       if (error) throw error;
 
-      // Salvar ingredientes
+      // Salvar ingredientes detalhados
       if (data && ingredientes.length > 0) {
         const ingredientesData = ingredientes.map(ing => ({
           prato_id: data.id,
-          insumo_id: ing.insumo_id,
+          insumo_id: ing.insumo_id || null,
           quantidade_bruta: ing.quantidade,
           quantidade_liquida: ing.quantidade,
-          custo_total: ing.custoTotal
+          custo_total: ing.custoTotal,
+          fator_correcao: 1.0
         }));
 
-        await supabase
+        const { error: ingredientesError } = await supabase
           .from('ingredientes_por_prato')
           .insert(ingredientesData);
+
+        if (ingredientesError) throw ingredientesError;
       }
 
-      toast.success('Ficha técnica salva com sucesso!');
+      toast.success('✅ Ficha técnica salva com sucesso!', {
+        description: `${nomePrato} - Custo: R$${resultados.custoPorPorcao.toFixed(2)} | Preço: R$${resultados.precoSugerido.toFixed(2)} | Margem: ${resultados.margemLiquida.toFixed(1)}%`
+      });
       
-      // Reset form
+      // Reset form e atualizar lista
       resetForm();
-      carregarFichasSalvas();
+      await carregarFichasSalvas();
 
     } catch (error) {
       console.error('Erro ao salvar ficha técnica:', error);
-      toast.error('Erro ao salvar ficha técnica');
+      toast.error('❌ Erro ao salvar ficha técnica', {
+        description: 'Verifique os dados e tente novamente'
+      });
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -316,6 +359,10 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
     setCategoria('entrada');
     setRendimento(1);
     setPrecoDesejado(0);
+    setDespesasFixas(0);
+    setDespesasVariaveis(0);
+    setCanalVenda('balcao');
+    setPrecoCompeticao(0);
     setIngredientes([]);
     setResultados(null);
     setAlertas([]);
@@ -431,6 +478,57 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
                     value={metaLucroPercentual}
                     onChange={(e) => setMetaLucroPercentual(Number(e.target.value))}
                     placeholder="30"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="despesasFixas">Despesas Fixas (R$)</Label>
+                  <Input
+                    id="despesasFixas"
+                    type="number"
+                    step="0.01"
+                    value={despesasFixas || ''}
+                    onChange={(e) => setDespesasFixas(Number(e.target.value))}
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="despesasVariaveis">Despesas Variáveis (R$)</Label>
+                  <Input
+                    id="despesasVariaveis"
+                    type="number"
+                    step="0.01"
+                    value={despesasVariaveis || ''}
+                    onChange={(e) => setDespesasVariaveis(Number(e.target.value))}
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Canal de Venda</Label>
+                  <Select value={canalVenda} onValueChange={setCanalVenda}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="balcao">Balcão</SelectItem>
+                      <SelectItem value="ifood">iFood (15% taxa)</SelectItem>
+                      <SelectItem value="uber">Uber Eats (12% taxa)</SelectItem>
+                      <SelectItem value="delivery">Delivery Próprio (5% taxa)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="precoCompeticao">Preço Concorrente (R$)</Label>
+                  <Input
+                    id="precoCompeticao"
+                    type="number"
+                    step="0.01"
+                    value={precoCompeticao || ''}
+                    onChange={(e) => setPrecoCompeticao(Number(e.target.value))}
+                    placeholder="Opcional"
                   />
                 </div>
               </div>
@@ -663,16 +761,56 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
                 </CardContent>
               </Card>
 
-          {/* Botão Salvar */}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={resetForm}>
-              Limpar Formulário
-            </Button>
-            <Button onClick={salvarFichaTecnica} disabled={!nomePrato || ingredientes.length === 0}>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Salvar Ficha Técnica
-            </Button>
-          </div>
+          {/* Botão Salvar Destaque */}
+          <Card className="border-2 border-green-200 bg-green-50">
+            <CardContent className="pt-4">
+              <div className="flex flex-col gap-3">
+                <div className="text-center">
+                  <h4 className="font-semibold text-green-800">Pronto para Salvar</h4>
+                  <p className="text-sm text-green-600">
+                    Ficha técnica completa com precificação automática
+                  </p>
+                </div>
+                
+                {precoCompeticao > 0 && (
+                  <div className="flex justify-between items-center text-sm bg-white p-2 rounded">
+                    <span>Comparação com concorrente:</span>
+                    <span className={`font-bold ${resultados && resultados.precoSugerido < precoCompeticao ? 'text-green-600' : 'text-red-600'}`}>
+                      {resultados && precoCompeticao > 0 ? 
+                        `${resultados.precoSugerido < precoCompeticao ? 'Mais barato' : 'Mais caro'} em ${formatCurrency(Math.abs(resultados.precoSugerido - precoCompeticao))}` :
+                        'Aguardando cálculo'
+                      }
+                    </span>
+                  </div>
+                )}
+                
+                <div className="flex justify-center gap-2">
+                  <Button variant="outline" onClick={resetForm} disabled={salvando}>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Limpar
+                  </Button>
+                  <Button 
+                    onClick={salvarFichaTecnica} 
+                    disabled={!nomePrato || ingredientes.length === 0 || salvando}
+                    className="bg-green-600 hover:bg-green-700"
+                    size="lg"
+                  >
+                    {salvando ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar Ficha Técnica
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Precificação Avançada */}
           {resultados && (
