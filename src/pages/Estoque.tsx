@@ -4,6 +4,11 @@ import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { InventoryOverview } from "@/components/restaurant/InventoryOverview";
 import { InventoryForm } from "@/components/restaurant/InventoryForm";
 import { PurchaseListGenerator } from "@/components/restaurant/PurchaseListGenerator";
+import { StockTrendsDashboard } from "@/components/restaurant/StockTrendsDashboard";
+import { SuppliersChecklist } from "@/components/restaurant/SuppliersChecklist";
+import { AutoMinStockCalculator } from "@/components/restaurant/AutoMinStockCalculator";
+import { UnitConverter } from "@/components/restaurant/UnitConverter";
+import { ProactivePurchaseRecommendations } from "@/components/restaurant/ProactivePurchaseRecommendations";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, FileDown, ShoppingCart, Package } from "lucide-react";
@@ -247,14 +252,20 @@ const Estoque = () => {
               ) : (
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <div className="border-b px-4 py-2">
-                    <TabsList className="grid w-full grid-cols-2 max-w-md">
+                    <TabsList className="grid w-full grid-cols-4 max-w-2xl">
                       <TabsTrigger value="overview" className="flex items-center gap-2 text-xs sm:text-sm">
                         <Package className="h-4 w-4" />
                         Estoque
                       </TabsTrigger>
                       <TabsTrigger value="shopping" className="flex items-center gap-2 text-xs sm:text-sm">
                         <ShoppingCart className="h-4 w-4" />
-                        Lista de Compras
+                        Compras
+                      </TabsTrigger>
+                      <TabsTrigger value="trends" className="flex items-center gap-2 text-xs sm:text-sm">
+                        Tendências
+                      </TabsTrigger>
+                      <TabsTrigger value="auto" className="flex items-center gap-2 text-xs sm:text-sm">
+                        Automático
                       </TabsTrigger>
                     </TabsList>
                   </div>
@@ -263,8 +274,23 @@ const Estoque = () => {
                     <InventoryOverview onEdit={editItem} />
                   </TabsContent>
 
-                  <TabsContent value="shopping" className="p-4">
+                  <TabsContent value="shopping" className="p-4 space-y-6">
                     <PurchaseListGenerator />
+                    <SuppliersChecklist />
+                    <ProactivePurchaseRecommendations />
+                  </TabsContent>
+
+                  <TabsContent value="trends" className="p-4">
+                    <StockTrendsDashboard />
+                  </TabsContent>
+
+                  <TabsContent value="auto" className="p-4 space-y-6">
+                    <AutoMinStockCalculator />
+                    <UnitConverter 
+                      currentUnit="kg" 
+                      conversions={[]} 
+                      onConversionsChange={() => {}} 
+                    />
                   </TabsContent>
                 </Tabs>
               )}
