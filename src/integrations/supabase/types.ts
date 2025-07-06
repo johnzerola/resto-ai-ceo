@@ -1496,18 +1496,23 @@ export type Database = {
       pratos: {
         Row: {
           ativo: boolean | null
+          canal_venda: string | null
           categoria: string | null
           created_at: string | null
           custo_embalagem: number | null
           custo_perdas: number | null
           custo_por_porcao: number | null
           custo_total: number | null
+          despesas_fixas_mensais: number | null
+          despesas_variaveis_mensais: number | null
           embalagem_id: string | null
           formato_venda: string | null
           id: string
           lucro_estimado: number | null
           margem_percentual: number | null
           margem_seguranca: number | null
+          markup_personalizado: number | null
+          meta_lucro_percentual: number | null
           nome_prato: string
           observacoes: string | null
           peso_bruto_kg: number | null
@@ -1531,18 +1536,23 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          canal_venda?: string | null
           categoria?: string | null
           created_at?: string | null
           custo_embalagem?: number | null
           custo_perdas?: number | null
           custo_por_porcao?: number | null
           custo_total?: number | null
+          despesas_fixas_mensais?: number | null
+          despesas_variaveis_mensais?: number | null
           embalagem_id?: string | null
           formato_venda?: string | null
           id?: string
           lucro_estimado?: number | null
           margem_percentual?: number | null
           margem_seguranca?: number | null
+          markup_personalizado?: number | null
+          meta_lucro_percentual?: number | null
           nome_prato: string
           observacoes?: string | null
           peso_bruto_kg?: number | null
@@ -1566,18 +1576,23 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          canal_venda?: string | null
           categoria?: string | null
           created_at?: string | null
           custo_embalagem?: number | null
           custo_perdas?: number | null
           custo_por_porcao?: number | null
           custo_total?: number | null
+          despesas_fixas_mensais?: number | null
+          despesas_variaveis_mensais?: number | null
           embalagem_id?: string | null
           formato_venda?: string | null
           id?: string
           lucro_estimado?: number | null
           margem_percentual?: number | null
           margem_seguranca?: number | null
+          markup_personalizado?: number | null
+          meta_lucro_percentual?: number | null
           nome_prato?: string
           observacoes?: string | null
           peso_bruto_kg?: number | null
