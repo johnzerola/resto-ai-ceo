@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SimulatorForm } from "@/components/restaurant/SimulatorForm";
 import { SimulatorResults } from "@/components/restaurant/SimulatorResults";
 import { PriceSimulator } from "@/components/restaurant/PriceSimulator";
+import { FinancialSimulator } from "@/components/restaurant/FinancialSimulator";
 import { ProtectedFeature } from "@/components/subscription/ProtectedFeature";
 import { Calculator, DollarSign, TrendingUp } from "lucide-react";
 
@@ -36,11 +37,16 @@ const Simulador = () => {
         <div className="w-full min-w-0 overflow-hidden">
           <Tabs defaultValue="price" className="space-y-3 sm:space-y-4">
             <div className="w-full overflow-x-auto">
-              <TabsList className="grid grid-cols-2 w-full max-w-xs sm:max-w-md mx-auto sm:mx-0 h-8 sm:h-10">
+              <TabsList className="grid grid-cols-3 w-full max-w-lg mx-auto sm:mx-0 h-8 sm:h-10">
                 <TabsTrigger value="price" className="flex items-center gap-1 text-xs sm:text-sm px-2">
                   <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden xs:inline">Simulador de</span>
                   <span>Preços</span>
+                </TabsTrigger>
+                <TabsTrigger value="advanced" className="flex items-center gap-1 text-xs sm:text-sm px-2">
+                  <Calculator className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden xs:inline">Calculadora</span>
+                  <span>Avançada</span>
                 </TabsTrigger>
                 <TabsTrigger value="scenario" className="flex items-center gap-1 text-xs sm:text-sm px-2">
                   <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -67,6 +73,23 @@ const Simulador = () => {
                       <PriceSimulator />
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="advanced" className="space-y-3 sm:space-y-4">
+              <Card className="w-full min-w-0">
+                <CardHeader className="p-3 sm:p-4 lg:p-6">
+                  <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
+                    <Calculator className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 flex-shrink-0" />
+                    <span className="truncate">Calculadora Financeira Avançada</span>
+                  </CardTitle>
+                  <p className="text-muted-foreground text-xs sm:text-sm">
+                    Análise completa de custos, margens e break-even
+                  </p>
+                </CardHeader>
+                <CardContent className="p-3 sm:p-4 lg:p-6 pt-0 w-full min-w-0 overflow-hidden">
+                  <FinancialSimulator />
                 </CardContent>
               </Card>
             </TabsContent>

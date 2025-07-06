@@ -1964,6 +1964,72 @@ export type Database = {
           },
         ]
       }
+      simulacoes_precos: {
+        Row: {
+          created_at: string
+          custo_direto: number
+          custo_mao_obra: number
+          custos_fixos: number
+          id: string
+          impostos_percentual: number
+          lucro_bruto: number
+          margem_desejada: number
+          markup_calculado: number
+          nome_produto: string
+          observacoes: string | null
+          preco_sugerido: number
+          precos_concorrentes: Json | null
+          restaurant_id: string
+          status_viabilidade: string
+          taxa_entrega: number
+          taxa_plataforma: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custo_direto?: number
+          custo_mao_obra?: number
+          custos_fixos?: number
+          id?: string
+          impostos_percentual?: number
+          lucro_bruto?: number
+          margem_desejada?: number
+          markup_calculado?: number
+          nome_produto: string
+          observacoes?: string | null
+          preco_sugerido?: number
+          precos_concorrentes?: Json | null
+          restaurant_id: string
+          status_viabilidade?: string
+          taxa_entrega?: number
+          taxa_plataforma?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custo_direto?: number
+          custo_mao_obra?: number
+          custos_fixos?: number
+          id?: string
+          impostos_percentual?: number
+          lucro_bruto?: number
+          margem_desejada?: number
+          markup_calculado?: number
+          nome_produto?: string
+          observacoes?: string | null
+          preco_sugerido?: number
+          precos_concorrentes?: Json | null
+          restaurant_id?: string
+          status_viabilidade?: string
+          taxa_entrega?: number
+          taxa_plataforma?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
