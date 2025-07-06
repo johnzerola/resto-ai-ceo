@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 
 const QuickAccessGrid = React.lazy(() => import('./QuickAccessGrid'));
 const MetricsGrid = React.lazy(() => import('./MetricsGrid'));
+const BusinessProfileWidget = React.lazy(() => import('./BusinessProfileWidget').then(module => ({ default: module.BusinessProfileWidget })));
 
 const DashboardSkeleton = memo(() => (
   <div className="space-y-4 sm:space-y-6 animate-pulse">
@@ -94,6 +95,17 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
               <DashboardSkeleton />
             ) : (
               <div className="space-y-4 sm:space-y-6">
+                {/* Widget de Perfil Empresarial */}
+                <ErrorBoundary fallback={
+                  <Card className="p-4 sm:p-6 text-center">
+                    <p className="text-muted-foreground text-sm">Erro ao carregar perfil empresarial</p>
+                  </Card>
+                }>
+                  <div data-testid="business-profile">
+                    <BusinessProfileWidget />
+                  </div>
+                </ErrorBoundary>
+
                 <ErrorBoundary fallback={
                   <Card className="p-4 sm:p-6 text-center">
                     <p className="text-muted-foreground text-sm">Erro ao carregar acesso rápido</p>

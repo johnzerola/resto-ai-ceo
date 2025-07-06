@@ -101,7 +101,14 @@ const navigation = [
     category: "account"
   },
   {
-    title: "Dados",
+    title: "Dados do Negócio",
+    href: "/dados-negocio",
+    icon: Shield,
+    description: "Configurações empresariais",
+    category: "account"
+  },
+  {
+    title: "Privacidade",
     href: "/privacidade",
     icon: Shield,
     description: "Privacidade e segurança",
