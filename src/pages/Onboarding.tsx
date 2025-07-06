@@ -39,7 +39,7 @@ const Onboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [showInsights, setShowInsights] = useState(false);
   const [insights, setInsights] = useState<string[]>([]);
-  const { createRestaurant, user, currentRestaurant } = useAuth();
+  const { createRestaurant, user, currentRestaurant, isLoading: authLoading } = useAuth();
   const { saveProfile, generateMotivationalInsights } = useBusinessProfile();
   const navigate = useNavigate();
 
@@ -193,11 +193,40 @@ const Onboarding = () => {
     }
   };
 
+  // Se está carregando a autenticação, mostrar loading
+  if (authLoading) {
+    console.log('⏳ Onboarding: Aguardando carregamento da autenticação...');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Se já tem restaurante, redirecionar
-  if (currentRestaurant) {
+  if (currentRestaurant && !isSubmitting) {
+    console.log('🔄 Redirecionando para dashboard - restaurante já existe');
     navigate("/dashboard");
     return null;
   }
+
+  // Se está submetendo, mostrar loading
+  if (isSubmitting) {
+    console.log('⏳ Onboarding: Submetendo dados do restaurante...');
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Configurando seu restaurante...</p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('🎯 Onboarding: Renderizando formulário de configuração');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-8">
