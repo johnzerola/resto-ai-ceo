@@ -17,7 +17,7 @@ export function ManualUsuario() {
       <div>
         <h1 className="text-2xl font-bold">Manual do Usuário</h1>
         <TypographyP>
-          Manual completo com todas as funcionalidades do Resto AI CEO para gestão do seu restaurante.
+          Manual completo com todas as funcionalidades do LucrAÍ para gestão do seu restaurante.
           Consulte esta seção para aprender a utilizar cada módulo do sistema.
         </TypographyP>
       </div>

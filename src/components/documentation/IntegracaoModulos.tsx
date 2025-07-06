@@ -24,7 +24,7 @@ export function IntegracaoModulos() {
       
       <TypographyH3>Fluxo de Dados entre Módulos</TypographyH3>
       <TypographyP>
-        O Resto AI CEO foi projetado para que todos os módulos compartilhem dados entre si, 
+        O LucrAÍ foi projetado para que todos os módulos compartilhem dados entre si, 
         criando uma experiência integrada que evita a duplicação de informações e mantém a consistência.
       </TypographyP>
       

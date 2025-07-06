@@ -152,7 +152,7 @@ const Onboarding = () => {
   };
 
   const handleContinueToDashboard = () => {
-    toast.success("Bem-vindo ao RestoAI CEO! Vamos começar a gerenciar seu restaurante!");
+    toast.success("Bem-vindo ao LucrAÍ! Vamos começar a gerenciar seu restaurante!");
     navigate("/dashboard");
   };
 

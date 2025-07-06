@@ -269,7 +269,7 @@ const PaginaVendasOtimizada = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-5xl sm:text-6xl font-bold mb-8">
-              Apresento o RestoAI CEO
+              Apresento o LucrAÍ CEO
             </h2>
             <p className="text-2xl mb-8 max-w-4xl mx-auto">
               A única plataforma com <strong>Inteligência Artificial</strong> que identifica 
@@ -310,7 +310,7 @@ const PaginaVendasOtimizada = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-6">
-              O que acontece quando você usa o RestoAI CEO:
+              O que acontece quando você usa o LucrAÍ:
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Mais de 7.842 restaurantes já viveram essa transformação. Agora é sua vez.
@@ -424,7 +424,7 @@ const PaginaVendasOtimizada = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-6">
-              Por que 7.842 donos de restaurantes confiam no RestoAI CEO?
+              Por que 7.842 donos de restaurantes confiam no LucrAÍ?
             </h2>
           </div>
 
@@ -480,7 +480,7 @@ const PaginaVendasOtimizada = () => {
                   ))}
                 </div>
                 <p className="italic text-gray-700 mb-6 text-lg leading-relaxed">
-                  "Antes do RestoAI CEO eu trabalhava 16 horas por dia e sobrava R$ 3.000/mês. 
+                  "Antes do LucrAÍ eu trabalhava 16 horas por dia e sobrava R$ 3.000/mês. 
                   Hoje trabalho 8 horas e sobram R$ 23.000/mês. A IA encontrou R$ 12.000 em 
                   vazamentos que eu nem sabia que existiam. É surreal!"
                 </p>
@@ -507,7 +507,7 @@ const PaginaVendasOtimizada = () => {
                 </div>
                 <p className="italic text-gray-700 mb-6 text-lg leading-relaxed">
                   "Estava quase fechando o restaurante. Dívidas de R$ 80mil e sem perspectiva. 
-                  O RestoAI me mostrou que eu estava vendendo 60% dos pratos no prejuízo! 
+                  O LucrAÍ me mostrou que eu estava vendendo 60% dos pratos no prejuízo! 
                   Em 4 meses quitei todas as dívidas e hoje faturo R$ 180k/mês."
                 </p>
                 <div className="flex items-center">
@@ -558,7 +558,7 @@ const PaginaVendasOtimizada = () => {
                   ))}
                 </div>
                 <p className="italic text-gray-700 mb-6 text-lg leading-relaxed">
-                  "O RestoAI pagou por si mesmo na primeira semana! Descobri que estava 
+                  "O LucrAÍ pagou por si mesmo na primeira semana! Descobri que estava 
                   desperdiçando R$ 8.000/mês só em compras erradas. Agora a IA faz toda a 
                   gestão de estoque e meu lucro aumentou 85% em 60 dias."
                 </p>
@@ -589,7 +589,7 @@ const PaginaVendasOtimizada = () => {
               <h3 className="text-3xl font-bold mb-6">Vamos fazer as contas juntos:</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
                 <div>
-                  <h4 className="text-xl font-bold mb-4 text-yellow-300">SEM o RestoAI CEO:</h4>
+                  <h4 className="text-xl font-bold mb-4 text-yellow-300">SEM o LucrAÍ:</h4>
                   <ul className="space-y-2">
                     <li>❌ R$ 15.000/mês perdidos em desperdício</li>
                     <li>❌ R$ 8.000/mês em pratos deficitários</li>
@@ -599,7 +599,7 @@ const PaginaVendasOtimizada = () => {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold mb-4 text-green-300">COM o RestoAI CEO:</h4>
+                  <h4 className="text-xl font-bold mb-4 text-green-300">COM o LucrAÍ:</h4>
                   <ul className="space-y-2">
                     <li>✅ +R$ 15.000/mês recuperados</li>
                     <li>✅ +R$ 12.000/mês em otimização</li>
@@ -850,7 +850,7 @@ const PaginaVendasOtimizada = () => {
               AUMENTE SEU LUCRO EM 25% OU SEU DINHEIRO DE VOLTA!
             </h3>
             <p className="text-lg text-gray-700 mb-6">
-              Use o RestoAI CEO por 60 dias completos. Se você não aumentar seu lucro em 
+              Use o LucrAÍ por 60 dias completos. Se você não aumentar seu lucro em 
               pelo menos 25%, nós devolvemos 100% do seu investimento. Sem perguntas, 
               sem burocracias, sem enrolação.
             </p>
@@ -939,7 +939,7 @@ const PaginaVendasOtimizada = () => {
               restaurantes mais lucrativos do Brasil usam.
             </p>
             <p>
-              A pergunta não é se o RestoAI CEO funciona. 
+              A pergunta não é se o LucrAÍ funciona. 
               <strong className="text-green-400"> Já provamos que funciona com 7.842 restaurantes.</strong>
             </p>
             <p className="text-3xl font-bold text-red-400">
@@ -972,18 +972,18 @@ const PaginaVendasOtimizada = () => {
       <footer className="bg-gray-900 text-gray-300 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="mb-4">
-            <h3 className="text-white font-bold text-xl mb-2">RestoAI CEO</h3>
+            <h3 className="text-white font-bold text-xl mb-2">LucrAÍ</h3>
             <p className="text-sm">
               A plataforma que transforma restaurantes com inteligência artificial.
             </p>
           </div>
           <div className="flex items-center justify-center gap-4 text-sm mb-4">
             <span>📞 (11) 99999-9999</span>
-            <span>📧 contato@restoaiceo.com</span>
+            <span>📧 contato@lucr.ai</span>
             <span>💬 Chat 24/7</span>
           </div>
           <div className="border-t border-gray-800 pt-4 text-sm">
-            <p>© {new Date().getFullYear()} RestoAI CEO. Todos os direitos reservados.</p>
+            <p>© {new Date().getFullYear()} LucrAÍ. Todos os direitos reservados.</p>
             <p className="mt-2 text-gray-400">
               CNPJ: 00.000.000/0001-00 • Desenvolvido para transformar restaurantes brasileiros
             </p>
