@@ -421,7 +421,7 @@ export default function Cardapio() {
 
           {/* Aba Fichas Técnicas & Precificação Integrada */}
           <TabsContent value="fichas" className="space-y-6">
-            <FichaTecnicaIntegrada onFichaUpdate={handleFichaUpdate} />
+            <FichaTecnicaIntegrada />
           </TabsContent>
 
           {/* Aba Análises */}

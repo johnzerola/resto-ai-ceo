@@ -395,7 +395,9 @@ export function useFichaTecnicaCompleta() {
         rendimento_porcoes: dadosPrato.rendimento_porcoes,
         observacoes: dadosPrato.observacoes || '',
         restaurant_id: currentRestaurant.id,
+        // Campos completos da ficha técnica
         custo_total: resultados?.cmv_estimado_valor || 0,
+        custo_por_porcao: (resultados?.cmv_estimado_valor || 0) / Math.max(dadosPrato.rendimento_porcoes, 1),
         preco_sugerido: resultados?.preco_sugerido || 0,
         preco_praticado: dadosPrato.preco_desejado || resultados?.preco_sugerido || 0,
         lucro_estimado: resultados?.lucro_estimado_valor || 0,

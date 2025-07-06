@@ -2454,6 +2454,21 @@ export type Database = {
           status_viabilidade: string
         }[]
       }
+      calcular_cmv_completo_melhorado: {
+        Args: { prato_uuid: string }
+        Returns: {
+          custo_ingredientes: number
+          despesas_fixas_prato: number
+          despesas_variaveis_prato: number
+          custo_total_final: number
+          custo_por_porcao: number
+          preco_sugerido_calculado: number
+          margem_bruta_percentual: number
+          margem_liquida_percentual: number
+          status_viabilidade: string
+          alertas: Json
+        }[]
+      }
       calcular_cmv_inteligente: {
         Args: { prato_uuid: string; preco_final?: number }
         Returns: {
