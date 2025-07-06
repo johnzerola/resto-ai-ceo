@@ -18,7 +18,8 @@ import {
   Settings,
   Bot,
   Shield,
-  CreditCard
+  CreditCard,
+  ClipboardList
 } from "lucide-react";
 import { ModernNavItem } from "./ModernNavItem";
 
@@ -94,16 +95,16 @@ const navigation = [
     category: "account"
   },
   {
-    title: "Configurações",
+    title: "Gestão de Tarefas",
     href: "/configuracoes",
-    icon: Settings,
+    icon: ClipboardList,
     description: "Configurações do sistema",
     category: "account"
   },
   {
     title: "Dados do Negócio",
     href: "/dados-negocio",
-    icon: Shield,
+    icon: Settings,
     description: "Configurações empresariais",
     category: "account"
   },

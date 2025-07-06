@@ -115,7 +115,7 @@ const BusinessProfilePage = () => {
 
   return (
     <ModernLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 mt-8 ml-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Dados do Negócio</h1>

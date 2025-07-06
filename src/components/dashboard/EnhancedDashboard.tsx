@@ -30,7 +30,7 @@ import { useSystemValidation } from "@/hooks/useSystemValidation";
 const quickAccessCards = [
   {
     title: "Validação Sistema",
-    description: "Verificar configurações",
+            description: "Verificar gestão de tarefas",
     icon: CheckCircle,
     href: "/system-validation",
     gradient: "from-green-500 to-green-600",
@@ -288,7 +288,7 @@ export function EnhancedDashboard() {
                         </Link>
                         <Link to="/configuracoes">
                           <MobileButton variant="outline" className="w-full sm:w-auto">
-                            Configurações
+                            Gestão de Tarefas
                           </MobileButton>
                         </Link>
                       </div>

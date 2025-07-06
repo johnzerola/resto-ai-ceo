@@ -283,7 +283,7 @@ export function StreamlinedDashboard() {
                         </Link>
                         <Link to="/configuracoes">
                           <MobileButton variant="outline" className="w-full sm:w-auto">
-                            Configurações
+                            Gestão de Tarefas
                           </MobileButton>
                         </Link>
                       </div>

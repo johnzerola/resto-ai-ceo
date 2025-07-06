@@ -72,7 +72,7 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link to="/configuracoes">
             <Settings className="mr-2 h-4 w-4" />
-            <span>Configurações</span>
+            <span>Gestão de Tarefas</span>
           </Link>
         </DropdownMenuItem>
         

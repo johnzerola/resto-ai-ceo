@@ -127,7 +127,7 @@ export function GuiaInicioRapido() {
         <TypographyH4 className="mt-0">Precisa de ajuda?</TypographyH4>
         <TypographyP>
           Caso tenha dúvidas ou precise de suporte, acesse o manual completo do usuário 
-          ou entre em contato com nosso suporte através do menu Configurações.
+          ou entre em contato com nosso suporte através do menu Gestão de Tarefas.
         </TypographyP>
       </div>
     </div>
