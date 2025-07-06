@@ -21,6 +21,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 
+// Hook para escutar atualizações de categorias
+function useCategoriesRefresh(reloadFn: () => void) {
+  useEffect(() => {
+    const handleCategoriesUpdate = () => {
+      reloadFn();
+    };
+    
+    window.addEventListener('categoriesUpdated', handleCategoriesUpdate);
+    return () => window.removeEventListener('categoriesUpdated', handleCategoriesUpdate);
+  }, [reloadFn]);
+}
+
 interface ContaPagar {
   id: string;
   descricao: string;
@@ -40,7 +52,7 @@ interface AccountsPayableManagerProps {
 
 export function AccountsPayableManager({ onDataChange }: AccountsPayableManagerProps) {
   const { currentRestaurant } = useAuth();
-  const { getExpenseCategories } = useFinancialCategories();
+  const { getExpenseCategories, reloadCategories } = useFinancialCategories();
   const [contas, setContas] = useState<ContaPagar[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -58,6 +70,9 @@ export function AccountsPayableManager({ onDataChange }: AccountsPayableManagerP
   useEffect(() => {
     loadContas();
   }, [currentRestaurant]);
+
+  // Escutar atualizações de categorias
+  useCategoriesRefresh(reloadCategories);
 
   const loadContas = async () => {
     if (!currentRestaurant?.id) return;

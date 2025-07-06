@@ -21,6 +21,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 
+// Hook para escutar atualizações de categorias
+function useCategoriesRefresh(reloadFn: () => void) {
+  useEffect(() => {
+    const handleCategoriesUpdate = () => {
+      reloadFn();
+    };
+    
+    window.addEventListener('categoriesUpdated', handleCategoriesUpdate);
+    return () => window.removeEventListener('categoriesUpdated', handleCategoriesUpdate);
+  }, [reloadFn]);
+}
+
 interface ContaReceber {
   id: string;
   descricao: string;
@@ -40,7 +52,7 @@ interface AccountsReceivableManagerProps {
 
 export function AccountsReceivableManager({ onDataChange }: AccountsReceivableManagerProps) {
   const { currentRestaurant } = useAuth();
-  const { getIncomeCategories } = useFinancialCategories();
+  const { getIncomeCategories, reloadCategories } = useFinancialCategories();
   const [contas, setContas] = useState<ContaReceber[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -58,6 +70,9 @@ export function AccountsReceivableManager({ onDataChange }: AccountsReceivableMa
   useEffect(() => {
     loadContas();
   }, [currentRestaurant]);
+
+  // Escutar atualizações de categorias
+  useCategoriesRefresh(reloadCategories);
 
   const loadContas = async () => {
     if (!currentRestaurant?.id) return;

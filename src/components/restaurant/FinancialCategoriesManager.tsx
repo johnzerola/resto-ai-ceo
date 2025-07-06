@@ -52,6 +52,8 @@ export function FinancialCategoriesManager() {
 
     if (success) {
       resetForm();
+      // Notificar outros componentes sobre a atualização
+      window.dispatchEvent(new CustomEvent('categoriesUpdated'));
     }
   };
 
