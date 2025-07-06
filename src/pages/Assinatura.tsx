@@ -5,9 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, Star, Zap, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTrialStatus } from '@/hooks/useTrialStatus';
 
 export function Assinatura() {
   const { subscriptionInfo } = useAuth();
+  const { trialStatus } = useTrialStatus();
+
+  const isTrial = subscriptionInfo?.status === 'trial' || trialStatus?.isTrialActive;
+  const currentPaidPlan = (subscriptionInfo?.status === 'active' && !isTrial) ? subscriptionInfo?.plan : null;
 
   const plans = [
     {
@@ -69,7 +74,7 @@ export function Assinatura() {
                 </Badge>
               </CardTitle>
               <CardDescription>
-                Plano atual: {subscriptionInfo.plan || 'Não definido'}
+                Plano atual: {isTrial ? 'Teste Grátis' : (currentPaidPlan || 'Não definido')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -120,9 +125,9 @@ export function Assinatura() {
                     className="w-full" 
                     variant={plan.current ? "outline" : plan.popular ? "default" : "outline"}
                     onClick={() => handlePlanChange(plan.name)}
-                    disabled={plan.current}
+                    disabled={(!isTrial && plan.current)}
                   >
-                    {plan.current ? "Plano Atual" : "Escolher Plano"}
+                    {(!isTrial && plan.current) ? "Plano Atual" : "Escolher Plano"}
                   </Button>
                 </CardContent>
               </Card>
