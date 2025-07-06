@@ -24,28 +24,23 @@ import {
   RotateCcw
 } from "lucide-react";
 import { toast } from 'sonner';
-import { useFichaTecnicaCore } from "@/hooks/useFichaTecnicaCore";
-import { useFichaTecnicaActions } from "@/hooks/useFichaTecnicaActions";
+import { useFichaTecnicaOptimized } from "@/hooks/useFichaTecnicaOptimized";
 
 export function FichaTecnicaInteligenteCompleta() {
-  const { 
-    ingredientes, 
-    setIngredientes, 
-    resultados, 
-    isCalculating, 
-    calcularResultados 
-  } = useFichaTecnicaCore();
-  
   const {
-    metasLucro,
-    setMetasLucro,
+    ingredientes,
+    resultados,
+    isCalculating,
+    insumosDisponiveis,
     precoDesejado,
     setPrecoDesejado,
-    insumosDisponiveis,
     adicionarIngrediente,
     atualizarIngrediente,
-    salvarFichaTecnica
-  } = useFichaTecnicaActions();
+    removerIngrediente,
+    calcularResultados,
+    salvarFichaTecnica,
+    limparFormulario
+  } = useFichaTecnicaOptimized();
 
   const [prato, setPrato] = useState({
     nome_prato: '',
@@ -58,8 +53,7 @@ export function FichaTecnicaInteligenteCompleta() {
 
   // Adicionar novo ingrediente
   const handleAdicionarIngrediente = () => {
-    const novoIngrediente = adicionarIngrediente();
-    setIngredientes(prev => [...prev, novoIngrediente]);
+    adicionarIngrediente();
   };
 
   // Atualizar ingrediente com debounce e validação
@@ -68,33 +62,21 @@ export function FichaTecnicaInteligenteCompleta() {
     if (campo === 'insumo_id' && valor) {
       const insumoSelecionado = insumosDisponiveis.find(ins => ins.id === valor);
       if (insumoSelecionado) {
-        const novosIngredientes = ingredientes.map(ing => {
-          if (ing.id === id) {
-            return {
-              ...ing,
-              insumo_id: valor,
-              nome_insumo: insumoSelecionado.nome,
-              preco_unitario: insumoSelecionado.preco_unitario || 0,
-              unidade_medida: insumoSelecionado.unidade_medida || 'g',
-              // Recalcular custo total automaticamente
-              custo_total: ing.quantidade_liquida * (insumoSelecionado.preco_unitario || 0)
-            };
-          }
-          return ing;
-        });
-        setIngredientes(novosIngredientes);
+        atualizarIngrediente(id, 'insumo_id', valor);
+        atualizarIngrediente(id, 'nome_insumo', insumoSelecionado.nome);
+        atualizarIngrediente(id, 'preco_unitario', insumoSelecionado.preco_unitario);
+        atualizarIngrediente(id, 'unidade_medida', insumoSelecionado.unidade_medida);
         return;
       }
     }
 
     // Para outros campos, usar a função padrão
-    const novosIngredientes = atualizarIngrediente(ingredientes, id, campo as any, valor);
-    setIngredientes(novosIngredientes);
+    atualizarIngrediente(id, campo as any, valor);
   };
 
   // Remover ingrediente
   const handleRemoverIngrediente = (id: string) => {
-    setIngredientes(prev => prev.filter(ing => ing.id !== id));
+    removerIngrediente(id);
   };
 
   // Calcular automaticamente quando dados mudarem
@@ -102,7 +84,7 @@ export function FichaTecnicaInteligenteCompleta() {
     if (ingredientes.length > 0 && ingredientes.some(ing => ing.custo_total > 0)) {
       const timer = setTimeout(() => {
         console.log('🧮 Trigger automático de cálculo');
-        calcularResultados(undefined, precoDesejado || undefined);
+        calcularResultados(precoDesejado || undefined);
       }, 800);
       return () => clearTimeout(timer);
     }
@@ -149,7 +131,7 @@ export function FichaTecnicaInteligenteCompleta() {
     // Calcular resultados se não tiver
     if (!resultados) {
       console.log('⏳ Calculando resultados antes de salvar...');
-      await calcularResultados(undefined, precoDesejado || undefined);
+      await calcularResultados(precoDesejado || undefined);
       
       // Dar um tempo para o cálculo processar
       setTimeout(() => {
@@ -164,7 +146,7 @@ export function FichaTecnicaInteligenteCompleta() {
 
     console.log('💾 Salvando ficha técnica:', { prato, ingredientes, resultados });
     
-    const sucesso = await salvarFichaTecnica(ingredientes, resultados, prato);
+    const sucesso = await salvarFichaTecnica(prato);
     if (sucesso) {
       handleLimparTudo();
       toast.success('🎉 Ficha técnica salva com sucesso!', {
@@ -181,8 +163,7 @@ export function FichaTecnicaInteligenteCompleta() {
       rendimento_porcoes: 1,
       observacoes: ''
     });
-    setIngredientes([]);
-    setPrecoDesejado(0);
+    limparFormulario();
   };
 
   // Funções de estilo

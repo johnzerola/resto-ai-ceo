@@ -114,7 +114,7 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
       return;
     }
 
-    // Calcular preço unitário com validação robusta
+    // Validação robusta dos valores principais
     const precoNumerico = Number(formData.preco_pago);
     const volumeNumerico = Number(formData.volume_embalagem);
     
@@ -128,26 +128,19 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
       return;
     }
     
-    const preco_unitario = precoNumerico / volumeNumerico;
+    // O preço unitário será calculado automaticamente pelo trigger do banco
     const precoAnterior = editingInsumo?.preco_unitario || 0;
-
-    // Validar se o cálculo é válido
-    if (!isFinite(preco_unitario) || preco_unitario <= 0) {
-      toast.error('Erro no cálculo do preço unitário. Verifique os valores inseridos.');
-      return;
-    }
     
     try {
       if (editingInsumo) {
-        // Atualizar no banco com logs detalhados
-        console.log('🔄 Atualizando insumo:', editingInsumo.id, 'com preço:', preco_unitario);
+        // Atualizar no banco - deixar o trigger calcular preco_unitario
+        console.log('🔄 Atualizando insumo:', editingInsumo.id);
         
         const updateData = {
           nome: formData.nome.trim(),
           categoria: formData.categoria?.trim() || 'geral',
           preco_pago: precoNumerico,
           volume_embalagem: volumeNumerico,
-          preco_unitario: Number(preco_unitario.toFixed(6)),
           unidade_medida: formData.unidade_medida.trim(),
           fornecedor: formData.fornecedor?.trim() || 'Não informado',
           estoque_atual: Number(formData.estoque_atual) || 0,
@@ -155,7 +148,7 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
           updated_at: new Date().toISOString()
         };
 
-        console.log('🔄 Atualizando insumo:', editingInsumo.id, 'dados:', updateData);
+        console.log('🔄 Dados para atualização:', updateData);
         
         const { error } = await supabase
           .from('insumos')
@@ -164,21 +157,32 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
 
         if (error) throw error;
         
-        // Efeito cascata se preço mudou
-        if (Math.abs(preco_unitario - precoAnterior) > 0.01) {
-          onCascadeEffect?.(editingInsumo.id, preco_unitario);
+        // Recarregar dados para pegar o preço unitário calculado
+        await loadInsumos();
+        
+        // Buscar o preço unitário recalculado para efeito cascata
+        const { data: insumoAtualizado } = await supabase
+          .from('insumos')
+          .select('preco_unitario')
+          .eq('id', editingInsumo.id)
+          .single();
+        
+        const novoPrecoUnitario = insumoAtualizado?.preco_unitario || 0;
+        
+        // Efeito cascata se preço mudou significativamente
+        if (Math.abs(novoPrecoUnitario - precoAnterior) > 0.01) {
+          onCascadeEffect?.(editingInsumo.id, novoPrecoUnitario);
           toast.success(`✅ Insumo "${formData.nome}" atualizado! Efeito cascata aplicado nos preços.`);
         } else {
           toast.success(`✅ Insumo "${formData.nome}" atualizado com sucesso!`);
         }
       } else {
-        // Criar novo - validação extra dos dados
+        // Criar novo - deixar o trigger calcular preco_unitario automaticamente
         const insumoData = {
           nome: formData.nome.trim(),
           categoria: formData.categoria?.trim() || 'geral',
           preco_pago: precoNumerico,
           volume_embalagem: volumeNumerico,
-          preco_unitario: Number(preco_unitario.toFixed(6)), // Precisão controlada
           unidade_medida: formData.unidade_medida.trim(),
           fornecedor: formData.fornecedor?.trim() || 'Não informado',
           estoque_atual: Number(formData.estoque_atual) || 0,
@@ -186,11 +190,7 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
           restaurant_id: currentRestaurant.id
         };
 
-        // Log detalhado para debug
-        console.log('💾 Criando novo insumo:', {
-          ...insumoData,
-          calculado: `${precoNumerico} / ${volumeNumerico} = ${preco_unitario}`
-        });
+        console.log('💾 Criando novo insumo:', insumoData);
 
         const { error } = await supabase
           .from('insumos')
@@ -201,8 +201,9 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
           throw error;
         }
         
+        const precoCalculado = precoNumerico / volumeNumerico;
         toast.success(`✅ Insumo "${formData.nome}" adicionado com sucesso!`, {
-          description: `Preço unitário: R$ ${preco_unitario.toFixed(4)}/${formData.unidade_medida}`
+          description: `Preço unitário calculado: R$ ${precoCalculado.toFixed(4)}/${formData.unidade_medida}`
         });
       }
 
