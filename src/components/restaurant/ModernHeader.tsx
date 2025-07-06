@@ -24,7 +24,7 @@ export const ModernHeader = memo(function ModernHeader() {
         {/* Center - Brand on mobile */}
         <div className="flex md:hidden items-center">
           <h1 className="text-lg font-bold bg-gradient-to-r from-[#1B2C4F] to-[#00D887] bg-clip-text text-transparent">
-            LucrAÍ
+            RestaurIA
           </h1>
         </div>
 
