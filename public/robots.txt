@@ -1,14 +1,52 @@
+# RestaurIA - Sistema de Gestão para Restaurantes
+# https://restauria.com.br
+
+User-agent: *
+Allow: /
+Allow: /cardapio
+Allow: /ficha-tecnica
+Allow: /estoque
+Allow: /financeiro
+Allow: /dashboard
+Allow: /simulador
+Allow: /metas
+Allow: /login
+Allow: /register
+
+# Não indexar páginas privadas/administrativas
+Disallow: /admin
+Disallow: /api
+Disallow: /superadmin
+Disallow: /system-admin
+Disallow: /configuracoes
+Disallow: /privacidade
+
+# Permitir rastreamento de recursos
+Allow: /assets/
+Allow: /images/
+Allow: /lovable-uploads/
+
+# Sitemap
+Sitemap: https://restauria.com.br/sitemap.xml
+
+# Crawl-delay para não sobrecarregar o servidor
+Crawl-delay: 1
+
+# User-agents específicos
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 0
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 2
 
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
 Allow: /

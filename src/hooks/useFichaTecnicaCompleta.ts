@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -244,22 +244,20 @@ export function useFichaTecnicaCompleta() {
     setIngredientes(prev => prev.filter(ing => ing.id !== id));
   }, []);
 
-  // Calcular resultados completos
+  // Memoizar dados estáveis para evitar re-renders
+  const dadosEstaveisParaCalculo = useMemo(() => ({
+    hasIngredientesValidos: ingredientes.some(ing => 
+      ing.insumo_id && ing.quantidade_bruta > 0 && ing.preco_unitario > 0
+    ),
+    custoTotalIngredientes: ingredientes.reduce((total, ing) => total + (ing.custo_total || 0), 0),
+    nomePreenchido: Boolean(dadosPrato.nome_prato?.trim()),
+    configHash: `${configuracaoAvancada.markup_personalizado}-${configuracaoAvancada.canal_venda}-${configuracaoAvancada.meta_lucro_percentual}`
+  }), [ingredientes, dadosPrato.nome_prato, configuracaoAvancada.markup_personalizado, configuracaoAvancada.canal_venda, configuracaoAvancada.meta_lucro_percentual]);
+
+  // Calcular resultados completos com memoização
   const calcularResultados = useCallback(async () => {
-    if (!currentRestaurant?.id || ingredientes.length === 0) {
+    if (!currentRestaurant?.id || !dadosEstaveisParaCalculo.hasIngredientesValidos) {
       console.log('❌ Condições insuficientes para cálculo');
-      return;
-    }
-
-    // Validar ingredientes
-    const ingredientesValidos = ingredientes.filter(ing => 
-      ing.insumo_id && 
-      ing.quantidade_bruta > 0 && 
-      ing.preco_unitario > 0
-    );
-
-    if (ingredientesValidos.length === 0) {
-      console.log('❌ Nenhum ingrediente válido para cálculo');
       return;
     }
 
@@ -267,8 +265,18 @@ export function useFichaTecnicaCompleta() {
     console.log('🧮 Calculando resultados completos...');
 
     try {
+      // Filtrar ingredientes válidos uma vez
+      const ingredientesValidos = ingredientes.filter(ing => 
+        ing.insumo_id && ing.quantidade_bruta > 0 && ing.preco_unitario > 0
+      );
+
+      if (ingredientesValidos.length === 0) {
+        console.log('❌ Nenhum ingrediente válido para cálculo');
+        return;
+      }
+
       // Calcular custo base dos ingredientes
-      const custoIngredientes = ingredientesValidos.reduce((total, ing) => total + ing.custo_total, 0);
+      const custoIngredientes = dadosEstaveisParaCalculo.custoTotalIngredientes;
       
       // Calcular despesas fixas por prato
       const metaPratosMes = 1000;
@@ -298,20 +306,22 @@ export function useFichaTecnicaCompleta() {
       // Usar preço desejado ou calculado
       const precoFinal = dadosPrato.preco_desejado > 0 ? dadosPrato.preco_desejado : precoSugerido;
       
-      // VALIDAÇÃO CRÍTICA: NUNCA PERMITIR PREÇO ABAIXO DO CUSTO
+      // 🚨 VALIDAÇÃO CRÍTICA: NUNCA PERMITIR PREÇO ABAIXO DO CUSTO
       if (precoFinal < custoTotal) {
         const alertas: string[] = ['🚨 ERRO CRÍTICO: Preço de venda menor que o custo de produção!'];
-        setResultados({
+        const resultadosErro: ResultadosCalculados = {
           cmv_estimado_percentual: 100,
           cmv_estimado_valor: custoTotal,
           lucro_estimado_valor: precoFinal - custoTotal,
           lucro_estimado_percentual: 0,
           margem_bruta: 0,
           margem_liquida: -100,
-          preco_sugerido: custoTotal * 1.5,
+          preco_sugerido: custoTotal * 1.5, // Preço mínimo seguro
           status_viabilidade: 'prejuizo',
           alertas: alertas
-        });
+        };
+        setResultados(resultadosErro);
+        console.log('🚨 ALERTA: Preço abaixo do custo bloqueado!');
         return;
       }
       
@@ -328,7 +338,7 @@ export function useFichaTecnicaCompleta() {
         statusViabilidade = 'atencao';
       }
       
-      // Gerar alertas
+      // Gerar alertas inteligentes
       const alertas: string[] = [];
       if (margemLiquida < 0) {
         alertas.push('🚨 PREJUÍZO: Margem líquida negativa!');
@@ -368,7 +378,7 @@ export function useFichaTecnicaCompleta() {
     } finally {
       setIsCalculating(false);
     }
-  }, [currentRestaurant, ingredientes, dadosPrato, configuracaoAvancada]);
+  }, [currentRestaurant?.id, dadosEstaveisParaCalculo, configuracaoAvancada.despesas_fixas_mensais, configuracaoAvancada.despesas_variaveis_mensais, dadosPrato.preco_desejado]);
 
   // Salvar ficha completa
   const salvarFicha = useCallback(async () => {

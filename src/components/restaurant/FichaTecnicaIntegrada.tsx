@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,20 +52,24 @@ export function FichaTecnicaIntegrada() {
   const [abaAtiva, setAbaAtiva] = useState('nova');
   const [showProgress, setShowProgress] = useState(false);
 
-  // Calcular automaticamente quando dados mudarem
+  // Memoizar condições para evitar re-renders desnecessários
+  const shouldCalculate = useMemo(() => {
+    return ingredientes.length > 0 && 
+           ingredientes.some(ing => ing.custo_total > 0) && 
+           dadosPrato.nome_prato?.trim();
+  }, [ingredientes, dadosPrato.nome_prato]);
+
+  // Calcular automaticamente quando dados mudarem (com debounce)
   useEffect(() => {
-    if (ingredientes.length > 0 && 
-        ingredientes.some(ing => ing.custo_total > 0) && 
-        dadosPrato.nome_prato?.trim()) {
-      
-      const timer = setTimeout(() => {
-        console.log('🔄 Auto-calculando resultados...');
-        calcularResultados();
-      }, 800);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [ingredientes, dadosPrato, configuracaoAvancada, calcularResultados]);
+    if (!shouldCalculate) return;
+    
+    const timer = setTimeout(() => {
+      console.log('🔄 Auto-calculando resultados...');
+      calcularResultados();
+    }, 800);
+    
+    return () => clearTimeout(timer);
+  }, [shouldCalculate, calcularResultados]);
 
   // Navegação entre abas com validação
   const navegarParaAba = (aba: string) => {
