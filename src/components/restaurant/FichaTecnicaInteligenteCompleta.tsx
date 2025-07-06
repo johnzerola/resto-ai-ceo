@@ -101,6 +101,7 @@ export function FichaTecnicaInteligenteCompleta() {
   useEffect(() => {
     if (ingredientes.length > 0 && ingredientes.some(ing => ing.custo_total > 0)) {
       const timer = setTimeout(() => {
+        console.log('🧮 Trigger automático de cálculo');
         calcularResultados(undefined, precoDesejado || undefined);
       }, 800);
       return () => clearTimeout(timer);
@@ -418,9 +419,13 @@ export function FichaTecnicaInteligenteCompleta() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <div>
                           <MobileFriendlyInput
-                            label={`Quantidade (${ingrediente.unidade_medida})`}
+                            label={`Quantidade (${ingrediente.unidade_medida || 'g'})`}
                             value={ingrediente.quantidade_bruta || ''}
-                            onChange={(value) => handleAtualizarIngrediente(ingrediente.id, 'quantidade_bruta', Number(value))}
+                            onChange={(value) => {
+                              const novaQuantidade = Number(value);
+                              console.log('📊 Atualizando quantidade:', novaQuantidade);
+                              handleAtualizarIngrediente(ingrediente.id, 'quantidade_bruta', novaQuantidade);
+                            }}
                             type="number"
                             placeholder="0"
                           />
