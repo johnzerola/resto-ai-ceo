@@ -48,11 +48,11 @@ const Simulador = () => {
                   <span className="hidden xs:inline">Calculadora</span>
                   <span>Avançada</span>
                 </TabsTrigger>
-                <TabsTrigger value="scenario" className="flex items-center gap-1 text-xs sm:text-sm px-2">
+                {/* <TabsTrigger value="scenario" className="flex items-center gap-1 text-xs sm:text-sm px-2">
                   <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden xs:inline">Simulador de</span>
                   <span>Cenários</span>
-                </TabsTrigger>
+                </TabsTrigger> */}
               </TabsList>
             </div>
 
@@ -94,6 +94,7 @@ const Simulador = () => {
               </Card>
             </TabsContent>
 
+            {/*
             <TabsContent value="scenario" className="space-y-3 sm:space-y-4">
               <ProtectedFeature
                 feature="hasSimuladorCenarios"
@@ -122,6 +123,7 @@ const Simulador = () => {
                 )}
               </ProtectedFeature>
             </TabsContent>
+            */}
           </Tabs>
         </div>
       </div>
