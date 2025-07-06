@@ -44,7 +44,7 @@ export function AssinaturaResponsive() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-3 max-w-6xl mx-auto">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto justify-center items-stretch">
           {plans.map((plan, index) => (
             <Card key={index} className={`relative overflow-hidden ${plan.popular ? 'border-restauria-green-profit shadow-lg' : ''}`}>
               {plan.popular && (

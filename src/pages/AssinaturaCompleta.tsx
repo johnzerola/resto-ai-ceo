@@ -224,7 +224,7 @@ export function AssinaturaCompleta() {
         )}
 
         {/* Planos */}
-        <div className="grid gap-6 lg:gap-8 md:grid-cols-2 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto justify-center items-stretch">
           {plans.map((plan) => {
             const Icon = plan.icon;
             const isCurrentPlan = planType === plan.id;
