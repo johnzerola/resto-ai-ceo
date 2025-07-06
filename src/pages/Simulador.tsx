@@ -37,7 +37,7 @@ const Simulador = () => {
         <div className="w-full min-w-0 overflow-hidden">
           <Tabs defaultValue="price" className="space-y-3 sm:space-y-4">
             <div className="w-full overflow-x-auto">
-              <TabsList className="grid grid-cols-3 w-full max-w-lg mx-auto sm:mx-0 h-8 sm:h-10">
+              <TabsList className="grid grid-cols-2 w-full max-w-lg mx-auto sm:mx-0 h-8 sm:h-10">
                 <TabsTrigger value="price" className="flex items-center gap-1 text-xs sm:text-sm px-2">
                   <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span className="hidden xs:inline">Simulador de</span>
