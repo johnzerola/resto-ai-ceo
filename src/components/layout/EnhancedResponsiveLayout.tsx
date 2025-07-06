@@ -43,7 +43,7 @@ export function EnhancedResponsiveLayout({ children }: EnhancedResponsiveLayoutP
             <div className="w-12 h-12 rounded-full border-4 border-muted"></div>
             <div className="w-12 h-12 rounded-full border-4 border-[#00D887] border-t-transparent absolute top-0 left-0 animate-spin"></div>
           </div>
-          <p className="text-lg font-medium text-foreground">Carregando LucrAÍ...</p>
+          <p className="text-lg font-medium text-foreground">Carregando RestaurIA...</p>
           <p className="text-sm text-muted-foreground mt-2">Preparando sua experiência inteligente</p>
         </div>
       </div>

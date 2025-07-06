@@ -144,7 +144,7 @@ const Login = () => {
       <div className={`w-full ${isMobile ? 'max-w-sm' : 'max-w-md'}`}>
         <div className="text-center mb-8">
           <h1 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold`}>
-            LucrAÍ
+            Resto<span className="text-primary">AI</span> CEO
           </h1>
           <p className={`text-gray-600 mt-2 ${isMobile ? 'text-sm' : ''}`}>
             Sua plataforma completa de gestão para restaurantes

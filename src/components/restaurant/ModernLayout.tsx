@@ -78,7 +78,7 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   }, [isInitialized]);
   
   if (isLoading && !isInitialized) {
-    return <LoadingSpinner message="Carregando LucrAÍ..." />;
+    return <LoadingSpinner message="Carregando RestaurIA..." />;
   }
   
   if (!isAuthenticated) {

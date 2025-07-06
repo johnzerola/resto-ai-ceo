@@ -50,7 +50,7 @@ export function AILimitedChat({ aiType }: AILimitedChatProps) {
     const limitedResponse: Message = {
       id: (Date.now() + 1).toString(),
       type: 'assistant',
-      content: `Olá! Sou o ${aiType === 'manager' ? 'Gerente Virtual' : 'Social Media IA'} do LucrAÍ. 
+      content: `Olá! Sou o ${aiType === 'manager' ? 'Gerente Virtual' : 'Social Media IA'} do RestaurIA. 
 
 Esta funcionalidade está limitada no seu plano atual. Para ter acesso completo a todas as minhas capacidades, incluindo:
 

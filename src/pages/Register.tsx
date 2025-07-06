@@ -80,7 +80,7 @@ export function Register() {
             Criar Conta
           </CardTitle>
           <CardDescription>
-            Crie sua conta no LucrAÍ
+            Crie sua conta no RestaurIA CEO
           </CardDescription>
         </CardHeader>
         
