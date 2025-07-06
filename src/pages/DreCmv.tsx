@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { DREOverview } from "@/components/restaurant/DREOverview";
 import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
+import { FinancialMetricsWidget } from "@/components/restaurant/FinancialMetricsWidget";
+import { FinancialCategoriesManager } from "@/components/restaurant/FinancialCategoriesManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -74,16 +76,23 @@ const DreCmv = () => {
           </div>
         )}
 
+        {/* Métricas Financeiras em Tempo Real */}
+        <FinancialMetricsWidget />
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="dre">DRE</TabsTrigger>
             <TabsTrigger value="cmv">CMV</TabsTrigger>
+            <TabsTrigger value="categorias">Categorias</TabsTrigger>
           </TabsList>
           <TabsContent value="dre">
             <DREOverview />
           </TabsContent>
           <TabsContent value="cmv">
             <CMVAnalysis />
+          </TabsContent>
+          <TabsContent value="categorias">
+            <FinancialCategoriesManager />
           </TabsContent>
         </Tabs>
       </div>
