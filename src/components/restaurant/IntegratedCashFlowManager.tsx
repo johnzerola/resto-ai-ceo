@@ -28,6 +28,7 @@ import { FinancialCategoriesManager } from "./FinancialCategoriesManager";
 import { FinancialMetricsWidget } from "./FinancialMetricsWidget";
 import { QuickExpenseForm } from "./QuickExpenseForm";
 import { FinancialAlertsWidget } from "./FinancialAlertsWidget";
+import { EnhancedFinancialAlertsWidget } from "./EnhancedFinancialAlertsWidget";
 
 interface AlertData {
   id: string;
@@ -247,8 +248,12 @@ export function IntegratedCashFlowManager() {
         </Card>
       </div>
 
-      {/* Widget de Alertas */}
-      <FinancialAlertsWidget onAlertsUpdate={loadSummaryData} />
+      {/* Widget de Alertas Aprimorado */}
+      <EnhancedFinancialAlertsWidget 
+        onAlertsUpdate={loadSummaryData} 
+        maxAlerts={8}
+        showAutoRefresh={true}
+      />
 
       {/* Botões de Ação Rápida - Mais Visíveis */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
