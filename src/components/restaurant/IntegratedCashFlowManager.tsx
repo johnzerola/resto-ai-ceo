@@ -16,6 +16,7 @@ import {
   Bell,
   Settings
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +26,8 @@ import { AccountsPayableManager } from "./AccountsPayableManager";
 import { AccountsReceivableManager } from "./AccountsReceivableManager";
 import { FinancialCategoriesManager } from "./FinancialCategoriesManager";
 import { FinancialMetricsWidget } from "./FinancialMetricsWidget";
+import { QuickExpenseForm } from "./QuickExpenseForm";
+import { FinancialAlertsWidget } from "./FinancialAlertsWidget";
 
 interface AlertData {
   id: string;
@@ -49,7 +52,6 @@ interface SummaryData {
 export function IntegratedCashFlowManager() {
   const { currentRestaurant } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
-  const [alerts, setAlerts] = useState<AlertData[]>([]);
   const [summary, setSummary] = useState<SummaryData>({
     totalBalance: 0,
     monthlyIncome: 0,
@@ -59,15 +61,12 @@ export function IntegratedCashFlowManager() {
     overduePayables: 0,
     overdueReceivables: 0
   });
-  const [isLoadingAlerts, setIsLoadingAlerts] = useState(false);
   const [editingEntry, setEditingEntry] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     if (currentRestaurant?.id) {
       loadSummaryData();
-      loadAlerts();
-      checkForAlerts();
     }
   }, [currentRestaurant]);
 
@@ -140,71 +139,6 @@ export function IntegratedCashFlowManager() {
     }
   };
 
-  const loadAlerts = async () => {
-    if (!currentRestaurant?.id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('alertas_sistema')
-        .select('*')
-        .eq('restaurant_id', currentRestaurant.id)
-        .eq('resolvido', false)
-        .in('tipo_alerta', ['vencimento_pagar', 'vencimento_receber', 'saldo_baixo'])
-        .order('data_criacao', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      
-      setAlerts(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar alertas:', error);
-    }
-  };
-
-  const checkForAlerts = async () => {
-    if (!currentRestaurant?.id) return;
-
-    setIsLoadingAlerts(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('cash-flow-alerts', {
-        body: { 
-          restaurantId: currentRestaurant.id,
-          daysBeforeDue: 3 
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.alertsProcessed > 0) {
-        toast.success(`${data.alertsProcessed} novo(s) alerta(s) encontrado(s)`);
-        loadAlerts(); // Recarregar alertas
-      }
-    } catch (error) {
-      console.error('Erro ao verificar alertas:', error);
-    } finally {
-      setIsLoadingAlerts(false);
-    }
-  };
-
-  const resolveAlert = async (alertId: string) => {
-    try {
-      const { error } = await supabase
-        .from('alertas_sistema')
-        .update({ 
-          resolvido: true,
-          data_resolucao: new Date().toISOString()
-        })
-        .eq('id', alertId);
-
-      if (error) throw error;
-
-      toast.success('Alerta marcado como resolvido');
-      loadAlerts();
-    } catch (error) {
-      console.error('Erro ao resolver alerta:', error);
-      toast.error('Erro ao resolver alerta');
-    }
-  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -213,13 +147,6 @@ export function IntegratedCashFlowManager() {
     }).format(value);
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'alta': return 'bg-red-100 text-red-800 border-red-200';
-      case 'media': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-blue-100 text-blue-800 border-blue-200';
-    }
-  };
 
   const handleEditEntry = (entryId: string) => {
     setEditingEntry({ id: entryId });
@@ -311,60 +238,77 @@ export function IntegratedCashFlowManager() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {alerts.length}
+              Monitoramento Ativo
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={checkForAlerts}
-              disabled={isLoadingAlerts}
-              className="text-xs mt-1 p-0 h-auto"
-            >
-              {isLoadingAlerts ? 'Verificando...' : 'Verificar Alertas'}
-            </Button>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sistema de alertas inteligentes
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Alertas */}
-      {alerts.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Bell className="h-5 w-5 mr-2" />
-              Alertas Financeiros
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {alerts.map((alert) => (
-                <Alert key={alert.id} className={getPriorityColor(alert.prioridade)}>
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle className="flex items-center justify-between">
-                    <span>{alert.titulo}</span>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {alert.prioridade}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => resolveAlert(alert.id)}
-                        className="h-6 px-2 text-xs"
-                      >
-                        Resolver
-                      </Button>
-                    </div>
-                  </AlertTitle>
-                  <AlertDescription>
-                    {alert.mensagem}
-                  </AlertDescription>
-                </Alert>
-              ))}
+      {/* Widget de Alertas */}
+      <FinancialAlertsWidget onAlertsUpdate={loadSummaryData} />
+
+      {/* Botões de Ação Rápida */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Button 
+          onClick={() => setShowForm(true)} 
+          className="h-16 flex flex-col gap-2 bg-green-600 hover:bg-green-700"
+        >
+          <Plus className="h-6 w-6" />
+          <span className="text-sm font-medium">Nova Transação</span>
+        </Button>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="h-16 flex flex-col gap-2 bg-red-600 hover:bg-red-700">
+              <CreditCard className="h-6 w-6" />
+              <span className="text-sm font-medium">Nova Conta a Pagar</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Nova Conta a Pagar</DialogTitle>
+            </DialogHeader>
+            <div className="p-4">
+              <AccountsPayableManager onDataChange={loadSummaryData} />
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="h-16 flex flex-col gap-2 bg-blue-600 hover:bg-blue-700">
+              <TrendingUp className="h-6 w-6" />
+              <span className="text-sm font-medium">Nova Conta a Receber</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Nova Conta a Receber</DialogTitle>
+            </DialogHeader>
+            <div className="p-4">
+              <AccountsReceivableManager onDataChange={loadSummaryData} />
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="h-16 flex flex-col gap-2 bg-orange-600 hover:bg-orange-700">
+              <Settings className="h-6 w-6" />
+              <span className="text-sm font-medium">Nova Despesa</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Nova Despesa Operacional</DialogTitle>
+            </DialogHeader>
+            <QuickExpenseForm onSuccess={() => { loadSummaryData(); }} />
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* Tabs principais */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -376,11 +320,6 @@ export function IntegratedCashFlowManager() {
             <TabsTrigger value="transactions">Transações</TabsTrigger>
             <TabsTrigger value="categories">Categorias</TabsTrigger>
           </TabsList>
-          
-          <Button onClick={() => setShowForm(true)} className="ml-4">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Transação
-          </Button>
         </div>
 
         <TabsContent value="overview" className="space-y-6">
