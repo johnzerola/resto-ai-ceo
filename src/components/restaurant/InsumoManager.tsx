@@ -88,8 +88,24 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
   };
 
   const saveInsumo = async () => {
-    if (!formData.nome || !formData.preco_pago || !formData.volume_embalagem || !formData.unidade_medida) {
-      toast.error('Preencha todos os campos obrigatórios');
+    // Validações básicas
+    if (!formData.nome?.trim()) {
+      toast.error('Nome do insumo é obrigatório');
+      return;
+    }
+
+    if (!formData.preco_pago || formData.preco_pago <= 0) {
+      toast.error('Preço pago deve ser maior que zero');
+      return;
+    }
+
+    if (!formData.volume_embalagem || formData.volume_embalagem <= 0) {
+      toast.error('Volume da embalagem deve ser maior que zero');
+      return;
+    }
+
+    if (!formData.unidade_medida?.trim()) {
+      toast.error('Unidade de medida é obrigatória');
       return;
     }
 
@@ -98,20 +114,29 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
       return;
     }
 
-    const preco_unitario = formData.preco_pago / formData.volume_embalagem;
+    // Calcular preço unitário com validação
+    const preco_unitario = Number(formData.preco_pago) / Number(formData.volume_embalagem);
     const precoAnterior = editingInsumo?.preco_unitario || 0;
+
+    // Validar se o cálculo é válido
+    if (!isFinite(preco_unitario) || preco_unitario <= 0) {
+      toast.error('Erro no cálculo do preço unitário. Verifique os valores inseridos.');
+      return;
+    }
     
     try {
       if (editingInsumo) {
-        // Atualizar
+        // Atualizar no banco com logs detalhados
+        console.log('🔄 Atualizando insumo:', editingInsumo.id, 'com preço:', preco_unitario);
+        
         const { error } = await supabase
           .from('insumos')
           .update({
             nome: formData.nome.trim(),
-            categoria: formData.categoria?.trim() || 'Geral',
+            categoria: formData.categoria?.trim() || 'geral',
             preco_pago: Number(formData.preco_pago),
             volume_embalagem: Number(formData.volume_embalagem),
-            preco_unitario: Number(preco_unitario),
+            preco_unitario: Number(preco_unitario.toFixed(6)),
             unidade_medida: formData.unidade_medida.trim(),
             fornecedor: formData.fornecedor?.trim() || 'Não informado',
             estoque_atual: Number(formData.estoque_atual) || 0,
@@ -129,21 +154,26 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
           toast.success(`✅ Insumo "${formData.nome}" atualizado com sucesso!`);
         }
       } else {
-        // Criar novo
+        // Criar novo - validação extra dos dados
+        const insumoData = {
+          nome: formData.nome.trim(),
+          categoria: formData.categoria?.trim() || 'geral',
+          preco_pago: Number(formData.preco_pago),
+          volume_embalagem: Number(formData.volume_embalagem),
+          preco_unitario: Number(preco_unitario.toFixed(6)), // Arredondar para evitar problemas de precisão
+          unidade_medida: formData.unidade_medida.trim(),
+          fornecedor: formData.fornecedor?.trim() || 'Não informado',
+          estoque_atual: Number(formData.estoque_atual) || 0,
+          estoque_minimo: Number(formData.estoque_minimo) || 0,
+          restaurant_id: currentRestaurant.id
+        };
+
+        // Log para debug
+        console.log('💾 Salvando insumo:', insumoData);
+
         const { error } = await supabase
           .from('insumos')
-          .insert({
-            nome: formData.nome.trim(),
-            categoria: formData.categoria?.trim() || 'Geral',
-            preco_pago: Number(formData.preco_pago),
-            volume_embalagem: Number(formData.volume_embalagem),
-            preco_unitario: Number(preco_unitario),
-            unidade_medida: formData.unidade_medida.trim(),
-            fornecedor: formData.fornecedor?.trim() || 'Não informado',
-            estoque_atual: Number(formData.estoque_atual) || 0,
-            estoque_minimo: Number(formData.estoque_minimo) || 0,
-            restaurant_id: currentRestaurant.id
-          });
+          .insert(insumoData);
 
         if (error) {
           console.error('Erro ao criar insumo:', error);

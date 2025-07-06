@@ -34,19 +34,40 @@ export function useFichaTecnicaCore() {
   const [resultados, setResultados] = useState<ResultadosCalculados | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Calcular resultados usando função do banco
+  // Calcular resultados usando função do banco com fallback
   const calcularResultados = useCallback(async (pratoId?: string, precoFinal?: number) => {
-    if (!currentRestaurant?.id || ingredientes.length === 0) return;
+    if (!currentRestaurant?.id || ingredientes.length === 0) {
+      console.log('❌ Condições insuficientes para cálculo:', { 
+        restaurant: !!currentRestaurant?.id, 
+        ingredientes: ingredientes.length 
+      });
+      return;
+    }
+
+    // Validar se todos os ingredientes têm dados necessários
+    const ingredientesValidos = ingredientes.filter(ing => 
+      ing.insumo_id && 
+      ing.quantidade_bruta > 0 && 
+      ing.preco_unitario > 0
+    );
+
+    if (ingredientesValidos.length === 0) {
+      console.log('❌ Nenhum ingrediente válido para cálculo');
+      return;
+    }
 
     setIsCalculating(true);
+    console.log('🧮 Iniciando cálculo para', ingredientesValidos.length, 'ingredientes');
+
     try {
       let pratoIdParaCalculo = pratoId;
       
+      // Criar prato temporário se necessário
       if (!pratoIdParaCalculo) {
         const { data: pratoTemp, error } = await supabase
           .from('pratos')
           .insert({
-            nome_prato: 'Cálculo Temporário',
+            nome_prato: 'Cálculo Temporário ' + Date.now(),
             restaurant_id: currentRestaurant.id,
             categoria: 'temp',
             rendimento_porcoes: 1,
@@ -55,30 +76,49 @@ export function useFichaTecnicaCore() {
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao criar prato temporário:', error);
+          throw error;
+        }
+        
         pratoIdParaCalculo = pratoTemp.id;
+        console.log('✅ Prato temporário criado:', pratoIdParaCalculo);
 
-        const ingredientesData = ingredientes.map(ing => ({
+        // Inserir apenas ingredientes válidos
+        const ingredientesData = ingredientesValidos.map(ing => ({
           prato_id: pratoIdParaCalculo,
           insumo_id: ing.insumo_id,
-          quantidade_bruta: ing.quantidade_bruta,
-          quantidade_liquida: ing.quantidade_liquida,
-          fator_correcao: ing.fator_correcao,
-          custo_total: ing.custo_total
+          quantidade_bruta: Number(ing.quantidade_bruta),
+          quantidade_liquida: Number(ing.quantidade_liquida) || Number(ing.quantidade_bruta) * Number(ing.fator_correcao || 1),
+          fator_correcao: Number(ing.fator_correcao) || 1,
+          custo_total: Number(ing.custo_total)
         }));
 
-        await supabase
+        const { error: ingredientesError } = await supabase
           .from('ingredientes_por_prato')
           .insert(ingredientesData);
+
+        if (ingredientesError) {
+          console.error('Erro ao inserir ingredientes temporários:', ingredientesError);
+          throw ingredientesError;
+        }
+        
+        console.log('✅ Ingredientes temporários inseridos:', ingredientesData.length);
       }
 
+      // Chamar função de cálculo do banco
       const { data: resultadosCalculo, error: calcError } = await supabase
         .rpc('calcular_cmv_inteligente', {
           prato_uuid: pratoIdParaCalculo,
           preco_final: precoFinal || null
         });
 
-      if (calcError) throw calcError;
+      if (calcError) {
+        console.error('Erro na função de cálculo:', calcError);
+        throw calcError;
+      }
+
+      console.log('✅ Resultados obtidos:', resultadosCalculo);
 
       if (resultadosCalculo && resultadosCalculo.length > 0) {
         const resultado = resultadosCalculo[0];
@@ -114,7 +154,7 @@ export function useFichaTecnicaCore() {
           }
         }
 
-        setResultados({
+        const resultadosProcessados = {
           cmv_estimado_percentual: Number(resultado.cmv_estimado_percentual) || 0,
           cmv_estimado_valor: Number(resultado.cmv_estimado_valor) || 0,
           lucro_estimado_valor: Number(resultado.lucro_estimado_valor) || 0,
@@ -124,7 +164,12 @@ export function useFichaTecnicaCore() {
           preco_sugerido: Number(resultado.preco_sugerido) || 0,
           status_viabilidade: statusViabilidade,
           alertas: alertasArray
-        });
+        };
+
+        console.log('✅ Resultados processados:', resultadosProcessados);
+        setResultados(resultadosProcessados);
+      } else {
+        console.warn('⚠️ Nenhum resultado retornado da função');
       }
 
       // Limpar prato temporário
@@ -138,11 +183,15 @@ export function useFichaTecnicaCore() {
           .from('pratos')
           .delete()
           .eq('id', pratoIdParaCalculo);
+        
+        console.log('🗑️ Prato temporário removido');
       }
 
     } catch (error) {
-      console.error('Erro ao calcular resultados:', error);
-      toast.error('Erro ao calcular resultados da ficha técnica');
+      console.error('❌ Erro ao calcular resultados:', error);
+      toast.error('Erro ao calcular resultados da ficha técnica', {
+        description: 'Verifique se todos os ingredientes estão completos'
+      });
     } finally {
       setIsCalculating(false);
     }

@@ -23,6 +23,7 @@ import {
   Save,
   RotateCcw
 } from "lucide-react";
+import { toast } from 'sonner';
 import { useFichaTecnicaCore } from "@/hooks/useFichaTecnicaCore";
 import { useFichaTecnicaActions } from "@/hooks/useFichaTecnicaActions";
 
@@ -61,8 +62,32 @@ export function FichaTecnicaInteligenteCompleta() {
     setIngredientes(prev => [...prev, novoIngrediente]);
   };
 
-  // Atualizar ingrediente com debounce
+  // Atualizar ingrediente com debounce e validação
   const handleAtualizarIngrediente = (id: string, campo: string, valor: any) => {
+    // Se está selecionando um insumo, buscar os dados completos
+    if (campo === 'insumo_id' && valor) {
+      const insumoSelecionado = insumosDisponiveis.find(ins => ins.id === valor);
+      if (insumoSelecionado) {
+        const novosIngredientes = ingredientes.map(ing => {
+          if (ing.id === id) {
+            return {
+              ...ing,
+              insumo_id: valor,
+              nome_insumo: insumoSelecionado.nome,
+              preco_unitario: insumoSelecionado.preco_unitario || 0,
+              unidade_medida: insumoSelecionado.unidade_medida || 'g',
+              // Recalcular custo total automaticamente
+              custo_total: ing.quantidade_liquida * (insumoSelecionado.preco_unitario || 0)
+            };
+          }
+          return ing;
+        });
+        setIngredientes(novosIngredientes);
+        return;
+      }
+    }
+
+    // Para outros campos, usar a função padrão
     const novosIngredientes = atualizarIngrediente(ingredientes, id, campo as any, valor);
     setIngredientes(novosIngredientes);
   };
@@ -84,9 +109,43 @@ export function FichaTecnicaInteligenteCompleta() {
 
   // Salvar ficha
   const handleSalvar = async () => {
+    // Validações completas antes do salvamento
+    if (!prato.nome_prato?.trim()) {
+      toast.error('Nome do prato é obrigatório');
+      return;
+    }
+
+    if (ingredientes.length === 0) {
+      toast.error('Adicione pelo menos um ingrediente');
+      return;
+    }
+
+    // Validar se todos os ingredientes estão preenchidos corretamente
+    const ingredientesInvalidos = ingredientes.filter(ing => 
+      !ing.insumo_id || 
+      !ing.nome_insumo || 
+      ing.quantidade_bruta <= 0 ||
+      ing.preco_unitario <= 0
+    );
+
+    if (ingredientesInvalidos.length > 0) {
+      toast.error(`${ingredientesInvalidos.length} ingrediente(s) com dados incompletos. Verifique os campos.`);
+      return;
+    }
+
+    // Se não temos resultados, calcular antes de salvar
+    if (!resultados) {
+      toast.error('Aguarde o cálculo dos resultados antes de salvar');
+      await calcularResultados(undefined, precoDesejado || undefined);
+      return;
+    }
+
     const sucesso = await salvarFichaTecnica(ingredientes, resultados, prato);
     if (sucesso) {
       handleLimparTudo();
+      toast.success('🎉 Ficha técnica salva com sucesso!', {
+        description: 'Todos os dados foram sincronizados automaticamente'
+      });
     }
   };
 
@@ -122,9 +181,18 @@ export function FichaTecnicaInteligenteCompleta() {
   };
 
   const isFormularioValido = () => {
-    return prato.nome_prato.trim() && 
-           ingredientes.length > 0 && 
-           ingredientes.every(ing => ing.insumo_id && ing.quantidade_bruta > 0);
+    const pratoValido = prato.nome_prato?.trim() && prato.categoria;
+    const ingredientesValidos = ingredientes.length > 0 && 
+      ingredientes.every(ing => 
+        ing.insumo_id && 
+        ing.nome_insumo && 
+        ing.quantidade_bruta > 0 &&
+        ing.preco_unitario > 0
+      );
+    
+    const calculosValidos = resultados !== null;
+    
+    return pratoValido && ingredientesValidos && calculosValidos;
   };
 
   return (
@@ -446,7 +514,7 @@ export function FichaTecnicaInteligenteCompleta() {
             </Card>
           )}
 
-          {/* Botões de Ação - Mobile friendly */}
+          {/* Botões de Ação - Sempre Visíveis e Funcionais */}
           <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
             <Button 
               variant="outline" 
