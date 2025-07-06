@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { createDefaultFinancialCategories } from '@/utils/financial-utils';
 import { toast } from 'sonner';
 
 interface FinancialCategory {
@@ -36,13 +37,35 @@ export function useFinancialCategories() {
 
       if (error) throw error;
       
-      // Type-safe mapping
-      const mappedData: FinancialCategory[] = (data || []).map(item => ({
-        ...item,
-        tipo: item.tipo as 'receita' | 'despesa'
-      }));
-      
-      setCategories(mappedData);
+      // Se não há categorias, criar as padrão
+      if (!data || data.length === 0) {
+        await createDefaultFinancialCategories(currentRestaurant.id);
+        
+        // Recarregar categorias após criar as padrão
+        const { data: newData, error: newError } = await supabase
+          .from('categorias_financeiras')
+          .select('*')
+          .eq('restaurant_id', currentRestaurant.id)
+          .eq('ativa', true)
+          .order('nome');
+
+        if (newError) throw newError;
+        
+        const mappedData: FinancialCategory[] = (newData || []).map(item => ({
+          ...item,
+          tipo: item.tipo as 'receita' | 'despesa'
+        }));
+        
+        setCategories(mappedData);
+      } else {
+        // Type-safe mapping
+        const mappedData: FinancialCategory[] = data.map(item => ({
+          ...item,
+          tipo: item.tipo as 'receita' | 'despesa'
+        }));
+        
+        setCategories(mappedData);
+      }
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
       toast.error('Erro ao carregar categorias');

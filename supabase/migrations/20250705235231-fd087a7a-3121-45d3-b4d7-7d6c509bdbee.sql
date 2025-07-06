@@ -38,33 +38,6 @@ CREATE TRIGGER update_categorias_financeiras_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.update_categorias_financeiras_updated_at();
 
--- Inserir categorias padrão para CMV
-INSERT INTO public.categorias_financeiras (restaurant_id, nome, tipo, impacta_cmv, impacta_dre) 
-SELECT 
-  r.id,
-  categoria.nome,
-  categoria.tipo,
-  categoria.impacta_cmv,
-  categoria.impacta_dre
-FROM public.restaurants r
-CROSS JOIN (
-  VALUES 
-    ('Ingredientes', 'despesa', true, true),
-    ('Alimentos', 'despesa', true, true),
-    ('Bebidas', 'despesa', true, true),
-    ('Insumos', 'despesa', true, true),
-    ('Embalagens', 'despesa', true, true),
-    ('Salários', 'despesa', false, true),
-    ('Marketing', 'despesa', false, true),
-    ('Aluguel', 'despesa', false, true),
-    ('Utilities', 'despesa', false, true),
-    ('Manutenção', 'despesa', false, true),
-    ('Vendas', 'receita', false, true),
-    ('Delivery', 'receita', false, true),
-    ('Eventos', 'receita', false, true)
-) as categoria(nome, tipo, impacta_cmv, impacta_dre)
-ON CONFLICT DO NOTHING;
-
 -- Função para calcular métricas financeiras em tempo real
 CREATE OR REPLACE FUNCTION public.calcular_metricas_financeiras(restaurant_uuid uuid)
 RETURNS TABLE(
