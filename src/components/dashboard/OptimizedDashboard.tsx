@@ -63,8 +63,8 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
           <div className="px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4">
               <div className="space-y-1">
-                <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-restauria-blue-tech to-restauria-green-profit bg-clip-text text-transparent">
-                  RestaurIA CEO
+                <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-lucrai-blue-tech to-lucrai-green-profit bg-clip-text text-transparent">
+                  LucrAÍ
                 </h1>
                 <p className="text-muted-foreground text-xs sm:text-sm">
                   Dashboard inteligente para gestão completa do seu restaurante

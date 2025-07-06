@@ -234,7 +234,7 @@ export function FinalSystemValidation() {
                 <strong>Status:</strong> ✅ SISTEMA APROVADO PARA PRODUÇÃO
               </p>
               <p className="text-sm text-muted-foreground">
-                O RestaurIA CEO está completamente funcional com {Math.round(overallCompletion)}% de completude. 
+                O LucrAÍ está completamente funcional com {Math.round(overallCompletion)}% de completude. 
                 Todas as funcionalidades essenciais foram validadas e o sistema está pronto para uso em produção 
                 com total confiança.
               </p>

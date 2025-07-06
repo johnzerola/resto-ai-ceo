@@ -30,7 +30,7 @@ export default function Index() {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-[#1B2C4F] to-[#00D887] bg-clip-text text-transparent">
-                  RestaurIA CEO
+                  LucrAÍ CEO
                 </h1>
                 <p className="text-xs text-slate-600">Gestão Inteligente</p>
               </div>
@@ -312,7 +312,7 @@ export default function Index() {
               </div>
               <div>
                 <h3 className="text-xl font-bold bg-gradient-to-r from-white to-[#00D887] bg-clip-text text-transparent">
-                  RestaurIA CEO
+                  LucrAÍ CEO
                 </h3>
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function Index() {
             </p>
             
             <div className="flex justify-center gap-6 text-sm text-slate-400">
-              <span>© 2024 RestaurIA CEO</span>
+              <span>© 2024 LucrAÍ</span>
               <span>•</span>
               <span>Todos os direitos reservados</span>
             </div>

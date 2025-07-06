@@ -19,7 +19,7 @@ export function SystemMonitoring() {
   }
 
   // Verificar se o usuário tem permissão de admin (você pode ajustar essa lógica)
-  const isAdmin = user?.email === 'admin@restauria.com' || user?.email?.includes('admin');
+  const isAdmin = user?.email === 'admin@lucr.ai' || user?.email?.includes('admin');
 
   if (!isAdmin) {
     return (
@@ -45,7 +45,7 @@ export function SystemMonitoring() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Monitoramento do Sistema</h1>
           <p className="text-muted-foreground">
-            Dashboard completo de métricas, alertas e status do sistema RestaurIA.
+            Dashboard completo de métricas, alertas e status do sistema LucrAÍ.
           </p>
         </div>
         

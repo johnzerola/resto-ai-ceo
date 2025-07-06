@@ -35,7 +35,7 @@ export default function Vendas() {
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00D887] to-[#00B572] bg-clip-text text-transparent">
-                RestaurIA
+                LucrAÍ
               </h1>
               <p className="text-xs text-muted-foreground">Gestão Inteligente</p>
             </div>
@@ -118,7 +118,7 @@ export default function Vendas() {
               Resultados que Falam por Si
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Milhares de restaurantes já transformaram seus negócios com o RestaurIA
+              Milhares de restaurantes já transformaram seus negócios com o LucrAÍ
             </p>
           </div>
 
@@ -173,7 +173,7 @@ export default function Vendas() {
               <CardContent className="p-8">
                 <Quote className="h-8 w-8 text-[#00D887] mb-4" />
                 <p className="text-lg mb-6 leading-relaxed">
-                  "O RestaurIA revolucionou nossa operação. Conseguimos reduzir custos em 35% e aumentar nossa margem de lucro significativamente."
+                  "O LucrAÍ revolucionou nossa operação. Conseguimos reduzir custos em 35% e aumentar nossa margem de lucro significativamente."
                 </p>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-[#00D887] to-[#00B572] rounded-full flex items-center justify-center text-white font-bold">
@@ -327,7 +327,7 @@ export default function Vendas() {
         <section className="py-16">
           <div className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Empresas que confiam no RestaurIA
+              Empresas que confiam no LucrAÍ
             </h2>
             <p className="text-lg text-muted-foreground">
               De pequenos bistrôs a grandes redes de restaurantes
@@ -360,7 +360,7 @@ export default function Vendas() {
                   Pronto para transformar seu restaurante?
                 </h3>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Junte-se a mais de <span className="font-semibold text-[#00D887]">2.500+ restaurantes</span> que já aumentaram seus lucros com o RestaurIA.
+                  Junte-se a mais de <span className="font-semibold text-[#00D887]">2.500+ restaurantes</span> que já aumentaram seus lucros com o LucrAÍ.
                   Comece agora com <span className="font-semibold">14 dias grátis</span> e veja a diferença.
                 </p>
                 
@@ -406,10 +406,10 @@ export default function Vendas() {
             <div className="w-8 h-8 bg-gradient-to-r from-[#00D887] to-[#00B572] rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
             </div>
-            <span className="text-lg font-semibold">RestaurIA</span>
+            <span className="text-lg font-semibold">LucrAÍ</span>
           </div>
           <p className="text-muted-foreground">
-            © 2024 RestaurIA. Todos os direitos reservados. Gestão inteligente para restaurantes.
+            © 2024 LucrAÍ. Todos os direitos reservados. Gestão inteligente para restaurantes.
           </p>
         </div>
       </footer>

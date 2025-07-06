@@ -210,7 +210,7 @@ export function SystemAudit() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-6 w-6" />
-            Auditoria do Sistema - RestaurIA CEO
+            Auditoria do Sistema - LucrAÍ
           </CardTitle>
           <div className="flex items-center gap-4">
             <div className="flex-1">

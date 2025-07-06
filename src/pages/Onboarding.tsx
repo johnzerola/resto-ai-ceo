@@ -178,7 +178,7 @@ const Onboarding = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Resto<span className="text-primary">AI</span> CEO</h1>
+          <h1 className="text-3xl font-bold">LucrAÍ</h1>
           <p className="text-gray-600 mt-2">Vamos configurar seu restaurante</p>
         </div>
         
