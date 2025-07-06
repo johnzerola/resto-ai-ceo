@@ -250,64 +250,61 @@ export function IntegratedCashFlowManager() {
       {/* Widget de Alertas */}
       <FinancialAlertsWidget onAlertsUpdate={loadSummaryData} />
 
-      {/* Botões de Ação Rápida */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      {/* Botões de Ação Rápida - Mais Visíveis */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button 
+              size="lg" 
+              className="h-20 flex flex-col gap-3 bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <CreditCard className="h-8 w-8" />
+              <div className="text-center">
+                <div className="font-bold">Nova Conta a Pagar</div>
+                <div className="text-xs opacity-90">Gastos e fornecedores</div>
+              </div>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl text-red-600">💳 Nova Conta a Pagar</DialogTitle>
+            </DialogHeader>
+            <AccountsPayableManager onDataChange={loadSummaryData} />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button 
+              size="lg" 
+              className="h-20 flex flex-col gap-3 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <TrendingUp className="h-8 w-8" />
+              <div className="text-center">
+                <div className="font-bold">Nova Conta a Receber</div>
+                <div className="text-xs opacity-90">Vendas e serviços</div>
+              </div>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl text-blue-600">💰 Nova Conta a Receber</DialogTitle>
+            </DialogHeader>
+            <AccountsReceivableManager onDataChange={loadSummaryData} />
+          </DialogContent>
+        </Dialog>
+
         <Button 
           onClick={() => setShowForm(true)} 
-          className="h-16 flex flex-col gap-2 bg-green-600 hover:bg-green-700"
+          size="lg"
+          className="h-20 flex flex-col gap-3 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
         >
-          <Plus className="h-6 w-6" />
-          <span className="text-sm font-medium">Nova Transação</span>
+          <Plus className="h-8 w-8" />
+          <div className="text-center">
+            <div className="font-bold">Nova Transação</div>
+            <div className="text-xs opacity-90">Fluxo de caixa direto</div>
+          </div>
         </Button>
-        
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="h-16 flex flex-col gap-2 bg-red-600 hover:bg-red-700">
-              <CreditCard className="h-6 w-6" />
-              <span className="text-sm font-medium">Nova Conta a Pagar</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Nova Conta a Pagar</DialogTitle>
-            </DialogHeader>
-            <div className="p-4">
-              <AccountsPayableManager onDataChange={loadSummaryData} />
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="h-16 flex flex-col gap-2 bg-blue-600 hover:bg-blue-700">
-              <TrendingUp className="h-6 w-6" />
-              <span className="text-sm font-medium">Nova Conta a Receber</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Nova Conta a Receber</DialogTitle>
-            </DialogHeader>
-            <div className="p-4">
-              <AccountsReceivableManager onDataChange={loadSummaryData} />
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="h-16 flex flex-col gap-2 bg-orange-600 hover:bg-orange-700">
-              <Settings className="h-6 w-6" />
-              <span className="text-sm font-medium">Nova Despesa</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Nova Despesa Operacional</DialogTitle>
-            </DialogHeader>
-            <QuickExpenseForm onSuccess={() => { loadSummaryData(); }} />
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Tabs principais */}

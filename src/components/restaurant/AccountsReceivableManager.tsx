@@ -19,6 +19,7 @@ import { Plus, Edit, Trash2, Check, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 
 interface ContaReceber {
   id: string;
@@ -39,6 +40,7 @@ interface AccountsReceivableManagerProps {
 
 export function AccountsReceivableManager({ onDataChange }: AccountsReceivableManagerProps) {
   const { currentRestaurant } = useAuth();
+  const { getIncomeCategories } = useFinancialCategories();
   const [contas, setContas] = useState<ContaReceber[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -127,6 +129,10 @@ export function AccountsReceivableManager({ onDataChange }: AccountsReceivableMa
 
   const markAsReceived = async (contaId: string) => {
     try {
+      const conta = contas.find(c => c.id === contaId);
+      if (!conta) return;
+
+      // Atualizar status da conta
       const { error } = await supabase
         .from('contas_a_receber')
         .update({ 
@@ -137,7 +143,26 @@ export function AccountsReceivableManager({ onDataChange }: AccountsReceivableMa
 
       if (error) throw error;
 
-      toast.success("Conta marcada como recebida!");
+      // Integrar ao cash_flow para DRE
+      const { error: cashFlowError } = await supabase
+        .from('cash_flow')
+        .insert({
+          restaurant_id: currentRestaurant?.id,
+          type: 'income',
+          amount: conta.valor,
+          date: new Date().toISOString().split('T')[0],
+          description: `${conta.descricao} - ${conta.cliente || 'Cliente'}`,
+          category: conta.categoria,
+          status: 'paid',
+          impacta_dre: true,
+          payment_method: conta.forma_recebimento || 'dinheiro'
+        });
+
+      if (cashFlowError) {
+        console.warn('Erro ao integrar com cash_flow:', cashFlowError);
+      }
+
+      toast.success("Conta marcada como recebida e integrada ao fluxo financeiro!");
       loadContas();
       onDataChange?.();
     } catch (error) {
@@ -223,15 +248,7 @@ export function AccountsReceivableManager({ onDataChange }: AccountsReceivableMa
     }
   };
 
-  const categorias = [
-    { value: "vendas", label: "Vendas" },
-    { value: "servicos", label: "Serviços" },
-    { value: "eventos", label: "Eventos" },
-    { value: "delivery", label: "Delivery" },
-    { value: "catering", label: "Catering" },
-    { value: "parcerias", label: "Parcerias" },
-    { value: "outras_receitas", label: "Outras Receitas" }
-  ];
+  const incomeCategories = getIncomeCategories();
 
   if (isLoading) {
     return (
@@ -305,8 +322,16 @@ export function AccountsReceivableManager({ onDataChange }: AccountsReceivableMa
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categorias.map(cat => (
-                        <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                      {incomeCategories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.nome}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: cat.cor }}
+                            />
+                            {cat.nome}
+                          </div>
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

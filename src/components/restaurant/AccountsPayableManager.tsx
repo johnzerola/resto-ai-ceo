@@ -19,6 +19,7 @@ import { AlertTriangle, Plus, Edit, Trash2, Check, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 
 interface ContaPagar {
   id: string;
@@ -39,6 +40,7 @@ interface AccountsPayableManagerProps {
 
 export function AccountsPayableManager({ onDataChange }: AccountsPayableManagerProps) {
   const { currentRestaurant } = useAuth();
+  const { getExpenseCategories } = useFinancialCategories();
   const [contas, setContas] = useState<ContaPagar[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -127,6 +129,10 @@ export function AccountsPayableManager({ onDataChange }: AccountsPayableManagerP
 
   const markAsPaid = async (contaId: string) => {
     try {
+      const conta = contas.find(c => c.id === contaId);
+      if (!conta) return;
+
+      // Atualizar status da conta
       const { error } = await supabase
         .from('contas_a_pagar')
         .update({ 
@@ -137,7 +143,35 @@ export function AccountsPayableManager({ onDataChange }: AccountsPayableManagerP
 
       if (error) throw error;
 
-      toast.success("Conta marcada como paga!");
+      // Verificar se a categoria impacta CMV ou DRE e integrar ao cash_flow
+      const { data: categoryData } = await supabase
+        .from('categorias_financeiras')
+        .select('impacta_cmv, impacta_dre')
+        .eq('nome', conta.categoria)
+        .eq('restaurant_id', currentRestaurant?.id)
+        .single();
+
+      // Adicionar ao cash_flow para integração com CMV/DRE
+      const { error: cashFlowError } = await supabase
+        .from('cash_flow')
+        .insert({
+          restaurant_id: currentRestaurant?.id,
+          type: 'expense',
+          amount: conta.valor,
+          date: new Date().toISOString().split('T')[0],
+          description: `${conta.descricao} - ${conta.fornecedor || 'Fornecedor'}`,
+          category: conta.categoria,
+          status: 'paid',
+          impacta_cmv: categoryData?.impacta_cmv || false,
+          impacta_dre: categoryData?.impacta_dre || true,
+          payment_method: conta.forma_pagamento || 'dinheiro'
+        });
+
+      if (cashFlowError) {
+        console.warn('Erro ao integrar com cash_flow:', cashFlowError);
+      }
+
+      toast.success("Conta marcada como paga e integrada ao fluxo financeiro!");
       loadContas();
       onDataChange?.();
     } catch (error) {
@@ -223,17 +257,7 @@ export function AccountsPayableManager({ onDataChange }: AccountsPayableManagerP
     }
   };
 
-  const categorias = [
-    { value: "aluguel", label: "Aluguel" },
-    { value: "salarios", label: "Salários" },
-    { value: "fornecedores", label: "Fornecedores" },
-    { value: "marketing", label: "Marketing" },
-    { value: "utilities", label: "Contas de Luz/Água" },
-    { value: "manutencao", label: "Manutenção" },
-    { value: "impostos", label: "Impostos" },
-    { value: "emprestimos", label: "Empréstimos" },
-    { value: "outras_despesas", label: "Outras Despesas" }
-  ];
+  const expenseCategories = getExpenseCategories();
 
   if (isLoading) {
     return (
@@ -307,8 +331,17 @@ export function AccountsPayableManager({ onDataChange }: AccountsPayableManagerP
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categorias.map(cat => (
-                        <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                      {expenseCategories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.nome}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: cat.cor }}
+                            />
+                            {cat.nome}
+                            {cat.impacta_cmv && <Badge variant="outline" className="text-xs">CMV</Badge>}
+                          </div>
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
