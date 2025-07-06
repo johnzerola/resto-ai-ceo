@@ -11,7 +11,7 @@ import { EnhancedBreakEvenDashboard } from '@/components/restaurant/EnhancedBrea
 import { CascadePriceUpdater } from '@/components/restaurant/CascadePriceUpdater';
 import { AIBusinessAssistant } from '@/components/restaurant/AIBusinessAssistant';
 import { InsumoManager } from '@/components/restaurant/InsumoManager';
-import { FichaTecnicaManager } from '@/components/restaurant/FichaTecnicaManager';
+import { FichaTecnicaIntegrada } from '@/components/restaurant/FichaTecnicaIntegrada';
 import { PrecificacaoManager } from '@/components/restaurant/PrecificacaoManager';
 import { FichaTecnicaImportCSV } from '@/components/restaurant/FichaTecnicaImportCSV';
 import { 
@@ -421,10 +421,7 @@ export default function Cardapio() {
 
           {/* Aba Fichas Técnicas & Precificação Integrada */}
           <TabsContent value="fichas" className="space-y-6">
-            <FichaTecnicaManager 
-              insumos={insumos} 
-              onFichaUpdate={handleFichaUpdate}
-            />
+            <FichaTecnicaIntegrada onFichaUpdate={handleFichaUpdate} />
           </TabsContent>
 
           {/* Aba Análises */}

@@ -54,32 +54,55 @@ interface ValidacaoStatus {
 export function useFichaTecnicaCompleta() {
   const { currentRestaurant } = useAuth();
   
-  // Estados principais
-  const [dadosPrato, setDadosPrato] = useState<DadosPrato>({
-    nome_prato: '',
-    categoria: '',
-    rendimento_porcoes: 1,
-    observacoes: '',
-    preco_desejado: 0
+  // Estados principais com localStorage
+  const [dadosPrato, setDadosPrato] = useState<DadosPrato>(() => {
+    const saved = localStorage.getItem('ficha_tecnica_dados_prato');
+    return saved ? JSON.parse(saved) : {
+      nome_prato: '',
+      categoria: '',
+      rendimento_porcoes: 1,
+      observacoes: '',
+      preco_desejado: 0
+    };
   });
 
-  const [configuracaoAvancada, setConfiguracaoAvancada] = useState<ConfiguracaoAvancada>({
-    meta_lucro_percentual: 30,
-    despesas_fixas_mensais: 0,
-    despesas_variaveis_mensais: 0,
-    markup_personalizado: 250,
-    canal_venda: 'balcao',
-    preco_concorrente: 0
+  const [configuracaoAvancada, setConfiguracaoAvancada] = useState<ConfiguracaoAvancada>(() => {
+    const saved = localStorage.getItem('ficha_tecnica_configuracao');
+    return saved ? JSON.parse(saved) : {
+      meta_lucro_percentual: 30,
+      despesas_fixas_mensais: 0,
+      despesas_variaveis_mensais: 0,
+      markup_personalizado: 250,
+      canal_venda: 'balcao',
+      preco_concorrente: 0
+    };
   });
 
-  const [ingredientes, setIngredientes] = useState<IngredienteCompleto[]>([]);
+  const [ingredientes, setIngredientes] = useState<IngredienteCompleto[]>(() => {
+    const saved = localStorage.getItem('ficha_tecnica_ingredientes');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [resultados, setResultados] = useState<ResultadosCalculados | null>(null);
   const [insumosDisponiveis, setInsumosDisponiveis] = useState<any[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
-  // Carregar insumos disponíveis
+  // Persistir dados no localStorage
+  useEffect(() => {
+    localStorage.setItem('ficha_tecnica_dados_prato', JSON.stringify(dadosPrato));
+  }, [dadosPrato]);
+
+  useEffect(() => {
+    localStorage.setItem('ficha_tecnica_configuracao', JSON.stringify(configuracaoAvancada));
+  }, [configuracaoAvancada]);
+
+  useEffect(() => {
+    localStorage.setItem('ficha_tecnica_ingredientes', JSON.stringify(ingredientes));
+  }, [ingredientes]);
+
+  // Carregar insumos disponíveis automaticamente
   useEffect(() => {
     if (currentRestaurant?.id) {
       carregarInsumos();
@@ -275,6 +298,23 @@ export function useFichaTecnicaCompleta() {
       // Usar preço desejado ou calculado
       const precoFinal = dadosPrato.preco_desejado > 0 ? dadosPrato.preco_desejado : precoSugerido;
       
+      // VALIDAÇÃO CRÍTICA: NUNCA PERMITIR PREÇO ABAIXO DO CUSTO
+      if (precoFinal < custoTotal) {
+        const alertas: string[] = ['🚨 ERRO CRÍTICO: Preço de venda menor que o custo de produção!'];
+        setResultados({
+          cmv_estimado_percentual: 100,
+          cmv_estimado_valor: custoTotal,
+          lucro_estimado_valor: precoFinal - custoTotal,
+          lucro_estimado_percentual: 0,
+          margem_bruta: 0,
+          margem_liquida: -100,
+          preco_sugerido: custoTotal * 1.5,
+          status_viabilidade: 'prejuizo',
+          alertas: alertas
+        });
+        return;
+      }
+      
       // Calcular métricas finais
       const lucroEstimado = precoFinal - custoTotal;
       const margemBruta = precoFinal > 0 ? (lucroEstimado / precoFinal) * 100 : 0;
@@ -295,6 +335,9 @@ export function useFichaTecnicaCompleta() {
       }
       if (margemLiquida < configuracaoAvancada.meta_lucro_percentual && margemLiquida >= 0) {
         alertas.push(`⚠️ Meta de lucro não atingida. Atual: ${margemLiquida.toFixed(1)}%`);
+      }
+      if (precoFinal <= custoTotal * 1.1) {
+        alertas.push('⚠️ Preço muito próximo do custo - margem de segurança baixa');
       }
       if (configuracaoAvancada.preco_concorrente > 0) {
         if (precoFinal > configuracaoAvancada.preco_concorrente * 1.2) {
@@ -407,24 +450,34 @@ export function useFichaTecnicaCompleta() {
 
   // Limpar tudo
   const limparTudo = useCallback(() => {
-    setDadosPrato({
+    const dadosVazios = {
       nome_prato: '',
       categoria: '',
       rendimento_porcoes: 1,
       observacoes: '',
       preco_desejado: 0
-    });
-    setConfiguracaoAvancada({
+    };
+    const configVazia = {
       meta_lucro_percentual: 30,
       despesas_fixas_mensais: 0,
       despesas_variaveis_mensais: 0,
       markup_personalizado: 250,
       canal_venda: 'balcao',
       preco_concorrente: 0
-    });
+    };
+    
+    setDadosPrato(dadosVazios);
+    setConfiguracaoAvancada(configVazia);
     setIngredientes([]);
     setResultados(null);
     setErrors([]);
+    
+    // Limpar localStorage
+    localStorage.removeItem('ficha_tecnica_dados_prato');
+    localStorage.removeItem('ficha_tecnica_configuracao');
+    localStorage.removeItem('ficha_tecnica_ingredientes');
+    
+    toast.success('Ficha técnica limpa com sucesso!');
   }, []);
 
   return {
