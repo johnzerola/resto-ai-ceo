@@ -94,19 +94,43 @@ const Onboarding = () => {
         throw restaurantError;
       }
 
-      // Salvar perfil empresarial detalhado
-      const profileSuccess = await saveProfile({
-        restaurant_id: restaurantData.id,
-        owner_name: values.ownerName,
-        cnpj: values.cnpj,
-        average_monthly_revenue: values.averageMonthlyRevenue,
-        average_ticket: values.averageTicket,
-        desired_profit_margin: values.desiredProfitMargin,
-        fixed_monthly_costs: values.fixedMonthlyCosts,
-        variable_monthly_costs: values.variableMonthlyCosts,
-        weekly_operating_days: values.weeklyOperatingDays,
-        daily_operating_hours: values.dailyOperatingHours,
-      });
+      // Salvar perfil empresarial detalhado diretamente no banco
+      const { data: profileData, error: profileError } = await supabase
+        .from('business_profiles')
+        .insert([
+          {
+            restaurant_id: restaurantData.id,
+            owner_name: values.ownerName,
+            cnpj: values.cnpj,
+            average_monthly_revenue: values.averageMonthlyRevenue,
+            average_ticket: values.averageTicket,
+            desired_profit_margin: values.desiredProfitMargin,
+            fixed_monthly_costs: values.fixedMonthlyCosts,
+            variable_monthly_costs: values.variableMonthlyCosts,
+            weekly_operating_days: values.weeklyOperatingDays,
+            daily_operating_hours: values.dailyOperatingHours,
+            break_even_point: values.fixedMonthlyCosts + (values.averageMonthlyRevenue * values.variableMonthlyCosts / 100),
+            ideal_cmv_percentage: 30,
+            monthly_sales_target: (values.fixedMonthlyCosts + (values.averageMonthlyRevenue * values.variableMonthlyCosts / 100)) / (1 - values.desiredProfitMargin / 100),
+            ideal_net_margin: values.desiredProfitMargin * 0.7,
+            motivational_insights: generateMotivationalInsights({
+              average_monthly_revenue: values.averageMonthlyRevenue,
+              break_even_point: values.fixedMonthlyCosts + (values.averageMonthlyRevenue * values.variableMonthlyCosts / 100),
+              ideal_cmv_percentage: 30,
+              monthly_sales_target: (values.fixedMonthlyCosts + (values.averageMonthlyRevenue * values.variableMonthlyCosts / 100)) / (1 - values.desiredProfitMargin / 100),
+              ideal_net_margin: values.desiredProfitMargin * 0.7,
+              weekly_operating_days: values.weeklyOperatingDays,
+              average_ticket: values.averageTicket
+            })
+          }
+        ])
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error("Erro ao salvar perfil empresarial:", profileError);
+        throw profileError;
+      }
 
       // Criar configurações iniciais do restaurante
       if (restaurantData) {
@@ -126,22 +150,18 @@ const Onboarding = () => {
           ]);
       }
 
-      // Gerar insights motivacionais
-      const generatedInsights = generateMotivationalInsights({
-        average_monthly_revenue: values.averageMonthlyRevenue,
-        break_even_point: values.fixedMonthlyCosts + (values.averageMonthlyRevenue * values.variableMonthlyCosts / 100),
-        ideal_cmv_percentage: 30,
-        monthly_sales_target: (values.fixedMonthlyCosts + (values.averageMonthlyRevenue * values.variableMonthlyCosts / 100)) / (1 - values.desiredProfitMargin / 100),
-        ideal_net_margin: values.desiredProfitMargin * 0.7,
-        weekly_operating_days: values.weeklyOperatingDays,
-        average_ticket: values.averageTicket
-      });
-
-      setInsights(generatedInsights);
+      // Usar insights gerados no perfil
+      const insightsArray = Array.isArray(profileData.motivational_insights) 
+        ? profileData.motivational_insights.map(insight => String(insight))
+        : (profileData.motivational_insights ? [String(profileData.motivational_insights)] : []);
+      setInsights(insightsArray);
       setShowInsights(true);
 
       // Atualizar contexto usando a função existente
       await createRestaurant(values.restaurantName);
+      
+      // Aguardar um pouco para garantir que o contexto foi atualizado
+      await new Promise(resolve => setTimeout(resolve, 500));
       
     } catch (error) {
       console.error("Erro ao configurar restaurante:", error);
@@ -175,7 +195,7 @@ const Onboarding = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-8">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold">Resto<span className="text-primary">AI</span> CEO</h1>

@@ -147,7 +147,7 @@ export function TrialSystemValidator() {
                 <h4 className="font-medium">Status do Trial</h4>
                 <p className="text-sm text-muted-foreground">
                   {trialData.isActive 
-                    ? `Trial ativo - ${trialData.daysRemaining} dias restantes`
+                    ? `Teste Grátis ativo - ${trialData.daysRemaining} dias restantes`
                     : trialData.status === 'not_found'
                     ? 'Sistema de trial não está configurado para este usuário'
                     : 'Trial não está ativo'
