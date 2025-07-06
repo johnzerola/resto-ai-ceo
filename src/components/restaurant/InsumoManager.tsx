@@ -114,8 +114,21 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
       return;
     }
 
-    // Calcular preço unitário com validação
-    const preco_unitario = Number(formData.preco_pago) / Number(formData.volume_embalagem);
+    // Calcular preço unitário com validação robusta
+    const precoNumerico = Number(formData.preco_pago);
+    const volumeNumerico = Number(formData.volume_embalagem);
+    
+    if (!precoNumerico || precoNumerico <= 0) {
+      toast.error('Preço pago deve ser maior que zero');
+      return;
+    }
+    
+    if (!volumeNumerico || volumeNumerico <= 0) {
+      toast.error('Volume da embalagem deve ser maior que zero');
+      return;
+    }
+    
+    const preco_unitario = precoNumerico / volumeNumerico;
     const precoAnterior = editingInsumo?.preco_unitario || 0;
 
     // Validar se o cálculo é válido
@@ -129,19 +142,24 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
         // Atualizar no banco com logs detalhados
         console.log('🔄 Atualizando insumo:', editingInsumo.id, 'com preço:', preco_unitario);
         
+        const updateData = {
+          nome: formData.nome.trim(),
+          categoria: formData.categoria?.trim() || 'geral',
+          preco_pago: precoNumerico,
+          volume_embalagem: volumeNumerico,
+          preco_unitario: Number(preco_unitario.toFixed(6)),
+          unidade_medida: formData.unidade_medida.trim(),
+          fornecedor: formData.fornecedor?.trim() || 'Não informado',
+          estoque_atual: Number(formData.estoque_atual) || 0,
+          estoque_minimo: Number(formData.estoque_minimo) || 0,
+          updated_at: new Date().toISOString()
+        };
+
+        console.log('🔄 Atualizando insumo:', editingInsumo.id, 'dados:', updateData);
+        
         const { error } = await supabase
           .from('insumos')
-          .update({
-            nome: formData.nome.trim(),
-            categoria: formData.categoria?.trim() || 'geral',
-            preco_pago: Number(formData.preco_pago),
-            volume_embalagem: Number(formData.volume_embalagem),
-            preco_unitario: Number(preco_unitario.toFixed(6)),
-            unidade_medida: formData.unidade_medida.trim(),
-            fornecedor: formData.fornecedor?.trim() || 'Não informado',
-            estoque_atual: Number(formData.estoque_atual) || 0,
-            estoque_minimo: Number(formData.estoque_minimo) || 0,
-          })
+          .update(updateData)
           .eq('id', editingInsumo.id);
 
         if (error) throw error;
@@ -158,9 +176,9 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
         const insumoData = {
           nome: formData.nome.trim(),
           categoria: formData.categoria?.trim() || 'geral',
-          preco_pago: Number(formData.preco_pago),
-          volume_embalagem: Number(formData.volume_embalagem),
-          preco_unitario: Number(preco_unitario.toFixed(6)), // Arredondar para evitar problemas de precisão
+          preco_pago: precoNumerico,
+          volume_embalagem: volumeNumerico,
+          preco_unitario: Number(preco_unitario.toFixed(6)), // Precisão controlada
           unidade_medida: formData.unidade_medida.trim(),
           fornecedor: formData.fornecedor?.trim() || 'Não informado',
           estoque_atual: Number(formData.estoque_atual) || 0,
@@ -168,12 +186,15 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
           restaurant_id: currentRestaurant.id
         };
 
-        // Log para debug
-        console.log('💾 Salvando insumo:', insumoData);
+        // Log detalhado para debug
+        console.log('💾 Criando novo insumo:', {
+          ...insumoData,
+          calculado: `${precoNumerico} / ${volumeNumerico} = ${preco_unitario}`
+        });
 
         const { error } = await supabase
           .from('insumos')
-          .insert(insumoData);
+          .insert([insumoData]);
 
         if (error) {
           console.error('Erro ao criar insumo:', error);

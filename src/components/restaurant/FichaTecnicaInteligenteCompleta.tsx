@@ -107,11 +107,23 @@ export function FichaTecnicaInteligenteCompleta() {
     }
   }, [ingredientes, precoDesejado, calcularResultados]);
 
-  // Salvar ficha
+  // Salvar ficha com validações robustas
   const handleSalvar = async () => {
-    // Validações completas antes do salvamento
+    console.log('🚀 Iniciando salvamento da ficha técnica...');
+    
+    // Validações obrigatórias
     if (!prato.nome_prato?.trim()) {
       toast.error('Nome do prato é obrigatório');
+      return;
+    }
+
+    if (!prato.categoria?.trim()) {
+      toast.error('Categoria do prato é obrigatória');
+      return;
+    }
+
+    if (prato.rendimento_porcoes <= 0) {
+      toast.error('Rendimento deve ser maior que zero');
       return;
     }
 
@@ -120,7 +132,7 @@ export function FichaTecnicaInteligenteCompleta() {
       return;
     }
 
-    // Validar se todos os ingredientes estão preenchidos corretamente
+    // Validar cada ingrediente
     const ingredientesInvalidos = ingredientes.filter(ing => 
       !ing.insumo_id || 
       !ing.nome_insumo || 
@@ -133,13 +145,24 @@ export function FichaTecnicaInteligenteCompleta() {
       return;
     }
 
-    // Se não temos resultados, calcular antes de salvar
+    // Calcular resultados se não tiver
     if (!resultados) {
-      toast.error('Aguarde o cálculo dos resultados antes de salvar');
+      console.log('⏳ Calculando resultados antes de salvar...');
       await calcularResultados(undefined, precoDesejado || undefined);
+      
+      // Dar um tempo para o cálculo processar
+      setTimeout(() => {
+        if (resultados) {
+          handleSalvar(); // Tentar salvar novamente com resultados
+        } else {
+          toast.error('Erro ao calcular resultados. Tente novamente.');
+        }
+      }, 1000);
       return;
     }
 
+    console.log('💾 Salvando ficha técnica:', { prato, ingredientes, resultados });
+    
     const sucesso = await salvarFichaTecnica(ingredientes, resultados, prato);
     if (sucesso) {
       handleLimparTudo();
@@ -180,8 +203,9 @@ export function FichaTecnicaInteligenteCompleta() {
     }
   };
 
+  // Validar se todos os campos obrigatórios estão preenchidos
   const isFormularioValido = () => {
-    const pratoValido = prato.nome_prato?.trim() && prato.categoria;
+    const pratoValido = prato.nome_prato?.trim() && prato.categoria && prato.rendimento_porcoes > 0;
     const ingredientesValidos = ingredientes.length > 0 && 
       ingredientes.every(ing => 
         ing.insumo_id && 
@@ -190,9 +214,14 @@ export function FichaTecnicaInteligenteCompleta() {
         ing.preco_unitario > 0
       );
     
-    const calculosValidos = resultados !== null;
+    console.log('🔍 Validação formulário:', { 
+      pratoValido, 
+      ingredientesValidos, 
+      ingredientesCount: ingredientes.length,
+      resultados: !!resultados 
+    });
     
-    return pratoValido && ingredientesValidos && calculosValidos;
+    return pratoValido && ingredientesValidos;
   };
 
   return (
@@ -217,15 +246,15 @@ export function FichaTecnicaInteligenteCompleta() {
             <RotateCcw className="h-4 w-4 mr-2" />
             Limpar
           </Button>
-          <Button 
-            onClick={handleSalvar}
-            disabled={!isFormularioValido()}
-            className="bg-green-600 hover:bg-green-700 min-w-[120px]"
-            size="sm"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Salvar Ficha
-          </Button>
+            <Button 
+              onClick={handleSalvar}
+              disabled={!isFormularioValido() || isCalculating}
+              className="bg-green-600 hover:bg-green-700 min-w-[120px]"
+              size="sm"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isCalculating ? 'Calculando...' : 'Salvar Ficha'}
+            </Button>
         </div>
       </div>
 
