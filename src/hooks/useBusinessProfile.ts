@@ -107,11 +107,15 @@ export const useBusinessProfile = () => {
   };
 
   const loadProfile = async () => {
-    if (!currentRestaurant?.id) return;
+    if (!currentRestaurant?.id) {
+      console.log('❌ currentRestaurant não disponível:', currentRestaurant);
+      return;
+    }
 
     setIsLoading(true);
     try {
       console.log('🔍 Carregando perfil para restaurante:', currentRestaurant.id);
+      console.log('🏪 Dados do restaurante:', currentRestaurant);
       
       const { data, error } = await supabase
         .from('business_profiles')
@@ -136,6 +140,19 @@ export const useBusinessProfile = () => {
         setProfile(profile);
       } else {
         console.log('ℹ️ Nenhum perfil encontrado para este restaurante');
+        console.log('🔍 Verificando se há dados na tabela business_profiles...');
+        
+        // Verificar se há dados na tabela
+        const { data: allProfiles, error: checkError } = await supabase
+          .from('business_profiles')
+          .select('*');
+        
+        if (checkError) {
+          console.error('❌ Erro ao verificar tabela:', checkError);
+        } else {
+          console.log('📊 Total de perfis na tabela:', allProfiles?.length);
+          console.log('📋 Perfis encontrados:', allProfiles);
+        }
       }
     } catch (error) {
       console.error('❌ Erro ao carregar perfil:', error);

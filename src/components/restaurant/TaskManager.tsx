@@ -52,6 +52,13 @@ export function TaskManager() {
   const loadTasks = () => {
     setIsLoading(true);
     try {
+      // Para novas contas, limpar qualquer dado antigo de tarefas
+      const isNewAccount = !localStorage.getItem('restaurantTasks');
+      if (isNewAccount) {
+        localStorage.removeItem('restaurantTasks');
+        console.log('🧹 Nova conta detectada - localStorage limpo');
+      }
+      
       // Carregar tarefas do localStorage
       const savedTasks = localStorage.getItem('restaurantTasks');
       if (savedTasks) {
@@ -59,6 +66,7 @@ export function TaskManager() {
       } else {
         // Nova conta: não há tarefas pré-definidas
         setTasks([]);
+        console.log('📝 Nova conta - lista de tarefas vazia');
       }
     } catch (error) {
       console.error('Erro ao carregar tarefas:', error);

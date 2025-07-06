@@ -160,8 +160,13 @@ const Onboarding = () => {
       // Atualizar contexto usando a função existente
       await createRestaurant(values.restaurantName);
       
-      // Aguardar um pouco para garantir que o contexto foi atualizado
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Aguardar mais tempo para garantir que o contexto foi atualizado
+      console.log('⏳ Aguardando atualização do contexto...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Forçar recarregamento do perfil
+      console.log('🔄 Forçando recarregamento do perfil...');
+      window.location.reload();
       
     } catch (error) {
       console.error("Erro ao configurar restaurante:", error);
