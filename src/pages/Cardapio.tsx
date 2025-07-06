@@ -13,6 +13,7 @@ import { AIBusinessAssistant } from '@/components/restaurant/AIBusinessAssistant
 import { InsumoManager } from '@/components/restaurant/InsumoManager';
 import { FichaTecnicaManager } from '@/components/restaurant/FichaTecnicaManager';
 import { PrecificacaoManager } from '@/components/restaurant/PrecificacaoManager';
+import { FichaTecnicaImportCSV } from '@/components/restaurant/FichaTecnicaImportCSV';
 import { 
   Search, 
   Calculator,
@@ -99,6 +100,13 @@ export default function Cardapio() {
     if (!currentRestaurant?.id || fichasTecnicas.length === 0) return;
 
     try {
+      console.log('🔄 Aplicando efeito cascata...', { 
+        restaurantId: currentRestaurant.id, 
+        fichasCount: fichasTecnicas.length 
+      });
+
+      let fichasAtualizadas = 0;
+
       // Para cada ficha técnica, recalcular os custos
       for (const ficha of fichasTecnicas) {
         const { data: ingredientes, error } = await supabase
@@ -109,56 +117,90 @@ export default function Cardapio() {
           `)
           .eq('prato_id', ficha.id);
 
-        if (error) continue;
+        if (error) {
+          console.error(`Erro ao buscar ingredientes da ficha ${ficha.id}:`, error);
+          continue;
+        }
 
         // Calcular novo custo total da ficha
-        let novoCustoTotal = 0;
+        let novoCustoIngredientes = 0;
+        let ingredientesComCusto = 0;
+
         for (const ing of ingredientes || []) {
           const insumo = ing.insumos;
-          if (insumo) {
-            novoCustoTotal += ing.quantidade_liquida * insumo.preco_unitario;
+          if (insumo && insumo.preco_unitario > 0) {
+            const custoIngrediente = ing.quantidade_liquida * insumo.preco_unitario;
+            novoCustoIngredientes += custoIngrediente;
+            ingredientesComCusto++;
           }
         }
 
-        // Adicionar custos de embalagem e perdas (usando configurações)
-        const custoEmbalagem = novoCustoTotal * 0.05;
-        const custoPerdas = novoCustoTotal * 0.05; // 5% padrão
-        const custoFinalTotal = novoCustoTotal + custoEmbalagem + custoPerdas;
-        const custoPorPorcao = custoFinalTotal / (ficha.rendimento_porcoes || 1);
+        // Só atualizar se encontrou ingredientes com custo
+        if (ingredientesComCusto > 0) {
+          // Aplicar fatores de correção (perdas, embalagem, margem de segurança)
+          const custoEmbalagem = novoCustoIngredientes * 0.05; // 5% embalagem
+          const custoPerdas = novoCustoIngredientes * ((ficha.margem_seguranca || 10) / 100);
+          const custoFinalTotal = novoCustoIngredientes + custoEmbalagem + custoPerdas;
+          const custoPorPorcao = custoFinalTotal / Math.max(ficha.rendimento_porcoes || 1, 1);
 
-        // Recalcular preço sugerido
-        const precoSugerido = custoPorPorcao * 2.5; // Markup padrão 250%
-        const margemPercentual = precoSugerido > 0 ? ((precoSugerido - custoPorPorcao) / precoSugerido) * 100 : 0;
+          // Recalcular preços com markup inteligente
+          const markupPadrao = 250; // 250% padrão para restaurantes
+          const precoSugerido = custoPorPorcao * (markupPadrao / 100);
+          const precoFinal = ficha.preco_praticado || precoSugerido;
+          
+          // Calcular margens
+          const lucroEstimado = precoFinal - custoPorPorcao;
+          const margemPercentual = precoFinal > 0 ? (lucroEstimado / precoFinal) * 100 : 0;
+          
+          // Determinar status de viabilidade
+          let statusViabilidade = 'saudavel';
+          if (margemPercentual < 0) statusViabilidade = 'prejuizo';
+          else if (margemPercentual < 20) statusViabilidade = 'atencao';
 
-        // Atualizar no banco
-        await supabase
-          .from('pratos')
-          .update({
-            custo_total: custoFinalTotal,
-            custo_por_porcao: custoPorPorcao,
-            preco_sugerido: precoSugerido,
-            margem_percentual: margemPercentual,
-            lucro_estimado: precoSugerido - custoPorPorcao,
-            custo_embalagem: custoEmbalagem,
-            custo_perdas: custoPerdas
-          })
-          .eq('id', ficha.id);
+          // Atualizar no banco
+          const { error: updateError } = await supabase
+            .from('pratos')
+            .update({
+              custo_total: custoFinalTotal,
+              custo_por_porcao: custoPorPorcao,
+              preco_sugerido: precoSugerido,
+              margem_percentual: margemPercentual,
+              lucro_estimado: lucroEstimado,
+              status_viabilidade: statusViabilidade,
+              custo_embalagem: custoEmbalagem,
+              custo_perdas: custoPerdas,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', ficha.id);
+
+          if (!updateError) {
+            fichasAtualizadas++;
+          } else {
+            console.error(`Erro ao atualizar ficha ${ficha.id}:`, updateError);
+          }
+        }
       }
 
       // Recarregar fichas atualizadas
-      const { data: fichasAtualizadas } = await supabase
+      const { data: fichasAtualizadasData } = await supabase
         .from('pratos')
         .select('*')
-        .eq('restaurant_id', currentRestaurant.id);
+        .eq('restaurant_id', currentRestaurant.id)
+        .order('updated_at', { ascending: false });
 
-      if (fichasAtualizadas) {
-        handleFichaUpdate(fichasAtualizadas);
+      if (fichasAtualizadasData) {
+        handleFichaUpdate(fichasAtualizadasData);
       }
 
-      toast.success('✅ Efeito cascata aplicado! Todos os preços foram recalculados automaticamente.');
+      toast.success(`✅ Efeito cascata concluído!`, {
+        description: `${fichasAtualizadas} ficha(s) técnica(s) recalculada(s) automaticamente.`
+      });
+
     } catch (error) {
       console.error('Erro no efeito cascata:', error);
-      toast.error('Erro ao atualizar preços automaticamente');
+      toast.error('❌ Erro ao atualizar preços automaticamente', {
+        description: 'Alguns preços podem não ter sido atualizados'
+      });
     }
   };
 
@@ -208,9 +250,22 @@ export default function Cardapio() {
               <Download className="h-4 w-4 mr-2" />
               Exportar CSV
             </Button>
+            <FichaTecnicaImportCSV onImportComplete={() => {
+              // Recarregar dados após importação
+              if (currentRestaurant?.id) {
+                const reloadData = async () => {
+                  const { data } = await supabase
+                    .from('pratos')
+                    .select('*')
+                    .eq('restaurant_id', currentRestaurant.id);
+                  if (data) handleFichaUpdate(data);
+                };
+                reloadData();
+              }
+            }} />
             <Button variant="outline" onClick={() => setShowCSVImport(true)}>
               <Upload className="h-4 w-4 mr-2" />
-              Importar CSV
+              Importar Menu CSV
             </Button>
           </div>
         </div>

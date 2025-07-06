@@ -137,6 +137,28 @@ export function FichaTecnicaInteligenteCompleta() {
         <p className="text-gray-600 text-sm sm:text-base">
           Calcule automaticamente CMV, lucro e preço ideal
         </p>
+        
+        {/* Botões de Ação Sempre Visíveis */}
+        <div className="flex justify-center gap-3 mt-4">
+          <Button 
+            variant="outline" 
+            onClick={handleLimparTudo}
+            size="sm"
+            className="min-w-[100px]"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Limpar
+          </Button>
+          <Button 
+            onClick={handleSalvar}
+            disabled={!isFormularioValido()}
+            className="bg-green-600 hover:bg-green-700 min-w-[120px]"
+            size="sm"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            Salvar Ficha
+          </Button>
+        </div>
       </div>
 
       <MobileScrollContainer maxHeight="85vh">

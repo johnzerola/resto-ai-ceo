@@ -93,6 +93,11 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
       return;
     }
 
+    if (!currentRestaurant?.id) {
+      toast.error('Nenhum restaurante selecionado');
+      return;
+    }
+
     const preco_unitario = formData.preco_pago / formData.volume_embalagem;
     const precoAnterior = editingInsumo?.preco_unitario || 0;
     
@@ -102,15 +107,15 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
         const { error } = await supabase
           .from('insumos')
           .update({
-            nome: formData.nome,
-            categoria: formData.categoria || 'Geral',
-            preco_pago: formData.preco_pago,
-            volume_embalagem: formData.volume_embalagem,
-            preco_unitario,
-            unidade_medida: formData.unidade_medida,
-            fornecedor: formData.fornecedor || 'Não informado',
-            estoque_atual: formData.estoque_atual,
-            estoque_minimo: formData.estoque_minimo,
+            nome: formData.nome.trim(),
+            categoria: formData.categoria?.trim() || 'Geral',
+            preco_pago: Number(formData.preco_pago),
+            volume_embalagem: Number(formData.volume_embalagem),
+            preco_unitario: Number(preco_unitario),
+            unidade_medida: formData.unidade_medida.trim(),
+            fornecedor: formData.fornecedor?.trim() || 'Não informado',
+            estoque_atual: Number(formData.estoque_atual) || 0,
+            estoque_minimo: Number(formData.estoque_minimo) || 0,
           })
           .eq('id', editingInsumo.id);
 
@@ -119,36 +124,44 @@ export function InsumoManager({ onInsumoUpdate, onCascadeEffect }: InsumoManager
         // Efeito cascata se preço mudou
         if (Math.abs(preco_unitario - precoAnterior) > 0.01) {
           onCascadeEffect?.(editingInsumo.id, preco_unitario);
-          toast.success(`Insumo atualizado! Preços afetados serão recalculados automaticamente.`);
+          toast.success(`✅ Insumo "${formData.nome}" atualizado! Efeito cascata aplicado nos preços.`);
         } else {
-          toast.success('Insumo atualizado com sucesso!');
+          toast.success(`✅ Insumo "${formData.nome}" atualizado com sucesso!`);
         }
       } else {
-        // Criar
+        // Criar novo
         const { error } = await supabase
           .from('insumos')
           .insert({
-            nome: formData.nome,
-            categoria: formData.categoria || 'Geral',
-            preco_pago: formData.preco_pago,
-            volume_embalagem: formData.volume_embalagem,
-            preco_unitario,
-            unidade_medida: formData.unidade_medida,
-            fornecedor: formData.fornecedor || 'Não informado',
-            estoque_atual: formData.estoque_atual,
-            estoque_minimo: formData.estoque_minimo,
-            restaurant_id: currentRestaurant?.id
+            nome: formData.nome.trim(),
+            categoria: formData.categoria?.trim() || 'Geral',
+            preco_pago: Number(formData.preco_pago),
+            volume_embalagem: Number(formData.volume_embalagem),
+            preco_unitario: Number(preco_unitario),
+            unidade_medida: formData.unidade_medida.trim(),
+            fornecedor: formData.fornecedor?.trim() || 'Não informado',
+            estoque_atual: Number(formData.estoque_atual) || 0,
+            estoque_minimo: Number(formData.estoque_minimo) || 0,
+            restaurant_id: currentRestaurant.id
           });
 
-        if (error) throw error;
-        toast.success('Insumo adicionado com sucesso!');
+        if (error) {
+          console.error('Erro ao criar insumo:', error);
+          throw error;
+        }
+        
+        toast.success(`✅ Insumo "${formData.nome}" adicionado com sucesso!`, {
+          description: `Preço unitário: R$ ${preco_unitario.toFixed(4)}/${formData.unidade_medida}`
+        });
       }
 
       resetForm();
-      loadInsumos();
+      await loadInsumos();
     } catch (error) {
       console.error('Erro ao salvar insumo:', error);
-      toast.error('Erro ao salvar insumo');
+      toast.error(`❌ Erro ao ${editingInsumo ? 'atualizar' : 'adicionar'} insumo`, {
+        description: error.message || 'Verifique os dados e tente novamente'
+      });
     }
   };
 

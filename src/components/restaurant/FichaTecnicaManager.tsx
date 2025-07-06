@@ -388,6 +388,35 @@ export function FichaTecnicaManager({ insumos = [], onFichaUpdate }: FichaTecnic
             Define seu preço ou meta de lucro - o sistema calcula automaticamente
           </p>
         </div>
+        {/* Botão de Salvar sempre visível */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={resetForm}
+            size="sm"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Limpar
+          </Button>
+          <Button 
+            onClick={salvarFichaTecnica}
+            disabled={!nomePrato || ingredientes.length === 0 || salvando}
+            className="bg-green-600 hover:bg-green-700"
+            size="sm"
+          >
+            {salvando ? (
+              <>
+                <div className="animate-spin h-4 w-4 mr-2 rounded-full border-2 border-white border-t-transparent" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Salvar Ficha
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Alertas */}
