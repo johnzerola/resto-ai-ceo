@@ -52,46 +52,13 @@ export function TaskManager() {
   const loadTasks = () => {
     setIsLoading(true);
     try {
-      // Simular carregamento de tarefas do localStorage para demonstração
+      // Carregar tarefas do localStorage
       const savedTasks = localStorage.getItem('restaurantTasks');
       if (savedTasks) {
         setTasks(JSON.parse(savedTasks));
       } else {
-        // Dados mockados para demonstração
-        const mockTasks: Task[] = [
-          {
-            id: '1',
-            titulo: 'Revisar cardápio de verão',
-            descricao: 'Atualizar preços e incluir novos pratos sazonais',
-            dataLimite: '2025-01-15',
-            responsavel: 'Ana Silva',
-            status: 'pendente',
-            criadaEm: '2025-01-05',
-            prioridade: 'alta'
-          },
-          {
-            id: '2',
-            titulo: 'Treinamento de equipe - atendimento',
-            descricao: 'Capacitar garçons sobre novos procedimentos',
-            dataLimite: '2025-01-10',
-            responsavel: 'Carlos Santos',
-            status: 'em_andamento',
-            criadaEm: '2025-01-03',
-            prioridade: 'media'
-          },
-          {
-            id: '3',
-            titulo: 'Inventário mensal',
-            descricao: 'Contagem completa do estoque',
-            dataLimite: '2025-01-08',
-            responsavel: 'Maria Costa',
-            status: 'concluida',
-            criadaEm: '2025-01-01',
-            prioridade: 'alta'
-          }
-        ];
-        setTasks(mockTasks);
-        localStorage.setItem('restaurantTasks', JSON.stringify(mockTasks));
+        // Nova conta: não há tarefas pré-definidas
+        setTasks([]);
       }
     } catch (error) {
       console.error('Erro ao carregar tarefas:', error);

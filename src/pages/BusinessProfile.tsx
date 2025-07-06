@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +50,7 @@ const BusinessProfilePage = () => {
   });
 
   // Update form when profile loads
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       form.reset({
         ownerName: profile.owner_name || "",
@@ -64,7 +64,7 @@ const BusinessProfilePage = () => {
         dailyOperatingHours: profile.daily_operating_hours,
       });
     }
-  });
+  }, [profile, form]);
 
   const onSubmit = async (values: BusinessProfileFormValues) => {
     setIsSubmitting(true);

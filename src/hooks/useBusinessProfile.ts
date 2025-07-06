@@ -111,6 +111,8 @@ export const useBusinessProfile = () => {
 
     setIsLoading(true);
     try {
+      console.log('🔍 Carregando perfil para restaurante:', currentRestaurant.id);
+      
       const { data, error } = await supabase
         .from('business_profiles')
         .select('*')
@@ -118,11 +120,12 @@ export const useBusinessProfile = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Erro ao carregar perfil:', error);
+        console.error('❌ Erro ao carregar perfil:', error);
         return;
       }
 
       if (data) {
+        console.log('✅ Perfil carregado:', data);
         // Convert Json to string array if needed
         const profile = {
           ...data,
@@ -131,9 +134,11 @@ export const useBusinessProfile = () => {
             : (data.motivational_insights ? [data.motivational_insights] : [])
         };
         setProfile(profile);
+      } else {
+        console.log('ℹ️ Nenhum perfil encontrado para este restaurante');
       }
     } catch (error) {
-      console.error('Erro ao carregar perfil:', error);
+      console.error('❌ Erro ao carregar perfil:', error);
     } finally {
       setIsLoading(false);
     }
@@ -147,6 +152,9 @@ export const useBusinessProfile = () => {
 
     setIsLoading(true);
     try {
+      console.log('💾 Salvando perfil:', profileData);
+      console.log('🏪 Restaurante ID:', currentRestaurant.id);
+      
       // Calcular métricas automáticas
       const calculatedMetrics = calculateBusinessMetrics(profileData);
       const fullProfileData = {
@@ -155,6 +163,8 @@ export const useBusinessProfile = () => {
         restaurant_id: currentRestaurant.id
       };
 
+      console.log('📊 Dados completos para salvar:', fullProfileData);
+
       const { data, error } = await supabase
         .from('business_profiles')
         .upsert([fullProfileData])
@@ -162,16 +172,17 @@ export const useBusinessProfile = () => {
         .single();
 
       if (error) {
-        console.error('Erro ao salvar perfil:', error);
+        console.error('❌ Erro ao salvar perfil:', error);
         toast.error('Erro ao salvar perfil empresarial');
         return false;
       }
 
+      console.log('✅ Perfil salvo com sucesso:', data);
       setProfile(data);
       toast.success('Perfil empresarial salvo com sucesso!');
       return true;
     } catch (error) {
-      console.error('Erro ao salvar perfil:', error);
+      console.error('❌ Erro ao salvar perfil:', error);
       toast.error('Erro ao salvar perfil empresarial');
       return false;
     } finally {

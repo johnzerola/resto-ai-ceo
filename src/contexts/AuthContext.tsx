@@ -84,30 +84,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       amount: null,
     });
     
-    // Limpar TODOS os dados específicos do usuário do localStorage
-    const allKeys = Object.keys(localStorage);
-    const userSpecificKeys = allKeys.filter(key => 
-      key.includes('financialData_') ||
-      key.includes('cashFlowEntries_') ||
-      key.includes('restaurantData_') ||
-      key === 'financialData' ||
-      key === 'cashFlow' ||
-      key === 'cashFlowEntries' ||
-      key === 'goals' ||
-      key === 'restaurantData' ||
-      key === 'currentUser' ||
-      key === 'inventory' ||
-      key === 'recipes'
-    );
+    // Limpar apenas dados temporários do localStorage
+    // NÃO limpar dados que devem persistir entre sessões
+    const tempKeys = [
+      'currentUser',
+      'financialData',
+      'cashFlow',
+      'cashFlowEntries',
+      'goals',
+      'inventory',
+      'recipes'
+    ];
     
-    userSpecificKeys.forEach(key => {
+    tempKeys.forEach(key => {
       try {
         localStorage.removeItem(key);
-        console.log(`Removido: ${key}`);
+        console.log(`Removido dado temporário: ${key}`);
       } catch (error) {
         console.error(`Erro ao remover ${key} do localStorage:`, error);
       }
     });
+    
+    // NÃO remover restaurantData - deve persistir entre sessões
+    console.log('✅ Dados do restaurante mantidos no localStorage');
   };
 
   const checkSubscription = async () => {
