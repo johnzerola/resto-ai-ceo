@@ -12,7 +12,7 @@ export function Assinatura() {
   const plans = [
     {
       name: "Básico",
-      price: "R$ 99",
+      price: "R$ 29,90",
       period: "/mês",
       description: "Perfeito para restaurantes pequenos",
       features: [
@@ -27,7 +27,7 @@ export function Assinatura() {
     },
     {
       name: "Profissional",
-      price: "R$ 199",
+      price: "R$ 78,90",
       period: "/mês",
       description: "Ideal para restaurantes em crescimento",
       features: [
@@ -41,22 +41,6 @@ export function Assinatura() {
       icon: Zap,
       popular: true,
       current: subscriptionInfo?.plan === "professional"
-    },
-    {
-      name: "Enterprise",
-      price: "R$ 399",
-      period: "/mês",
-      description: "Para redes e restaurantes grandes",
-      features: [
-        "Todos os recursos do Profissional",
-        "Análise de múltiplas unidades",
-        "Dashboard executivo",
-        "API personalizada",
-        "Treinamento dedicado",
-        "Suporte 24/7"
-      ],
-      icon: Crown,
-      current: subscriptionInfo?.plan === "enterprise"
     }
   ];
 

@@ -8,7 +8,7 @@ export function AssinaturaResponsive() {
   const plans = [
     {
       name: "Básico",
-      price: "R$ 49",
+      price: "R$ 29,90",
       description: "Ideal para pequenos restaurantes",
       features: [
         "Dashboard básico",
@@ -19,7 +19,7 @@ export function AssinaturaResponsive() {
     },
     {
       name: "Profissional",
-      price: "R$ 99",
+      price: "R$ 78,90",
       description: "Para restaurantes em crescimento",
       features: [
         "Tudo do plano Básico",
@@ -29,18 +29,6 @@ export function AssinaturaResponsive() {
         "Integração com delivery"
       ],
       popular: true
-    },
-    {
-      name: "Enterprise",
-      price: "R$ 199",
-      description: "Para redes de restaurantes",
-      features: [
-        "Tudo do plano Profissional",
-        "Multi-unidades",
-        "API personalizada",
-        "Suporte 24/7",
-        "Consultoria especializada"
-      ]
     }
   ];
 

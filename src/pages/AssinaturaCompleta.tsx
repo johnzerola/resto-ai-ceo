@@ -31,7 +31,7 @@ const plans = [
     name: 'Básico',
     price: 29.90,
     period: '/mês',
-    description: 'Para começar',
+    description: 'Perfeito para restaurantes pequenos',
     stripeProductId: 'prod_ScEOIQOyRxpW4r',
     features: [
       'Dashboard básico',
@@ -57,7 +57,7 @@ const plans = [
     name: 'Profissional',
     price: 78.90,
     period: '/mês',
-    description: 'Para dominar',
+    description: 'Ideal para restaurantes em crescimento',
     stripeProductId: 'prod_ScEPJDdBU5a0xq',
     popular: true,
     features: [
