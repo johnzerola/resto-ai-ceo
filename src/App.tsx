@@ -29,6 +29,7 @@ import Login from "./pages/Login";
 import Vendas from "./pages/Vendas";
 import AiAssistant from "./pages/AiAssistant";
 import Onboarding from "./pages/Onboarding";
+import BusinessProfile from "./pages/BusinessProfile";
 import { ProjecoesPagina } from "./pages/ProjecoesPagina";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,16 @@ function App() {
                 <Route path="/onboarding" element={
                   <ProtectedRoute>
                     <Onboarding />
+                  </ProtectedRoute>
+                } />
+                <Route path="/dados-negocio" element={
+                  <ProtectedRoute>
+                    <BusinessProfile />
+                  </ProtectedRoute>
+                } />
+                <Route path="/business-profile" element={
+                  <ProtectedRoute>
+                    <BusinessProfile />
                   </ProtectedRoute>
                 } />
                 {/* Página inicial de vendas SEM proteção - página pública */}

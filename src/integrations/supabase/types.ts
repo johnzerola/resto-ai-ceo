@@ -156,6 +156,77 @@ export type Database = {
           },
         ]
       }
+      business_profiles: {
+        Row: {
+          average_monthly_revenue: number | null
+          average_ticket: number | null
+          break_even_point: number | null
+          cnpj: string | null
+          created_at: string | null
+          daily_operating_hours: string | null
+          desired_profit_margin: number | null
+          fixed_monthly_costs: number | null
+          id: string
+          ideal_cmv_percentage: number | null
+          ideal_net_margin: number | null
+          monthly_sales_target: number | null
+          motivational_insights: Json | null
+          owner_name: string | null
+          restaurant_id: string
+          updated_at: string | null
+          variable_monthly_costs: number | null
+          weekly_operating_days: number | null
+        }
+        Insert: {
+          average_monthly_revenue?: number | null
+          average_ticket?: number | null
+          break_even_point?: number | null
+          cnpj?: string | null
+          created_at?: string | null
+          daily_operating_hours?: string | null
+          desired_profit_margin?: number | null
+          fixed_monthly_costs?: number | null
+          id?: string
+          ideal_cmv_percentage?: number | null
+          ideal_net_margin?: number | null
+          monthly_sales_target?: number | null
+          motivational_insights?: Json | null
+          owner_name?: string | null
+          restaurant_id: string
+          updated_at?: string | null
+          variable_monthly_costs?: number | null
+          weekly_operating_days?: number | null
+        }
+        Update: {
+          average_monthly_revenue?: number | null
+          average_ticket?: number | null
+          break_even_point?: number | null
+          cnpj?: string | null
+          created_at?: string | null
+          daily_operating_hours?: string | null
+          desired_profit_margin?: number | null
+          fixed_monthly_costs?: number | null
+          id?: string
+          ideal_cmv_percentage?: number | null
+          ideal_net_margin?: number | null
+          monthly_sales_target?: number | null
+          motivational_insights?: Json | null
+          owner_name?: string | null
+          restaurant_id?: string
+          updated_at?: string | null
+          variable_monthly_costs?: number | null
+          weekly_operating_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profiles_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canais_venda: {
         Row: {
           ativo: boolean | null
@@ -1858,12 +1929,14 @@ export type Database = {
         Row: {
           average_monthly_sales: number | null
           business_type: string | null
+          cnpj: string | null
           created_at: string | null
           desired_profit_margin: number | null
           fixed_expenses: number | null
           id: string
           name: string
           owner_id: string
+          owner_name: string | null
           target_beverage_cost: number | null
           target_food_cost: number | null
           updated_at: string | null
@@ -1872,12 +1945,14 @@ export type Database = {
         Insert: {
           average_monthly_sales?: number | null
           business_type?: string | null
+          cnpj?: string | null
           created_at?: string | null
           desired_profit_margin?: number | null
           fixed_expenses?: number | null
           id?: string
           name: string
           owner_id: string
+          owner_name?: string | null
           target_beverage_cost?: number | null
           target_food_cost?: number | null
           updated_at?: string | null
@@ -1886,12 +1961,14 @@ export type Database = {
         Update: {
           average_monthly_sales?: number | null
           business_type?: string | null
+          cnpj?: string | null
           created_at?: string | null
           desired_profit_margin?: number | null
           fixed_expenses?: number | null
           id?: string
           name?: string
           owner_id?: string
+          owner_name?: string | null
           target_beverage_cost?: number | null
           target_food_cost?: number | null
           updated_at?: string | null
