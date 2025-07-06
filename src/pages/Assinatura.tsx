@@ -6,10 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Check, Star, Zap, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTrialStatus } from '@/hooks/useTrialStatus';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 export function Assinatura() {
   const { subscriptionInfo } = useAuth();
   const { trialStatus } = useTrialStatus();
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const isTrial = subscriptionInfo?.status === 'trial' || trialStatus?.isTrialActive;
   const currentPaidPlan = (subscriptionInfo?.status === 'active' && !isTrial) ? subscriptionInfo?.plan : null;
@@ -28,7 +32,9 @@ export function Assinatura() {
         "Suporte por email"
       ],
       icon: Star,
-      current: subscriptionInfo?.plan === "basic"
+      current: subscriptionInfo?.plan === "basic",
+      stripeProductId: 'prod_ScEOIQOyRxpW4r',
+      id: 'basico'
     },
     {
       name: "Profissional",
@@ -45,13 +51,41 @@ export function Assinatura() {
       ],
       icon: Zap,
       popular: true,
-      current: subscriptionInfo?.plan === "professional"
+      current: subscriptionInfo?.plan === "professional",
+      stripeProductId: 'prod_ScEPJDdBU5a0xq',
+      id: 'profissional'
     }
   ];
 
-  const handlePlanChange = (planName: string) => {
-    // Implementar lógica de mudança de plano
-    console.log(`Alterando para plano: ${planName}`);
+  const handlePlanChange = async (planName: string) => {
+    const selectedPlan = plans.find(p => p.name === planName);
+    if (!selectedPlan) {
+      toast.error('Plano não encontrado');
+      return;
+    }
+    setIsProcessingPayment(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: {
+          productId: selectedPlan.stripeProductId,
+          planId: selectedPlan.id
+        }
+      });
+      if (error) {
+        toast.error('Erro ao processar pagamento. Tente novamente.');
+        return;
+      }
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast.success('Redirecionando para o pagamento...');
+      } else {
+        toast.error('Erro ao gerar link de pagamento');
+      }
+    } catch (error) {
+      toast.error('Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   return (
@@ -125,9 +159,9 @@ export function Assinatura() {
                     className="w-full" 
                     variant={plan.current ? "outline" : plan.popular ? "default" : "outline"}
                     onClick={() => handlePlanChange(plan.name)}
-                    disabled={(!isTrial && plan.current)}
+                    disabled={isProcessingPayment || (!isTrial && plan.current)}
                   >
-                    {(!isTrial && plan.current) ? "Plano Atual" : "Escolher Plano"}
+                    {isProcessingPayment ? 'Processando...' : ((!isTrial && plan.current) ? "Plano Atual" : "Escolher Plano")}
                   </Button>
                 </CardContent>
               </Card>
