@@ -13,6 +13,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 import type { CashFlowEntry } from "./CashFlowOverview";
 
+// Hook para escutar atualizações de categorias
+function useCategoriesRefresh(reloadFn: () => void) {
+  useEffect(() => {
+    const handleCategoriesUpdate = () => {
+      reloadFn();
+    };
+    
+    window.addEventListener('categoriesUpdated', handleCategoriesUpdate);
+    return () => window.removeEventListener('categoriesUpdated', handleCategoriesUpdate);
+  }, [reloadFn]);
+}
+
 interface CashFlowFormProps {
   onEntryAdded: () => void;
   onEditComplete?: () => void;
@@ -20,8 +32,8 @@ interface CashFlowFormProps {
 }
 
 export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: CashFlowFormProps) {
-  const { user } = useAuth();
-  const { getIncomeCategories, getExpenseCategories } = useFinancialCategories();
+  const { currentRestaurant } = useAuth();
+  const { getIncomeCategories, getExpenseCategories, reloadCategories } = useFinancialCategories();
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: "",
@@ -70,6 +82,9 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
     }
   }, [editingEntry]);
 
+  // Escutar atualizações de categorias
+  useCategoriesRefresh(reloadCategories);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -78,8 +93,8 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
       return;
     }
 
-    if (!user) {
-      toast.error("Usuário não autenticado");
+    if (!currentRestaurant?.id) {
+      toast.error("Restaurante não selecionado");
       return;
     }
 
@@ -87,26 +102,16 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
     setIsSubmitting(true);
 
     try {
-      // Get the user's restaurant ID
-      const { data: restaurants, error: restaurantError } = await supabase
-        .from('restaurants')
-        .select('id')
-        .eq('owner_id', user.id)
-        .limit(1);
-
-      if (restaurantError) {
-        console.error('Erro ao buscar restaurante:', restaurantError);
-        throw new Error('Erro ao buscar dados do restaurante');
-      }
-
-      if (!restaurants || restaurants.length === 0) {
-        throw new Error('Nenhum restaurante encontrado para este usuário');
-      }
-
-      const restaurantId = restaurants[0].id;
+      // Buscar dados da categoria para determinar impacto CMV/DRE
+      const { data: categoryData } = await supabase
+        .from('categorias_financeiras')
+        .select('impacta_cmv, impacta_dre')
+        .eq('restaurant_id', currentRestaurant.id)
+        .eq('nome', formData.category)
+        .single();
 
       const entryData = {
-        restaurant_id: restaurantId,
+        restaurant_id: currentRestaurant.id,
         type: formData.type,
         amount: formData.amount,
         date: formData.date,
@@ -114,7 +119,9 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
         category: formData.category,
         status: formData.status === 'completed' ? 'paid' : formData.status,
         payment_method: formData.paymentMethod,
-        documento: formData.notes || null
+        documento: formData.notes || null,
+        impacta_cmv: categoryData?.impacta_cmv || false,
+        impacta_dre: categoryData?.impacta_dre || true
       };
 
       console.log('Dados que serão salvos no Supabase:', entryData);

@@ -63,7 +63,7 @@ const categoryTranslations: { [key: string]: string } = {
 };
 
 export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
-  const { user } = useAuth();
+  const { currentRestaurant } = useAuth();
   const [cashFlow, setCashFlow] = useState<CashFlowEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("all");
@@ -80,19 +80,19 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
   });
 
   const loadCashFlowData = async () => {
-    if (!user) {
-      console.log('Usuário não autenticado');
+    if (!currentRestaurant?.id) {
+      console.log('Restaurante não selecionado');
       return;
     }
 
-    console.log('Carregando dados do fluxo de caixa para usuário:', user.id);
+    console.log('Carregando dados do fluxo de caixa para restaurante:', currentRestaurant.id);
     setIsLoading(true);
     
     try {
       const { data, error } = await supabase
         .from('cash_flow')
         .select('*')
-        .eq('restaurant_id', user.id)
+        .eq('restaurant_id', currentRestaurant.id)
         .order('date', { ascending: false });
 
       if (error) {
@@ -130,7 +130,7 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
 
   useEffect(() => {
     loadCashFlowData();
-  }, [user]);
+  }, [currentRestaurant]);
 
   const calculateSummary = (entries: CashFlowEntry[]) => {
     const completedEntries = entries.filter(entry => entry.status === "completed");
