@@ -33,7 +33,9 @@ export function FichaTecnicaInteligenteCompleta() {
     isCalculating,
     insumosDisponiveis,
     precoDesejado,
+    configuracaoAvancada,
     setPrecoDesejado,
+    atualizarConfiguracao,
     adicionarIngrediente,
     atualizarIngrediente,
     removerIngrediente,
@@ -83,12 +85,15 @@ export function FichaTecnicaInteligenteCompleta() {
   useEffect(() => {
     if (ingredientes.length > 0 && ingredientes.some(ing => ing.custo_total > 0)) {
       const timer = setTimeout(() => {
-        console.log('🧮 Trigger automático de cálculo');
-        calcularResultados(precoDesejado || undefined);
+        console.log('🧮 Trigger automático de cálculo com configuração avançada');
+        calcularResultados(precoDesejado || undefined, {
+          ...prato,
+          ...configuracaoAvancada
+        });
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [ingredientes, precoDesejado, calcularResultados]);
+  }, [ingredientes, precoDesejado, configuracaoAvancada, prato, calcularResultados]);
 
   // Salvar ficha com validações robustas
   const handleSalvar = async () => {
@@ -131,7 +136,10 @@ export function FichaTecnicaInteligenteCompleta() {
     // Calcular resultados se não tiver
     if (!resultados) {
       console.log('⏳ Calculando resultados antes de salvar...');
-      await calcularResultados(precoDesejado || undefined);
+      await calcularResultados(precoDesejado || undefined, {
+        ...prato,
+        ...configuracaoAvancada
+      });
       
       // Dar um tempo para o cálculo processar
       setTimeout(() => {
@@ -144,9 +152,19 @@ export function FichaTecnicaInteligenteCompleta() {
       return;
     }
 
-    console.log('💾 Salvando ficha técnica:', { prato, ingredientes, resultados });
+    console.log('💾 Salvando ficha técnica completa:', { 
+      prato, 
+      configuracaoAvancada, 
+      ingredientes, 
+      resultados 
+    });
     
-    const sucesso = await salvarFichaTecnica(prato);
+    const dadosCompletos = {
+      ...prato,
+      ...configuracaoAvancada
+    };
+    
+    const sucesso = await salvarFichaTecnica(dadosCompletos);
     if (sucesso) {
       handleLimparTudo();
       toast.success('🎉 Ficha técnica salva com sucesso!', {
@@ -303,6 +321,122 @@ export function FichaTecnicaInteligenteCompleta() {
                   helpText="Se informar, calculamos se vale a pena cobrar esse preço"
                 />
               </div>
+
+              {/* Seção de Configurações Avançadas - SEMPRE VISÍVEL */}
+              <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg text-purple-800 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    🎯 Configurações de Precificação
+                  </CardTitle>
+                  <p className="text-sm text-purple-600">
+                    Configure suas metas e parâmetros para precificação inteligente
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <MobileFriendlyInput
+                        label="🎯 Meta de Lucro (%)"
+                        value={configuracaoAvancada.meta_lucro_percentual}
+                        onChange={(value) => atualizarConfiguracao('meta_lucro_percentual', Number(value))}
+                        type="number"
+                        placeholder="30"
+                        helpText="Margem de lucro desejada"
+                      />
+                    </div>
+                    
+                    <div>
+                      <MobileFriendlyInput
+                        label="🏢 Despesas Fixas/Mês (R$)"
+                        value={configuracaoAvancada.despesas_fixas_mensais}
+                        onChange={(value) => atualizarConfiguracao('despesas_fixas_mensais', Number(value))}
+                        type="number"
+                        placeholder="5000"
+                        helpText="Aluguel, salários, etc."
+                      />
+                    </div>
+                    
+                    <div>
+                      <MobileFriendlyInput
+                        label="📊 Despesas Variáveis (%)"
+                        value={configuracaoAvancada.despesas_variaveis_mensais}
+                        onChange={(value) => atualizarConfiguracao('despesas_variaveis_mensais', Number(value))}
+                        type="number"
+                        placeholder="10"
+                        helpText="% sobre custo dos ingredientes"
+                      />
+                    </div>
+                    
+                    <div>
+                      <MobileFriendlyInput
+                        label="🔢 Markup Personalizado (%)"
+                        value={configuracaoAvancada.markup_personalizado}
+                        onChange={(value) => atualizarConfiguracao('markup_personalizado', Number(value))}
+                        type="number"
+                        placeholder="250"
+                        helpText="Multiplicador para preço sugerido"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-purple-700">
+                        🚀 Canal de Venda
+                      </Label>
+                      <Select 
+                        value={configuracaoAvancada.canal_venda} 
+                        onValueChange={(value) => atualizarConfiguracao('canal_venda', value)}
+                      >
+                        <SelectTrigger className="mt-1 h-12 bg-white">
+                          <SelectValue placeholder="Selecione o canal" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="balcao">🍽️ Balcão/Presencial</SelectItem>
+                          <SelectItem value="ifood">🛵 iFood (15% taxa)</SelectItem>
+                          <SelectItem value="uber_eats">🚗 Uber Eats (12% taxa)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-purple-600 mt-1">
+                        Taxas são consideradas no cálculo
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <MobileFriendlyInput
+                        label="🏆 Preço Concorrente (R$)"
+                        value={configuracaoAvancada.preco_concorrente || ''}
+                        onChange={(value) => atualizarConfiguracao('preco_concorrente', Number(value))}
+                        type="number"
+                        placeholder="20.00"
+                        helpText="Preço da concorrência para comparação"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Preview em tempo real */}
+                  {resultados && (
+                    <div className="mt-4 p-3 bg-white rounded-lg border border-purple-200">
+                      <h4 className="font-medium text-purple-800 mb-2">📊 Preview dos Resultados:</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-gray-600">Preço Sugerido:</span>
+                          <span className="font-bold text-green-600 ml-2">
+                            R$ {resultados.preco_sugerido.toFixed(2)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Margem Líquida:</span>
+                          <span className={`font-bold ml-2 ${resultados.margem_liquida >= configuracaoAvancada.meta_lucro_percentual ? 'text-green-600' : 'text-red-600'}`}>
+                            {resultados.margem_liquida.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Campos Avançados (Colapsáveis) */}
               <div>

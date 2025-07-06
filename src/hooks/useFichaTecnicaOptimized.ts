@@ -32,6 +32,21 @@ interface DadosPrato {
   categoria: string;
   rendimento_porcoes: number;
   observacoes?: string;
+  meta_lucro_percentual?: number;
+  despesas_fixas_mensais?: number;
+  despesas_variaveis_mensais?: number;
+  markup_personalizado?: number;
+  canal_venda?: string;
+  preco_concorrente?: number;
+}
+
+interface ConfiguracaoAvancada {
+  meta_lucro_percentual: number;
+  despesas_fixas_mensais: number;
+  despesas_variaveis_mensais: number;
+  markup_personalizado: number;
+  canal_venda: string;
+  preco_concorrente: number;
 }
 
 export function useFichaTecnicaOptimized() {
@@ -41,6 +56,16 @@ export function useFichaTecnicaOptimized() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [insumosDisponiveis, setInsumosDisponiveis] = useState<any[]>([]);
   const [precoDesejado, setPrecoDesejado] = useState<number>(0);
+  
+  // Estados para configurações avançadas
+  const [configuracaoAvancada, setConfiguracaoAvancada] = useState<ConfiguracaoAvancada>({
+    meta_lucro_percentual: 30,
+    despesas_fixas_mensais: 0,
+    despesas_variaveis_mensais: 0,
+    markup_personalizado: 250,
+    canal_venda: 'balcao',
+    preco_concorrente: 0
+  });
 
   // Carregar insumos disponíveis
   useEffect(() => {
@@ -114,8 +139,8 @@ export function useFichaTecnicaOptimized() {
     setIngredientes(prev => prev.filter(ing => ing.id !== id));
   }, []);
 
-  // Calcular resultados otimizado
-  const calcularResultados = useCallback(async (precoFinal?: number) => {
+  // Calcular resultados avançado considerando TODOS os fatores
+  const calcularResultados = useCallback(async (precoFinal?: number, dadosPrato?: DadosPrato) => {
     if (!currentRestaurant?.id || ingredientes.length === 0) {
       console.log('❌ Condições insuficientes para cálculo');
       return;
@@ -134,115 +159,103 @@ export function useFichaTecnicaOptimized() {
     }
 
     setIsCalculating(true);
-    console.log('🧮 Iniciando cálculo otimizado para', ingredientesValidos.length, 'ingredientes');
+    console.log('🧮 Iniciando cálculo avançado para', ingredientesValidos.length, 'ingredientes');
+    console.log('📊 Configuração avançada:', configuracaoAvancada);
 
     try {
-      // Criar prato temporário
-      const { data: pratoTemp, error: pratoError } = await supabase
-        .from('pratos')
-        .insert({
-          nome_prato: 'Cálculo Temporário ' + Date.now(),
-          restaurant_id: currentRestaurant.id,
-          categoria: 'temp',
-          rendimento_porcoes: 1,
-          margem_seguranca: 10
-        })
-        .select()
-        .single();
-
-      if (pratoError) throw pratoError;
-
-      // Inserir ingredientes temporários
-      const ingredientesData = ingredientesValidos.map(ing => ({
-        prato_id: pratoTemp.id,
-        insumo_id: ing.insumo_id,
-        quantidade_bruta: Number(ing.quantidade_bruta),
-        quantidade_liquida: Number(ing.quantidade_liquida) || Number(ing.quantidade_bruta) * Number(ing.fator_correcao || 1),
-        fator_correcao: Number(ing.fator_correcao) || 1,
-        custo_total: Number(ing.custo_total)
-      }));
-
-      const { error: ingredientesError } = await supabase
-        .from('ingredientes_por_prato')
-        .insert(ingredientesData);
-
-      if (ingredientesError) throw ingredientesError;
-
-      // Chamar função de cálculo
-      const { data: resultadosCalculo, error: calcError } = await supabase
-        .rpc('calcular_cmv_inteligente', {
-          prato_uuid: pratoTemp.id,
-          preco_final: precoFinal || precoDesejado || null
-        });
-
-      if (calcError) throw calcError;
-
-      if (resultadosCalculo && resultadosCalculo.length > 0) {
-        const resultado = resultadosCalculo[0];
-        
-        // Processar status com validação robusta
-        let statusViabilidade: 'saudavel' | 'atencao' | 'prejuizo' = 'saudavel';
-        if (typeof resultado.status_viabilidade === 'string') {
-          const statusValue = resultado.status_viabilidade.toLowerCase();
-          if (['saudavel', 'atencao', 'prejuizo'].includes(statusValue)) {
-            statusViabilidade = statusValue as 'saudavel' | 'atencao' | 'prejuizo';
-          }
+      // Calcular custo base dos ingredientes
+      const custoIngredientes = ingredientesValidos.reduce((total, ing) => total + ing.custo_total, 0);
+      
+      // Calcular despesas fixas por prato (despesa mensal / meta de pratos por mês)
+      const metaPratosMes = 1000; // Padrão - pode vir de configuração
+      const despesaFixaPorPrato = configuracaoAvancada.despesas_fixas_mensais > 0 
+        ? configuracaoAvancada.despesas_fixas_mensais / metaPratosMes 
+        : 0;
+      
+      // Calcular despesas variáveis (percentual sobre custo)
+      const despesaVariavel = custoIngredientes * (configuracaoAvancada.despesas_variaveis_mensais / 100);
+      
+      // Custo total real
+      const custoTotal = custoIngredientes + despesaFixaPorPrato + despesaVariavel;
+      
+      // Calcular preço baseado no canal
+      const taxaCanal = configuracaoAvancada.canal_venda === 'ifood' ? 0.15 : 
+                      configuracaoAvancada.canal_venda === 'uber_eats' ? 0.12 : 0;
+      
+      // Preço sugerido considerando markup personalizado
+      const markupFinal = configuracaoAvancada.markup_personalizado || 250;
+      let precoSugerido = custoTotal * (markupFinal / 100);
+      
+      // Ajustar para taxa do canal (se delivery)
+      if (taxaCanal > 0) {
+        precoSugerido = precoSugerido / (1 - taxaCanal);
+      }
+      
+      // Usar preço informado ou calculado
+      const precoFinalCalculo = precoFinal || precoDesejado || precoSugerido;
+      
+      // Calcular métricas finais
+      const lucroEstimado = precoFinalCalculo - custoTotal;
+      const margemBruta = precoFinalCalculo > 0 ? (lucroEstimado / precoFinalCalculo) * 100 : 0;
+      const margemLiquida = margemBruta - (taxaCanal * 100) - 15; // -15% impostos aproximado
+      
+      // Determinar status de viabilidade
+      let statusViabilidade: 'saudavel' | 'atencao' | 'prejuizo' = 'saudavel';
+      const metaLucro = configuracaoAvancada.meta_lucro_percentual;
+      
+      if (margemLiquida < 0) {
+        statusViabilidade = 'prejuizo';
+      } else if (margemLiquida < metaLucro) {
+        statusViabilidade = 'atencao';
+      }
+      
+      // Gerar alertas contextuais
+      const alertas: string[] = [];
+      
+      if (margemLiquida < 0) {
+        alertas.push('🚨 PREJUÍZO: Margem líquida negativa! Revise custos ou aumente o preço.');
+      }
+      
+      if (margemLiquida < metaLucro && margemLiquida >= 0) {
+        alertas.push(`⚠️ Meta de lucro não atingida. Atual: ${margemLiquida.toFixed(1)}%, Meta: ${metaLucro}%`);
+      }
+      
+      if (configuracaoAvancada.preco_concorrente > 0) {
+        if (precoFinalCalculo > configuracaoAvancada.preco_concorrente * 1.2) {
+          alertas.push('💰 Preço 20% acima da concorrência. Considere revisar.');
+        } else if (precoFinalCalculo < configuracaoAvancada.preco_concorrente * 0.8) {
+          alertas.push('📈 Oportunidade: Preço abaixo da concorrência, pode aumentar margem.');
         }
-        
-        // Processar alertas com segurança
-        let alertasArray: string[] = [];
-        if (resultado.alertas) {
-            try {
-              if (Array.isArray(resultado.alertas)) {
-                alertasArray = resultado.alertas.filter(item => item).map(item => String(item));
-              } else if (typeof resultado.alertas === 'string') {
-                const parsed = JSON.parse(resultado.alertas);
-                if (Array.isArray(parsed)) {
-                  alertasArray = parsed.filter(item => item).map(item => String(item));
-                }
-              }
-          } catch (e) {
-            console.warn('Erro ao processar alertas:', e);
-            alertasArray = [];
-          }
-        }
-
-        const resultadosProcessados = {
-          cmv_estimado_percentual: Number(resultado.cmv_estimado_percentual) || 0,
-          cmv_estimado_valor: Number(resultado.cmv_estimado_valor) || 0,
-          lucro_estimado_valor: Number(resultado.lucro_estimado_valor) || 0,
-          lucro_estimado_percentual: Number(resultado.lucro_estimado_percentual) || 0,
-          margem_bruta: Number(resultado.margem_bruta) || 0,
-          margem_liquida: Number(resultado.margem_liquida) || 0,
-          preco_sugerido: Number(resultado.preco_sugerido) || 0,
-          status_viabilidade: statusViabilidade,
-          alertas: alertasArray
-        };
-
-        console.log('✅ Resultados processados:', resultadosProcessados);
-        setResultados(resultadosProcessados);
+      }
+      
+      if (custoIngredientes / precoFinalCalculo > 0.35) {
+        alertas.push('📊 CMV alto (>35%). Revise receita ou fornecedores.');
       }
 
-      // Limpar prato temporário
-      await supabase
-        .from('ingredientes_por_prato')
-        .delete()
-        .eq('prato_id', pratoTemp.id);
-      
-      await supabase
-        .from('pratos')
-        .delete()
-        .eq('id', pratoTemp.id);
+      const resultadosProcessados: ResultadosOptimizados = {
+        cmv_estimado_percentual: precoFinalCalculo > 0 ? (custoTotal / precoFinalCalculo) * 100 : 0,
+        cmv_estimado_valor: custoTotal,
+        lucro_estimado_valor: lucroEstimado,
+        lucro_estimado_percentual: margemBruta,
+        margem_bruta: margemBruta,
+        margem_liquida: margemLiquida,
+        preco_sugerido: precoSugerido,
+        status_viabilidade: statusViabilidade,
+        alertas: alertas
+      };
+
+      console.log('✅ Resultados avançados processados:', resultadosProcessados);
+      setResultados(resultadosProcessados);
 
     } catch (error) {
-      console.error('❌ Erro ao calcular resultados:', error);
+      console.error('❌ Erro ao calcular resultados avançados:', error);
       toast.error('Erro ao calcular resultados da ficha técnica');
     } finally {
       setIsCalculating(false);
     }
-  }, [currentRestaurant, ingredientes, precoDesejado]);
+  }, [currentRestaurant, ingredientes, precoDesejado, configuracaoAvancada]);
 
-  // Salvar ficha técnica otimizado
+  // Salvar ficha técnica completa com todos os campos
   const salvarFichaTecnica = useCallback(async (dadosPrato: DadosPrato) => {
     if (!currentRestaurant?.id) {
       toast.error('Nenhum restaurante selecionado');
@@ -278,19 +291,38 @@ export function useFichaTecnicaOptimized() {
     }
 
     try {
-      // Salvar prato
+      console.log('💾 Salvando com configurações avançadas:', {
+        dadosPrato,
+        configuracaoAvancada,
+        resultados
+      });
+
+      // Salvar prato com todas as configurações
+      const pratoCompleto = {
+        nome_prato: dadosPrato.nome_prato,
+        categoria: dadosPrato.categoria,
+        rendimento_porcoes: dadosPrato.rendimento_porcoes,
+        observacoes: dadosPrato.observacoes || '',
+        restaurant_id: currentRestaurant.id,
+        custo_total: resultados?.cmv_estimado_valor || 0,
+        preco_sugerido: resultados?.preco_sugerido || 0,
+        preco_praticado: precoDesejado || resultados?.preco_sugerido || 0,
+        lucro_estimado: resultados?.lucro_estimado_valor || 0,
+        margem_percentual: resultados?.margem_liquida || 0,
+        status_viabilidade: resultados?.status_viabilidade || 'saudavel',
+        
+        // Novos campos de configuração avançada
+        meta_lucro_percentual: configuracaoAvancada.meta_lucro_percentual,
+        despesas_fixas_mensais: configuracaoAvancada.despesas_fixas_mensais,
+        despesas_variaveis_mensais: configuracaoAvancada.despesas_variaveis_mensais,
+        markup_personalizado: configuracaoAvancada.markup_personalizado,
+        canal_venda: configuracaoAvancada.canal_venda,
+        preco_concorrente: configuracaoAvancada.preco_concorrente
+      };
+
       const { data: prato, error: pratoError } = await supabase
         .from('pratos')
-        .insert({
-          ...dadosPrato,
-          restaurant_id: currentRestaurant.id,
-          custo_total: resultados?.cmv_estimado_valor || 0,
-          preco_sugerido: resultados?.preco_sugerido || 0,
-          preco_praticado: precoDesejado || resultados?.preco_sugerido || 0,
-          lucro_estimado: resultados?.lucro_estimado_valor || 0,
-          margem_percentual: resultados?.margem_liquida || 0,
-          status_viabilidade: resultados?.status_viabilidade || 'saudavel'
-        })
+        .insert(pratoCompleto)
         .select()
         .single();
 
@@ -312,21 +344,46 @@ export function useFichaTecnicaOptimized() {
 
       if (ingredientesError) throw ingredientesError;
 
-      toast.success('Ficha técnica salva com sucesso!');
+      toast.success('🎉 Ficha técnica completa salva com sucesso!', {
+        description: `Prato "${dadosPrato.nome_prato}" com precificação inteligente`
+      });
       return true;
 
     } catch (error) {
-      console.error('Erro ao salvar ficha técnica:', error);
+      console.error('❌ Erro ao salvar ficha técnica completa:', error);
       toast.error('Erro ao salvar ficha técnica');
       return false;
     }
-  }, [currentRestaurant, ingredientes, resultados, precoDesejado]);
+  }, [currentRestaurant, ingredientes, resultados, precoDesejado, configuracaoAvancada]);
 
   // Limpar formulário
   const limparFormulario = useCallback(() => {
     setIngredientes([]);
     setResultados(null);
     setPrecoDesejado(0);
+  }, []);
+
+  // Atualizar configuração avançada
+  const atualizarConfiguracao = useCallback((campo: keyof ConfiguracaoAvancada, valor: any) => {
+    setConfiguracaoAvancada(prev => ({
+      ...prev,
+      [campo]: valor
+    }));
+  }, []);
+
+  // Limpar formulário expandido
+  const limparFormularioCompleto = useCallback(() => {
+    setIngredientes([]);
+    setResultados(null);
+    setPrecoDesejado(0);
+    setConfiguracaoAvancada({
+      meta_lucro_percentual: 30,
+      despesas_fixas_mensais: 0,
+      despesas_variaveis_mensais: 0,
+      markup_personalizado: 250,
+      canal_venda: 'balcao',
+      preco_concorrente: 0
+    });
   }, []);
 
   return {
@@ -336,10 +393,12 @@ export function useFichaTecnicaOptimized() {
     isCalculating,
     insumosDisponiveis,
     precoDesejado,
+    configuracaoAvancada,
     
     // Setters
     setIngredientes,
     setPrecoDesejado,
+    atualizarConfiguracao,
     
     // Ações
     adicionarIngrediente,
@@ -347,7 +406,7 @@ export function useFichaTecnicaOptimized() {
     removerIngrediente,
     calcularResultados,
     salvarFichaTecnica,
-    limparFormulario,
+    limparFormulario: limparFormularioCompleto,
     carregarInsumos
   };
 }
