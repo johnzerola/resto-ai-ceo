@@ -193,9 +193,8 @@ const Onboarding = () => {
     }
   };
 
-  // Se está carregando a autenticação, mostrar loading
-  if (authLoading) {
-    console.log('⏳ Onboarding: Aguardando carregamento da autenticação...');
+  // Se o contexto de autenticação está carregando ou currentRestaurant é undefined, mostrar loading
+  if (authLoading || typeof currentRestaurant === 'undefined') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-8">
         <div className="text-center">
