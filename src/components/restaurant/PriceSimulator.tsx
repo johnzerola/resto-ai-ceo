@@ -96,8 +96,9 @@ export function PriceSimulator() {
     // Aplicar impostos
     const priceWithTaxes = basePrice / (1 - formData.taxPercentage / 100);
     
-    // Aplicar taxas de entrega e plataforma
-    const finalPrice = priceWithTaxes + formData.deliveryFee + formData.platformFee;
+    // Aplicar taxa de entrega (valor fixo) e taxa de plataforma (percentual)
+    const platformFeeAmount = priceWithTaxes * (formData.platformFee / 100);
+    const finalPrice = priceWithTaxes + formData.deliveryFee + platformFeeAmount;
     
     // Calcular markup
     const markup = totalCost > 0 ? ((finalPrice - totalCost) / totalCost) * 100 : 0;
@@ -157,7 +158,7 @@ export function PriceSimulator() {
     setTimeout(() => {
       setResults(calculatedResults);
       setIsCalculating(false);
-      toast.success('Preço calculado com sucesso!');
+      toast.success('Simulação calculada com sucesso!');
     }, 500);
   };
 
@@ -313,7 +314,7 @@ export function PriceSimulator() {
           ) : (
             <>
               <Calculator className="h-4 w-4" />
-              Calcular Preço Ideal
+              Calcular e Mostrar Resultados
             </>
           )}
         </Button>
@@ -472,14 +473,14 @@ export function PriceSimulator() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="platformFee">Taxa de Plataforma (R$)</Label>
+                <Label htmlFor="platformFee">Taxa de Plataforma (%)</Label>
                 <Input
                   id="platformFee"
                   type="number"
-                  step="0.01"
+                  step="0.1"
                   value={formData.platformFee || ''}
                   onChange={(e) => handleInputChange('platformFee', Number(e.target.value))}
-                  placeholder="0,00"
+                  placeholder="15"
                 />
               </div>
             </div>
@@ -611,8 +612,8 @@ export function PriceSimulator() {
                   )}
                   {formData.platformFee > 0 && (
                     <div className="flex justify-between">
-                      <span>Taxa de Plataforma:</span>
-                      <span>{formatCurrency(formData.platformFee)}</span>
+                      <span>Taxa de Plataforma ({formData.platformFee}%):</span>
+                      <span>{formatCurrency(results.finalPrice * formData.platformFee / 100)}</span>
                     </div>
                   )}
                 </div>
