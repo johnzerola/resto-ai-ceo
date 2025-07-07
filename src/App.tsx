@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DataSync } from "@/components/restaurant/DataSync";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+
 import { EnhancedErrorBoundary } from "@/components/error/EnhancedErrorBoundary";
 import { PerformanceMonitor } from "@/components/performance/PerformanceMonitor";
 // Lazy loading otimizado para performance
@@ -64,10 +64,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <PerformanceMonitor />
-      <ThemeProvider>
-        <EnhancedErrorBoundary>
-          <AuthProvider>
-            <DataSync>
+      <EnhancedErrorBoundary>
+        <AuthProvider>
+          <DataSync>
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
@@ -282,10 +281,9 @@ function App() {
                   </Routes>
                 </BrowserRouter>
               </TooltipProvider>
-            </DataSync>
-          </AuthProvider>
-        </EnhancedErrorBoundary>
-      </ThemeProvider>
+          </DataSync>
+        </AuthProvider>
+      </EnhancedErrorBoundary>
     </QueryClientProvider>
   );
 }

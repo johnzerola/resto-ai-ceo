@@ -4,7 +4,7 @@ import { ModernSidebar } from "./ModernSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { EmailConfirmationBanner } from "../auth/EmailConfirmationBanner";
-import { PremiumThemeToggle } from "@/components/theme/PremiumThemeToggle";
+
 import { FeedbackSystem } from "@/components/feedback/FeedbackSystem";
 import { EnhancedErrorBoundary } from "@/components/common/EnhancedErrorBoundary";
 import { cn } from "@/lib/utils";
@@ -109,15 +109,11 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <PremiumThemeToggle position="header" />
+            
           </div>
         </div>
       </header>
 
-      {/* Floating Theme Toggle for Mobile */}
-      <div className="md:hidden">
-        <PremiumThemeToggle position="floating" />
-      </div>
 
       <main className={cn(
         "flex-1 transition-all duration-300 ease-out min-h-screen relative",

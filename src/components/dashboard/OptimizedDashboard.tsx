@@ -49,7 +49,7 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
       icon: isOnline ? <Wifi className="h-3 w-3 sm:h-4 sm:w-4" /> : <WifiOff className="h-3 w-3 sm:h-4 sm:w-4" />,
       status: isOnline ? 'Online' : 'Offline',
       color: isOnline ? 'text-green-600' : 'text-red-600',
-      bgColor: isOnline ? 'bg-green-50 dark:bg-green-950' : 'bg-red-50 dark:bg-red-950',
+      bgColor: isOnline ? 'bg-green-50' : 'bg-red-50',
       lastUpdate: lastUpdateTime,
       isSyncing: syncStatus === 'syncing'
     };

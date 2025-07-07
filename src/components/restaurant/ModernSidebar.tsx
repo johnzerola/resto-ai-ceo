@@ -216,7 +216,7 @@ export function ModernSidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-3 left-3 z-50 md:hidden bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white/100 transition-all duration-200 border border-gray-200/50 dark:bg-gray-900/95 dark:border-gray-700/50 dark:hover:bg-gray-900/100"
+        className="fixed top-3 left-3 z-50 md:hidden bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white/100 transition-all duration-200 border border-gray-200/50"
         onClick={toggleMobile}
       >
         {isMobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -234,7 +234,7 @@ export function ModernSidebar() {
       <div
         className={cn(
           "fixed left-0 top-0 z-40 h-full border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
-          "bg-white dark:bg-gray-900",
+          "bg-white",
           "md:translate-x-0",
           isMobileOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full",
           !isMobileOpen && isCollapsed && "md:w-16",
@@ -347,7 +347,7 @@ export function ModernSidebar() {
         {/* Footer */}
         {(!isCollapsed || isMobileOpen) && (
           <div className="p-3 sm:p-4 border-t border-sidebar-border bg-gradient-to-r from-muted/50 to-card flex-shrink-0">
-            <div className="text-xs text-muted-foreground text-center dark:text-gray-300">
+            <div className="text-xs text-muted-foreground text-center">
               <p className="font-medium">Lucraí v2.0</p>
               <p className="hidden sm:block">Inteligência para seu restaurante</p>
             </div>
