@@ -7,30 +7,54 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DataSync } from "@/components/restaurant/DataSync";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
-import FichaTecnicaInteligenteCompleta from "./pages/FichaTecnicaInteligenteCompleta";
-import SystemValidation from "./pages/SystemValidation";
-import DreCmv from "./pages/DreCmv";
-import FluxoDeCaixa from "./pages/FluxoDeCaixa";
-import Simulador from "./pages/Simulador";
-import { Metas } from "./pages/Metas";
-import Estoque from "./pages/Estoque";
-import Cardapio from "./pages/Cardapio";
-import GerenciarUsuarios from "./pages/GerenciarUsuarios";
-import { Assinatura } from "./pages/Assinatura";
-import Configuracoes from "./pages/Configuracoes";
-import Documentacao from "./pages/Documentacao";
-import { Privacidade } from "./pages/Privacidade";
-import StatusSistema from "./pages/StatusSistema";
-import SecurityCenter from "./pages/SecurityCenter";
-import NotFound from "./pages/NotFound";
-import SystemAuditPage from "./pages/SystemAuditPage";
+// Lazy loading otimizado para performance
+import { lazy, Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Páginas críticas (não lazy)
 import Login from "./pages/Login";
-import Vendas from "./pages/Vendas";
-import AiAssistant from "./pages/AiAssistant";
 import Onboarding from "./pages/Onboarding";
-import BusinessProfile from "./pages/BusinessProfile";
-import { ProjecoesPagina } from "./pages/ProjecoesPagina";
+import NotFound from "./pages/NotFound";
+
+// Lazy loading para páginas pesadas
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const FichaTecnicaInteligenteCompleta = lazy(() => import("./pages/FichaTecnicaInteligenteCompleta"));
+const SystemValidation = lazy(() => import("./pages/SystemValidation"));
+const DreCmv = lazy(() => import("./pages/DreCmv"));
+const FluxoDeCaixa = lazy(() => import("./pages/FluxoDeCaixa"));
+const Simulador = lazy(() => import("./pages/Simulador"));
+const Metas = lazy(() => import("./pages/Metas").then(module => ({ default: module.Metas })));
+const Estoque = lazy(() => import("./pages/Estoque"));
+const Cardapio = lazy(() => import("./pages/Cardapio"));
+const GerenciarUsuarios = lazy(() => import("./pages/GerenciarUsuarios"));
+const Assinatura = lazy(() => import("./pages/Assinatura").then(module => ({ default: module.Assinatura })));
+const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const Documentacao = lazy(() => import("./pages/Documentacao"));
+const Privacidade = lazy(() => import("./pages/Privacidade").then(module => ({ default: module.Privacidade })));
+const StatusSistema = lazy(() => import("./pages/StatusSistema"));
+const SecurityCenter = lazy(() => import("./pages/SecurityCenter"));
+const SystemAuditPage = lazy(() => import("./pages/SystemAuditPage"));
+const Vendas = lazy(() => import("./pages/Vendas"));
+const AiAssistant = lazy(() => import("./pages/AiAssistant"));
+const BusinessProfile = lazy(() => import("./pages/BusinessProfile"));
+const ProjecoesPagina = lazy(() => import("./pages/ProjecoesPagina").then(module => ({ default: module.ProjecoesPagina })));
+
+// Loading component otimizado
+const PageLoader = () => (
+  <div className="min-h-screen p-6">
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-[300px]" />
+        <Skeleton className="h-4 w-[200px]" />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-[200px] w-full" />
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -65,62 +89,86 @@ function App() {
                 <Route path="/vendas" element={<Vendas />} />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <Suspense fallback={<PageLoader />}>
+                      <Dashboard />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/dre-cmv" element={
                   <ProtectedRoute>
-                    <DreCmv />
+                    <Suspense fallback={<PageLoader />}>
+                      <DreCmv />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/dre" element={
                   <ProtectedRoute>
-                    <DreCmv />
+                    <Suspense fallback={<PageLoader />}>
+                      <DreCmv />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/cmv" element={
                   <ProtectedRoute>
-                    <DreCmv />
+                    <Suspense fallback={<PageLoader />}>
+                      <DreCmv />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/fluxo-de-caixa" element={
                   <ProtectedRoute>
-                    <FluxoDeCaixa />
+                    <Suspense fallback={<PageLoader />}>
+                      <FluxoDeCaixa />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/simulador" element={
                   <ProtectedRoute>
-                    <Simulador />
+                    <Suspense fallback={<PageLoader />}>
+                      <Simulador />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/metas" element={
                   <ProtectedRoute>
-                    <Metas />
+                    <Suspense fallback={<PageLoader />}>
+                      <Metas />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/estoque" element={
                   <ProtectedRoute>
-                    <Estoque />
+                    <Suspense fallback={<PageLoader />}>
+                      <Estoque />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/cardapio" element={
                   <ProtectedRoute>
-                    <Cardapio />
+                    <Suspense fallback={<PageLoader />}>
+                      <Cardapio />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/assistente-ia" element={
                   <ProtectedRoute>
-                    <AiAssistant />
+                    <Suspense fallback={<PageLoader />}>
+                      <AiAssistant />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/ai-assistant" element={
                   <ProtectedRoute>
-                    <AiAssistant />
+                    <Suspense fallback={<PageLoader />}>
+                      <AiAssistant />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/projecoes" element={
                   <ProtectedRoute>
-                    <ProjecoesPagina />
+                    <Suspense fallback={<PageLoader />}>
+                      <ProjecoesPagina />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/gerenciar-usuarios" element={

@@ -160,7 +160,7 @@ export function FichaTecnicaFixed() {
 
   // Salvar com feedback completo
   const handleSalvar = useMemo(() => async () => {
-    console.log('💾 Iniciando salvamento completo...');
+    // Auto-save progress tracking
     
     // 🚨 VALIDAÇÃO CRÍTICA ANTES DE SALVAR
     if (resultados && resultados.lucro_estimado_valor < 0) {

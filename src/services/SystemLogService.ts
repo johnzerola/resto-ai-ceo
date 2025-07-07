@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface SystemLog {
@@ -36,7 +35,10 @@ export class SystemLogService {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Erro ao registrar log do sistema:', error);
+      // System logging silently fails in production
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Erro ao registrar log do sistema:', error);
+      }
       return false;
     }
   }
@@ -63,7 +65,9 @@ export class SystemLogService {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Erro ao buscar logs do sistema:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Erro ao buscar logs do sistema:', error);
+      }
       return [];
     }
 
@@ -82,7 +86,9 @@ export class SystemLogService {
       .limit(limit);
 
     if (error) {
-      console.error('Erro ao buscar logs do usuário:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Erro ao buscar logs do usuário:', error);
+      }
       return [];
     }
 
@@ -101,7 +107,9 @@ export class SystemLogService {
       .limit(limit);
 
     if (error) {
-      console.error('Erro ao buscar logs de erro:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Erro ao buscar logs de erro:', error);  
+      }
       return [];
     }
 
