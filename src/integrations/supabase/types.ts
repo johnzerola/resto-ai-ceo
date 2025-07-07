@@ -56,6 +56,83 @@ export type Database = {
           },
         ]
       }
+      affiliate_referrals: {
+        Row: {
+          affiliate_id: string | null
+          commission_earned: number | null
+          conversion_date: string | null
+          created_at: string | null
+          id: string
+          referral_code: string
+          referred_user_id: string | null
+          status: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          commission_earned?: number | null
+          conversion_date?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code: string
+          referred_user_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          commission_earned?: number | null
+          conversion_date?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_user_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_referrals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          affiliate_code: string
+          commission_rate: number | null
+          created_at: string | null
+          id: string
+          status: string | null
+          total_earnings: number | null
+          total_referrals: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          affiliate_code: string
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          affiliate_code?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       alertas_sistema: {
         Row: {
           created_at: string | null
@@ -155,6 +232,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      branding_assets: {
+        Row: {
+          asset_data: Json
+          category: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          asset_data: Json
+          category: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          asset_data?: Json
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: []
       }
       business_profiles: {
         Row: {
@@ -687,6 +797,80 @@ export type Database = {
           },
         ]
       }
+      developer_permissions: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          permission_type: string
+          resource_access: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          permission_type: string
+          resource_access?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          permission_type?: string
+          resource_access?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      discount_coupons: {
+        Row: {
+          affiliate_id: string | null
+          code: string
+          created_at: string | null
+          discount_type: string | null
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          usage_limit: number | null
+          used_count: number | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          code: string
+          created_at?: string | null
+          discount_type?: string | null
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          usage_limit?: number | null
+          used_count?: number | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          code?: string
+          created_at?: string | null
+          discount_type?: string | null
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          usage_limit?: number | null
+          used_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_coupons_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dre_mensal: {
         Row: {
           ano: number
@@ -816,6 +1000,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feedback_submissions: {
+        Row: {
+          content: Json
+          created_at: string | null
+          feedback_type: string
+          id: string
+          page_url: string | null
+          processed: boolean | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: Json
+          created_at?: string | null
+          feedback_type: string
+          id?: string
+          page_url?: string | null
+          processed?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          feedback_type?: string
+          id?: string
+          page_url?: string | null
+          processed?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       goals: {
         Row: {
@@ -2242,6 +2459,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_metrics: {
+        Row: {
+          id: string
+          metric_type: string
+          metric_value: Json
+          restaurant_id: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          id?: string
+          metric_type: string
+          metric_value: Json
+          restaurant_id?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          id?: string
+          metric_type?: string
+          metric_value?: Json
+          restaurant_id?: string | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
       tabela_contexto: {
         Row: {
           contexto: string
@@ -2394,6 +2635,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          restaurant_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          restaurant_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          restaurant_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       webhook_logs: {
         Row: {
           event: string
@@ -2534,6 +2802,10 @@ export type Database = {
         Args: { restaurant_uuid: string }
         Returns: undefined
       }
+      generate_affiliate_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       gerar_alertas_automaticos: {
         Args: { restaurant_uuid: string }
         Returns: undefined
@@ -2557,6 +2829,13 @@ export type Database = {
       gtrgm_out: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
       }
       log_security_event: {
         Args: { event_type: string; user_id?: string; details?: Json }
@@ -2584,7 +2863,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "owner" | "admin" | "developer" | "affiliate" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2699,6 +2978,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["owner", "admin", "developer", "affiliate", "user"],
+    },
   },
 } as const
