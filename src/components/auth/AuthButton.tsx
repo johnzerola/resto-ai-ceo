@@ -47,11 +47,11 @@ export function AuthButton() {
       </Link>
       <Link to="/login?tab=register">
         <Button 
-          className="bg-gradient-to-r from-blue-500 via-green-500 to-yellow-400 text-white hover:shadow-lg transition-all duration-300 hover:scale-105 font-medium"
-          aria-label="Criar nova conta"
+          className="bg-gradient-to-r from-blue-500 via-green-500 to-yellow-400 text-white hover:shadow-lg transition-all duration-300 hover:scale-105 font-medium animate-pulse"
+          aria-label="Criar nova conta - 7 dias grátis"
         >
           <UserPlus className="mr-2 h-4 w-4" />
-          Registrar-se
+          Teste 7 Dias Grátis
         </Button>
       </Link>
     </div>

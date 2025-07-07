@@ -403,7 +403,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('owner_id', userId);
 
       if (error) {
-        console.error('Erro ao buscar restaurantes:', error);
+        console.warn('Aviso ao buscar restaurantes:', error.message);
         // Fallback - assumir que precisa de onboarding
         setNeedsOnboarding(true);
         return;
@@ -425,7 +425,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setNeedsOnboarding(true);
       }
     } catch (error) {
-      console.error('Erro ao verificar restaurantes:', error);
+      console.warn('Aviso ao verificar restaurantes:', error);
       setNeedsOnboarding(true);
     }
   };
@@ -435,19 +435,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        console.log('Inicializando autenticação...');
+        console.log('✅ Inicializando autenticação...');
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession?.user && mounted) {
-          console.log('Sessão encontrada:', currentSession.user.email);
+          console.log('✅ Sessão ativa encontrada:', currentSession.user.email);
           setSession(currentSession);
           setUser(currentSession.user);
           setUserRole(UserRole.OWNER);
           
-          // Verificar se o usuário tem restaurantes
-          await checkUserRestaurants(currentSession.user.id);
+          // Verificar se o usuário tem restaurantes (apenas avisos)
+          setTimeout(() => {
+            checkUserRestaurants(currentSession.user.id);
+          }, 100);
         } else {
-          console.log('Nenhuma sessão ativa encontrada');
+          console.log('ℹ️ Nenhuma sessão ativa encontrada');
           clearUserData();
         }
       } catch (error) {

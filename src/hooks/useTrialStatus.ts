@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,86 +32,60 @@ export function useTrialStatus() {
       setIsLoading(true);
       setError(null);
 
-      const { data, error } = await supabase.rpc('check_trial_status', {
-        user_email: user.email
-      });
+      // Verificar diretamente na tabela profiles com trial de 7 dias
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('trial_start, trial_end, plan_status')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      if (error) {
-        console.warn('RPC check_trial_status failed, using fallback:', error);
-        // Fallback: verificar diretamente na tabela subscribers
-        const { data: subscriberData, error: subError } = await supabase
-          .from('subscribers')
-          .select('trial_start, trial_end, trial_used, plan_status')
-          .eq('email', user.email)
-          .maybeSingle();
-
-        if (subError) {
-          console.warn('Subscriber query failed, using default trial:', subError);
-          // Dar trial padrão para novos usuários
-          setTrialStatus({
-            isTrialActive: true,
-            daysRemaining: 14,
-            trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-            planStatus: 'trial'
-          });
-          return;
-        }
-
-        if (subscriberData?.trial_end) {
-          const now = new Date();
-          const trialEnd = new Date(subscriberData.trial_end);
-          const isActive = now < trialEnd;
-          const daysRemaining = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-
-          setTrialStatus({
-            isTrialActive: isActive,
-            daysRemaining,
-            trialEndDate: subscriberData.trial_end,
-            planStatus: subscriberData.plan_status || 'trial'
-          });
-        } else {
-          // Novo usuário sem trial configurado
-          setTrialStatus({
-            isTrialActive: true,
-            daysRemaining: 14,
-            trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-            planStatus: 'trial'
-          });
-        }
+      if (profileError) {
+        console.warn('Profile query failed, using default trial:', profileError);
+        // Dar trial padrão para novos usuários - 7 dias
+        setTrialStatus({
+          isTrialActive: true,
+          daysRemaining: 7,
+          trialEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          planStatus: 'trial'
+        });
         return;
       }
 
-      if (data && data.length > 0) {
-        const status = data[0];
+      if (profileData?.trial_end) {
+        const now = new Date();
+        const trialEnd = new Date(profileData.trial_end);
+        const isActive = now < trialEnd;
+        const daysRemaining = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
         setTrialStatus({
-          isTrialActive: status.is_trial_active || false,
-          daysRemaining: status.days_remaining || 0,
-          trialEndDate: status.trial_end_date,
-          planStatus: status.plan_status || 'free'
+          isTrialActive: isActive,
+          daysRemaining,
+          trialEndDate: profileData.trial_end,
+          planStatus: profileData.plan_status || 'trial'
         });
       } else {
-        // Trial padrão para novos usuários
+        // Novo usuário sem trial configurado - 7 dias
         setTrialStatus({
           isTrialActive: true,
-          daysRemaining: 14,
-          trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          daysRemaining: 7,
+          trialEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           planStatus: 'trial'
         });
       }
     } catch (err: any) {
       console.warn('Trial status check failed, using safe defaults:', err);
-      // Em caso de erro, dar trial padrão ao usuário
+      // Em caso de erro, dar trial padrão ao usuário - 7 dias
       setTrialStatus({
         isTrialActive: true,
-        daysRemaining: 14,
-        trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        daysRemaining: 7,
+        trialEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         planStatus: 'trial'
       });
       setError(null); // Não propagar erro para a UI
     } finally {
       setIsLoading(false);
     }
-  }, [user?.email]);
+  }, [user?.email, user?.id]);
 
   useEffect(() => {
     checkTrialStatus();

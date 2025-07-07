@@ -1945,9 +1945,12 @@ export type Database = {
           name: string | null
           onboarding_complete: boolean | null
           onboarding_step: number | null
+          plan_status: string | null
           preferences: Json | null
           role: string | null
           status: string | null
+          trial_end: string | null
+          trial_start: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1958,9 +1961,12 @@ export type Database = {
           name?: string | null
           onboarding_complete?: boolean | null
           onboarding_step?: number | null
+          plan_status?: string | null
           preferences?: Json | null
           role?: string | null
           status?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1971,9 +1977,12 @@ export type Database = {
           name?: string | null
           onboarding_complete?: boolean | null
           onboarding_step?: number | null
+          plan_status?: string | null
           preferences?: Json | null
           role?: string | null
           status?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string | null
         }
         Relationships: []
