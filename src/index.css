@@ -1,11 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+  font-family: 'DM Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
   font-weight: 400;
 
   color-scheme: light dark;
@@ -18,82 +19,127 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  /* 🎨 LUCRAÍ BRANDING - SISTEMA DE CORES COMPLETO */
+  
+  /* Cores Base da Marca (HSL) */
+  --lucrai-blue-primary: 210 70% 26%;        /* #0F4C75 - Azul Tech Principal */
+  --lucrai-blue-secondary: 210 58% 35%;      /* #2D4A7A - Azul Tech Claro */
+  --lucrai-green-primary: 174 100% 42%;      /* #00D4AA - Verde Lucro */
+  --lucrai-green-secondary: 160 100% 36%;    /* #00B572 - Verde Lucro Escuro */
+  --lucrai-yellow-primary: 51 100% 50%;      /* #FFD700 - Amarelo Ouro */
+  --lucrai-yellow-secondary: 45 100% 45%;    /* #E6BE00 - Amarelo Escuro */
+  --lucrai-orange-alert: 14 100% 60%;        /* #FF6B35 - Laranja Alerta */
+  
+  /* Gradientes da Marca */
+  --lucrai-gradient-primary: linear-gradient(135deg, hsl(var(--lucrai-blue-primary)), hsl(var(--lucrai-green-primary)));
+  --lucrai-gradient-secondary: linear-gradient(135deg, hsl(var(--lucrai-green-primary)), hsl(var(--lucrai-yellow-primary)));
+  --lucrai-gradient-full: linear-gradient(135deg, hsl(var(--lucrai-blue-primary)), hsl(var(--lucrai-green-primary)), hsl(var(--lucrai-yellow-primary)));
+  --lucrai-gradient-subtle: linear-gradient(135deg, hsl(var(--lucrai-blue-primary) / 0.05), hsl(var(--lucrai-green-primary) / 0.05));
+  
+  /* Cores Neutras Customizadas */
+  --lucrai-gray-50: 210 25% 98%;
+  --lucrai-gray-100: 210 25% 96%;
+  --lucrai-gray-200: 210 20% 92%;
+  --lucrai-gray-300: 210 15% 85%;
+  --lucrai-gray-400: 210 10% 70%;
+  --lucrai-gray-500: 210 8% 55%;
+  --lucrai-gray-600: 210 10% 45%;
+  --lucrai-gray-700: 210 15% 35%;
+  --lucrai-gray-800: 210 20% 25%;
+  --lucrai-gray-900: 210 25% 15%;
+
+  /* Sistema de Design Tokens Semânticos */
+  --background: var(--lucrai-gray-50);
+  --foreground: var(--lucrai-gray-900);
   --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card-foreground: var(--lucrai-gray-900);
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222.2 84% 4.9%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222.2 84% 4.9%;
+  --popover-foreground: var(--lucrai-gray-900);
+  --primary: var(--lucrai-blue-primary);
+  --primary-foreground: 0 0% 98%;
+  --secondary: var(--lucrai-gray-100);
+  --secondary-foreground: var(--lucrai-gray-900);
+  --muted: var(--lucrai-gray-100);
+  --muted-foreground: var(--lucrai-gray-500);
+  --accent: var(--lucrai-green-primary);
+  --accent-foreground: 0 0% 98%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
-  --chart-1: 12 76% 61%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
+  --border: var(--lucrai-gray-200);
+  --input: var(--lucrai-gray-200);
+  --ring: var(--lucrai-blue-primary);
+  --radius: 0.75rem;
+  
+  /* Charts com cores da marca */
+  --chart-1: var(--lucrai-blue-primary);
+  --chart-2: var(--lucrai-green-primary);
+  --chart-3: var(--lucrai-yellow-primary);
+  --chart-4: var(--lucrai-orange-alert);
+  --chart-5: var(--lucrai-blue-secondary);
 
-  --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 240 5.9% 10%;
+  /* Sidebar com branding */
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: var(--lucrai-gray-700);
+  --sidebar-primary: var(--lucrai-blue-primary);
   --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
+  --sidebar-accent: var(--lucrai-gray-100);
+  --sidebar-accent-foreground: var(--lucrai-gray-900);
+  --sidebar-border: var(--lucrai-gray-200);
+  --sidebar-ring: var(--lucrai-blue-primary);
 
-  /* Cores do Lucraí */
-  --lucrai-blue-tech: #0F4C75;
-  --lucrai-green-profit: #00D4AA;
-  --lucrai-gold-accent: #FFD700;
-  --lucrai-orange-alert: #FF6B35;
+  /* Estados e Feedback */
+  --success: var(--lucrai-green-primary);
+  --success-foreground: 0 0% 98%;
+  --warning: var(--lucrai-yellow-primary);
+  --warning-foreground: var(--lucrai-gray-900);
+  --info: var(--lucrai-blue-primary);
+  --info-foreground: 0 0% 98%;
+  
+  /* Sombras Personalizadas */
+  --shadow-brand: 0 4px 20px hsl(var(--lucrai-blue-primary) / 0.15);
+  --shadow-brand-lg: 0 10px 40px hsl(var(--lucrai-blue-primary) / 0.2);
+  --shadow-success: 0 4px 20px hsl(var(--lucrai-green-primary) / 0.15);
+  --shadow-warning: 0 4px 20px hsl(var(--lucrai-yellow-primary) / 0.15);
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 84% 4.9%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+  /* Dark Mode com Branding Lucraí */
+  --background: var(--lucrai-gray-900);
+  --foreground: var(--lucrai-gray-50);
+  --card: var(--lucrai-gray-800);
+  --card-foreground: var(--lucrai-gray-50);
+  --popover: var(--lucrai-gray-800);
+  --popover-foreground: var(--lucrai-gray-50);
+  --primary: var(--lucrai-green-primary);
+  --primary-foreground: var(--lucrai-gray-900);
+  --secondary: var(--lucrai-gray-700);
+  --secondary-foreground: var(--lucrai-gray-50);
+  --muted: var(--lucrai-gray-700);
+  --muted-foreground: var(--lucrai-gray-400);
+  --accent: var(--lucrai-blue-primary);
+  --accent-foreground: var(--lucrai-gray-50);
   --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 94.1%;
-  --chart-1: 220 70% 50%;
-  --chart-2: 160 60% 45%;
-  --chart-3: 30 80% 55%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 340 75% 55%;
+  --destructive-foreground: var(--lucrai-gray-50);
+  --border: var(--lucrai-gray-700);
+  --input: var(--lucrai-gray-700);
+  --ring: var(--lucrai-green-primary);
+  
+  /* Charts dark mode */
+  --chart-1: var(--lucrai-blue-secondary);
+  --chart-2: var(--lucrai-green-primary);
+  --chart-3: var(--lucrai-yellow-primary);
+  --chart-4: var(--lucrai-orange-alert);
+  --chart-5: var(--lucrai-blue-primary);
 
-  --sidebar-background: 240 5.9% 10%;
-  --sidebar-foreground: 240 4.8% 95.9%;
-  --sidebar-primary: 224.3 76.3% 94.1%;
-  --sidebar-primary-foreground: 240 5.9% 10%;
-  --sidebar-accent: 240 3.7% 15.9%;
-  --sidebar-accent-foreground: 240 4.8% 95.9%;
-  --sidebar-border: 240 3.7% 15.9%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
+  /* Sidebar dark mode */
+  --sidebar-background: var(--lucrai-gray-900);
+  --sidebar-foreground: var(--lucrai-gray-300);
+  --sidebar-primary: var(--lucrai-green-primary);
+  --sidebar-primary-foreground: var(--lucrai-gray-900);
+  --sidebar-accent: var(--lucrai-gray-800);
+  --sidebar-accent-foreground: var(--lucrai-gray-50);
+  --sidebar-border: var(--lucrai-gray-700);
+  --sidebar-ring: var(--lucrai-green-primary);
 }
 
 * {
@@ -101,8 +147,9 @@
 }
 
 body {
-  background-color: hsl(var(--background));
+  background: var(--lucrai-gradient-subtle);
   color: hsl(var(--foreground));
+  font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
 }
 
 /* Margem padrão para conteúdo principal das telas */
@@ -446,37 +493,187 @@ body {
   color: hsl(240 4.8% 75.9%);
 }
 
-/* Cores específicas do Lucraí */
-.text-lucrai-blue-tech {
-  color: var(--lucrai-blue-tech);
+/* 🎨 LUCRAÍ BRANDING - CLASSES DE UTILIDADE */
+
+/* Gradientes da Marca */
+.bg-lucrai-gradient-primary {
+  background: var(--lucrai-gradient-primary);
 }
 
-.text-lucrai-green-profit {
-  color: var(--lucrai-green-profit);
+.bg-lucrai-gradient-secondary {
+  background: var(--lucrai-gradient-secondary);
 }
 
-.text-lucrai-gold-accent {
-  color: var(--lucrai-gold-accent);
+.bg-lucrai-gradient-full {
+  background: var(--lucrai-gradient-full);
 }
 
-.text-lucrai-orange-alert {
-  color: var(--lucrai-orange-alert);
+.bg-lucrai-gradient-subtle {
+  background: var(--lucrai-gradient-subtle);
 }
 
-.bg-lucrai-blue-tech {
-  background-color: var(--lucrai-blue-tech);
+.text-lucrai-gradient {
+  background: var(--lucrai-gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.bg-lucrai-green-profit {
-  background-color: var(--lucrai-green-profit);
+/* Cores Semânticas */
+.bg-lucrai-primary {
+  background-color: hsl(var(--lucrai-blue-primary));
 }
 
-.bg-lucrai-gold-accent {
-  background-color: var(--lucrai-gold-accent);
+.text-lucrai-primary {
+  color: hsl(var(--lucrai-blue-primary));
 }
 
-.bg-lucrai-orange-alert {
-  background-color: var(--lucrai-orange-alert);
+.bg-lucrai-success {
+  background-color: hsl(var(--lucrai-green-primary));
+}
+
+.text-lucrai-success {
+  color: hsl(var(--lucrai-green-primary));
+}
+
+.bg-lucrai-warning {
+  background-color: hsl(var(--lucrai-yellow-primary));
+}
+
+.text-lucrai-warning {
+  color: hsl(var(--lucrai-yellow-primary));
+}
+
+.bg-lucrai-danger {
+  background-color: hsl(var(--lucrai-orange-alert));
+}
+
+.text-lucrai-danger {
+  color: hsl(var(--lucrai-orange-alert));
+}
+
+/* Sombras Personalizadas */
+.shadow-lucrai {
+  box-shadow: var(--shadow-brand);
+}
+
+.shadow-lucrai-lg {
+  box-shadow: var(--shadow-brand-lg);
+}
+
+.shadow-lucrai-success {
+  box-shadow: var(--shadow-success);
+}
+
+/* Componentes Específicos do Lucraí */
+.lucrai-card {
+  @apply bg-card/90 backdrop-blur-xl border border-border/50 rounded-xl shadow-lg hover:shadow-lucrai transition-all duration-300;
+}
+
+.lucrai-card-interactive {
+  @apply lucrai-card hover:scale-[1.02] hover:shadow-lucrai-lg cursor-pointer;
+}
+
+.lucrai-button-primary {
+  @apply bg-lucrai-gradient-primary text-white font-semibold px-6 py-3 rounded-xl hover:shadow-lucrai-lg transform hover:scale-105 transition-all duration-200 border-0;
+}
+
+.lucrai-button-secondary {
+  @apply bg-lucrai-gradient-secondary text-gray-900 font-semibold px-6 py-3 rounded-xl hover:shadow-lucrai-lg transform hover:scale-105 transition-all duration-200 border-0;
+}
+
+.lucrai-button-outline {
+  @apply border-2 border-primary bg-transparent text-primary font-semibold px-6 py-3 rounded-xl hover:bg-primary hover:text-primary-foreground hover:shadow-lucrai transform hover:scale-105 transition-all duration-200;
+}
+
+.lucrai-input {
+  @apply bg-card/50 border border-border/50 rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 focus:bg-card transition-all duration-200;
+}
+
+.lucrai-badge-success {
+  @apply bg-lucrai-success/10 text-lucrai-success border border-lucrai-success/20 px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.lucrai-badge-warning {
+  @apply bg-lucrai-warning/10 text-lucrai-warning border border-lucrai-warning/20 px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.lucrai-badge-info {
+  @apply bg-lucrai-primary/10 text-lucrai-primary border border-lucrai-primary/20 px-3 py-1 rounded-full text-sm font-medium;
+}
+
+/* Tipografia da Marca */
+.lucrai-heading {
+  @apply font-bold tracking-tight text-lucrai-gradient;
+}
+
+.lucrai-heading-1 {
+  @apply lucrai-heading text-4xl lg:text-5xl;
+}
+
+.lucrai-heading-2 {
+  @apply lucrai-heading text-3xl lg:text-4xl;
+}
+
+.lucrai-heading-3 {
+  @apply lucrai-heading text-2xl lg:text-3xl;
+}
+
+.lucrai-text-feature {
+  @apply text-lg text-muted-foreground font-medium leading-relaxed;
+}
+
+/* Animações da Marca */
+.lucrai-pulse {
+  @apply animate-pulse;
+  animation-duration: 2s;
+}
+
+.lucrai-bounce {
+  @apply animate-bounce;
+  animation-delay: 0.5s;
+}
+
+.lucrai-fade-in {
+  @apply animate-fade-in;
+}
+
+/* Componentes Especiais */
+.lucrai-hero-section {
+  @apply bg-lucrai-gradient-subtle min-h-screen flex items-center justify-center relative overflow-hidden;
+}
+
+.lucrai-stats-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
+}
+
+.lucrai-feature-card {
+  @apply lucrai-card p-8 text-center space-y-4 group;
+}
+
+.lucrai-nav-item {
+  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent transition-all duration-200 group;
+}
+
+.lucrai-nav-item.active {
+  @apply bg-sidebar-accent text-sidebar-accent-foreground shadow-sm;
+}
+
+/* Estados de Feedback */
+.lucrai-loading {
+  @apply opacity-60 pointer-events-none animate-pulse;
+}
+
+.lucrai-success-state {
+  @apply border-lucrai-success/20 bg-lucrai-success/5 text-lucrai-success;
+}
+
+.lucrai-error-state {
+  @apply border-lucrai-danger/20 bg-lucrai-danger/5 text-lucrai-danger;
+}
+
+.lucrai-warning-state {
+  @apply border-lucrai-warning/20 bg-lucrai-warning/5 text-lucrai-warning;
 }
 
 /* Dashboard específico */

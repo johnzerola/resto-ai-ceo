@@ -50,32 +50,55 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Lucraí Brand Colors
+        // 🎨 Lucraí Brand Colors - Tokens Semânticos
         'lucrai': {
-          'blue-tech': '#0F4C75',
-          'blue-tech-light': '#2D4A7A',
-          'green-profit': '#00D4AA',
-          'green-profit-dark': '#00B572',
-          'gold-accent': '#FFD700',
-          'white-clean': '#FFFFFF',
-          'gray-neutral': '#F4F5F7',
-          'gray-text': '#6B7280',
+          // Cores Base
+          'blue': {
+            50: 'hsl(var(--lucrai-gray-50))',
+            100: 'hsl(var(--lucrai-gray-100))',
+            200: 'hsl(var(--lucrai-gray-200))',
+            300: 'hsl(var(--lucrai-gray-300))',
+            400: 'hsl(var(--lucrai-gray-400))',
+            500: 'hsl(var(--lucrai-gray-500))',
+            600: 'hsl(var(--lucrai-gray-600))',
+            700: 'hsl(var(--lucrai-gray-700))',
+            800: 'hsl(var(--lucrai-gray-800))',
+            900: 'hsl(var(--lucrai-gray-900))',
+            'primary': 'hsl(var(--lucrai-blue-primary))',
+            'secondary': 'hsl(var(--lucrai-blue-secondary))',
+          },
+          'green': {
+            'primary': 'hsl(var(--lucrai-green-primary))',
+            'secondary': 'hsl(var(--lucrai-green-secondary))',
+          },
+          'yellow': {
+            'primary': 'hsl(var(--lucrai-yellow-primary))',
+            'secondary': 'hsl(var(--lucrai-yellow-secondary))',
+          },
+          'orange': {
+            'alert': 'hsl(var(--lucrai-orange-alert))',
+          },
         },
+        // Estados Semânticos
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        info: "hsl(var(--info))",
+        // Compatibilidade com sistema antigo
         resto: {
           blue: {
-            100: "#e6f0ff",
-            400: "#4c84ff",
-            500: "#1a56db",
-            600: "#1245b5",
-            700: "#0F4C75", // Lucraí Blue-Tech
+            100: "hsl(var(--lucrai-gray-100))",
+            400: "hsl(var(--lucrai-blue-secondary))",
+            500: "hsl(var(--lucrai-blue-primary))",
+            600: "hsl(var(--lucrai-blue-primary))",
+            700: "hsl(var(--lucrai-blue-primary))",
           },
           green: {
-            500: "#00D4AA", // Lucraí Green-Profit
-            600: "#00B572", // Lucraí Green-Profit Dark
+            500: "hsl(var(--lucrai-green-primary))",
+            600: "hsl(var(--lucrai-green-secondary))",
           },
           gray: {
-            500: "#6b7280",
-            neutral: "#F4F5F7", // Lucraí Gray-Neutral
+            500: "hsl(var(--lucrai-gray-500))",
+            neutral: "hsl(var(--lucrai-gray-100))",
           }
         }
       },
@@ -85,8 +108,11 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        'satoshi': ['Satoshi', 'Poppins', 'system-ui', 'sans-serif'],
-        'inter': ['Inter', 'SF Pro Text', 'system-ui', 'sans-serif'],
+        'dm-sans': ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
+        'inter': ['Inter', 'DM Sans', 'system-ui', 'sans-serif'],
+        'satoshi': ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
+        // Alias para compatibilidade
+        'sans': ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {

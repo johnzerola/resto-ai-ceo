@@ -215,7 +215,7 @@ export function ModernSidebar() {
         )}
       >
         {/* Header */}
-        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-sidebar-border bg-gradient-to-r from-[#1B2C4F] to-[#2D4A7A] flex-shrink-0">
+        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-sidebar-border flex-shrink-0" style={{ background: 'var(--lucrai-gradient-primary)' }}>
           {(!isCollapsed || isMobileOpen) && (
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-content flex-shrink-0">
@@ -225,7 +225,7 @@ export function ModernSidebar() {
                   className="w-full h-full object-contain"
                 />
               </div>
-              <h2 className="text-sm sm:text-lg font-bold text-white truncate">
+              <h2 className="text-sm sm:text-lg font-bold text-white truncate font-dm-sans">
                 Lucraí
               </h2>
             </div>
