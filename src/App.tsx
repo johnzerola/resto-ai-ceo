@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { DataSync } from "@/components/restaurant/DataSync";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 import { EnhancedErrorBoundary } from "@/components/error/EnhancedErrorBoundary";
@@ -49,7 +48,7 @@ const OnboardingGuiado = lazy(() => import("./pages/OnboardingGuiado").then(modu
 const DeveloperDashboard = lazy(() => import("./components/developer/DeveloperDashboard").then(module => ({ default: module.DeveloperDashboard })));
 const BrandingGuide = lazy(() => import("./components/branding/BrandingGuide").then(module => ({ default: module.BrandingGuide })));
 const AffiliateSystem = lazy(() => import("./components/affiliate/AffiliateSystem").then(module => ({ default: module.AffiliateSystem })));
-const LandingPage = lazy(() => import("./pages/LandingPage"));
+const Index = lazy(() => import("./pages/Index"));
 
 // Import optimized branded loader
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
@@ -67,11 +66,10 @@ function App() {
       <PerformanceMonitor />
       <EnhancedErrorBoundary>
         <AuthProvider>
-          <DataSync>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
                   <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/onboarding" element={
@@ -96,7 +94,7 @@ function App() {
                 {/* Landing Page como página inicial */}
                 <Route path="/" element={
                   <Suspense fallback={<PageLoader />}>
-                    <LandingPage />
+                    <Index />
                   </Suspense>
                 } />
                 {/* Página de vendas alternativa */}
@@ -318,7 +316,6 @@ function App() {
                   </Routes>
                 </BrowserRouter>
               </TooltipProvider>
-          </DataSync>
         </AuthProvider>
       </EnhancedErrorBoundary>
     </QueryClientProvider>

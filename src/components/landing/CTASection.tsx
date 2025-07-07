@@ -69,7 +69,7 @@ export function CTASection() {
           <div className="grid md:grid-cols-3 gap-8 text-sm">
             <div className="flex items-center justify-center gap-2">
               <CheckCircle className="h-5 w-5 text-emerald-300" />
-              <span>{isAuthenticated ? 'Dados sempre atualizados' : '14 dias de teste grátis'}</span>
+              <span>{isAuthenticated ? 'Dados sempre atualizados' : '7 dias de teste grátis'}</span>
             </div>
             <div className="flex items-center justify-center gap-2">
               <CheckCircle className="h-5 w-5 text-emerald-300" />

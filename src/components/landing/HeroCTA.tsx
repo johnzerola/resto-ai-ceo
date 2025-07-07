@@ -44,7 +44,7 @@ export function HeroCTA() {
         <Link to="/login?tab=register">
           <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-blue-600 hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto">
             <PlayCircle className="mr-2 h-5 w-5" />
-            COMEÇAR TESTE GRÁTIS
+            TESTE GRÁTIS 7 DIAS
           </Button>
         </Link>
         <Button size="lg" variant="outline" className="border-slate-300 hover:border-emerald-400 hover:text-emerald-600 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto">
@@ -56,7 +56,7 @@ export function HeroCTA() {
       <div className="flex items-center gap-4 text-sm text-slate-600">
         <div className="flex items-center">
           <CheckCircle className="h-4 w-4 text-emerald-500 mr-1" />
-          14 dias grátis
+          7 dias grátis
         </div>
         <div className="flex items-center">
           <CheckCircle className="h-4 w-4 text-emerald-500 mr-1" />
