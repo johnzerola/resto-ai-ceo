@@ -37,8 +37,9 @@ export function ProtectedRoute({
   }
 
   // Se está autenticado mas precisa de onboarding e não está na página de onboarding
-  if (isAuthenticated && needsOnboarding && location.pathname !== '/onboarding') {
-    // Redirecionamento para onboarding obrigatório
+  // Adicionar verificação extra para prevenir loops
+  if (isAuthenticated && needsOnboarding && location.pathname !== '/onboarding' && location.pathname !== '/dashboard') {
+    // Redirecionamento para onboarding obrigatório apenas se não estiver tentando acessar dashboard
     return <Navigate to="/onboarding" replace />;
   }
 

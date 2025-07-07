@@ -123,6 +123,11 @@ export function ProtectedOnboardingRoute({
 
   // Se requer onboarding completo mas não está completo
   if (requireOnboardingComplete && !onboardingStatus.complete) {
+    // Verificar se já está na página de onboarding para evitar loops
+    if (location.pathname === '/onboarding') {
+      return <>{children}</>;
+    }
+    
     // Se ainda não iniciou o onboarding, redirecionar
     if (onboardingStatus.step === 0) {
       return <Navigate to="/onboarding" replace />;

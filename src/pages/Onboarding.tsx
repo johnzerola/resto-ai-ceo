@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
@@ -38,6 +38,7 @@ function OnboardingCompleted({ onContinue }: OnboardingCompletedProps) {
 
 const Onboarding = () => {
   const [showCompleted, setShowCompleted] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   const { user, currentRestaurant, isLoading: authLoading } = useAuth();
   const { isComplete, isLoading: statusLoading } = useOnboardingStatus();
   const navigate = useNavigate();
@@ -47,39 +48,61 @@ const Onboarding = () => {
   };
 
   const handleContinueToDashboard = () => {
-    navigate("/dashboard");
+    setShouldRedirect(true);
   };
 
-  // Se está carregando autenticação ou status
+  const handleSkipOnboarding = () => {
+    setShouldRedirect(true);
+  };
+
+  // Handle redirects in useEffect to prevent render loops
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate("/dashboard");
+    }
+  }, [shouldRedirect, navigate]);
+
+  // Redirect if onboarding is complete (but not during render)
+  useEffect(() => {
+    if (!authLoading && !statusLoading && (isComplete || currentRestaurant)) {
+      const timer = setTimeout(() => {
+        setShouldRedirect(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isComplete, currentRestaurant, authLoading, statusLoading]);
+
+  // Loading state
   if (authLoading || statusLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lucrai-blue-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando...</p>
+          <p className="text-muted-foreground">Carregando configuração...</p>
         </div>
       </div>
     );
   }
 
-  // Se onboarding já está completo
-  if (isComplete) {
-    if (showCompleted) {
-      return <OnboardingCompleted onContinue={handleContinueToDashboard} />;
-    }
-    // Redirecionar para dashboard se já completou
-    navigate("/dashboard");
-    return null;
+  // Show completion screen
+  if (showCompleted) {
+    return <OnboardingCompleted onContinue={handleContinueToDashboard} />;
   }
 
-  // Se já tem restaurante, considerar onboarding completo
-  if (currentRestaurant) {
-    navigate("/dashboard");
-    return null;
-  }
-
-  // Renderizar o wizard de onboarding
-  return <OnboardingWizard onComplete={handleOnboardingComplete} />;
+  // Show onboarding wizard with skip option
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+      <div className="absolute top-4 right-4">
+        <button 
+          onClick={handleSkipOnboarding}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+        >
+          Pular configuração
+        </button>
+      </div>
+      <OnboardingWizard onComplete={handleOnboardingComplete} />
+    </div>
+  );
 };
 
 export default Onboarding;
