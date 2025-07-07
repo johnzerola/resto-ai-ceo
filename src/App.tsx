@@ -38,6 +38,8 @@ const Vendas = lazy(() => import("./pages/Vendas"));
 const AiAssistant = lazy(() => import("./pages/AiAssistant"));
 const BusinessProfile = lazy(() => import("./pages/BusinessProfile"));
 const ProjecoesPagina = lazy(() => import("./pages/ProjecoesPagina").then(module => ({ default: module.ProjecoesPagina })));
+const Integracoes = lazy(() => import("./pages/Integracoes").then(module => ({ default: module.Integracoes })));
+const OnboardingGuiado = lazy(() => import("./pages/OnboardingGuiado").then(module => ({ default: module.OnboardingGuiado })));
 
 // Loading component otimizado
 const PageLoader = () => (
@@ -219,6 +221,20 @@ function App() {
                 <Route path="/system-audit" element={
                   <ProtectedRoute>
                     <SystemAuditPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/integracoes" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <Integracoes />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/onboarding-guiado" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <OnboardingGuiado />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="*" element={<NotFound />} />

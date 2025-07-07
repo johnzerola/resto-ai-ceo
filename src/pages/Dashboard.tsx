@@ -1,12 +1,12 @@
 
 import React from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { OptimizedDashboard } from "@/components/dashboard/OptimizedDashboard";
+import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
 
 const Dashboard = () => {
   return (
     <DashboardLayout>
-      <OptimizedDashboard />
+      <IntelligentDashboard />
     </DashboardLayout>
   );
 };
