@@ -1,9 +1,14 @@
 
 import React from "react";
-import { UnifiedDashboard } from "@/components/dashboard/UnifiedDashboard";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { IntelligentDashboard } from "@/components/dashboard/IntelligentDashboard";
 
 const Dashboard = () => {
-  return <UnifiedDashboard />;
+  return (
+    <DashboardLayout>
+      <IntelligentDashboard />
+    </DashboardLayout>
+  );
 };
 
 export default Dashboard;
