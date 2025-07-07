@@ -1943,6 +1943,8 @@ export type Database = {
           id: string
           last_login: string | null
           name: string | null
+          onboarding_complete: boolean | null
+          onboarding_step: number | null
           preferences: Json | null
           role: string | null
           status: string | null
@@ -1954,6 +1956,8 @@ export type Database = {
           id: string
           last_login?: string | null
           name?: string | null
+          onboarding_complete?: boolean | null
+          onboarding_step?: number | null
           preferences?: Json | null
           role?: string | null
           status?: string | null
@@ -1965,6 +1969,8 @@ export type Database = {
           id?: string
           last_login?: string | null
           name?: string | null
+          onboarding_complete?: boolean | null
+          onboarding_step?: number | null
           preferences?: Json | null
           role?: string | null
           status?: string | null
@@ -2703,6 +2709,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_clean_new_users: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       auto_expire_trials: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -2798,6 +2808,10 @@ export type Database = {
           plan_status: string
         }[]
       }
+      clean_user_data: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
       detectar_tendencias_estoque: {
         Args: { restaurant_uuid: string }
         Returns: undefined
@@ -2855,6 +2869,14 @@ export type Database = {
       }
       system_healthcheck: {
         Args: { restaurant_uuid: string }
+        Returns: Json
+      }
+      validate_business_data: {
+        Args: {
+          restaurant_uuid: string
+          selling_price: number
+          cost_price: number
+        }
         Returns: Json
       }
       validate_password_strength: {

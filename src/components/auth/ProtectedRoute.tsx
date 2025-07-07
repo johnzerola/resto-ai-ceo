@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/services/AuthService";
 import { Navigate, useLocation } from "react-router-dom";
 import { ReactNode } from "react";
+import { ProtectedOnboardingRoute } from "./ProtectedOnboardingRoute";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -61,6 +62,10 @@ export function ProtectedRoute({
     }
   }
 
-  // Se passou por todas as verificações, renderizar o componente
-  return <>{children}</>;
+  // Se passou por todas as verificações, usar o ProtectedOnboardingRoute
+  return (
+    <ProtectedOnboardingRoute requireOnboardingComplete={true}>
+      {children}
+    </ProtectedOnboardingRoute>
+  );
 }

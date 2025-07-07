@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { migrateUserFinancialData } from '@/services/FinancialStorageService';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface DataSyncProps {
@@ -11,69 +12,121 @@ interface DataSyncProps {
 export function DataSync({ children }: DataSyncProps) {
   const { user, isLoading: authLoading } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isCleaningData, setIsCleaningData] = useState(false);
+
+  // Função para detectar e limpar dados de usuários novos
+  const checkAndCleanNewUser = async (userId: string) => {
+    try {
+      setIsCleaningData(true);
+      
+      // Verificar se é usuário novo (criado nas últimas 24h)
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('created_at, onboarding_complete')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Erro ao verificar perfil:', error);
+        return;
+      }
+
+      if (profile) {
+        const isNewUser = new Date(profile.created_at).getTime() > Date.now() - (24 * 60 * 60 * 1000);
+        const needsCleaning = isNewUser && !profile.onboarding_complete;
+
+        if (needsCleaning) {
+          console.log('🧹 Usuário novo detectado - iniciando limpeza automática');
+          
+          // Chamar função de limpeza do Supabase
+          const { error: cleanError } = await supabase.rpc('clean_user_data', {
+            user_uuid: userId
+          });
+
+          if (cleanError) {
+            console.error('Erro na limpeza automática:', cleanError);
+          } else {
+            console.log('✨ Limpeza automática concluída - ambiente limpo garantido');
+            
+            // Limpar localStorage também
+            const keysToClean = [
+              'cashFlow', 'goals', 'inventory', 'recipes', 'restaurantData',
+              'financialData', 'currentUser'
+            ];
+            
+            keysToClean.forEach(key => {
+              const userKey = `${key}_${userId}`;
+              localStorage.removeItem(userKey);
+              localStorage.removeItem(key); // Versão sem user_id também
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Erro na verificação de usuário novo:', error);
+    } finally {
+      setIsCleaningData(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
 
     const initializeData = async () => {
       try {
-        // Inicialização otimizada - não esperar auth se não necessário
+        // Inicialização otimizada
         const quickInit = () => {
           if (mounted) {
             setIsInitialized(true);
           }
         };
 
-        // Se ainda está carregando auth, dar timeout mais curto
+        // Se ainda está carregando auth, timeout mais rápido
         if (authLoading) {
-          const timeout = setTimeout(quickInit, 1000); // Reduzido de 2s para 1s
+          const timeout = setTimeout(quickInit, 800);
           return () => clearTimeout(timeout);
         }
 
-        // Inicializar dados se houver usuário (de forma assíncrona)
+        // Se houver usuário, verificar se precisa de limpeza
         if (user) {
-          // Não bloquear a UI esperando migração
-          requestIdleCallback ? requestIdleCallback(() => {
-            migrateUserFinancialData().catch(console.error);
-          }) : setTimeout(() => {
-            migrateUserFinancialData().catch(console.error);
-          }, 100);
+          // Primeiro, verificar e limpar se necessário
+          await checkAndCleanNewUser(user.id);
           
-          // Garantir estrutura básica de dados rapidamente
-          const dataKeys = ['cashFlow', 'goals', 'inventory', 'recipes', 'restaurantData'];
-          dataKeys.forEach(key => {
-            const userKey = `${key}_${user.id}`;
-            if (!localStorage.getItem(userKey)) {
-              const defaultValue = key === 'restaurantData' ? {} : [];
-              localStorage.setItem(userKey, JSON.stringify(defaultValue));
-            }
-          });
+          // Apenas depois de limpar, inicializar estrutura básica
+          if (!isCleaningData) {
+            // Migração de dados em background (não bloquear UI)
+            requestIdleCallback ? requestIdleCallback(() => {
+              migrateUserFinancialData().catch(console.error);
+            }) : setTimeout(() => {
+              migrateUserFinancialData().catch(console.error);
+            }, 100);
+          }
         }
 
         quickInit();
       } catch (error) {
         console.error('Erro na inicialização:', error);
         if (mounted) {
-          setIsInitialized(true); // Permitir que o app continue mesmo com erro
+          setIsInitialized(true);
         }
       }
     };
 
     initializeData();
 
-    // Timeout de segurança reduzido - permitir que o app continue após 1.5 segundos
+    // Timeout de segurança ainda mais agressivo para UX
     const safetyTimeout = setTimeout(() => {
       if (mounted && !isInitialized) {
-        console.log('Safety timeout - forçando inicialização');
+        console.log('⚡ Safety timeout - forçando inicialização rápida');
         setIsInitialized(true);
       }
-    }, 1500); // Reduzido de 3s para 1.5s
+    }, 1200);
 
     return () => {
       mounted = false;
       clearTimeout(safetyTimeout);
     };
-  }, [user, authLoading, isInitialized]);
+  }, [user, authLoading, isInitialized, isCleaningData]);
 
   // Mostrar loading apenas muito brevemente para não impactar UX
   if (!isInitialized) {
