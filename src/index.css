@@ -696,15 +696,21 @@ body {
 }
 
 .lucrai-success-state {
-  @apply border-lucrai-success/20 bg-lucrai-success/5 text-lucrai-success;
+  border: 1px solid hsl(174 100% 42% / 0.2);
+  background-color: hsl(174 100% 42% / 0.05);
+  color: hsl(var(--lucrai-green-primary));
 }
 
 .lucrai-error-state {
-  @apply border-lucrai-danger/20 bg-lucrai-danger/5 text-lucrai-danger;
+  border: 1px solid hsl(14 100% 60% / 0.2);
+  background-color: hsl(14 100% 60% / 0.05);
+  color: hsl(var(--lucrai-orange-alert));
 }
 
 .lucrai-warning-state {
-  @apply border-lucrai-warning/20 bg-lucrai-warning/5 text-lucrai-warning;
+  border: 1px solid hsl(51 100% 50% / 0.2);
+  background-color: hsl(51 100% 50% / 0.05);
+  color: hsl(var(--lucrai-yellow-primary));
 }
 
 /* Dashboard específico */
