@@ -97,7 +97,7 @@ const Onboarding = () => {
       // Salvar perfil empresarial detalhado diretamente no banco
       const { data: profileData, error: profileError } = await supabase
         .from('business_profiles')
-        .upsert([
+        .insert([
           {
             restaurant_id: restaurantData.id,
             owner_name: values.ownerName,
@@ -123,7 +123,7 @@ const Onboarding = () => {
               average_ticket: values.averageTicket
             })
           }
-        ], { onConflict: 'restaurant_id' })
+        ])
         .select()
         .single();
 
