@@ -210,11 +210,11 @@ export function PerformanceCharts() {
   const chartConfig = {
     atual: {
       label: "Período Atual",
-      theme: { light: "#3b82f6" }
+      color: "#3b82f6"
     },
     anterior: {
       label: "Período Anterior",
-      theme: { light: "#9ca3af" }
+      color: "#9ca3af"
     }
   };
   
