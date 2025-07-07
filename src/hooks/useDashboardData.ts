@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -10,6 +10,22 @@ import {
   AlertData 
 } from '@/types/dashboard';
 import { toast } from 'sonner';
+
+// Cache para evitar refetch desnecessário
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+const dataCache = new Map<string, { data: any; timestamp: number }>();
+
+const getCachedData = (key: string) => {
+  const cached = dataCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+};
+
+const setCachedData = (key: string, data: any) => {
+  dataCache.set(key, { data, timestamp: Date.now() });
+};
 
 export function useDashboardData() {
   const { currentRestaurant } = useAuth();
@@ -38,12 +54,20 @@ export function useDashboardData() {
   const loadFinancialData = useCallback(async () => {
     if (!currentRestaurant?.id) return;
 
+    const cacheKey = `financial_${currentRestaurant.id}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) {
+      setFinancialData(cached);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('cash_flow')
         .select('*')
         .eq('restaurant_id', currentRestaurant.id)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .limit(100); // Limitar para os últimos 100 registros
 
       if (error) throw error;
 
@@ -58,6 +82,7 @@ export function useDashboardData() {
       })) || [];
 
       setFinancialData(typedData);
+      setCachedData(cacheKey, typedData);
     } catch (err) {
       console.error('Erro ao carregar dados financeiros:', err);
       setError('Erro ao carregar dados financeiros');
@@ -189,7 +214,7 @@ export function useDashboardData() {
     }
   }, [currentRestaurant?.id]);
 
-  const calculateDashboardStats = useCallback(() => {
+  const calculateDashboardStats = useMemo(() => {
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
     const today = new Date().toISOString().split('T')[0];
@@ -228,10 +253,22 @@ export function useDashboardData() {
       return sum + (item.quantity * item.cost_per_unit);
     }, 0);
 
-    // Crescimento mensal (simulado)
-    const monthlyGrowth = Math.random() * 15 + 5;
+    // Crescimento mensal baseado em dados reais
+    const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+    
+    const previousMonthData = financialData.filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate.getMonth() + 1 === previousMonth && entryDate.getFullYear() === previousYear;
+    });
+    
+    const previousRevenue = previousMonthData
+      .filter(entry => entry.type === 'income')
+      .reduce((sum, entry) => sum + entry.amount, 0);
+    
+    const monthlyGrowth = previousRevenue > 0 ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 : 0;
 
-    setDashboardStats({
+    return {
       totalRevenue,
       totalExpenses,
       netProfit,
@@ -243,8 +280,13 @@ export function useDashboardData() {
       profitMargin,
       monthlyGrowth,
       inventoryValue
-    });
+    };
   }, [financialData, goals, inventory]);
+
+  // Atualizar stats quando calculado
+  useEffect(() => {
+    setDashboardStats(calculateDashboardStats);
+  }, [calculateDashboardStats]);
 
   const refreshData = useCallback(async () => {
     setIsLoading(true);
@@ -271,10 +313,6 @@ export function useDashboardData() {
       refreshData();
     }
   }, [currentRestaurant?.id, refreshData]);
-
-  useEffect(() => {
-    calculateDashboardStats();
-  }, [financialData, goals, inventory, calculateDashboardStats]);
 
   return {
     dashboardStats,
