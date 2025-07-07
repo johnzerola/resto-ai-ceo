@@ -19,9 +19,13 @@ import {
   Bot,
   Shield,
   CreditCard,
-  ClipboardList
+  ClipboardList,
+  Code2,
+  Palette,
+  Users2
 } from "lucide-react";
 import { ModernNavItem } from "./ModernNavItem";
+import { ConditionalNavItem } from "./ConditionalNavItem";
 
 const navigation = [
   {
@@ -114,6 +118,27 @@ const navigation = [
     icon: Shield,
     description: "Privacidade e segurança",
     category: "support"
+  },
+  {
+    title: "Developer",
+    href: "/developer",
+    icon: Code2,
+    description: "Dashboard do desenvolvedor",
+    category: "developer"
+  },
+  {
+    title: "Branding",
+    href: "/branding",
+    icon: Palette,
+    description: "Guia de marca",
+    category: "developer"
+  },
+  {
+    title: "Programa Afiliados",
+    href: "/affiliate",
+    icon: Users2,
+    description: "Sistema de afiliados",
+    category: "business"
   }
 ];
 
@@ -126,7 +151,9 @@ const categories = {
   management: { label: "Gestão", color: "text-indigo-600" },
   ai: { label: "Inteligência", color: "text-pink-600" },
   account: { label: "Conta", color: "text-gray-600" },
-  support: { label: "Suporte", color: "text-gray-500" }
+  support: { label: "Suporte", color: "text-gray-500" },
+  developer: { label: "Desenvolvedor", color: "text-red-600" },
+  business: { label: "Negócios", color: "text-green-700" }
 };
 
 export function ModernSidebar() {
@@ -264,17 +291,51 @@ export function ModernSidebar() {
                       </div>
                     )}
                     <div className="space-y-0.5 sm:space-y-1">
-                      {items.map((item) => (
-                        <ModernNavItem
-                          key={item.href}
-                          href={item.href}
-                          icon={item.icon}
-                          title={item.title}
-                          description={item.description}
-                          isCollapsed={isCollapsed && !isMobileOpen}
-                          category={categoryKey}
-                        />
-                      ))}
+                      {items.map((item) => {
+                        // Use ConditionalNavItem for developer features
+                        if (item.category === 'developer') {
+                          return (
+                            <ConditionalNavItem
+                              key={item.href}
+                              href={item.href}
+                              icon={item.icon}
+                              title={item.title}
+                              description={item.description}
+                              isCollapsed={isCollapsed && !isMobileOpen}
+                              category={categoryKey}
+                              requiredRole="developer"
+                            />
+                          );
+                        }
+                        
+                        // Use ConditionalNavItem for affiliate features
+                        if (item.href === '/affiliate') {
+                          return (
+                            <ConditionalNavItem
+                              key={item.href}
+                              href={item.href}
+                              icon={item.icon}
+                              title={item.title}
+                              description={item.description}
+                              isCollapsed={isCollapsed && !isMobileOpen}
+                              category={categoryKey}
+                              requiredRole="affiliate"
+                            />
+                          );
+                        }
+                        
+                        return (
+                          <ModernNavItem
+                            key={item.href}
+                            href={item.href}
+                            icon={item.icon}
+                            title={item.title}
+                            description={item.description}
+                            isCollapsed={isCollapsed && !isMobileOpen}
+                            category={categoryKey}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 );

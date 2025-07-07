@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { EmailConfirmationBanner } from "../auth/EmailConfirmationBanner";
 import { AdvancedThemeToggle } from "@/components/theme/AdvancedThemeToggle";
+import { FeedbackSystem } from "@/components/feedback/FeedbackSystem";
 import { cn } from "@/lib/utils";
 
 const LoadingSpinner = memo(({ message }: { message: string }) => (
@@ -123,6 +124,9 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
             </ErrorBoundary>
           </React.Suspense>
         </div>
+        
+        {/* Integrated Feedback System */}
+        <FeedbackSystem />
       </main>
     </div>
   );

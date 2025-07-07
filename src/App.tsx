@@ -45,6 +45,11 @@ const ProjecoesPagina = lazy(() => import("./pages/ProjecoesPagina").then(module
 const Integracoes = lazy(() => import("./pages/Integracoes").then(module => ({ default: module.Integracoes })));
 const OnboardingGuiado = lazy(() => import("./pages/OnboardingGuiado").then(module => ({ default: module.OnboardingGuiado })));
 
+// New feature pages
+const DeveloperDashboard = lazy(() => import("./components/developer/DeveloperDashboard").then(module => ({ default: module.DeveloperDashboard })));
+const BrandingGuide = lazy(() => import("./components/branding/BrandingGuide").then(module => ({ default: module.BrandingGuide })));
+const AffiliateSystem = lazy(() => import("./components/affiliate/AffiliateSystem").then(module => ({ default: module.AffiliateSystem })));
+
 // Import optimized branded loader
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
 
@@ -248,6 +253,28 @@ function App() {
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}>
                       <OnboardingGuiado />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                {/* New Feature Routes */}
+                <Route path="/developer" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <DeveloperDashboard />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/branding" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <BrandingGuide />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/affiliate" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <AffiliateSystem />
                     </Suspense>
                   </ProtectedRoute>
                 } />
