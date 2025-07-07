@@ -99,14 +99,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     tempKeys.forEach(key => {
       try {
         localStorage.removeItem(key);
-        console.log(`Removido dado temporário: ${key}`);
       } catch (error) {
         console.error(`Erro ao remover ${key} do localStorage:`, error);
       }
     });
     
-    // NÃO remover restaurantData - deve persistir entre sessões
-    console.log('✅ Dados do restaurante mantidos no localStorage');
+    // Dados do restaurante são mantidos entre sessões
   };
 
   const checkSubscription = async () => {
@@ -224,7 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string): Promise<boolean> => {
     try {
-      console.log('Tentando fazer login com:', email);
+      // Tentativa de login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -237,7 +235,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user && data.session) {
-        console.log('Login bem-sucedido!', data.user.email);
         toast.success('Login realizado com sucesso!');
         return true;
       }
@@ -252,7 +249,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
-      console.log('Tentando criar conta para:', email);
+      // Tentativa de criação de conta
       
       // Garantir HTTPS para redirecionamento em produção
       const redirectUrl = window.location.protocol === 'https:' 
@@ -281,7 +278,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        console.log('Conta criada com sucesso para:', data.user.email);
+        // Conta criada com sucesso
         
         // Verificar se precisa confirmar email
         if (!data.session) {

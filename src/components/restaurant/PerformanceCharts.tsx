@@ -14,13 +14,14 @@ import {
   Bar,
   BarChart,
 } from "recharts";
+import { ChartDataPoint, MonthlyChartData, ComparisonMetrics } from "@/types/dashboard";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { ChartContainer } from "@/components/ui/chart";
 import { TrendingUp, TrendingDown, CalendarDays } from "lucide-react";
 
-// Dados de exemplo para o gráfico - Aqui seriam substituídos por dados reais da API
-const getDailyData = () => [
+// Dados de exemplo para o gráfico - Em produção, estes dados viriam da API
+const getDailyData = (): ChartDataPoint[] => [
   {
     date: "01/05",
     atual: 4500,
@@ -65,7 +66,7 @@ const getDailyData = () => [
   }
 ];
 
-const getMonthlyData = () => [
+const getMonthlyData = (): MonthlyChartData[] => [
   {
     month: "Jan",
     atual: 85000,
@@ -108,18 +109,30 @@ interface ComparisonCardProps {
 }
 
 // Componente personalizado para o tooltip
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    color: string;
+  }>;
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-3 border rounded-lg shadow-sm">
         <p className="text-sm font-medium">{label}</p>
         <div className="mt-2 space-y-1">
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index) => (
             <p 
               key={`item-${index}`}
               className="text-xs flex items-center justify-between gap-4"
             >
-              <span style={{ color: entry.color }}>{entry.name === "atual" ? "Período Atual" : "Período Anterior"}</span>
+              <span style={{ color: entry.color }}>
+                {entry.name === "atual" ? "Período Atual" : "Período Anterior"}
+              </span>
               <span className="font-medium">{formatCurrency(entry.value)}</span>
             </p>
           ))}
@@ -131,12 +144,19 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 // Componente personalizado para a legenda
-const CustomLegend = (props: any) => {
-  const { payload } = props;
+interface LegendProps {
+  payload?: Array<{
+    dataKey: string;
+    color: string;
+  }>;
+}
+
+const CustomLegend = ({ payload }: LegendProps) => {
+  if (!payload) return null;
   
   return (
     <div className="flex items-center justify-center gap-4 pt-3">
-      {payload.map((entry: any, index: number) => (
+      {payload.map((entry, index) => (
         <div key={`legend-${index}`} className="flex items-center gap-1.5">
           <div
             className="h-2 w-2 shrink-0 rounded-[2px]"
@@ -192,10 +212,10 @@ export function PerformanceCharts() {
   const monthlyData = getMonthlyData();
   
   // Calcular valores comparativos
-  const calculateTotalAndDiff = (data: any[]) => {
+  const calculateTotalAndDiff = (data: ChartDataPoint[] | MonthlyChartData[]): ComparisonMetrics => {
     const currentTotal = data.reduce((sum, item) => sum + item.atual, 0);
     const previousTotal = data.reduce((sum, item) => sum + item.anterior, 0);
-    const percentageDiff = ((currentTotal - previousTotal) / previousTotal) * 100;
+    const percentageDiff = previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal) * 100 : 0;
     
     return {
       currentTotal,

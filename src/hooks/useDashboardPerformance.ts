@@ -1,5 +1,8 @@
 
-import { useState, useEffect } from 'react';
+// DEPRECATED: This hook is replaced by useDashboardData for better type safety and error handling
+// This file is kept for backward compatibility but should not be used in new components
+
+import { useDashboardData } from './useDashboardData';
 
 export interface DashboardStats {
   totalRevenue: number;
@@ -16,124 +19,14 @@ export interface DashboardStats {
 }
 
 export function useDashboardPerformance() {
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
-    totalRevenue: 0,
-    totalExpenses: 0,
-    netProfit: 0,
-    activeGoals: 0,
-    completedGoals: 0,
-    inventoryItems: 0,
-    todaySales: 0,
-    averageTicket: 0,
-    profitMargin: 0,
-    monthlyGrowth: 0,
-    inventoryValue: 0
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [performanceMetrics, setPerformanceMetrics] = useState({
-    renderTime: 0,
-    lastUpdate: new Date().toISOString()
-  });
-
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      const startTime = performance.now();
-      setIsLoading(true);
-
-      try {
-        // Load financial data from localStorage
-        const cashFlowData = localStorage.getItem('cashFlowEntries');
-        const financialData = cashFlowData ? JSON.parse(cashFlowData) : [];
-
-        // Load goals data
-        const goalsData = localStorage.getItem('goals');
-        const goals = goalsData ? JSON.parse(goalsData) : [];
-
-        // Load inventory data
-        const inventoryData = localStorage.getItem('inventoryItems');
-        const inventory = inventoryData ? JSON.parse(inventoryData) : [];
-
-        // Calculate metrics
-        const totalRevenue = financialData
-          .filter((entry: any) => entry.type === 'income')
-          .reduce((sum: number, entry: any) => sum + (entry.amount || 0), 0);
-
-        const totalExpenses = financialData
-          .filter((entry: any) => entry.type === 'expense')
-          .reduce((sum: number, entry: any) => sum + (entry.amount || 0), 0);
-
-        const netProfit = totalRevenue - totalExpenses;
-        const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
-
-        const activeGoals = goals.filter((goal: any) => !goal.completed).length;
-        const completedGoals = goals.filter((goal: any) => goal.completed).length;
-
-        // Calculate today's sales
-        const today = new Date().toISOString().split('T')[0];
-        const todaySales = financialData
-          .filter((entry: any) => entry.type === 'income' && entry.date === today)
-          .reduce((sum: number, entry: any) => sum + (entry.amount || 0), 0);
-
-        // Calculate average ticket (simple estimation)
-        const totalSalesEntries = financialData.filter((entry: any) => entry.type === 'income').length;
-        const averageTicket = totalSalesEntries > 0 ? totalRevenue / totalSalesEntries : 0;
-
-        // Calculate inventory value
-        const inventoryValue = inventory.reduce((sum: number, item: any) => {
-          return sum + ((item.quantity || 0) * (item.cost_per_unit || 0));
-        }, 0);
-
-        // Calculate monthly growth (simulate with random positive growth for demo)
-        const monthlyGrowth = Math.random() * 15 + 5; // 5-20% growth simulation
-
-        setDashboardStats({
-          totalRevenue,
-          totalExpenses,
-          netProfit,
-          activeGoals,
-          completedGoals,
-          inventoryItems: inventory.length,
-          todaySales,
-          averageTicket,
-          profitMargin,
-          monthlyGrowth,
-          inventoryValue
-        });
-
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        // Keep default values on error
-      } finally {
-        const endTime = performance.now();
-        setPerformanceMetrics({
-          renderTime: endTime - startTime,
-          lastUpdate: new Date().toISOString()
-        });
-        setIsLoading(false);
-      }
-    };
-
-    loadDashboardData();
-
-    // Listen for data updates
-    const handleDataUpdate = () => {
-      loadDashboardData();
-    };
-
-    window.addEventListener('financialDataUpdated', handleDataUpdate);
-    window.addEventListener('goalsUpdated', handleDataUpdate);
-    window.addEventListener('inventoryUpdated', handleDataUpdate);
-
-    return () => {
-      window.removeEventListener('financialDataUpdated', handleDataUpdate);
-      window.removeEventListener('goalsUpdated', handleDataUpdate);
-      window.removeEventListener('inventoryUpdated', handleDataUpdate);
-    };
-  }, []);
-
+  const { dashboardStats, isLoading } = useDashboardData();
+  
   return {
     dashboardStats,
     isLoading,
-    performanceMetrics
+    performanceMetrics: {
+      renderTime: 0,
+      lastUpdate: new Date().toISOString()
+    }
   };
 }
