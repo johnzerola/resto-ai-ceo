@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,37 +13,56 @@ import {
   Users,
   CheckCircle,
   Star,
-  ArrowRight
+  ArrowRight,
+  PlayCircle,
+  Smartphone,
+  Globe,
+  MessageSquare,
+  PieChart,
+  Target,
+  Clock,
+  Award,
+  Monitor,
+  DollarSign,
+  Utensils,
+  TrendingDown,
+  Activity
 } from "lucide-react";
 
 export default function Index() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
       {/* Header */}
-      <header className="relative z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200/60">
+      <header className="relative z-50 w-full bg-white/95 backdrop-blur-lg border-b border-slate-200/60 sticky top-0">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#00D887] to-[#1B2C4F] rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                 <ChefHat className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-lucrai-blue-tech to-lucrai-green-profit bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">
                   Lucraí CEO
                 </h1>
                 <p className="text-xs text-slate-600">Gestão Inteligente</p>
               </div>
             </div>
             
+            <nav className="hidden md:flex items-center gap-6">
+              <a href="#recursos" className="text-slate-600 hover:text-emerald-500 transition-colors">Recursos</a>
+              <a href="#precos" className="text-slate-600 hover:text-emerald-500 transition-colors">Preços</a>
+              <a href="#sobre" className="text-slate-600 hover:text-emerald-500 transition-colors">Sobre</a>
+            </nav>
+            
             <div className="flex items-center gap-4">
               <Link to="/login">
-                <Button variant="ghost" className="text-slate-700 hover:text-[#00D887]">
+                <Button variant="ghost" className="text-slate-700 hover:text-emerald-500 transition-colors">
                   Entrar
                 </Button>
               </Link>
               <Link to="/register">
-                <Button className="bg-gradient-to-r from-[#00D887] to-[#00B572] hover:shadow-lg">
-                  Começar agora
+                <Button className="bg-gradient-to-r from-emerald-500 to-blue-600 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                  Teste Grátis
                 </Button>
               </Link>
             </div>
@@ -52,279 +70,585 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
+      {/* Enhanced Hero Section */}
+      <section className="relative py-24 overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-transparent to-emerald-50"></div>
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-r from-blue-400/20 to-emerald-400/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-gradient-to-r from-emerald-400/20 to-blue-400/20 rounded-full blur-3xl"></div>
+        
+        <div className="container mx-auto px-6 relative">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200 transition-colors">
+                <Zap className="mr-2 h-4 w-4" />
+                Top Rated Automatic Restaurant Management Software
+              </Badge>
+              
+              <div className="space-y-6">
+                <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+                  <span className="bg-gradient-to-r from-slate-900 via-blue-900 to-emerald-600 bg-clip-text text-transparent">
+                    Seu restaurante mais inteligente.
+                  </span>
+                  <br />
+                  <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                    Seus negócios mais lucrativos.
+                  </span>
+                </h1>
+                
+                <p className="text-xl text-slate-600 leading-relaxed max-w-xl">
+                  Com a gestão de restaurante do Lucraí você envia mensagens de áudio e texto pelo WhatsApp e 
+                  organiza a operação do seu restaurante.
+                </p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link to="/register">
+                    <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-blue-600 hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto">
+                      <PlayCircle className="mr-2 h-5 w-5" />
+                      START FREE TRIAL
+                    </Button>
+                  </Link>
+                  <Button size="lg" variant="outline" className="border-slate-300 hover:border-emerald-400 hover:text-emerald-600 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto">
+                    <PlayCircle className="mr-2 h-5 w-5" />
+                    Assistir ao vídeo
+                  </Button>
+                </div>
+                
+                <div className="flex items-center gap-4 text-sm text-slate-600">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-emerald-500 mr-1" />
+                    14 dias grátis
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-emerald-500 mr-1" />
+                    Sem cartão de crédito
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-emerald-500 mr-1" />
+                    Suporte incluído
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Product Mockup */}
+            <div className="relative">
+              <div className="relative bg-gradient-to-br from-white to-blue-50 rounded-3xl shadow-2xl p-8 border border-slate-200/60">
+                <div className="bg-gradient-to-br from-blue-600 to-emerald-500 rounded-2xl p-6 text-white">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold">Dashboard - Lucraí CEO</h3>
+                    <div className="flex gap-2">
+                      <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                      <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                      <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-white/20 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-white/80">Faturamento</span>
+                        <TrendingUp className="h-4 w-4" />
+                      </div>
+                      <div className="text-2xl font-bold">R$ 60.757</div>
+                      <div className="text-xs text-emerald-200">+15.3% vs mês anterior</div>
+                    </div>
+                    <div className="bg-white/20 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-white/80">CMV</span>
+                        <TrendingDown className="h-4 w-4" />
+                      </div>
+                      <div className="text-2xl font-bold">28.4%</div>
+                      <div className="text-xs text-emerald-200">-2.1% otimizado</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/20 rounded-lg p-4">
+                    <div className="text-sm text-white/80 mb-2">Margem de Lucro</div>
+                    <div className="w-full bg-white/20 rounded-full h-2 mb-2">
+                      <div className="bg-emerald-300 h-2 rounded-full w-3/4"></div>
+                    </div>
+                    <div className="text-sm text-emerald-200">75% da meta mensal atingida</div>
+                  </div>
+                </div>
+                
+                {/* Floating Elements */}
+                <div className="absolute -top-4 -right-4 bg-white rounded-xl shadow-lg p-4 border border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                      <MessageSquare className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">WhatsApp</div>
+                      <div className="text-xs text-slate-500">3 mensagens</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-4 border border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Activity className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold">IA Analytics</div>
+                      <div className="text-xs text-slate-500">Análise completa</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Indicators */}
+      <section className="py-12 bg-white border-t border-slate-200/60">
         <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <Badge variant="secondary" className="mb-6 bg-[#00D887]/10 text-[#00D887] border-[#00D887]/20">
-              🚀 Revolucione seu restaurante com IA
+          <div className="text-center mb-8">
+            <p className="text-slate-600 font-medium">NOSSOS PARCEIROS</p>
+          </div>
+          <div className="flex justify-center items-center gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
+            <div className="text-2xl font-bold text-slate-400">abrasel</div>
+            <div className="text-2xl font-bold text-slate-400">ECOA</div>
+            <div className="text-2xl font-bold text-slate-400">bia food</div>
+            <div className="text-2xl font-bold text-slate-400">Repediu</div>
+            <div className="text-2xl font-bold text-slate-400">Falaê!</div>
+            <div className="text-2xl font-bold text-slate-400">SEBRAE</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Enhanced Features Section */}
+      <section id="recursos" className="py-24 bg-gradient-to-b from-white to-slate-50">
+        <div className="container mx-auto px-6">
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <Badge variant="secondary" className="mb-4 bg-blue-100 text-blue-700 border-blue-200">
+              Recursos Completos
             </Badge>
-            
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-[#1B2C4F] via-slate-700 to-[#00D887] bg-clip-text text-transparent leading-tight">
-              Gestão Inteligente para
-              <span className="block">Restaurantes Modernos</span>
-            </h1>
-            
-            <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Transforme seus dados em lucro com nossa plataforma de IA. 
-              Controle total de custos, precificação inteligente e análises preditivas.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/register">
-                <Button size="lg" className="bg-gradient-to-r from-[#00D887] to-[#00B572] hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-lg px-8 py-6">
-                  <Zap className="mr-2 h-5 w-5" />
-                  Começar agora
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button size="lg" variant="outline" className="border-[#00D887] text-[#00D887] hover:bg-[#00D887] hover:text-white transition-all duration-200 text-lg px-8 py-6">
-                  Entrar na plataforma
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="py-20 bg-slate-50/50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 text-slate-900">
-              Tudo que você precisa em um só lugar
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent">
+              Comece no seu estoque e revoluciona a operação inteira
             </h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              Funcionalidades completas para gestão inteligente do seu restaurante
+            <p className="text-xl text-slate-600 leading-relaxed">
+              Olha tudo que a Lucraí faz: desde controle de estoque até análises preditivas com IA
             </p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-200 hover:border-[#00D887]/30">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-[#00D887] to-[#00B572] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Calculator className="h-6 w-6 text-white" />
+          
+          <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
+            <div className="space-y-8">
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Calculator className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Movimentação de estoque</h3>
+                    <p className="text-slate-600">Controle completo de entrada e saída de produtos com rastreabilidade total.</p>
+                  </div>
                 </div>
-                <CardTitle className="text-slate-900">Fichas Técnicas</CardTitle>
-                <CardDescription>
-                  Padronize receitas e calcule custos automaticamente
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-200 hover:border-[#00D887]/30">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-[#1B2C4F] to-[#2D4A6B] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <BarChart3 className="h-6 w-6 text-white" />
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <PieChart className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Gestão de compras</h3>
+                    <p className="text-slate-600">Automatize pedidos e otimize sua cadeia de suprimentos.</p>
+                  </div>
                 </div>
-                <CardTitle className="text-slate-900">DRE Automática</CardTitle>
-                <CardDescription>
-                  Relatórios financeiros em tempo real
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-200 hover:border-[#00D887]/30">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-[#00D887] to-[#00B572] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <TrendingUp className="h-6 w-6 text-white" />
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Target className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Controle de CMV</h3>
+                    <p className="text-slate-600">Monitore custos em tempo real e otimize sua margem de lucro.</p>
+                  </div>
                 </div>
-                <CardTitle className="text-slate-900">IA Preditiva</CardTitle>
-                <CardDescription>
-                  Previsões de vendas e análises inteligentes
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-200 hover:border-[#00D887]/30">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-[#1B2C4F] to-[#2D4A6B] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Shield className="h-6 w-6 text-white" />
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Clock className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Delegação de tarefas</h3>
+                    <p className="text-slate-600">Organize sua equipe e delegue responsabilidades com eficiência.</p>
+                  </div>
                 </div>
-                <CardTitle className="text-slate-900">Controle Total</CardTitle>
-                <CardDescription>
-                  Gestão completa de estoque e fornecedores
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-200 hover:border-[#00D887]/30">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-[#00D887] to-[#00B572] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-slate-900">Multi-usuário</CardTitle>
-                <CardDescription>
-                  Colaboração em equipe com controle de acesso
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="group hover:shadow-lg transition-all duration-300 border-slate-200 hover:border-[#00D887]/30">
-              <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-[#1B2C4F] to-[#2D4A6B] rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Zap className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-slate-900">Automação</CardTitle>
-                <CardDescription>
-                  Processos automáticos para máxima eficiência
-                </CardDescription>
-              </CardHeader>
-            </Card>
+              </div>
+              
+              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
+                Teste grátis
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="relative">
+              <div className="bg-gradient-to-br from-slate-100 to-white rounded-2xl p-8 shadow-xl border border-slate-200">
+                <img 
+                  src="/lovable-uploads/633ccea0-b0be-4e1b-8596-7c25ee217aba.png" 
+                  alt="Dashboard do sistema mostrando controle de estoque e análises"
+                  className="w-full rounded-lg shadow-sm"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-20">
+      {/* WhatsApp Integration Section */}
+      <section className="py-24 bg-gradient-to-br from-emerald-50 to-blue-50">
         <div className="container mx-auto px-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4 text-slate-900">
-                Resultados comprovados
-              </h2>
-              <p className="text-xl text-slate-600">
-                Veja o que nossos clientes alcançaram
-              </p>
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="relative">
+              <div className="bg-white rounded-2xl p-8 shadow-xl border border-slate-200">
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
+                      <MessageSquare className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="font-semibold text-slate-900">WhatsApp Business</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="bg-slate-100 rounded-lg p-3 text-sm">
+                      <div className="font-medium text-slate-900">5kg parmesão</div>
+                      <div className="text-slate-600">1kg de filé</div>
+                      <div className="text-slate-600">Venceu Ontem</div>
+                    </div>
+                    <div className="bg-emerald-100 rounded-lg p-3 text-sm">
+                      <div className="font-medium text-emerald-800">INVENTÁRIO</div>
+                      <div className="text-emerald-600">Fiz o scan na verduraria</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+            
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                  <span className="text-slate-900">No WhatsApp por texto, </span>
+                  <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
+                    áudio ou foto
+                  </span>
+                </h2>
+                <p className="text-xl text-slate-600 leading-relaxed">
+                  Além de um painel completo no celular ou computador, você também pode 
+                  fazer o controle de tudo através de mensagens de áudio, texto e foto pelo WhatsApp.
+                </p>
+              </div>
+              
+              <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white">
+                Teste grátis
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-[#00D887] mb-2">35%</div>
-                <div className="text-slate-900 font-semibold mb-2">Redução de custos</div>
-                <div className="text-slate-600">Controle inteligente de despesas</div>
+      {/* Real-time CMV Section */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                  <span className="bg-gradient-to-r from-slate-900 to-blue-600 bg-clip-text text-transparent">
+                    Seu CMV atualizado em tempo real
+                  </span>
+                </h2>
+                <p className="text-xl text-slate-600 leading-relaxed mb-6">
+                  A gente sabe que a sua rentabilidade depende do CMV, preciso a que 
+                  suas conta seja é do fácil de fazer toda força é por isso que facilitamos ela 
+                  pra você nem precisar calcular.
+                </p>
               </div>
               
-              <div className="text-center">
-                <div className="text-4xl font-bold text-[#00D887] mb-2">60%</div>
-                <div className="text-slate-900 font-semibold mb-2">Tempo economizado</div>
-                <div className="text-slate-600">Automatização de processos</div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-slate-50 rounded-xl p-6">
+                  <div className="text-3xl font-bold text-emerald-600 mb-2">30.4%</div>
+                  <div className="text-sm text-slate-600">CMV Atual</div>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-6">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">R$ 15k</div>
+                  <div className="text-sm text-slate-600">Economia mensal</div>
+                </div>
               </div>
               
-              <div className="text-center">
-                <div className="text-4xl font-bold text-[#00D887] mb-2">25%</div>
-                <div className="text-slate-900 font-semibold mb-2">Aumento do lucro</div>
-                <div className="text-slate-600">Precificação otimizada</div>
+              <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-blue-600 text-white">
+                Ver demonstração
+                <PlayCircle className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+            
+            <div className="relative">
+              <div className="bg-gradient-to-br from-emerald-500 to-blue-600 rounded-3xl p-8 text-white shadow-2xl">
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-emerald-100">CMV</span>
+                    <Award className="h-5 w-5" />
+                  </div>
+                  <div className="text-4xl font-bold mb-1">60.757</div>
+                  <div className="text-emerald-200 text-sm">30.4 Meta Semana 29 últimos 10 dias</div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-white/20 rounded-lg p-4">
+                    <div className="text-3xl font-bold mb-1">R$ 50.000,00</div>
+                    <div className="text-emerald-200 text-sm">Quanto foram as saídas de agosto?</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white/20 rounded-lg p-4">
+                      <div className="text-lg font-bold">R$ 16k</div>
+                      <div className="text-emerald-200 text-xs">1º Semana</div>
+                    </div>
+                    <div className="bg-white/20 rounded-lg p-4">
+                      <div className="text-lg font-bold">R$ 12k</div>
+                      <div className="text-emerald-200 text-xs">2º Semana</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 bg-slate-50/50">
+      {/* Statistics Section */}
+      <section className="py-24 bg-gradient-to-br from-slate-900 to-blue-900 text-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 text-slate-900">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Resultados que <span className="text-emerald-400">fazem a diferença</span>
+            </h2>
+            <p className="text-xl text-slate-300">
+              Veja o impacto real em restaurantes como o seu
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-5xl font-bold text-emerald-400 mb-3">1000+</div>
+              <div className="text-slate-300 font-medium">Restaurantes ativos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-5xl font-bold text-emerald-400 mb-3">35%</div>
+              <div className="text-slate-300 font-medium">Redução média de custos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-5xl font-bold text-emerald-400 mb-3">60%</div>
+              <div className="text-slate-300 font-medium">Tempo economizado</div>
+            </div>
+            <div className="text-center">
+              <div className="text-5xl font-bold text-emerald-400 mb-3">4.9★</div>
+              <div className="text-slate-300 font-medium">Avaliação dos usuários</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Enhanced Testimonials */}
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4 bg-emerald-100 text-emerald-700 border-emerald-200">
+              Depoimentos
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-slate-900">
               O que nossos clientes dizem
             </h2>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
+          
+          <div className="grid lg:grid-cols-3 gap-8">
+            <Card className="border-slate-200 hover:shadow-lg transition-shadow duration-300">
+              <CardContent className="p-8">
+                <div className="flex items-center mb-6">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-[#00D887] text-[#00D887]" />
+                    <Star key={i} className="w-5 h-5 fill-emerald-500 text-emerald-500" />
                   ))}
                 </div>
-                <p className="text-slate-700 mb-4">
-                  "Revolucionou nossa gestão. Conseguimos reduzir custos em 30% no primeiro mês."
+                <p className="text-slate-700 mb-6 text-lg leading-relaxed">
+                  "Revolucionou nossa gestão. Conseguimos reduzir custos em 30% no primeiro mês e ter controle total do nosso CMV."
                 </p>
-                <div className="font-semibold text-slate-900">Carlos Silva</div>
-                <div className="text-sm text-slate-600">Pizzaria do Carlos</div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold">CS</span>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-900">Carlos Silva</div>
+                    <div className="text-sm text-slate-600">Pizzaria do Carlos • São Paulo</div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
+            
+            <Card className="border-slate-200 hover:shadow-lg transition-shadow duration-300">
+              <CardContent className="p-8">
+                <div className="flex items-center mb-6">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-[#00D887] text-[#00D887]" />
+                    <Star key={i} className="w-5 h-5 fill-emerald-500 text-emerald-500" />
                   ))}
                 </div>
-                <p className="text-slate-700 mb-4">
-                  "A IA nos ajuda a tomar decisões mais assertivas. Recomendo!"
+                <p className="text-slate-700 mb-6 text-lg leading-relaxed">
+                  "A IA nos ajuda a tomar decisões mais assertivas. O WhatsApp integrado é genial para nossa equipe!"
                 </p>
-                <div className="font-semibold text-slate-900">Maria Santos</div>
-                <div className="text-sm text-slate-600">Bistrô Gourmet</div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold">MS</span>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-900">Maria Santos</div>
+                    <div className="text-sm text-slate-600">Bistrô Gourmet • Rio de Janeiro</div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
+            
+            <Card className="border-slate-200 hover:shadow-lg transition-shadow duration-300">
+              <CardContent className="p-8">
+                <div className="flex items-center mb-6">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-[#00D887] text-[#00D887]" />
+                    <Star key={i} className="w-5 h-5 fill-emerald-500 text-emerald-500" />
                   ))}
                 </div>
-                <p className="text-slate-700 mb-4">
-                  "Finalmente temos controle total sobre nossos custos e margens."
+                <p className="text-slate-700 mb-6 text-lg leading-relaxed">
+                  "Finalmente temos controle total sobre custos e margens. O sistema é intuitivo e muito completo."
                 </p>
-                <div className="font-semibold text-slate-900">João Pereira</div>
-                <div className="text-sm text-slate-600">Restaurante Sabor</div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold">JP</span>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-900">João Pereira</div>
+                    <div className="text-sm text-slate-600">Restaurante Sabor • Belo Horizonte</div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-[#1B2C4F] to-[#00D887]">
-        <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl font-bold mb-6 text-white">
+      {/* Enhanced CTA Section */}
+      <section className="py-24 bg-gradient-to-br from-emerald-600 via-blue-600 to-purple-700 relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-blue-500/20"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.05%22%3E%3Cpath%20d%3D%22M30%2030c0-16.569%2013.431-30%2030-30v60c-16.569%200-30-13.431-30-30z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+        
+        <div className="container mx-auto px-6 relative">
+          <div className="max-w-4xl mx-auto text-center text-white">
+            <Badge variant="secondary" className="mb-6 bg-white/20 text-white border-white/30">
+              <Zap className="mr-2 h-4 w-4" />
+              Comece agora mesmo
+            </Badge>
+            
+            <h2 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
               Pronto para transformar seu restaurante?
             </h2>
-            <p className="text-xl text-white/90 mb-8">
-              Junte-se a centenas de restaurantes que já aumentaram seus lucros
+            <p className="text-xl text-white/90 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Junte-se a mais de 1000 restaurantes que já aumentaram seus lucros e 
+              otimizaram suas operações com o Lucraí CEO.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center mb-12">
               <Link to="/register">
-                <Button size="lg" className="bg-white text-[#1B2C4F] hover:bg-slate-100 text-lg px-8 py-6">
-                  <CheckCircle className="mr-2 h-5 w-5" />
+                <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 hover:scale-105 transition-all duration-300 text-lg px-10 py-6 shadow-xl">
+                  <CheckCircle className="mr-2 h-6 w-6" />
                   Começar teste gratuito
                 </Button>
               </Link>
-              <Link to="/login">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#1B2C4F] text-lg px-8 py-6">
-                  Já tem conta? Entrar
-                </Button>
-              </Link>
+              <Button size="lg" variant="outline" className="border-white/50 text-white hover:bg-white/10 transition-all duration-300 text-lg px-10 py-6">
+                <PlayCircle className="mr-2 h-6 w-6" />
+                Ver demonstração
+              </Button>
             </div>
             
-            <p className="text-sm text-white/70 mt-6">
-              ✅ 14 dias grátis • ✅ Sem compromisso • ✅ Suporte incluído
-            </p>
+            <div className="grid md:grid-cols-3 gap-8 text-sm">
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle className="h-5 w-5 text-emerald-300" />
+                <span>14 dias de teste grátis</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle className="h-5 w-5 text-emerald-300" />
+                <span>Sem compromisso de permanência</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <CheckCircle className="h-5 w-5 text-emerald-300" />
+                <span>Suporte especializado incluído</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-white py-12">
+      {/* Enhanced Footer */}
+      <footer className="bg-slate-900 text-white py-16">
         <div className="container mx-auto px-6">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#00D887] to-[#00B572] rounded-xl flex items-center justify-center">
-                <ChefHat className="h-6 w-6 text-white" />
+          <div className="grid lg:grid-cols-4 gap-12 mb-12">
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl flex items-center justify-center">
+                  <ChefHat className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-emerald-400 bg-clip-text text-transparent">
+                    Lucraí CEO
+                  </h3>
+                  <p className="text-slate-400 text-sm">Gestão Inteligente</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-bold bg-gradient-to-r from-white to-lucrai-green-profit bg-clip-text text-transparent">
-                  Lucraí CEO
-                </h3>
+              
+              <p className="text-slate-400 mb-6 max-w-md leading-relaxed">
+                A plataforma de gestão inteligente que transforma dados em lucro para seu restaurante. 
+                Controle total, análises preditivas e automação em um só lugar.
+              </p>
+              
+              <div className="flex gap-4">
+                <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center hover:bg-emerald-600 transition-colors cursor-pointer">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center hover:bg-emerald-600 transition-colors cursor-pointer">
+                  <Globe className="h-5 w-5" />
+                </div>
               </div>
             </div>
             
-            <p className="text-slate-400 mb-6 max-w-2xl mx-auto">
-              A plataforma de gestão inteligente que transforma dados em lucro para seu restaurante.
-            </p>
+            <div>
+              <h4 className="font-semibold mb-4">Produto</h4>
+              <ul className="space-y-3 text-slate-400">
+                <li><a href="#" className="hover:text-emerald-400 transition-colors">Recursos</a></li>
+                <li><a href="#" className="hover:text-emerald-400 transition-colors">Preços</a></li>
+                <li><a href="#" className="hover:text-emerald-400 transition-colors">API</a></li>
+                <li><a href="#" className="hover:text-emerald-400 transition-colors">Integrações</a></li>
+              </ul>
+            </div>
             
-            <div className="flex justify-center gap-6 text-sm text-slate-400">
-              <span>© 2024 Lucraí CEO</span>
-              <span>•</span>
-              <span>Todos os direitos reservados</span>
+            <div>
+              <h4 className="font-semibold mb-4">Suporte</h4>
+              <ul className="space-y-3 text-slate-400">
+                <li><a href="#" className="hover:text-emerald-400 transition-colors">Documentação</a></li>
+                <li><a href="#" className="hover:text-emerald-400 transition-colors">Centro de Ajuda</a></li>
+                <li><a href="#" className="hover:text-emerald-400 transition-colors">Contato</a></li>
+                <li><a href="#" className="hover:text-emerald-400 transition-colors">Status</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-slate-800 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex gap-8 text-sm text-slate-400">
+                <span>© 2024 Lucraí CEO</span>
+                <a href="#" className="hover:text-emerald-400 transition-colors">Privacidade</a>
+                <a href="#" className="hover:text-emerald-400 transition-colors">Termos</a>
+              </div>
+              <div className="text-sm text-slate-400">
+                Feito com ❤️ para restaurantes brasileiros
+              </div>
             </div>
           </div>
         </div>
