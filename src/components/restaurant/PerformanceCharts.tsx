@@ -1,5 +1,5 @@
 
-import { useState, useMemo, memo, useCallback } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -20,7 +20,7 @@ import { formatCurrency } from "@/lib/utils";
 import { ChartContainer } from "@/components/ui/chart";
 import { TrendingUp, TrendingDown, CalendarDays } from "lucide-react";
 
-// Dados de exemplo para o gráfico - Em produção, estes dados viriam da API - Memoizados para performance
+// Dados de exemplo para o gráfico - Em produção, estes dados viriam da API
 const getDailyData = (): ChartDataPoint[] => [
   {
     date: "01/05",
@@ -119,7 +119,7 @@ interface TooltipProps {
   label?: string;
 }
 
-const CustomTooltip = memo(({ active, payload, label }: TooltipProps) => {
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-3 border rounded-lg shadow-sm">
@@ -141,7 +141,7 @@ const CustomTooltip = memo(({ active, payload, label }: TooltipProps) => {
     );
   }
   return null;
-});
+};
 
 // Componente personalizado para a legenda
 interface LegendProps {
@@ -151,7 +151,7 @@ interface LegendProps {
   }>;
 }
 
-const CustomLegend = memo(({ payload }: LegendProps) => {
+const CustomLegend = ({ payload }: LegendProps) => {
   if (!payload) return null;
   
   return (
@@ -169,9 +169,9 @@ const CustomLegend = memo(({ payload }: LegendProps) => {
       ))}
     </div>
   );
-});
+};
 
-const ComparisonCard = memo(({ title, currentValue, previousValue, percentageDiff, period }: ComparisonCardProps) => {
+const ComparisonCard = ({ title, currentValue, previousValue, percentageDiff, period }: ComparisonCardProps) => {
   const isPositive = percentageDiff > 0;
   
   return (
@@ -202,17 +202,17 @@ const ComparisonCard = memo(({ title, currentValue, previousValue, percentageDif
       </CardContent>
     </Card>
   );
-});
+};
 
-export const PerformanceCharts = memo(() => {
+export function PerformanceCharts() {
   const [period, setPeriod] = useState<"daily" | "monthly">("daily");
   
-  // Dados para gráficos - memoizados para evitar recálculos
-  const dailyData = useMemo(() => getDailyData(), []);
-  const monthlyData = useMemo(() => getMonthlyData(), []);
+  // Dados para gráficos
+  const dailyData = getDailyData();
+  const monthlyData = getMonthlyData();
   
-  // Calcular valores comparativos - memoizado
-  const calculateTotalAndDiff = useCallback((data: ChartDataPoint[] | MonthlyChartData[]): ComparisonMetrics => {
+  // Calcular valores comparativos
+  const calculateTotalAndDiff = (data: ChartDataPoint[] | MonthlyChartData[]): ComparisonMetrics => {
     const currentTotal = data.reduce((sum, item) => sum + item.atual, 0);
     const previousTotal = data.reduce((sum, item) => sum + item.anterior, 0);
     const percentageDiff = previousTotal > 0 ? ((currentTotal - previousTotal) / previousTotal) * 100 : 0;
@@ -222,12 +222,12 @@ export const PerformanceCharts = memo(() => {
       previousTotal,
       percentageDiff
     };
-  }, []);
+  };
   
-  const dailyComparison = useMemo(() => calculateTotalAndDiff(dailyData), [dailyData, calculateTotalAndDiff]);
-  const monthlyComparison = useMemo(() => calculateTotalAndDiff(monthlyData), [monthlyData, calculateTotalAndDiff]);
+  const dailyComparison = calculateTotalAndDiff(dailyData);
+  const monthlyComparison = calculateTotalAndDiff(monthlyData);
   
-  const chartConfig = useMemo(() => ({
+  const chartConfig = {
     atual: {
       label: "Período Atual",
       color: "#3b82f6"
@@ -236,15 +236,13 @@ export const PerformanceCharts = memo(() => {
       label: "Período Anterior",
       color: "#9ca3af"
     }
-  }), []);
-
-  const handlePeriodChange = useCallback((value: any) => setPeriod(value), []);
+  };
   
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Análise de Desempenho</h2>
-        <Tabs value={period} onValueChange={handlePeriodChange} className="w-[300px]">
+        <Tabs value={period} onValueChange={(value: any) => setPeriod(value)} className="w-[300px]">
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="daily">Diário</TabsTrigger>
             <TabsTrigger value="monthly">Mensal</TabsTrigger>
@@ -366,4 +364,4 @@ export const PerformanceCharts = memo(() => {
       </Card>
     </div>
   );
-});
+}

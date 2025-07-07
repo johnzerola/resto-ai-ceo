@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,8 +21,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Componente de máquina de escrever otimizado
-const Typewriter = memo(({ texts, speed = 100, deleteSpeed = 50, pauseTime = 2000 }: {
+// Componente de máquina de escrever
+const Typewriter = ({ texts, speed = 100, deleteSpeed = 50, pauseTime = 2000 }: {
   texts: string[];
   speed?: number;
   deleteSpeed?: number;
@@ -59,10 +59,10 @@ const Typewriter = memo(({ texts, speed = 100, deleteSpeed = 50, pauseTime = 200
       <span className="animate-pulse">|</span>
     </span>
   );
-});
+};
 
-// Componente de animação fade-in otimizado
-const FadeIn = memo(({ children, delay = 0, className = '' }: {
+// Componente de animação fade-in
+const FadeIn = ({ children, delay = 0, className = '' }: {
   children: React.ReactNode;
   delay?: number;
   className?: string;
@@ -74,26 +74,24 @@ const FadeIn = memo(({ children, delay = 0, className = '' }: {
     return () => clearTimeout(timer);
   }, [delay]);
 
-  const classes = useMemo(() => cn(
-    'transition-all duration-1000',
-    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8',
-    className
-  ), [isVisible, className]);
-
   return (
-    <div className={classes}>
+    <div className={cn(
+      'transition-all duration-1000',
+      isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8',
+      className
+    )}>
       {children}
     </div>
   );
-});
+};
 
-// Seção Hero otimizada
-const HeroSection = memo(() => {
-  const typewriterTexts = useMemo(() => [
+// Seção Hero
+const HeroSection = () => {
+  const typewriterTexts = [
     "O sistema mais fácil e barato para fazer seu negócio lucrar de verdade!",
     "Sem complicação, sem dor de cabeça!",
     "Controle total, lucro garantido!"
-  ], []);
+  ];
 
   return (
     <section className="min-h-screen bg-gradient-to-br from-[#0058A3] via-[#00B140] to-[#FFD400] relative overflow-hidden">
@@ -196,18 +194,18 @@ const HeroSection = memo(() => {
       </div>
     </section>
   );
-});
+};
 
-// Seção de Benefícios otimizada
-const BenefitsSection = memo(() => {
-  const benefits = useMemo(() => [
+// Seção de Benefícios
+const BenefitsSection = () => {
+  const benefits = [
     { icon: DollarSign, title: "Controle total do seu estoque", description: "Nunca mais perca produtos ou fique sem ingredientes" },
     { icon: Zap, title: "Precificação inteligente em segundos", description: "Algoritmo calcula o preço ideal para máxima lucratividade" },
     { icon: TrendingUp, title: "CMV & DRE prontos automaticamente", description: "Relatórios financeiros sempre atualizados em tempo real" },
     { icon: Bot, title: "Insights proativos por IA", description: "Inteligência artificial sugere melhorias para seu negócio" },
     { icon: CreditCard, title: "Fluxo de caixa simplificado", description: "Controle financeiro descomplicado e visual" },
     { icon: UtensilsCrossed, title: "Para pizzarias, bares, cafeterias e restaurantes", description: "Solução completa para qualquer tipo de food service" }
-  ], []);
+  ];
 
   return (
     <section className="py-20 bg-white">
@@ -245,7 +243,7 @@ const BenefitsSection = memo(() => {
       </div>
     </section>
   );
-});
+};
 
 // Seção Solução para Dores
 const PainSolutionSection = () => {
