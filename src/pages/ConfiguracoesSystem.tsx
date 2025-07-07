@@ -1,5 +1,6 @@
 import React from 'react';
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
+import { ThemeSettings } from "@/components/theme/ThemeSettings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -45,30 +46,7 @@ export default function ConfiguracoesSystem() {
           </TabsList>
 
           <TabsContent value="geral" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  Aparência
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Modo Escuro</div>
-                    <div className="text-sm text-muted-foreground">Ativar tema escuro para reduzir cansaço visual</div>
-                  </div>
-                  <Switch />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">Animações</div>
-                    <div className="text-sm text-muted-foreground">Habilitar animações da interface</div>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-              </CardContent>
-            </Card>
+          <ThemeSettings />
 
             <Card>
               <CardHeader>

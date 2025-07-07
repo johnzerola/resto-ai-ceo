@@ -103,26 +103,26 @@
 }
 
 .dark {
-  /* Dark Mode com Branding Lucraí */
-  --background: var(--lucrai-gray-900);
-  --foreground: var(--lucrai-gray-50);
-  --card: var(--lucrai-gray-800);
-  --card-foreground: var(--lucrai-gray-50);
-  --popover: var(--lucrai-gray-800);
-  --popover-foreground: var(--lucrai-gray-50);
-  --primary: var(--lucrai-green-primary);
-  --primary-foreground: var(--lucrai-gray-900);
-  --secondary: var(--lucrai-gray-700);
-  --secondary-foreground: var(--lucrai-gray-50);
-  --muted: var(--lucrai-gray-700);
-  --muted-foreground: var(--lucrai-gray-400);
-  --accent: var(--lucrai-blue-primary);
-  --accent-foreground: var(--lucrai-gray-50);
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: var(--lucrai-gray-50);
-  --border: var(--lucrai-gray-700);
-  --input: var(--lucrai-gray-700);
-  --ring: var(--lucrai-green-primary);
+  /* Premium Dark Mode - Professional Design */
+  --background: 220 13% 9%;           /* #121212 - Deep premium dark */
+  --foreground: 210 20% 98%;          /* #F8FAFC - Soft white */
+  --card: 220 13% 11%;                /* #1C1C1E - Elevated dark surface */
+  --card-foreground: 210 20% 95%;     /* #F1F5F9 - High contrast text */
+  --popover: 220 13% 13%;             /* #1F1F23 - Elevated popover */
+  --popover-foreground: 210 20% 95%;  /* #F1F5F9 - Clear text */
+  --primary: var(--lucrai-green-primary);     /* Keep brand green */
+  --primary-foreground: 220 13% 9%;   /* Dark text on green */
+  --secondary: 220 13% 15%;           /* #26262A - Subtle elevation */
+  --secondary-foreground: 210 20% 90%; /* #E2E8F0 - Medium contrast */
+  --muted: 220 13% 15%;               /* #26262A - Muted backgrounds */
+  --muted-foreground: 215 16% 65%;    /* #94A3B8 - Readable muted text */
+  --accent: var(--lucrai-blue-primary);       /* Keep brand blue */
+  --accent-foreground: 210 20% 98%;   /* High contrast on accent */
+  --destructive: 0 84% 60%;           /* Bright red for visibility */
+  --destructive-foreground: 210 20% 98%; /* White on red */
+  --border: 220 13% 20%;              /* #33333A - Subtle borders */
+  --input: 220 13% 13%;               /* #1F1F23 - Input backgrounds */
+  --ring: var(--lucrai-green-primary);        /* Brand focus ring */
   
   /* Charts dark mode */
   --chart-1: var(--lucrai-blue-secondary);
@@ -131,14 +131,14 @@
   --chart-4: var(--lucrai-orange-alert);
   --chart-5: var(--lucrai-blue-primary);
 
-  /* Sidebar dark mode */
-  --sidebar-background: var(--lucrai-gray-900);
-  --sidebar-foreground: var(--lucrai-gray-300);
+  /* Premium Sidebar Dark Mode */
+  --sidebar-background: 220 13% 9%;   /* #121212 - Match main background */
+  --sidebar-foreground: 215 16% 75%;  /* #B1BAC5 - Readable sidebar text */
   --sidebar-primary: var(--lucrai-green-primary);
-  --sidebar-primary-foreground: var(--lucrai-gray-900);
-  --sidebar-accent: var(--lucrai-gray-800);
-  --sidebar-accent-foreground: var(--lucrai-gray-50);
-  --sidebar-border: var(--lucrai-gray-700);
+  --sidebar-primary-foreground: 220 13% 9%;
+  --sidebar-accent: 220 13% 15%;      /* #26262A - Hover states */
+  --sidebar-accent-foreground: 210 20% 95%;
+  --sidebar-border: 220 13% 18%;      /* #2D2D32 - Visible borders */
   --sidebar-ring: var(--lucrai-green-primary);
 }
 
@@ -150,6 +150,16 @@ body {
   background: var(--lucrai-gradient-subtle);
   color: hsl(var(--foreground));
   font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+  transition: background-color var(--theme-transition-duration, 300ms) ease, 
+              color var(--theme-transition-duration, 300ms) ease;
+}
+
+/* Smooth theme transitions */
+.theme-transitioning * {
+  transition: background-color var(--theme-transition-duration, 300ms) ease,
+              color var(--theme-transition-duration, 300ms) ease,
+              border-color var(--theme-transition-duration, 300ms) ease,
+              box-shadow var(--theme-transition-duration, 300ms) ease !important;
 }
 
 /* Margem padrão para conteúdo principal das telas */
