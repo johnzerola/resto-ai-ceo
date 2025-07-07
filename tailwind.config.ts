@@ -50,7 +50,7 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // 🎨 Lucraí Brand Colors - Tokens Semânticos
+        // 🎨 Lucraí Brand Colors - Tokens Semânticos Completos
         'lucrai': {
           // Cores Base
           'blue': {
@@ -66,10 +66,13 @@ export default {
             900: 'hsl(var(--lucrai-gray-900))',
             'primary': 'hsl(var(--lucrai-blue-primary))',
             'secondary': 'hsl(var(--lucrai-blue-secondary))',
+            'tech': 'hsl(var(--lucrai-blue-primary))', // Alias for brand consistency
           },
           'green': {
             'primary': 'hsl(var(--lucrai-green-primary))',
             'secondary': 'hsl(var(--lucrai-green-secondary))',
+            'profit': 'hsl(var(--lucrai-green-primary))', // Alias for brand consistency
+            'profit-dark': 'hsl(var(--lucrai-green-secondary))', // Darker variant
           },
           'yellow': {
             'primary': 'hsl(var(--lucrai-yellow-primary))',
@@ -77,6 +80,23 @@ export default {
           },
           'orange': {
             'alert': 'hsl(var(--lucrai-orange-alert))',
+          },
+          'gold': {
+            'accent': 'hsl(var(--lucrai-yellow-primary))', // Alias for gold accent
+          },
+          'gray': {
+            50: 'hsl(var(--lucrai-gray-50))',
+            100: 'hsl(var(--lucrai-gray-100))',
+            200: 'hsl(var(--lucrai-gray-200))',
+            300: 'hsl(var(--lucrai-gray-300))',
+            400: 'hsl(var(--lucrai-gray-400))',
+            500: 'hsl(var(--lucrai-gray-500))',
+            600: 'hsl(var(--lucrai-gray-600))',
+            700: 'hsl(var(--lucrai-gray-700))',
+            800: 'hsl(var(--lucrai-gray-800))',
+            900: 'hsl(var(--lucrai-gray-900))',
+            'neutral': 'hsl(var(--lucrai-gray-100))', // Alias for neutral background
+            'text': 'hsl(var(--lucrai-gray-600))', // Alias for text color
           },
         },
         // Estados Semânticos

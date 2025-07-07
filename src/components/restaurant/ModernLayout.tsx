@@ -4,6 +4,7 @@ import { ModernSidebar } from "./ModernSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { EmailConfirmationBanner } from "../auth/EmailConfirmationBanner";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 const LoadingSpinner = memo(({ message }: { message: string }) => (
@@ -98,11 +99,16 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
       <ModernSidebar />
       
       <main className={cn(
-        "flex-1 transition-all duration-300 ease-out min-h-screen",
+        "flex-1 transition-all duration-300 ease-out min-h-screen relative",
         // Add top margin on mobile to prevent overlap with menu button
         "pt-16 md:pt-0",
         sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
       )}>
+        {/* Theme toggle - positioned absolutely for easy access */}
+        <div className="absolute top-4 right-4 z-10 hidden md:block">
+          <ThemeToggle />
+        </div>
+        
         <EmailConfirmationBanner />
         
         <div className="min-h-screen">

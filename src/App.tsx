@@ -7,6 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DataSync } from "@/components/restaurant/DataSync";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { EnhancedErrorBoundary } from "@/components/error/EnhancedErrorBoundary";
+import { PerformanceMonitor } from "@/components/performance/PerformanceMonitor";
 // Lazy loading otimizado para performance
 import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +31,7 @@ const Estoque = lazy(() => import("./pages/Estoque"));
 const Cardapio = lazy(() => import("./pages/Cardapio"));
 const GerenciarUsuarios = lazy(() => import("./pages/GerenciarUsuarios"));
 const Assinatura = lazy(() => import("./pages/Assinatura").then(module => ({ default: module.Assinatura })));
+const GestaoTarefas = lazy(() => import("./pages/GestaoTarefas"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const Documentacao = lazy(() => import("./pages/Documentacao"));
 const Privacidade = lazy(() => import("./pages/Privacidade").then(module => ({ default: module.Privacidade })));
@@ -41,21 +45,12 @@ const ProjecoesPagina = lazy(() => import("./pages/ProjecoesPagina").then(module
 const Integracoes = lazy(() => import("./pages/Integracoes").then(module => ({ default: module.Integracoes })));
 const OnboardingGuiado = lazy(() => import("./pages/OnboardingGuiado").then(module => ({ default: module.OnboardingGuiado })));
 
-// Loading component otimizado
-const PageLoader = () => (
-  <div className="min-h-screen p-6">
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-[300px]" />
-        <Skeleton className="h-4 w-[200px]" />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-[200px] w-full" />
-        ))}
-      </div>
-    </div>
-  </div>
+// Import optimized branded loader
+import { PageBrandedLoader } from "@/components/common/BrandedLoader";
+
+// Loading component otimizado com branding Lucraí
+const PageLoader = ({ message }: { message?: string }) => (
+  <PageBrandedLoader message={message} />
 );
 
 const queryClient = new QueryClient();
@@ -63,13 +58,16 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <DataSync>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
+      <PerformanceMonitor />
+      <ThemeProvider defaultTheme="system" storageKey="lucrai-ui-theme">
+        <EnhancedErrorBoundary>
+          <AuthProvider>
+            <DataSync>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/onboarding" element={
                   <ProtectedRoute>
@@ -185,7 +183,23 @@ function App() {
                 } />
                 <Route path="/configuracoes" element={
                   <ProtectedRoute>
-                    <Configuracoes />
+                    <Suspense fallback={<PageLoader />}>
+                      <Configuracoes />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/gestao-tarefas" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <GestaoTarefas />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/tarefas" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <GestaoTarefas />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/documentacao" element={
@@ -238,11 +252,13 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </DataSync>
-      </AuthProvider>
+                  </Routes>
+                </BrowserRouter>
+              </TooltipProvider>
+            </DataSync>
+          </AuthProvider>
+        </EnhancedErrorBoundary>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
