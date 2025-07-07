@@ -11,21 +11,25 @@ import {
 } from '@/types/dashboard';
 import { toast } from 'sonner';
 
-// Cache para evitar refetch desnecessário
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
-const dataCache = new Map<string, { data: any; timestamp: number }>();
+// Cache otimizado para diferentes tipos de dados
+const FINANCIAL_CACHE_DURATION = 10 * 60 * 1000; // 10 minutos para dados financeiros
+const STATIC_CACHE_DURATION = 30 * 60 * 1000; // 30 minutos para metas/estoque
+const dataCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
 
 const getCachedData = (key: string) => {
   const cached = dataCache.get(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
     return cached.data;
   }
   return null;
 };
 
-const setCachedData = (key: string, data: any) => {
-  dataCache.set(key, { data, timestamp: Date.now() });
+const setCachedData = (key: string, data: any, ttl: number = FINANCIAL_CACHE_DURATION) => {
+  dataCache.set(key, { data, timestamp: Date.now(), ttl });
 };
+
+// Cache para consultas combinadas
+const COMBINED_CACHE_KEY = 'dashboard_combined_';
 
 export function useDashboardData() {
   const { currentRestaurant } = useAuth();
@@ -288,25 +292,135 @@ export function useDashboardData() {
     setDashboardStats(calculateDashboardStats);
   }, [calculateDashboardStats]);
 
+  // Carregamento otimizado com consulta única
+  const loadCombinedData = useCallback(async () => {
+    if (!currentRestaurant?.id) return;
+
+    const cacheKey = `${COMBINED_CACHE_KEY}${currentRestaurant.id}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) {
+      setFinancialData(cached.financial || []);
+      setGoals(cached.goals || []);
+      setInventory(cached.inventory || []);
+      setAlerts(cached.alerts || []);
+      if (cached.businessProfile) setBusinessProfile(cached.businessProfile);
+      return;
+    }
+
+    try {
+      // Executar consultas em paralelo de forma otimizada
+      const [
+        { data: cashFlowData },
+        { data: goalsData },
+        { data: insumosData },
+        { data: alertsData },
+        { data: businessData }
+      ] = await Promise.all([
+        supabase.from('cash_flow').select('*').eq('restaurant_id', currentRestaurant.id).order('date', { ascending: false }).limit(50),
+        supabase.from('goals').select('*').eq('restaurant_id', currentRestaurant.id),
+        supabase.from('insumos').select('*').eq('restaurant_id', currentRestaurant.id),
+        supabase.from('alertas_sistema').select('*').eq('restaurant_id', currentRestaurant.id).eq('resolvido', false).order('data_criacao', { ascending: false }),
+        supabase.from('business_profiles').select('*').eq('restaurant_id', currentRestaurant.id).maybeSingle()
+      ]);
+
+      // Processar dados financeiros
+      const typedFinancialData: FinancialData[] = cashFlowData?.map(item => ({
+        id: item.id,
+        type: item.type as 'income' | 'expense',
+        amount: item.amount,
+        date: item.date,
+        category: item.category,
+        description: item.description,
+        restaurant_id: item.restaurant_id
+      })) || [];
+
+      // Processar metas
+      const typedGoals: GoalData[] = goalsData?.map(item => ({
+        id: item.id,
+        title: item.title,
+        target: item.target,
+        current: item.current || 0,
+        completed: item.completed || false,
+        deadline: item.deadline,
+        description: item.description,
+        restaurant_id: item.restaurant_id
+      })) || [];
+
+      // Processar estoque
+      const typedInventory: InventoryItem[] = insumosData?.map(item => ({
+        id: item.id,
+        name: item.nome,
+        quantity: item.estoque_atual || 0,
+        minStock: item.estoque_minimo || 0,
+        cost_per_unit: item.preco_unitario || 0,
+        unit: item.unidade_medida,
+        category: item.categoria,
+        restaurant_id: item.restaurant_id
+      })) || [];
+
+      // Processar alertas
+      const typedAlerts: AlertData[] = alertsData?.map(item => ({
+        id: item.id,
+        type: item.prioridade === 'alta' ? 'error' : item.prioridade === 'media' ? 'warning' : 'info',
+        title: item.titulo,
+        message: item.mensagem,
+        priority: item.prioridade as 'high' | 'medium' | 'low',
+        restaurant_id: item.restaurant_id,
+        created_at: item.data_criacao,
+        resolved: item.resolvido
+      })) || [];
+
+      // Processar perfil empresarial
+      const typedBusinessProfile = businessData ? {
+        id: businessData.id,
+        restaurant_id: businessData.restaurant_id,
+        owner_name: businessData.owner_name,
+        cnpj: businessData.cnpj,
+        average_monthly_revenue: businessData.average_monthly_revenue,
+        average_ticket: businessData.average_ticket,
+        desired_profit_margin: businessData.desired_profit_margin,
+        fixed_monthly_costs: businessData.fixed_monthly_costs,
+        variable_monthly_costs: businessData.variable_monthly_costs,
+        weekly_operating_days: businessData.weekly_operating_days,
+        daily_operating_hours: businessData.daily_operating_hours
+      } : null;
+
+      // Atualizar estados
+      setFinancialData(typedFinancialData);
+      setGoals(typedGoals);
+      setInventory(typedInventory);
+      setAlerts(typedAlerts);
+      if (typedBusinessProfile) setBusinessProfile(typedBusinessProfile);
+
+      // Cachear resultado combinado
+      setCachedData(cacheKey, {
+        financial: typedFinancialData,
+        goals: typedGoals,
+        inventory: typedInventory,
+        alerts: typedAlerts,
+        businessProfile: typedBusinessProfile
+      }, FINANCIAL_CACHE_DURATION);
+
+    } catch (err) {
+      console.error('Erro ao carregar dados combinados:', err);
+      setError('Erro ao carregar dados do dashboard');
+      toast.error('Erro ao carregar dados do dashboard');
+    }
+  }, [currentRestaurant?.id]);
+
   const refreshData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      await Promise.all([
-        loadFinancialData(),
-        loadGoals(),
-        loadInventory(),
-        loadBusinessProfile(),
-        loadAlerts()
-      ]);
+      await loadCombinedData();
     } catch (err) {
       console.error('Erro ao atualizar dados:', err);
       setError('Erro ao atualizar dados do dashboard');
     } finally {
       setIsLoading(false);
     }
-  }, [loadFinancialData, loadGoals, loadInventory, loadBusinessProfile, loadAlerts]);
+  }, [loadCombinedData]);
 
   useEffect(() => {
     if (currentRestaurant?.id) {

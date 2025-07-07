@@ -1,9 +1,13 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/services/AuthService';
 import { toast } from 'sonner';
+
+// Cache para restaurantes (30 min)
+const RESTAURANT_CACHE_TIME = 30 * 60 * 1000;
+const restaurantCache = new Map<string, { data: Restaurant[]; timestamp: number }>();
 
 interface SubscriptionInfo {
   subscribed: boolean;
@@ -395,7 +399,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const checkUserRestaurants = async (userId: string) => {
+  const checkUserRestaurants = useCallback(async (userId: string) => {
+    // Verificar cache primeiro
+    const cached = restaurantCache.get(userId);
+    if (cached && Date.now() - cached.timestamp < RESTAURANT_CACHE_TIME) {
+      const restaurants = cached.data;
+      if (restaurants.length > 0) {
+        setUserRestaurants(restaurants);
+        setCurrentRestaurant(restaurants[0]);
+        setNeedsOnboarding(false);
+      } else {
+        setNeedsOnboarding(true);
+      }
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('restaurants')
@@ -404,31 +422,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.warn('Aviso ao buscar restaurantes:', error.message);
-        // Fallback - assumir que precisa de onboarding
         setNeedsOnboarding(true);
         return;
       }
 
-      if (data && data.length > 0) {
-        const restaurants = data.map(r => ({
-          id: r.id,
-          name: r.name,
-          user_id: r.owner_id,
-          created_at: r.created_at,
-        }));
-        
+      const restaurants = data?.map(r => ({
+        id: r.id,
+        name: r.name,
+        user_id: r.owner_id,
+        created_at: r.created_at,
+      })) || [];
+      
+      // Atualizar cache
+      restaurantCache.set(userId, { data: restaurants, timestamp: Date.now() });
+      
+      if (restaurants.length > 0) {
         setUserRestaurants(restaurants);
         setCurrentRestaurant(restaurants[0]);
         setNeedsOnboarding(false);
       } else {
-        // Usuário não tem restaurante - precisa de onboarding
         setNeedsOnboarding(true);
       }
     } catch (error) {
       console.warn('Aviso ao verificar restaurantes:', error);
       setNeedsOnboarding(true);
     }
-  };
+  }, []);
+
+  // Debounce para checkUserRestaurants
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
+  
+  const debouncedCheckUserRestaurants = useCallback((userId: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      checkUserRestaurants(userId);
+    }, 300);
+  }, [checkUserRestaurants]);
 
   useEffect(() => {
     let mounted = true;
@@ -444,10 +475,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(currentSession.user);
           setUserRole(UserRole.OWNER);
           
-          // Verificar se o usuário tem restaurantes (apenas avisos)
-          setTimeout(() => {
-            checkUserRestaurants(currentSession.user.id);
-          }, 100);
+          // Verificar restaurantes com debounce
+          debouncedCheckUserRestaurants(currentSession.user.id);
         } else {
           console.log('ℹ️ Nenhuma sessão ativa encontrada');
           clearUserData();
@@ -483,10 +512,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentSession.user);
         setUserRole(UserRole.OWNER);
         
-        // Verificar se o usuário tem restaurantes
-        setTimeout(() => {
-          checkUserRestaurants(currentSession.user.id);
-        }, 100);
+        // Verificar restaurantes com debounce
+        debouncedCheckUserRestaurants(currentSession.user.id);
       } else {
         clearUserData();
       }
@@ -496,9 +523,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
       subscription.unsubscribe();
     };
-  }, []);
+  }, [debouncedCheckUserRestaurants]);
 
   // Check subscription when session changes
   useEffect(() => {
@@ -511,7 +541,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = !!user && !!session;
 
-  const value: AuthContextType = {
+  // Memoizar o valor do contexto para evitar re-renders desnecessários
+  const value: AuthContextType = useMemo(() => ({
     user,
     session,
     userRole,
@@ -533,7 +564,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSubscription,
     createCheckoutSession,
     openCustomerPortal,
-  };
+  }), [
+    user,
+    session,
+    userRole,
+    isLoading,
+    isAuthenticated,
+    needsOnboarding,
+    subscriptionInfo,
+    userRestaurants,
+    currentRestaurant,
+    signIn,
+    signUp,
+    signOut,
+    login,
+    register,
+    logout,
+    hasPermission,
+    setCurrentRestaurant,
+    createRestaurant,
+    checkSubscription,
+    createCheckoutSession,
+    openCustomerPortal,
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

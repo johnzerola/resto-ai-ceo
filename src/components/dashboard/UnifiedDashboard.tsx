@@ -15,8 +15,7 @@ import {
   BarChart3,
   Sparkles
 } from 'lucide-react';
-import { useDashboardData } from '@/hooks/useDashboardData';
-import { useAuth } from '@/contexts/AuthContext';
+import { useOptimizedDashboard } from '@/hooks/useOptimizedDashboard';
 import { formatCurrency } from '@/lib/utils';
 const PerformanceCharts = React.lazy(() => import('@/components/restaurant/PerformanceCharts').then(module => ({ default: module.PerformanceCharts })));
 
@@ -126,14 +125,14 @@ const QuickActionsGrid = memo(() => (
 ));
 
 export const UnifiedDashboard = memo(function UnifiedDashboard() {
-  const { currentRestaurant } = useAuth();
   const { 
-    dashboardStats, 
+    stats, 
     alerts, 
+    restaurant,
     isLoading, 
     error, 
     refreshData 
-  } = useDashboardData();
+  } = useOptimizedDashboard();
 
   if (error) {
     return (
@@ -173,7 +172,7 @@ export const UnifiedDashboard = memo(function UnifiedDashboard() {
                     Dashboard Unificado
                   </h1>
                   <p className="text-slate-600 text-xs lg:text-sm">
-                    {currentRestaurant?.name || 'Lucraí CEO'}
+                    {restaurant.restaurantName}
                   </p>
                 </div>
               </div>
@@ -205,26 +204,26 @@ export const UnifiedDashboard = memo(function UnifiedDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Receita do Mês"
-            value={formatCurrency(dashboardStats.totalRevenue)}
-            change={`+${dashboardStats.monthlyGrowth.toFixed(1)}%`}
+            value={formatCurrency(stats.revenue)}
+            change={`+${stats.monthlyGrowth.toFixed(1)}%`}
             trend="up"
             icon={DollarSign}
-            description={`${dashboardStats.todaySales > 0 ? formatCurrency(dashboardStats.todaySales) : 'R$ 0,00'} hoje`}
+            description={`${stats.todaySales > 0 ? formatCurrency(stats.todaySales) : 'R$ 0,00'} hoje`}
           />
           
           <StatCard
             title="Lucro Líquido"
-            value={formatCurrency(dashboardStats.netProfit)}
-            change={`${dashboardStats.profitMargin.toFixed(1)}% margem`}
-            trend={dashboardStats.netProfit >= 0 ? 'up' : 'down'}
+            value={formatCurrency(stats.profit)}
+            change={`${stats.profitMargin.toFixed(1)}% margem`}
+            trend={stats.profit >= 0 ? 'up' : 'down'}
             icon={TrendingUp}
             description="Receitas - Despesas"
           />
           
           <StatCard
             title="Metas Ativas"
-            value={dashboardStats.activeGoals.toString()}
-            change={`${dashboardStats.completedGoals} concluídas`}
+            value={stats.activeGoals.toString()}
+            change={`${stats.completedGoals} concluídas`}
             trend="neutral"
             icon={Target}
             description="Objetivos em andamento"
@@ -232,8 +231,8 @@ export const UnifiedDashboard = memo(function UnifiedDashboard() {
           
           <StatCard
             title="Itens em Estoque"
-            value={dashboardStats.inventoryItems.toString()}
-            change={formatCurrency(dashboardStats.inventoryValue)}
+            value={stats.inventoryItems.toString()}
+            change={formatCurrency(stats.inventoryValue)}
             trend="neutral"
             icon={Package}
             description="Valor total do estoque"
