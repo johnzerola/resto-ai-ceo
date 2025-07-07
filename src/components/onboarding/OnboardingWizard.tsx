@@ -221,7 +221,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         .from('pratos')
         .insert([{
           restaurant_id: restaurantData.id,
-          nome: formData.firstItemName,
+          nome_prato: formData.firstItemName,
           categoria: formData.firstItemCategory,
           custo_total: formData.firstItemCost,
           preco_sugerido: formData.firstItemPrice,
