@@ -11,7 +11,6 @@ import { useGlobalSync } from "@/hooks/useGlobalSync";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 
 const QuickAccessGrid = React.lazy(() => import('./QuickAccessGrid'));
-const MetricsGrid = React.lazy(() => import('./MetricsGrid'));
 const BusinessProfileWidget = React.lazy(() => import('./BusinessProfileWidget').then(module => ({ default: module.BusinessProfileWidget })));
 
 const DashboardSkeleton = memo(() => (
@@ -122,7 +121,12 @@ export const OptimizedDashboard = memo(function OptimizedDashboard() {
                   </Card>
                 }>
                   <div data-testid="dashboard-metrics">
-                    <MetricsGrid stats={dashboardStats} />
+                    <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+                      <Card className="p-4">
+                        <p className="text-sm text-muted-foreground">Dashboard Legado</p>
+                        <p className="text-xs">Use o Dashboard Unificado</p>
+                      </Card>
+                    </div>
                   </div>
                 </ErrorBoundary>
               </div>
