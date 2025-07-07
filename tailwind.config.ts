@@ -107,6 +107,12 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        'lucrai': '0 4px 20px hsl(210 70% 26% / 0.15)',
+        'lucrai-lg': '0 10px 40px hsl(210 70% 26% / 0.2)',
+        'lucrai-success': '0 4px 20px hsl(174 100% 42% / 0.15)',
+        'lucrai-warning': '0 4px 20px hsl(51 100% 50% / 0.15)',
+      },
       fontFamily: {
         'dm-sans': ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
         'inter': ['Inter', 'DM Sans', 'system-ui', 'sans-serif'],

@@ -552,17 +552,17 @@ body {
   color: hsl(var(--lucrai-orange-alert));
 }
 
-/* Sombras Personalizadas */
+/* Sombras Personalizadas - Agora definidas no Tailwind */
 .shadow-lucrai {
-  box-shadow: var(--shadow-brand);
+  box-shadow: 0 4px 20px hsl(210 70% 26% / 0.15);
 }
 
 .shadow-lucrai-lg {
-  box-shadow: var(--shadow-brand-lg);
+  box-shadow: 0 10px 40px hsl(210 70% 26% / 0.2);
 }
 
 .shadow-lucrai-success {
-  box-shadow: var(--shadow-success);
+  box-shadow: 0 4px 20px hsl(174 100% 42% / 0.15);
 }
 
 /* Componentes Específicos do Lucraí */
