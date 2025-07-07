@@ -1,8 +1,9 @@
-import React, { memo } from 'react';
+import React, { memo, Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -134,6 +135,14 @@ export const UnifiedDashboard = memo(function UnifiedDashboard() {
     refreshData 
   } = useOptimizedDashboard();
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <LoadingSpinner size="lg" text="Carregando dashboard..." />
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -256,16 +265,13 @@ export const UnifiedDashboard = memo(function UnifiedDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <React.Suspense fallback={
+            <Suspense fallback={
               <div className="h-[300px] animate-pulse bg-slate-100 rounded-lg flex items-center justify-center">
-                <div className="text-center space-y-2">
-                  <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-sm text-slate-600">Carregando gráficos...</p>
-                </div>
+                <LoadingSpinner text="Carregando gráficos..." />
               </div>
             }>
               <PerformanceCharts />
-            </React.Suspense>
+            </Suspense>
           </CardContent>
         </Card>
 

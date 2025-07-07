@@ -4,6 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/services/AuthService';
 import { toast } from 'sonner';
+import { useOptimizedQueries } from '@/hooks/useOptimizedQueries';
 
 // Cache para restaurantes (30 min)
 const RESTAURANT_CACHE_TIME = 30 * 60 * 1000;
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRestaurants, setUserRestaurants] = useState<Restaurant[]>([]);
   const [currentRestaurant, setCurrentRestaurant] = useState<Restaurant | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [lastAuthCheck, setLastAuthCheck] = useState<number>(0);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
     subscribed: false,
     subscription_tier: null,
@@ -69,6 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     nextBilling: null,
     amount: null,
   });
+
+  const { fetchUserDataOptimized, clearCache } = useOptimizedQueries();
 
   // Função para limpar dados do usuário
   const clearUserData = () => {
@@ -87,6 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       nextBilling: null,
       amount: null,
     });
+    
+    // Limpar cache de queries
+    clearCache();
     
     // Limpar apenas dados temporários do localStorage
     // NÃO limpar dados que devem persistir entre sessões
@@ -111,8 +118,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Dados do restaurante são mantidos entre sessões
   };
 
-  const checkSubscription = async () => {
+  const checkSubscription = useCallback(async () => {
     try {
+      // Debounce subscription check (máximo 1 vez por minuto)
+      const now = Date.now();
+      if (now - lastAuthCheck < 60000) {
+        return;
+      }
+      setLastAuthCheck(now);
+
       if (!session?.access_token) {
         console.log('No session available for subscription check');
         return;
@@ -143,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error checking subscription:', error);
     }
-  };
+  }, [session?.access_token, lastAuthCheck]);
 
   const createCheckoutSession = async (priceId: string) => {
     try {
@@ -400,42 +414,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const checkUserRestaurants = useCallback(async (userId: string) => {
-    // Verificar cache primeiro
-    const cached = restaurantCache.get(userId);
-    if (cached && Date.now() - cached.timestamp < RESTAURANT_CACHE_TIME) {
-      const restaurants = cached.data;
-      if (restaurants.length > 0) {
-        setUserRestaurants(restaurants);
-        setCurrentRestaurant(restaurants[0]);
-        setNeedsOnboarding(false);
-      } else {
-        setNeedsOnboarding(true);
-      }
-      return;
-    }
-
     try {
-      const { data, error } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('owner_id', userId);
-
-      if (error) {
-        console.warn('Aviso ao buscar restaurantes:', error.message);
-        setNeedsOnboarding(true);
-        return;
-      }
-
-      const restaurants = data?.map(r => ({
+      // Usar query otimizada que combina múltiplas consultas
+      const result = await fetchUserDataOptimized(userId);
+      
+      const restaurants = result.restaurants?.map((r: any) => ({
         id: r.id,
         name: r.name,
         user_id: r.owner_id,
         created_at: r.created_at,
       })) || [];
       
-      // Atualizar cache
-      restaurantCache.set(userId, { data: restaurants, timestamp: Date.now() });
-      
       if (restaurants.length > 0) {
         setUserRestaurants(restaurants);
         setCurrentRestaurant(restaurants[0]);
@@ -443,11 +432,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setNeedsOnboarding(true);
       }
+      
+      // Definir role do usuário
+      setUserRole(result.userRole === 'owner' ? UserRole.OWNER : UserRole.EMPLOYEE);
     } catch (error) {
       console.warn('Aviso ao verificar restaurantes:', error);
       setNeedsOnboarding(true);
     }
-  }, []);
+  }, [fetchUserDataOptimized]);
 
   // Debounce para checkUserRestaurants
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
@@ -467,15 +459,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         console.log('✅ Inicializando autenticação...');
+        
+        // Evitar inicialização muito frequente
+        const now = Date.now();
+        if (now - lastAuthCheck < 2000) {
+          setIsLoading(false);
+          return;
+        }
+        setLastAuthCheck(now);
+        
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession?.user && mounted) {
           console.log('✅ Sessão ativa encontrada:', currentSession.user.email);
           setSession(currentSession);
           setUser(currentSession.user);
-          setUserRole(UserRole.OWNER);
           
-          // Verificar restaurantes com debounce
+          // Verificar restaurantes com debounce otimizado
           debouncedCheckUserRestaurants(currentSession.user.id);
         } else {
           console.log('ℹ️ Nenhuma sessão ativa encontrada');

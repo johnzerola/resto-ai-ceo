@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDashboardData } from "@/hooks/useOptimizedQueries";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { FinancialIntelligenceCenter } from "./FinancialIntelligenceCenter";
 import { PriorityActionCenter } from "./PriorityActionCenter";
 import { GameficationProgress } from "./GameficationProgress";

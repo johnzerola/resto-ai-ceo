@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOptimizedQueries } from '@/hooks/useOptimizedQueries';
 import { 
   DashboardStats, 
   FinancialData, 
@@ -10,6 +11,7 @@ import {
   AlertData 
 } from '@/types/dashboard';
 import { toast } from 'sonner';
+import { debounce } from '@/utils/debounce';
 
 // Cache otimizado para diferentes tipos de dados
 const FINANCIAL_CACHE_DURATION = 10 * 60 * 1000; // 10 minutos para dados financeiros

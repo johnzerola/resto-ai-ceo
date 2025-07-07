@@ -37,7 +37,7 @@ export interface LoadingSpinnerProps
 }
 
 const LoadingSpinner = React.forwardRef<HTMLDivElement, LoadingSpinnerProps>(
-  ({ className, size, variant, text = "Carregando...", showText = false, ...props }, ref) => {
+  ({ className, size, variant, text = "Carregando...", showText = true, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -50,7 +50,7 @@ const LoadingSpinner = React.forwardRef<HTMLDivElement, LoadingSpinnerProps>(
       >
         <div className={cn(spinnerVariants({ size, variant }))} />
         {showText && (
-          <span className="text-sm text-muted-foreground font-medium">
+          <span className="text-sm text-muted-foreground font-medium animate-pulse">
             {text}
           </span>
         )}
