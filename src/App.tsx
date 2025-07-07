@@ -49,6 +49,7 @@ const OnboardingGuiado = lazy(() => import("./pages/OnboardingGuiado").then(modu
 const DeveloperDashboard = lazy(() => import("./components/developer/DeveloperDashboard").then(module => ({ default: module.DeveloperDashboard })));
 const BrandingGuide = lazy(() => import("./components/branding/BrandingGuide").then(module => ({ default: module.BrandingGuide })));
 const AffiliateSystem = lazy(() => import("./components/affiliate/AffiliateSystem").then(module => ({ default: module.AffiliateSystem })));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 
 // Import optimized branded loader
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
@@ -92,8 +93,14 @@ function App() {
                     </Suspense>
                   </ProtectedRoute>
                 } />
-                {/* Página inicial de vendas SEM proteção - página pública */}
+                {/* Landing Page como página inicial */}
                 <Route path="/" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <LandingPage />
+                  </Suspense>
+                } />
+                {/* Página de vendas alternativa */}
+                <Route path="/sistema" element={
                   <Suspense fallback={<PageLoader />}>
                     <Vendas />
                   </Suspense>
