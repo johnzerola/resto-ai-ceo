@@ -100,7 +100,7 @@ const BusinessProfilePage = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !profile) {
     return (
       <ModernLayout>
         <div className="flex items-center justify-center p-8">
