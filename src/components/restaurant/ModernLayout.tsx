@@ -6,6 +6,7 @@ import { Navigate } from "react-router-dom";
 import { EmailConfirmationBanner } from "../auth/EmailConfirmationBanner";
 import { AdvancedThemeToggle } from "@/components/theme/AdvancedThemeToggle";
 import { FeedbackSystem } from "@/components/feedback/FeedbackSystem";
+import { EnhancedErrorBoundary } from "@/components/common/EnhancedErrorBoundary";
 import { cn } from "@/lib/utils";
 
 const LoadingSpinner = memo(({ message }: { message: string }) => (
@@ -99,29 +100,28 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full bg-background">
       <ModernSidebar />
       
-      <main className={cn(
-        "flex-1 transition-all duration-300 ease-out min-h-screen relative",
-        // Add top margin on mobile to prevent overlap with menu button
-        "pt-16 md:pt-0",
-        sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
-      )}>
-        {/* Advanced theme toggle - positioned absolutely for easy access */}
-        <div className="absolute top-4 right-4 z-10 hidden md:block">
+      {/* Fixed Header with Theme Toggle */}
+      <header className="fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-md border-b border-border md:left-72 transition-all duration-300">
+        <div className="flex items-center justify-between h-14 px-4">
+          <div className="flex-1" />
           <AdvancedThemeToggle variant="compact" />
         </div>
-        
-        {/* Floating theme toggle for mobile */}
-        <div className="md:hidden">
-          <AdvancedThemeToggle variant="floating" />
-        </div>
+      </header>
+
+      <main className={cn(
+        "flex-1 transition-all duration-300 ease-out min-h-screen relative",
+        // Add top margin for fixed header
+        "pt-14",
+        sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
+      )}>
         
         <EmailConfirmationBanner />
         
-        <div className="min-h-screen">
+        <div className="min-h-screen p-6">
           <React.Suspense fallback={<LoadingSpinner message="Carregando conteúdo..." />}>
-            <ErrorBoundary>
+            <EnhancedErrorBoundary>
               {children}
-            </ErrorBoundary>
+            </EnhancedErrorBoundary>
           </React.Suspense>
         </div>
         
@@ -132,32 +132,3 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error?: Error }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Layout Error Boundary caught an error:', error, errorInfo);
-    
-    if (process.env.NODE_ENV === 'production') {
-      console.error('Production error logged:', { error, errorInfo });
-    }
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <ErrorFallback />;
-    }
-
-    return this.props.children;
-  }
-}

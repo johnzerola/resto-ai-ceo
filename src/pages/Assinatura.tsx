@@ -9,11 +9,14 @@ import { useTrialStatus } from '@/hooks/useTrialStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useState } from 'react';
+import { LoadingBoundary } from '@/components/common/LoadingBoundary';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export function Assinatura() {
   const { subscriptionInfo } = useAuth();
-  const { trialStatus } = useTrialStatus();
+  const { trialStatus, isLoading: trialLoading, error: trialError } = useTrialStatus();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const { handleAsyncError } = useErrorHandler();
 
   const isTrial = subscriptionInfo?.status === 'trial' || trialStatus?.isTrialActive;
   const currentPaidPlan = (subscriptionInfo?.status === 'active' && !isTrial) ? subscriptionInfo?.plan : null;
@@ -63,34 +66,55 @@ export function Assinatura() {
       toast.error('Plano não encontrado');
       return;
     }
+    
     setIsProcessingPayment(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          productId: selectedPlan.stripeProductId,
-          planId: selectedPlan.id
+    
+    await handleAsyncError(
+      async () => {
+        const { data, error } = await supabase.functions.invoke('create-checkout', {
+          body: {
+            productId: selectedPlan.stripeProductId,
+            planId: selectedPlan.id
+          }
+        });
+        
+        if (error) throw new Error('Erro ao processar pagamento');
+        
+        if (data?.url) {
+          window.open(data.url, '_blank');
+          toast.success('Redirecionando para o pagamento...');
+        } else {
+          throw new Error('Erro ao gerar link de pagamento');
         }
-      });
-      if (error) {
-        toast.error('Erro ao processar pagamento. Tente novamente.');
-        return;
+      },
+      {
+        toastTitle: 'Erro no Pagamento',
+        toastDescription: 'Não foi possível processar o pagamento. Tente novamente.',
+        onError: () => setIsProcessingPayment(false)
       }
-      if (data?.url) {
-        window.open(data.url, '_blank');
-        toast.success('Redirecionando para o pagamento...');
-      } else {
-        toast.error('Erro ao gerar link de pagamento');
-      }
-    } catch (error) {
-      toast.error('Erro ao processar pagamento. Tente novamente.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
+    );
+    
+    setIsProcessingPayment(false);
   };
 
   return (
     <ModernLayout>
-      <div className="space-y-6">
+      <LoadingBoundary 
+        isLoading={trialLoading} 
+        error={trialError}
+        errorFallback={
+          <div className="p-8 text-center">
+            <p className="text-red-600">Erro ao carregar informações de assinatura</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-6 p-6">
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold tracking-tight">Planos e Assinatura</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -192,7 +216,8 @@ export function Assinatura() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </LoadingBoundary>
     </ModernLayout>
   );
 }

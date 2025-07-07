@@ -14,6 +14,8 @@ import * as z from "zod";
 import { Store, User, FileText, Calendar, Clock, DollarSign, TrendingUp, Target, Save, ArrowLeft } from "lucide-react";
 import { useBusinessProfile, BusinessProfile } from "@/hooks/useBusinessProfile";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
+import { LoadingBoundary } from '@/components/common/LoadingBoundary';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 const businessProfileSchema = z.object({
   ownerName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional(),
@@ -31,7 +33,9 @@ type BusinessProfileFormValues = z.infer<typeof businessProfileSchema>;
 
 const BusinessProfilePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { profile, isLoading, saveProfile, updateRestaurantData } = useBusinessProfile();
+  const { handleAsyncError } = useErrorHandler();
   const navigate = useNavigate();
 
   const form = useForm<BusinessProfileFormValues>({
@@ -68,54 +72,70 @@ const BusinessProfilePage = () => {
 
   const onSubmit = async (values: BusinessProfileFormValues) => {
     setIsSubmitting(true);
+    setError(null);
     
-    try {
-      // Atualizar dados do restaurante
-      await updateRestaurantData({
-        owner_name: values.ownerName,
-        cnpj: values.cnpj,
-      });
+    const success = await handleAsyncError(
+      async () => {
+        // Atualizar dados do restaurante
+        await updateRestaurantData({
+          owner_name: values.ownerName,
+          cnpj: values.cnpj,
+        });
 
-      // Salvar perfil empresarial
-      const success = await saveProfile({
-        owner_name: values.ownerName,
-        cnpj: values.cnpj,
-        average_monthly_revenue: values.averageMonthlyRevenue,
-        average_ticket: values.averageTicket,
-        desired_profit_margin: values.desiredProfitMargin,
-        fixed_monthly_costs: values.fixedMonthlyCosts,
-        variable_monthly_costs: values.variableMonthlyCosts,
-        weekly_operating_days: values.weeklyOperatingDays,
-        daily_operating_hours: values.dailyOperatingHours,
-      });
+        // Salvar perfil empresarial
+        const result = await saveProfile({
+          owner_name: values.ownerName,
+          cnpj: values.cnpj,
+          average_monthly_revenue: values.averageMonthlyRevenue,
+          average_ticket: values.averageTicket,
+          desired_profit_margin: values.desiredProfitMargin,
+          fixed_monthly_costs: values.fixedMonthlyCosts,
+          variable_monthly_costs: values.variableMonthlyCosts,
+          weekly_operating_days: values.weeklyOperatingDays,
+          daily_operating_hours: values.dailyOperatingHours,
+        });
 
-      if (success) {
+        if (!result) throw new Error('Falha ao salvar perfil');
+        
         toast.success("Dados do negócio atualizados com sucesso!");
+        return result;
+      },
+      {
+        toastTitle: 'Erro ao Salvar',
+        toastDescription: 'Não foi possível salvar os dados do negócio. Tente novamente.',
+        onError: (err) => setError(err.message)
       }
-    } catch (error) {
-      console.error("Erro ao salvar dados:", error);
-      toast.error("Erro ao salvar dados do negócio");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <ModernLayout>
-        <div className="flex items-center justify-center p-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Carregando dados do negócio...</p>
-          </div>
-        </div>
-      </ModernLayout>
     );
-  }
+    
+    setIsSubmitting(false);
+  };
 
   return (
     <ModernLayout>
-      <div className="space-y-6 mt-8 ml-8">
+      <LoadingBoundary 
+        isLoading={isLoading} 
+        error={error}
+        fallback={
+          <div className="flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Carregando dados do negócio...</p>
+            </div>
+          </div>
+        }
+        errorFallback={
+          <div className="p-8 text-center">
+            <p className="text-red-600">Erro ao carregar dados do negócio</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+            >
+              Tentar Novamente
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Dados do Negócio</h1>
@@ -406,7 +426,8 @@ const BusinessProfilePage = () => {
             </Form>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </LoadingBoundary>
     </ModernLayout>
   );
 };
