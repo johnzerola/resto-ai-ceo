@@ -18,7 +18,7 @@ import {
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency } from '@/lib/utils';
-import { PerformanceCharts } from '@/components/restaurant/PerformanceCharts';
+const PerformanceCharts = React.lazy(() => import('@/components/restaurant/PerformanceCharts').then(module => ({ default: module.PerformanceCharts })));
 
 const StatCard = memo(({ 
   title, 
@@ -95,6 +95,35 @@ const AlertsSection = memo(({ alerts }: { alerts: any[] }) => {
     </div>
   );
 });
+
+const QuickActionsGrid = memo(() => (
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <Button variant="outline" className="h-20 flex-col gap-2" asChild>
+      <a href="/fluxo-de-caixa">
+        <DollarSign className="h-6 w-6" />
+        <span className="text-xs">Fluxo de Caixa</span>
+      </a>
+    </Button>
+    <Button variant="outline" className="h-20 flex-col gap-2" asChild>
+      <a href="/metas">
+        <Target className="h-6 w-6" />
+        <span className="text-xs">Metas</span>
+      </a>
+    </Button>
+    <Button variant="outline" className="h-20 flex-col gap-2" asChild>
+      <a href="/estoque">
+        <Package className="h-6 w-6" />
+        <span className="text-xs">Estoque</span>
+      </a>
+    </Button>
+    <Button variant="outline" className="h-20 flex-col gap-2" asChild>
+      <a href="/dre">
+        <BarChart3 className="h-6 w-6" />
+        <span className="text-xs">Relatórios</span>
+      </a>
+    </Button>
+  </div>
+));
 
 export const UnifiedDashboard = memo(function UnifiedDashboard() {
   const { currentRestaurant } = useAuth();
@@ -228,7 +257,16 @@ export const UnifiedDashboard = memo(function UnifiedDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <PerformanceCharts />
+            <React.Suspense fallback={
+              <div className="h-[300px] animate-pulse bg-slate-100 rounded-lg flex items-center justify-center">
+                <div className="text-center space-y-2">
+                  <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="text-sm text-slate-600">Carregando gráficos...</p>
+                </div>
+              </div>
+            }>
+              <PerformanceCharts />
+            </React.Suspense>
           </CardContent>
         </Card>
 
@@ -241,32 +279,7 @@ export const UnifiedDashboard = memo(function UnifiedDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-                <a href="/fluxo-de-caixa">
-                  <DollarSign className="h-6 w-6" />
-                  <span className="text-xs">Fluxo de Caixa</span>
-                </a>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-                <a href="/metas">
-                  <Target className="h-6 w-6" />
-                  <span className="text-xs">Metas</span>
-                </a>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-                <a href="/estoque">
-                  <Package className="h-6 w-6" />
-                  <span className="text-xs">Estoque</span>
-                </a>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2" asChild>
-                <a href="/dre">
-                  <BarChart3 className="h-6 w-6" />
-                  <span className="text-xs">Relatórios</span>
-                </a>
-              </Button>
-            </div>
+            <QuickActionsGrid />
           </CardContent>
         </Card>
       </div>

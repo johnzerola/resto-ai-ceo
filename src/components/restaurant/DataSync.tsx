@@ -17,23 +17,29 @@ export function DataSync({ children }: DataSyncProps) {
 
     const initializeData = async () => {
       try {
-        // Se ainda está carregando auth, aguardar um pouco mas não indefinidamente
+        // Inicialização otimizada - não esperar auth se não necessário
+        const quickInit = () => {
+          if (mounted) {
+            setIsInitialized(true);
+          }
+        };
+
+        // Se ainda está carregando auth, dar timeout mais curto
         if (authLoading) {
-          const timeout = setTimeout(() => {
-            if (mounted) {
-              console.log('Auth timeout - prosseguindo com inicialização');
-              setIsInitialized(true);
-            }
-          }, 2000);
+          const timeout = setTimeout(quickInit, 1000); // Reduzido de 2s para 1s
           return () => clearTimeout(timeout);
         }
 
-        // Inicializar dados se houver usuário
+        // Inicializar dados se houver usuário (de forma assíncrona)
         if (user) {
-          console.log('Inicializando dados para usuário:', user.id);
-          await migrateUserFinancialData();
+          // Não bloquear a UI esperando migração
+          requestIdleCallback ? requestIdleCallback(() => {
+            migrateUserFinancialData().catch(console.error);
+          }) : setTimeout(() => {
+            migrateUserFinancialData().catch(console.error);
+          }, 100);
           
-          // Garantir estrutura básica de dados
+          // Garantir estrutura básica de dados rapidamente
           const dataKeys = ['cashFlow', 'goals', 'inventory', 'recipes', 'restaurantData'];
           dataKeys.forEach(key => {
             const userKey = `${key}_${user.id}`;
@@ -44,9 +50,7 @@ export function DataSync({ children }: DataSyncProps) {
           });
         }
 
-        if (mounted) {
-          setIsInitialized(true);
-        }
+        quickInit();
       } catch (error) {
         console.error('Erro na inicialização:', error);
         if (mounted) {
@@ -57,13 +61,13 @@ export function DataSync({ children }: DataSyncProps) {
 
     initializeData();
 
-    // Timeout de segurança - sempre permitir que o app continue após 3 segundos
+    // Timeout de segurança reduzido - permitir que o app continue após 1.5 segundos
     const safetyTimeout = setTimeout(() => {
       if (mounted && !isInitialized) {
         console.log('Safety timeout - forçando inicialização');
         setIsInitialized(true);
       }
-    }, 3000);
+    }, 1500); // Reduzido de 3s para 1.5s
 
     return () => {
       mounted = false;
@@ -71,13 +75,13 @@ export function DataSync({ children }: DataSyncProps) {
     };
   }, [user, authLoading, isInitialized]);
 
-  // Mostrar loading apenas brevemente
-  if (!isInitialized && authLoading) {
+  // Mostrar loading apenas muito brevemente para não impactar UX
+  if (!isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando...</p>
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-slate-600 text-sm">Inicializando...</p>
         </div>
       </div>
     );
