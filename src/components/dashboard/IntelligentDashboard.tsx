@@ -81,7 +81,8 @@ const defaultWidgets: DashboardWidget[] = [
 
 export function IntelligentDashboard() {
   const { currentRestaurant } = useAuth();
-  const { data: dashboardData, isLoading } = useDashboardData();
+  const dashboardData = useDashboardData();
+  const { isLoading } = dashboardData;
   const [widgets, setWidgets] = useState(defaultWidgets);
   const [activeTab, setActiveTab] = useState("overview");
   const [personalizedInsights, setPersonalizedInsights] = useState<string[]>([]);

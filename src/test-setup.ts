@@ -35,10 +35,10 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn(),
   useLocation: () => ({ pathname: '/' }),
-  Link: ({ children, to }: any) => <a href={to}>{children}</a>,
-  BrowserRouter: ({ children }: any) => children,
-  Routes: ({ children }: any) => children,
-  Route: ({ element }: any) => element
+  Link: vi.fn(({ children }) => children),
+  BrowserRouter: vi.fn(({ children }) => children),
+  Routes: vi.fn(({ children }) => children),
+  Route: vi.fn(({ element }) => element)
 }));
 
 // Mock do toast
