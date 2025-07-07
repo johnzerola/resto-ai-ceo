@@ -69,23 +69,37 @@ const Onboarding = () => {
     }
 
     setIsSubmitting(true);
+    
     try {
-      // 1. Criar restaurante via contexto
-      await createRestaurant(values.restaurantName);
-      // 2. Aguardar contexto atualizar
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      // Criar restaurante com dados completos
+      const { data: restaurantData, error: restaurantError } = await supabase
+        .from('restaurants')
+        .insert([
+          {
+            name: values.restaurantName,
+            owner_id: user.id,
+            owner_name: values.ownerName,
+            business_type: values.businessType,
+            cnpj: values.cnpj || null,
+            target_food_cost: 30,
+            target_beverage_cost: 25,
+            average_monthly_sales: values.averageMonthlyRevenue,
+            desired_profit_margin: values.desiredProfitMargin,
+          }
+        ])
+        .select()
+        .single();
 
-      // 3. Criar perfil empresarial usando o restaurante do contexto
-      if (!currentRestaurant?.id) {
-        toast.error("Erro ao obter restaurante criado. Tente novamente.");
-        setIsSubmitting(false);
-        return;
+      if (restaurantError) {
+        throw restaurantError;
       }
+
+      // Salvar perfil empresarial detalhado diretamente no banco
       const { data: profileData, error: profileError } = await supabase
         .from('business_profiles')
         .upsert([
           {
-            restaurant_id: currentRestaurant.id,
+            restaurant_id: restaurantData.id,
             owner_name: values.ownerName,
             cnpj: values.cnpj,
             average_monthly_revenue: values.averageMonthlyRevenue,
@@ -119,20 +133,22 @@ const Onboarding = () => {
       }
 
       // Criar configurações iniciais do restaurante
-      await supabase
-        .from('configuracoes_restaurante')
-        .insert([
-          {
-            restaurant_id: currentRestaurant.id,
-            receita_mensal_esperada: values.averageMonthlyRevenue,
-            markup_padrao: 250,
-            margem_lucro_esperada: values.desiredProfitMargin,
-            custo_medio_por_prato: values.averageTicket * 0.3,
-            meta_vendas_diaria: values.averageMonthlyRevenue / 30,
-            ticket_medio_esperado: values.averageTicket,
-            pratos_vendidos_dia_meta: Math.ceil((values.averageMonthlyRevenue / 30) / values.averageTicket),
-          }
-        ]);
+      if (restaurantData) {
+        await supabase
+          .from('configuracoes_restaurante')
+          .insert([
+            {
+              restaurant_id: restaurantData.id,
+              receita_mensal_esperada: values.averageMonthlyRevenue,
+              markup_padrao: 250,
+              margem_lucro_esperada: values.desiredProfitMargin,
+              custo_medio_por_prato: values.averageTicket * 0.3, // Estimar custo baseado no ticket
+              meta_vendas_diaria: values.averageMonthlyRevenue / 30,
+              ticket_medio_esperado: values.averageTicket,
+              pratos_vendidos_dia_meta: Math.ceil((values.averageMonthlyRevenue / 30) / values.averageTicket),
+            }
+          ]);
+      }
 
       // Usar insights gerados no perfil
       const insightsArray = Array.isArray(profileData.motivational_insights) 
@@ -141,8 +157,17 @@ const Onboarding = () => {
       setInsights(insightsArray);
       setShowInsights(true);
 
+      // Atualizar contexto usando a função existente
+      await createRestaurant(values.restaurantName);
+      
+      // Aguardar mais tempo para garantir que o contexto foi atualizado
+      console.log('⏳ Aguardando atualização do contexto...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       // Forçar recarregamento do perfil
+      console.log('🔄 Forçando recarregamento do perfil...');
       window.location.reload();
+      
     } catch (error) {
       console.error("Erro ao configurar restaurante:", error);
       toast.error("Erro ao configurar restaurante");
