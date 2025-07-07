@@ -4,7 +4,7 @@ import { ModernSidebar } from "./ModernSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { EmailConfirmationBanner } from "../auth/EmailConfirmationBanner";
-import { AdvancedThemeToggle } from "@/components/theme/AdvancedThemeToggle";
+import { PremiumThemeToggle } from "@/components/theme/PremiumThemeToggle";
 import { FeedbackSystem } from "@/components/feedback/FeedbackSystem";
 import { EnhancedErrorBoundary } from "@/components/common/EnhancedErrorBoundary";
 import { cn } from "@/lib/utils";
@@ -100,18 +100,29 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full bg-background">
       <ModernSidebar />
       
-      {/* Fixed Header with Theme Toggle */}
-      <header className="fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-md border-b border-border md:left-72 transition-all duration-300">
-        <div className="flex items-center justify-between h-14 px-4">
-          <div className="flex-1" />
-          <AdvancedThemeToggle variant="compact" />
+      {/* Premium Fixed Header with Theme Toggle */}
+      <header className="fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 md:left-72 transition-all duration-300 shadow-sm">
+        <div className="flex items-center justify-between h-16 px-6">
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium text-muted-foreground hidden md:block">
+              Lucraí Premium
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <PremiumThemeToggle position="header" />
+          </div>
         </div>
       </header>
 
+      {/* Floating Theme Toggle for Mobile */}
+      <div className="md:hidden">
+        <PremiumThemeToggle position="floating" />
+      </div>
+
       <main className={cn(
         "flex-1 transition-all duration-300 ease-out min-h-screen relative",
-        // Add top margin for fixed header
-        "pt-14",
+        // Add top margin for premium header
+        "pt-16",
         sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
       )}>
         
