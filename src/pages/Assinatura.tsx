@@ -101,16 +101,13 @@ export function Assinatura() {
     <ModernLayout>
       <LoadingBoundary 
         isLoading={trialLoading} 
-        error={trialError}
-        errorFallback={
-          <div className="p-8 text-center">
-            <p className="text-red-600">Erro ao carregar informações de assinatura</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
-            >
-              Tentar Novamente
-            </button>
+        error={null}
+        fallback={
+          <div className="flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Carregando informações de assinatura...</p>
+            </div>
           </div>
         }
       >

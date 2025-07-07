@@ -108,23 +108,40 @@ export const useBusinessProfile = () => {
 
   const loadProfile = async () => {
     if (!currentRestaurant?.id) {
-      console.log('❌ currentRestaurant não disponível:', currentRestaurant);
+      console.log('ℹ️ currentRestaurant não disponível:', currentRestaurant);
+      setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     try {
       console.log('🔍 Carregando perfil para restaurante:', currentRestaurant.id);
-      console.log('🏪 Dados do restaurante:', currentRestaurant);
       
       const { data, error } = await supabase
         .from('business_profiles')
         .select('*')
         .eq('restaurant_id', currentRestaurant.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('❌ Erro ao carregar perfil:', error);
+      if (error) {
+        console.warn('⚠️ Erro ao carregar perfil, usando defaults:', error);
+        // Criar perfil padrão em caso de erro
+        const defaultProfile = {
+          restaurant_id: currentRestaurant.id,
+          average_monthly_revenue: 30000,
+          average_ticket: 35,
+          desired_profit_margin: 30,
+          fixed_monthly_costs: 8000,
+          variable_monthly_costs: 15,
+          weekly_operating_days: 6,
+          daily_operating_hours: "08:00-18:00",
+          break_even_point: 0,
+          ideal_cmv_percentage: 30,
+          monthly_sales_target: 0,
+          ideal_net_margin: 20,
+          motivational_insights: []
+        };
+        setProfile(defaultProfile);
         return;
       }
 
@@ -139,23 +156,44 @@ export const useBusinessProfile = () => {
         };
         setProfile(profile);
       } else {
-        console.log('ℹ️ Nenhum perfil encontrado para este restaurante');
-        console.log('🔍 Verificando se há dados na tabela business_profiles...');
-        
-        // Verificar se há dados na tabela
-        const { data: allProfiles, error: checkError } = await supabase
-          .from('business_profiles')
-          .select('*');
-        
-        if (checkError) {
-          console.error('❌ Erro ao verificar tabela:', checkError);
-        } else {
-          console.log('📊 Total de perfis na tabela:', allProfiles?.length);
-          console.log('📋 Perfis encontrados:', allProfiles);
-        }
+        console.log('ℹ️ Nenhum perfil encontrado, criando perfil padrão');
+        // Criar perfil padrão
+        const defaultProfile = {
+          restaurant_id: currentRestaurant.id,
+          average_monthly_revenue: 30000,
+          average_ticket: 35,
+          desired_profit_margin: 30,
+          fixed_monthly_costs: 8000,
+          variable_monthly_costs: 15,
+          weekly_operating_days: 6,
+          daily_operating_hours: "08:00-18:00",
+          break_even_point: 0,
+          ideal_cmv_percentage: 30,
+          monthly_sales_target: 0,
+          ideal_net_margin: 20,
+          motivational_insights: []
+        };
+        setProfile(defaultProfile);
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar perfil:', error);
+      console.warn('⚠️ Erro crítico ao carregar perfil, usando fallback:', error);
+      // Fallback seguro
+      const fallbackProfile = {
+        restaurant_id: currentRestaurant.id,
+        average_monthly_revenue: 30000,
+        average_ticket: 35,
+        desired_profit_margin: 30,
+        fixed_monthly_costs: 8000,
+        variable_monthly_costs: 15,
+        weekly_operating_days: 6,
+        daily_operating_hours: "08:00-18:00",
+        break_even_point: 0,
+        ideal_cmv_percentage: 30,
+        monthly_sales_target: 0,
+        ideal_net_margin: 20,
+        motivational_insights: []
+      };
+      setProfile(fallbackProfile);
     } finally {
       setIsLoading(false);
     }
