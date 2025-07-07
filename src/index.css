@@ -670,11 +670,24 @@ body {
 }
 
 .lucrai-nav-item {
-  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent transition-all duration-200;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  color: hsl(var(--foreground));
+  transition: all 200ms;
+}
+
+.lucrai-nav-item:hover {
+  color: hsl(var(--accent-foreground));
+  background-color: hsl(var(--accent));
 }
 
 .lucrai-nav-item.active {
-  @apply bg-sidebar-accent text-sidebar-accent-foreground shadow-sm;
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 /* Estados de Feedback */
