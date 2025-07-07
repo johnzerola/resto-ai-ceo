@@ -130,15 +130,18 @@ export function FichaTecnicaFixed() {
   const [abaAtiva, setAbaAtiva] = useState('nova');
   const [showProgress, setShowProgress] = useState(false);
 
-  // Memoizar condições para evitar re-renders desnecessários
-  const conditions = useMemo(() => ({
-    hasBasicData: Boolean(dadosPrato.nome_prato?.trim()),
-    hasIngredients: ingredientes.length > 0,
-    hasResults: Boolean(resultados),
-    canNavigateToIngredients: Boolean(dadosPrato.nome_prato?.trim() && dadosPrato.categoria),
-    canNavigateToResults: ingredientes.length > 0,
-    canSave: validarFormulario().tudoValido && Boolean(resultados) && (resultados?.lucro_estimado_valor || 0) >= 0
-  }), [dadosPrato.nome_prato, dadosPrato.categoria, ingredientes.length, resultados, validarFormulario]);
+  // Memoizar condições para evitar re-renders desnecessários (corrigido)
+  const conditions = useMemo(() => {
+    const validacao = validarFormulario();
+    return {
+      hasBasicData: Boolean(dadosPrato.nome_prato?.trim()),
+      hasIngredients: ingredientes.length > 0,
+      hasResults: Boolean(resultados),
+      canNavigateToIngredients: Boolean(dadosPrato.nome_prato?.trim() && dadosPrato.categoria),
+      canNavigateToResults: validacao.temIngredientesParaCalcular || false,
+      canSave: validacao.tudoValido && Boolean(resultados) && (resultados?.lucro_estimado_valor || 0) >= 0
+    };
+  }, [dadosPrato.nome_prato, dadosPrato.categoria, ingredientes.length, resultados, validarFormulario]);
 
   // Navegação entre abas com validação memoizada
   const navegarParaAba = useMemo(() => (aba: string) => {

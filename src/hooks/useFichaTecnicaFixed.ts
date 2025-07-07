@@ -50,6 +50,7 @@ interface ValidacaoStatus {
   dadosBasicosValidos: boolean;
   ingredientesValidos: boolean;
   tudoValido: boolean;
+  temIngredientesParaCalcular?: boolean;
 }
 
 // Hook principal corrigido e otimizado
@@ -156,7 +157,7 @@ export function useFichaTecnicaFixed() {
     }
   }, [currentRestaurant?.id, carregarInsumos, insumosDisponiveis.length]);
 
-  // Validações com memoização
+  // Validações com memoização (melhoradas)
   const validarFormulario = useCallback((): ValidacaoStatus => {
     const errosEncontrados: string[] = [];
 
@@ -173,45 +174,37 @@ export function useFichaTecnicaFixed() {
 
     const dadosBasicosValidos = errosEncontrados.length === 0;
 
-    // Validar ingredientes
+    // Validar ingredientes (mais flexível)
     if (ingredientes.length === 0) {
       errosEncontrados.push('Adicione pelo menos um ingrediente');
     }
 
-    const ingredientesInvalidos = ingredientes.filter(ing => 
-      !ing.insumo_id || 
-      !ing.nome_insumo || 
-      ing.quantidade_bruta <= 0 ||
-      ing.preco_unitario <= 0
+    const ingredientesCompletos = ingredientes.filter(ing => 
+      ing.insumo_id && 
+      ing.nome_insumo && 
+      ing.quantidade_bruta > 0 &&
+      ing.preco_unitario > 0
     );
 
-    if (ingredientesInvalidos.length > 0) {
-      errosEncontrados.push(`${ingredientesInvalidos.length} ingrediente(s) com dados incompletos`);
-    }
-
-    const ingredientesValidos = ingredientes.length > 0 && ingredientesInvalidos.length === 0;
+    // Para salvar, precisamos de pelo menos 1 ingrediente completo
+    const temIngredientesParaSalvar = ingredientesCompletos.length > 0;
+    
+    // Para calcular, também precisamos de pelo menos 1 ingrediente completo
+    const temIngredientesParaCalcular = ingredientesCompletos.length > 0;
 
     setErrors(errosEncontrados);
 
     return {
       dadosBasicosValidos,
-      ingredientesValidos,
-      tudoValido: dadosBasicosValidos && ingredientesValidos
+      ingredientesValidos: temIngredientesParaSalvar,
+      tudoValido: dadosBasicosValidos && temIngredientesParaSalvar,
+      temIngredientesParaCalcular // Nova propriedade para controle de cálculo
     };
   }, [dadosPrato, ingredientes]);
 
-  // Calcular resultados com condições de parada
+  // Calcular resultados com condições de parada melhoradas
   const calcularResultados = useCallback(() => {
     if (!currentRestaurant?.id || debouncedIngredientes.length === 0) {
-      setResultados(null);
-      return;
-    }
-
-    const ingredientesValidos = debouncedIngredientes.filter(ing => 
-      ing.insumo_id && ing.quantidade_bruta > 0 && ing.preco_unitario > 0
-    );
-
-    if (ingredientesValidos.length === 0) {
       setResultados(null);
       return;
     }
@@ -219,7 +212,23 @@ export function useFichaTecnicaFixed() {
     setIsCalculating(true);
 
     try {
-      // Calcular custo base dos ingredientes
+      // Separar ingredientes válidos e inválidos
+      const ingredientesValidos = debouncedIngredientes.filter(ing => 
+        ing.insumo_id && 
+        ing.nome_insumo && 
+        ing.quantidade_bruta > 0 && 
+        ing.preco_unitario > 0 &&
+        ing.custo_total > 0
+      );
+
+      const ingredientesIncompletos = debouncedIngredientes.filter(ing => 
+        !ing.insumo_id || 
+        !ing.nome_insumo || 
+        ing.quantidade_bruta <= 0 || 
+        ing.preco_unitario <= 0
+      );
+
+      // Calcular custo base apenas dos ingredientes válidos
       const custoIngredientes = ingredientesValidos.reduce((total, ing) => total + ing.custo_total, 0);
       
       // Calcular despesas fixas por prato
@@ -275,6 +284,11 @@ export function useFichaTecnicaFixed() {
         alertas.push(`⚠️ Meta de lucro não atingida. Atual: ${margemLiquida.toFixed(1)}%`);
       }
       
+      // Gerar alertas para ingredientes incompletos
+      if (ingredientesIncompletos.length > 0) {
+        alertas.push(`⚠️ ${ingredientesIncompletos.length} ingrediente(s) incompleto(s) - não incluído(s) no cálculo`);
+      }
+
       // Gerar alertas adicionais
       if (configuracaoAvancada.preco_concorrente > 0) {
         if (precoFinal > configuracaoAvancada.preco_concorrente * 1.2) {
@@ -282,6 +296,11 @@ export function useFichaTecnicaFixed() {
         } else if (precoFinal < configuracaoAvancada.preco_concorrente * 0.8) {
           alertas.push('📈 Oportunidade: preço abaixo da concorrência');
         }
+      }
+
+      // Aviso sobre ingredientes não calculados
+      if (ingredientesValidos.length < debouncedIngredientes.length) {
+        alertas.push(`📋 Cálculo baseado em ${ingredientesValidos.length} de ${debouncedIngredientes.length} ingredientes`);
       }
 
       const resultadosCalculados: ResultadosCalculados = {
@@ -312,10 +331,20 @@ export function useFichaTecnicaFixed() {
     configuracaoAvancada
   ]);
 
-  // Auto-calcular quando ingredientes mudarem (com debounce)
+  // Auto-calcular quando ingredientes mudarem (com debounce) - melhorado
   useEffect(() => {
     if (isInitialized.current && debouncedIngredientes.length > 0) {
-      calcularResultados();
+      // Calcular sempre que há ingredientes, mesmo que alguns estejam incompletos
+      const ingredientesCompletos = debouncedIngredientes.filter(ing => 
+        ing.insumo_id && ing.nome_insumo && ing.quantidade_bruta > 0 && ing.preco_unitario > 0
+      );
+      
+      if (ingredientesCompletos.length > 0) {
+        calcularResultados();
+      } else {
+        // Se não há ingredientes completos, limpar resultados mas não mostrar erro
+        setResultados(null);
+      }
     }
   }, [debouncedIngredientes, calcularResultados]);
 

@@ -15,7 +15,8 @@ import {
   Save,
   RefreshCw,
   Target,
-  PieChart
+  PieChart,
+  Package
 } from "lucide-react";
 
 interface DadosPrato {
@@ -97,18 +98,38 @@ export function ResultadosTab({
         <div className="text-center py-12">
           <Calculator className="h-16 w-16 mx-auto mb-4 text-gray-400" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Calculando Resultados...
+            Pronto para Calcular Resultados
           </h3>
           <p className="text-gray-600 mb-6">
-            Aguarde enquanto processamos os dados da sua ficha técnica
+            {ingredientes.length === 0 
+              ? 'Adicione ingredientes na aba anterior para calcular os resultados'
+              : 'Clique no botão abaixo para calcular os resultados financeiros da ficha técnica'
+            }
           </p>
+          
+          {/* Informações sobre ingredientes se houver */}
+          {ingredientes.length > 0 && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-sm text-blue-800">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Package className="h-4 w-4" />
+                  <span className="font-medium">Ingredientes Encontrados: {ingredientes.length}</span>
+                </div>
+                <p className="text-xs">
+                  💡 <strong>Dica:</strong> O sistema calculará com base nos ingredientes que possuem todos os dados completos.
+                  Ingredientes incompletos serão ignorados no cálculo, mas ainda podem ser corrigidos depois.
+                </p>
+              </div>
+            </div>
+          )}
+          
           <Button 
             onClick={onRecalcular}
-            disabled={isCalculating}
+            disabled={isCalculating || ingredientes.length === 0}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isCalculating ? 'animate-spin' : ''}`} />
-            {isCalculating ? 'Calculando...' : 'Calcular Agora'}
+            {isCalculating ? 'Calculando...' : 'Calcular Resultados'}
           </Button>
         </div>
         
@@ -277,27 +298,59 @@ export function ResultadosTab({
         </CardContent>
       </Card>
 
-      {/* Alertas e Recomendações */}
+      {/* Alertas e Recomendações - Melhorado */}
       {resultados.alertas.length > 0 && (
-        <Alert className={`border-2 ${
-          resultados.status_viabilidade === 'prejuizo' ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'
-        }`}>
-          <AlertTriangle className={`h-4 w-4 ${
-            resultados.status_viabilidade === 'prejuizo' ? 'text-red-600' : 'text-yellow-600'
-          }`} />
-          <AlertDescription>
-            <div className={`${
-              resultados.status_viabilidade === 'prejuizo' ? 'text-red-800' : 'text-yellow-800'
+        <div className="space-y-3">
+          {/* Alertas de Ingredientes Incompletos - Seção Separada */}
+          {resultados.alertas.some(alerta => alerta.includes('incompleto')) && (
+            <Alert className="border-2 border-yellow-200 bg-yellow-50">
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertDescription>
+                <div className="text-yellow-800">
+                  <strong>ℹ️ Informação sobre Ingredientes:</strong>
+                  <div className="mt-2 p-3 bg-yellow-100 rounded-md text-sm">
+                    {resultados.alertas
+                      .filter(alerta => alerta.includes('incompleto') || alerta.includes('baseado em'))
+                      .map((alerta, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <span className="text-yellow-600">•</span>
+                          <span>{alerta}</span>
+                        </div>
+                      ))}
+                    <div className="mt-2 text-xs text-yellow-700 border-t border-yellow-200 pt-2">
+                      💡 <strong>Dica:</strong> Complete os dados dos ingredientes faltantes na aba "Ingredientes" para obter um cálculo mais preciso.
+                    </div>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Outros Alertas */}
+          {resultados.alertas.filter(alerta => !alerta.includes('incompleto') && !alerta.includes('baseado em')).length > 0 && (
+            <Alert className={`border-2 ${
+              resultados.status_viabilidade === 'prejuizo' ? 'border-red-200 bg-red-50' : 'border-yellow-200 bg-yellow-50'
             }`}>
-              <strong>Alertas Importantes:</strong>
-              <ul className="mt-2 space-y-1 list-disc list-inside">
-                {resultados.alertas.map((alerta, index) => (
-                  <li key={index}>{alerta}</li>
-                ))}
-              </ul>
-            </div>
-          </AlertDescription>
-        </Alert>
+              <AlertTriangle className={`h-4 w-4 ${
+                resultados.status_viabilidade === 'prejuizo' ? 'text-red-600' : 'text-yellow-600'
+              }`} />
+              <AlertDescription>
+                <div className={`${
+                  resultados.status_viabilidade === 'prejuizo' ? 'text-red-800' : 'text-yellow-800'
+                }`}>
+                  <strong>Alertas Importantes:</strong>
+                  <ul className="mt-2 space-y-1 list-disc list-inside">
+                    {resultados.alertas
+                      .filter(alerta => !alerta.includes('incompleto') && !alerta.includes('baseado em'))
+                      .map((alerta, index) => (
+                        <li key={index}>{alerta}</li>
+                      ))}
+                  </ul>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
       )}
 
       {/* Recomendações */}
