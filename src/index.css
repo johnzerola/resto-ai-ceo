@@ -53,11 +53,11 @@
   --sidebar-border: 220 13% 91%;
   --sidebar-ring: 217.2 91.2% 59.8%;
 
-  /* Cores do RestaurIA */
-  --restauria-blue-tech: #1B2C4F;
-  --restauria-green-profit: #00D887;
-  --restauria-purple-premium: #5B4FC7;
-  --restauria-orange-alert: #FF6B35;
+  /* Cores do Lucraí */
+  --lucrai-blue-tech: #0F4C75;
+  --lucrai-green-profit: #00D4AA;
+  --lucrai-gold-accent: #FFD700;
+  --lucrai-orange-alert: #FF6B35;
 }
 
 .dark {
@@ -446,37 +446,37 @@ body {
   color: hsl(240 4.8% 75.9%);
 }
 
-/* Cores específicas do RestaurIA */
-.text-restauria-blue-tech {
-  color: var(--restauria-blue-tech);
+/* Cores específicas do Lucraí */
+.text-lucrai-blue-tech {
+  color: var(--lucrai-blue-tech);
 }
 
-.text-restauria-green-profit {
-  color: var(--restauria-green-profit);
+.text-lucrai-green-profit {
+  color: var(--lucrai-green-profit);
 }
 
-.text-restauria-purple-premium {
-  color: var(--restauria-purple-premium);
+.text-lucrai-gold-accent {
+  color: var(--lucrai-gold-accent);
 }
 
-.text-restauria-orange-alert {
-  color: var(--restauria-orange-alert);
+.text-lucrai-orange-alert {
+  color: var(--lucrai-orange-alert);
 }
 
-.bg-restauria-blue-tech {
-  background-color: var(--restauria-blue-tech);
+.bg-lucrai-blue-tech {
+  background-color: var(--lucrai-blue-tech);
 }
 
-.bg-restauria-green-profit {
-  background-color: var(--restauria-green-profit);
+.bg-lucrai-green-profit {
+  background-color: var(--lucrai-green-profit);
 }
 
-.bg-restauria-purple-premium {
-  background-color: var(--restauria-purple-premium);
+.bg-lucrai-gold-accent {
+  background-color: var(--lucrai-gold-accent);
 }
 
-.bg-restauria-orange-alert {
-  background-color: var(--restauria-orange-alert);
+.bg-lucrai-orange-alert {
+  background-color: var(--lucrai-orange-alert);
 }
 
 /* Dashboard específico */

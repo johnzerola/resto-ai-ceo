@@ -326,7 +326,7 @@ const Login = () => {
         </Card>
         
         <div className={`mt-6 text-center text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-          <p>© {new Date().getFullYear()} LucrAÍ. Todos os direitos reservados.</p>
+          <p>© {new Date().getFullYear()} Lucraí. Todos os direitos reservados.</p>
         </div>
       </div>
     </div>

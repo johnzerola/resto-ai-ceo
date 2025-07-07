@@ -40,7 +40,7 @@ export function TrialBanner() {
         <AlertTriangle className="h-4 w-4 text-red-600" />
         <AlertDescription className="flex items-center justify-between">
           <span className="text-red-800">
-            <strong>Trial Expirado!</strong> Assine agora para continuar usando todas as funcionalidades do LucrAÍ.
+            <strong>Trial Expirado!</strong> Assine agora para continuar usando todas as funcionalidades do Lucraí.
           </span>
           <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white">
             <Link to="/assinatura">

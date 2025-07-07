@@ -23,7 +23,7 @@ const Documentacao = () => {
           <div>
             <h2 className="text-xl font-semibold mb-2">Introdução</h2>
             <p>
-              Bem-vindo à documentação técnica do LucrAÍ. Aqui você encontrará informações detalhadas sobre a arquitetura, integração e API do sistema.
+              Bem-vindo à documentação técnica do Lucraí. Aqui você encontrará informações detalhadas sobre a arquitetura, integração e API do sistema.
             </p>
           </div>
         </TabsContent>

@@ -29,8 +29,8 @@ export default function Index() {
                 <ChefHat className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-[#1B2C4F] to-[#00D887] bg-clip-text text-transparent">
-                  RestaurIA CEO
+                <h1 className="text-xl font-bold bg-gradient-to-r from-lucrai-blue-tech to-lucrai-green-profit bg-clip-text text-transparent">
+                  Lucraí CEO
                 </h1>
                 <p className="text-xs text-slate-600">Gestão Inteligente</p>
               </div>
@@ -311,8 +311,8 @@ export default function Index() {
                 <ChefHat className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold bg-gradient-to-r from-white to-[#00D887] bg-clip-text text-transparent">
-                  RestaurIA CEO
+                <h3 className="text-xl font-bold bg-gradient-to-r from-white to-lucrai-green-profit bg-clip-text text-transparent">
+                  Lucraí CEO
                 </h3>
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function Index() {
             </p>
             
             <div className="flex justify-center gap-6 text-sm text-slate-400">
-              <span>© 2024 RestaurIA CEO</span>
+              <span>© 2024 Lucraí CEO</span>
               <span>•</span>
               <span>Todos os direitos reservados</span>
             </div>

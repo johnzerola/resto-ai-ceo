@@ -94,7 +94,7 @@ export function Assinatura() {
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold tracking-tight">Planos e Assinatura</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Escolha o plano ideal para o seu restaurante e desbloquear todo o potencial da RestaurIA
+            Escolha o plano ideal para o seu restaurante e desbloquear todo o potencial do Lucraí
           </p>
         </div>
 

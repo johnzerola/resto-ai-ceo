@@ -41,7 +41,7 @@ export function BackupRecuperacao() {
             </div>
             
             <TypographyP>
-              O sistema LucrAÍ agora possui backup automático com as seguintes características:
+              O sistema Lucraí agora possui backup automático com as seguintes características:
             </TypographyP>
             
             <TypographyH4>Características do Sistema</TypographyH4>

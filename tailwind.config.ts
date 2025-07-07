@@ -50,12 +50,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // RestaurIA Brand Colors
-        'restauria': {
-          'blue-tech': '#1B2C4F',
+        // Lucraí Brand Colors
+        'lucrai': {
+          'blue-tech': '#0F4C75',
           'blue-tech-light': '#2D4A7A',
-          'green-profit': '#00D887',
+          'green-profit': '#00D4AA',
           'green-profit-dark': '#00B572',
+          'gold-accent': '#FFD700',
           'white-clean': '#FFFFFF',
           'gray-neutral': '#F4F5F7',
           'gray-text': '#6B7280',
@@ -66,15 +67,15 @@ export default {
             400: "#4c84ff",
             500: "#1a56db",
             600: "#1245b5",
-            700: "#1B2C4F", // RestaurIA Blue-Tech
+            700: "#0F4C75", // Lucraí Blue-Tech
           },
           green: {
-            500: "#00D887", // RestaurIA Green-Profit
-            600: "#00B572", // RestaurIA Green-Profit Dark
+            500: "#00D4AA", // Lucraí Green-Profit
+            600: "#00B572", // Lucraí Green-Profit Dark
           },
           gray: {
             500: "#6b7280",
-            neutral: "#F4F5F7", // RestaurIA Gray-Neutral
+            neutral: "#F4F5F7", // Lucraí Gray-Neutral
           }
         }
       },

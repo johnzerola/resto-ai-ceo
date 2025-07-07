@@ -220,13 +220,13 @@ export function ModernSidebar() {
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-content flex-shrink-0">
                 <img 
-                  src="/lovable-uploads/633ccea0-b0be-4e1b-8596-7c25ee217aba.png" 
-                  alt="RestaurIA Logo" 
+                  src="/src/assets/lucrai-logo.png" 
+                  alt="Lucraí Logo" 
                   className="w-full h-full object-contain"
                 />
               </div>
               <h2 className="text-sm sm:text-lg font-bold text-white truncate">
-                RestaurIA
+                Lucraí
               </h2>
             </div>
           )}
@@ -287,7 +287,7 @@ export function ModernSidebar() {
         {(!isCollapsed || isMobileOpen) && (
           <div className="p-3 sm:p-4 border-t border-sidebar-border bg-gradient-to-r from-muted/50 to-card flex-shrink-0">
             <div className="text-xs text-muted-foreground text-center dark:text-gray-300">
-              <p className="font-medium">RestaurIA v2.0</p>
+              <p className="font-medium">Lucraí v2.0</p>
               <p className="hidden sm:block">Inteligência para seu restaurante</p>
             </div>
           </div>
