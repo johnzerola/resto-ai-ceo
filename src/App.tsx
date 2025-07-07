@@ -80,17 +80,29 @@ function App() {
                 } />
                 <Route path="/dados-negocio" element={
                   <ProtectedRoute>
-                    <BusinessProfile />
+                    <Suspense fallback={<PageLoader />}>
+                      <BusinessProfile />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/business-profile" element={
                   <ProtectedRoute>
-                    <BusinessProfile />
+                    <Suspense fallback={<PageLoader />}>
+                      <BusinessProfile />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 {/* Página inicial de vendas SEM proteção - página pública */}
-                <Route path="/" element={<Vendas />} />
-                <Route path="/vendas" element={<Vendas />} />
+                <Route path="/" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <Vendas />
+                  </Suspense>
+                } />
+                <Route path="/vendas" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <Vendas />
+                  </Suspense>
+                } />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}>
@@ -177,12 +189,16 @@ function App() {
                 } />
                 <Route path="/gerenciar-usuarios" element={
                   <ProtectedRoute>
-                    <GerenciarUsuarios />
+                    <Suspense fallback={<PageLoader />}>
+                      <GerenciarUsuarios />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/assinatura" element={
                   <ProtectedRoute>
-                    <Assinatura />
+                    <Suspense fallback={<PageLoader />}>
+                      <Assinatura />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/configuracoes" element={
@@ -208,37 +224,51 @@ function App() {
                 } />
                 <Route path="/documentacao" element={
                   <ProtectedRoute>
-                    <Documentacao />
+                    <Suspense fallback={<PageLoader />}>
+                      <Documentacao />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/privacidade" element={
                   <ProtectedRoute>
-                    <Privacidade />
+                    <Suspense fallback={<PageLoader />}>
+                      <Privacidade />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/status-sistema" element={
                   <ProtectedRoute>
-                    <StatusSistema />
+                    <Suspense fallback={<PageLoader />}>
+                      <StatusSistema />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/security-center" element={
                   <ProtectedRoute>
-                    <SecurityCenter />
+                    <Suspense fallback={<PageLoader />}>
+                      <SecurityCenter />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/ficha-tecnica-inteligente-completa" element={
                   <ProtectedRoute>
-                    <FichaTecnicaInteligenteCompleta />
+                    <Suspense fallback={<PageLoader />}>
+                      <FichaTecnicaInteligenteCompleta />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/system-validation" element={
                   <ProtectedRoute>
-                    <SystemValidation />
+                    <Suspense fallback={<PageLoader />}>
+                      <SystemValidation />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/system-audit" element={
                   <ProtectedRoute>
-                    <SystemAuditPage />
+                    <Suspense fallback={<PageLoader />}>
+                      <SystemAuditPage />
+                    </Suspense>
                   </ProtectedRoute>
                 } />
                 <Route path="/integracoes" element={
