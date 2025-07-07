@@ -666,11 +666,11 @@ body {
 }
 
 .lucrai-feature-card {
-  @apply lucrai-card p-8 text-center space-y-4 group;
+  @apply lucrai-card p-8 text-center space-y-4;
 }
 
 .lucrai-nav-item {
-  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent transition-all duration-200 group;
+  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent transition-all duration-200;
 }
 
 .lucrai-nav-item.active {
