@@ -1,15 +1,12 @@
 
-import React, { Suspense } from "react";
+import React from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { UnifiedDashboard } from "@/components/dashboard/UnifiedDashboard";
-import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { FastDashboard } from "@/components/dashboard/FastDashboard";
 
 const Dashboard = () => {
   return (
     <DashboardLayout>
-      <Suspense fallback={<DashboardSkeleton />}>
-        <UnifiedDashboard />
-      </Suspense>
+      <FastDashboard />
     </DashboardLayout>
   );
 };

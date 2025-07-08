@@ -39,8 +39,7 @@ export function useOptimizedQueries() {
         .from('restaurants')
         .select(`
           *,
-          business_profiles(*),
-          subscription_plans(*)
+          business_profiles(*)
         `)
         .eq('owner_id', userId)
         .limit(10);

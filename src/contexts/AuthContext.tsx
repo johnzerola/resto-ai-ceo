@@ -415,31 +415,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkUserRestaurants = useCallback(async (userId: string) => {
     try {
-      // Usar query otimizada que combina múltiplas consultas
-      const result = await fetchUserDataOptimized(userId);
+      console.log('🔍 Verificando restaurantes para usuário:', userId);
       
-      const restaurants = result.restaurants?.map((r: any) => ({
+      // Query simples e direta
+      const { data: restaurants, error } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('owner_id', userId)
+        .limit(10);
+
+      if (error) {
+        console.error('Erro ao buscar restaurantes:', error);
+        setNeedsOnboarding(true);
+        return;
+      }
+      
+      const formattedRestaurants = (restaurants || []).map((r: any) => ({
         id: r.id,
         name: r.name,
         user_id: r.owner_id,
         created_at: r.created_at,
-      })) || [];
+      }));
       
-      if (restaurants.length > 0) {
-        setUserRestaurants(restaurants);
-        setCurrentRestaurant(restaurants[0]);
+      console.log('🏪 Restaurantes encontrados:', formattedRestaurants.length);
+      
+      if (formattedRestaurants.length > 0) {
+        setUserRestaurants(formattedRestaurants);
+        setCurrentRestaurant(formattedRestaurants[0]);
         setNeedsOnboarding(false);
+        setUserRole(UserRole.OWNER);
       } else {
+        console.log('📝 Nenhum restaurante encontrado - redirecionando para onboarding');
         setNeedsOnboarding(true);
+        setUserRole(UserRole.OWNER);
       }
       
-      // Definir role do usuário
-      setUserRole(result.userRole === 'owner' ? UserRole.OWNER : UserRole.EMPLOYEE);
     } catch (error) {
-      console.warn('Aviso ao verificar restaurantes:', error);
+      console.error('Erro crítico ao verificar restaurantes:', error);
       setNeedsOnboarding(true);
+      setUserRole(UserRole.OWNER);
     }
-  }, [fetchUserDataOptimized]);
+  }, []);
 
   // Debounce para checkUserRestaurants
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
@@ -475,8 +491,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(currentSession);
           setUser(currentSession.user);
           
-          // Verificar restaurantes com debounce otimizado
-          debouncedCheckUserRestaurants(currentSession.user.id);
+          // Verificar restaurantes diretamente sem debounce para acelerar carregamento
+          await checkUserRestaurants(currentSession.user.id);
         } else {
           console.log('ℹ️ Nenhuma sessão ativa encontrada');
           clearUserData();
@@ -507,13 +523,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (currentSession?.user) {
-        console.log('Usuário logado:', currentSession.user.email);
         setSession(currentSession);
         setUser(currentSession.user);
-        setUserRole(UserRole.OWNER);
         
-        // Verificar restaurantes com debounce
-        debouncedCheckUserRestaurants(currentSession.user.id);
+        if (event === 'SIGNED_IN') {
+          console.log('Login realizado - carregando dados...');
+          await checkUserRestaurants(currentSession.user.id);
+        } else if (event === 'INITIAL_SESSION') {
+          console.log('Sessão inicial - carregando dados...');
+          await checkUserRestaurants(currentSession.user.id);
+        }
       } else {
         clearUserData();
       }
