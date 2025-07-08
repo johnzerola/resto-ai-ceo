@@ -4,9 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/services/AuthService';
 import { toast } from 'sonner';
-import { useOptimizedQueries } from '@/hooks/useOptimizedQueries';
-
-// Cache para restaurantes (30 min)
+// Cache simples para restaurantes (30 min)
 const RESTAURANT_CACHE_TIME = 30 * 60 * 1000;
 const restaurantCache = new Map<string, { data: Restaurant[]; timestamp: number }>();
 
@@ -72,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     amount: null,
   });
 
-  const { fetchUserDataOptimized, clearCache } = useOptimizedQueries();
+  // Remover dependência do useOptimizedQueries para acelerar
 
   // Função para limpar dados do usuário
   const clearUserData = () => {
@@ -92,8 +90,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       amount: null,
     });
     
-    // Limpar cache de queries
-    clearCache();
+    // Limpar cache simples
+    restaurantCache.clear();
     
     // Limpar apenas dados temporários do localStorage
     // NÃO limpar dados que devem persistir entre sessões
@@ -417,16 +415,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🔍 Verificando restaurantes para usuário:', userId);
       
-      // Query simples e direta
+      // Verificar cache primeiro
+      const cacheKey = `restaurants_${userId}`;
+      const cached = restaurantCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < RESTAURANT_CACHE_TIME) {
+        console.log('📦 Usando dados do cache');
+        const restaurants = cached.data;
+        if (restaurants.length > 0) {
+          setUserRestaurants(restaurants);
+          setCurrentRestaurant(restaurants[0]);
+          setNeedsOnboarding(false);
+          setUserRole(UserRole.OWNER);
+        } else {
+          setNeedsOnboarding(true);
+          setUserRole(UserRole.OWNER);
+        }
+        return;
+      }
+      
+      // Query simples e direta SEM JOIN
       const { data: restaurants, error } = await supabase
         .from('restaurants')
-        .select('*')
+        .select('id, name, owner_id, created_at')
         .eq('owner_id', userId)
-        .limit(10);
+        .limit(5);
 
       if (error) {
         console.error('Erro ao buscar restaurantes:', error);
         setNeedsOnboarding(true);
+        setUserRole(UserRole.OWNER);
         return;
       }
       
@@ -436,6 +453,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user_id: r.owner_id,
         created_at: r.created_at,
       }));
+      
+      // Salvar no cache
+      restaurantCache.set(cacheKey, {
+        data: formattedRestaurants,
+        timestamp: Date.now()
+      });
       
       console.log('🏪 Restaurantes encontrados:', formattedRestaurants.length);
       
@@ -457,32 +480,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Debounce para checkUserRestaurants
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-  
-  const debouncedCheckUserRestaurants = useCallback((userId: string) => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    debounceTimeoutRef.current = setTimeout(() => {
-      checkUserRestaurants(userId);
-    }, 300);
-  }, [checkUserRestaurants]);
+  // Remover debounce para acelerar carregamento
 
   useEffect(() => {
     let mounted = true;
 
     const initializeAuth = async () => {
       try {
-        console.log('✅ Inicializando autenticação...');
-        
-        // Evitar inicialização muito frequente
-        const now = Date.now();
-        if (now - lastAuthCheck < 2000) {
-          setIsLoading(false);
-          return;
-        }
-        setLastAuthCheck(now);
+        console.log('✅ Inicializando autenticação otimizada...');
         
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
@@ -490,8 +495,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('✅ Sessão ativa encontrada:', currentSession.user.email);
           setSession(currentSession);
           setUser(currentSession.user);
+          setUserRole(UserRole.OWNER);
           
-          // Verificar restaurantes diretamente sem debounce para acelerar carregamento
+          // Verificar restaurantes imediatamente
           await checkUserRestaurants(currentSession.user.id);
         } else {
           console.log('ℹ️ Nenhuma sessão ativa encontrada');
@@ -509,7 +515,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initializeAuth();
 
-    // Auth state listener
+    // Auth state listener otimizado
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log('Auth state changed:', event, currentSession?.user?.email);
       
@@ -525,12 +531,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (currentSession?.user) {
         setSession(currentSession);
         setUser(currentSession.user);
+        setUserRole(UserRole.OWNER);
         
-        if (event === 'SIGNED_IN') {
-          console.log('Login realizado - carregando dados...');
-          await checkUserRestaurants(currentSession.user.id);
-        } else if (event === 'INITIAL_SESSION') {
-          console.log('Sessão inicial - carregando dados...');
+        // Verificar restaurantes para qualquer evento de auth
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+          console.log('Login detectado - carregando dados...');
           await checkUserRestaurants(currentSession.user.id);
         }
       } else {
@@ -542,12 +547,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
       subscription.unsubscribe();
     };
-  }, [debouncedCheckUserRestaurants]);
+  }, [checkUserRestaurants]);
 
   // Check subscription when session changes
   useEffect(() => {

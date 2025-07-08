@@ -1,14 +1,9 @@
 
 import React from "react";
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
-import { FastDashboard } from "@/components/dashboard/FastDashboard";
+import { DirectDashboard } from "@/components/dashboard/DirectDashboard";
 
 const Dashboard = () => {
-  return (
-    <DashboardLayout>
-      <FastDashboard />
-    </DashboardLayout>
-  );
+  return <DirectDashboard />;
 };
 
 export default Dashboard;
