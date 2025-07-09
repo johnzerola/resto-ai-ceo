@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,21 @@ const StatCard = memo(({
 export const DirectDashboard = memo(function DirectDashboard() {
   const { currentRestaurant, isLoading } = useAuth();
 
+  // Memoizar dados para evitar re-renders desnecessários
+  const memoizedStats = useMemo(() => ({
+    revenue: 'R$ 25.430,00',
+    profit: 'R$ 8.950,00', 
+    goals: '5',
+    inventory: '48'
+  }), []);
+
+  const memoizedQuickActions = useMemo(() => [
+    { href: '/fluxo-de-caixa', icon: 'DollarSign', label: 'Fluxo de Caixa' },
+    { href: '/metas', icon: 'Target', label: 'Metas' },
+    { href: '/estoque', icon: 'Package', label: 'Estoque' },
+    { href: '/dre', icon: 'TrendingUp', label: 'Relatórios' }
+  ], []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -98,7 +113,7 @@ export const DirectDashboard = memo(function DirectDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard
             title="Receita do Mês"
-            value="R$ 25.430,00"
+            value={memoizedStats.revenue}
             icon={DollarSign}
             description="Performance mensal"
             href="/fluxo-de-caixa"
@@ -106,7 +121,7 @@ export const DirectDashboard = memo(function DirectDashboard() {
           
           <StatCard
             title="Lucro Líquido"
-            value="R$ 8.950,00"
+            value={memoizedStats.profit}
             icon={TrendingUp}
             description="Margem saudável"
             href="/dre"
@@ -114,7 +129,7 @@ export const DirectDashboard = memo(function DirectDashboard() {
           
           <StatCard
             title="Metas Ativas"
-            value="5"
+            value={memoizedStats.goals}
             icon={Target}
             description="Objetivos em andamento"
             href="/metas"
@@ -122,7 +137,7 @@ export const DirectDashboard = memo(function DirectDashboard() {
           
           <StatCard
             title="Itens em Estoque"
-            value="48"
+            value={memoizedStats.inventory}
             icon={Package}
             description="Produtos cadastrados"
             href="/estoque"

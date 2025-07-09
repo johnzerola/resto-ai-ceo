@@ -4,8 +4,8 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/services/AuthService';
 import { toast } from 'sonner';
-// Cache simples para restaurantes (30 min)
-const RESTAURANT_CACHE_TIME = 30 * 60 * 1000;
+// Cache otimizado para restaurantes (1 hora)
+const RESTAURANT_CACHE_TIME = 60 * 60 * 1000;
 const restaurantCache = new Map<string, { data: Restaurant[]; timestamp: number }>();
 
 interface SubscriptionInfo {
@@ -415,30 +415,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('🔍 Verificando restaurantes para usuário:', userId);
       
-      // Verificar cache primeiro
+      // Verificar cache primeiro (1 hora)
       const cacheKey = `restaurants_${userId}`;
       const cached = restaurantCache.get(cacheKey);
-      if (cached && Date.now() - cached.timestamp < RESTAURANT_CACHE_TIME) {
-        console.log('📦 Usando dados do cache');
+      if (cached && Date.now() - cached.timestamp < 3600000) { // 1 hora
+        console.log('📦 Cache hit - carregando instantâneo');
         const restaurants = cached.data;
+        setUserRestaurants(restaurants);
         if (restaurants.length > 0) {
-          setUserRestaurants(restaurants);
           setCurrentRestaurant(restaurants[0]);
           setNeedsOnboarding(false);
-          setUserRole(UserRole.OWNER);
         } else {
           setNeedsOnboarding(true);
-          setUserRole(UserRole.OWNER);
         }
+        setUserRole(UserRole.OWNER);
         return;
       }
       
-      // Query simples e direta SEM JOIN
+      // Query otimizada - somente campos essenciais com LIMIT
       const { data: restaurants, error } = await supabase
         .from('restaurants')
         .select('id, name, owner_id, created_at')
         .eq('owner_id', userId)
-        .limit(5);
+        .limit(10);
 
       if (error) {
         console.error('Erro ao buscar restaurantes:', error);
@@ -454,24 +453,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         created_at: r.created_at,
       }));
       
-      // Salvar no cache
+      // Cache com TTL de 1 hora
       restaurantCache.set(cacheKey, {
         data: formattedRestaurants,
         timestamp: Date.now()
       });
       
-      console.log('🏪 Restaurantes encontrados:', formattedRestaurants.length);
+      console.log('🏪 Restaurantes carregados:', formattedRestaurants.length);
       
+      setUserRestaurants(formattedRestaurants);
       if (formattedRestaurants.length > 0) {
-        setUserRestaurants(formattedRestaurants);
         setCurrentRestaurant(formattedRestaurants[0]);
         setNeedsOnboarding(false);
-        setUserRole(UserRole.OWNER);
       } else {
-        console.log('📝 Nenhum restaurante encontrado - redirecionando para onboarding');
         setNeedsOnboarding(true);
-        setUserRole(UserRole.OWNER);
       }
+      setUserRole(UserRole.OWNER);
       
     } catch (error) {
       console.error('Erro crítico ao verificar restaurantes:', error);
@@ -487,20 +484,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        console.log('✅ Inicializando autenticação otimizada...');
+        console.log('⚡ Auth otimizada iniciando...');
         
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession?.user && mounted) {
-          console.log('✅ Sessão ativa encontrada:', currentSession.user.email);
+          console.log('⚡ Sessão encontrada:', currentSession.user.email);
           setSession(currentSession);
           setUser(currentSession.user);
           setUserRole(UserRole.OWNER);
           
-          // Verificar restaurantes imediatamente
-          await checkUserRestaurants(currentSession.user.id);
+          // Carregamento imediato de restaurantes (sem await para não bloquear)
+          checkUserRestaurants(currentSession.user.id);
         } else {
-          console.log('ℹ️ Nenhuma sessão ativa encontrada');
+          console.log('ℹ️ Sem sessão - redirecionando');
           clearUserData();
         }
       } catch (error) {
@@ -513,16 +510,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    initializeAuth();
-
-    // Auth state listener otimizado
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log('Auth state changed:', event, currentSession?.user?.email);
+    // Auth state listener simplificado - SEM debounce
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      console.log('⚡ Auth change:', event);
       
       if (!mounted) return;
 
       if (event === 'SIGNED_OUT' || !currentSession) {
-        console.log('Usuário deslogado');
         clearUserData();
         setIsLoading(false);
         return;
@@ -533,17 +527,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(currentSession.user);
         setUserRole(UserRole.OWNER);
         
-        // Verificar restaurantes para qualquer evento de auth
+        // Carregamento instantâneo de dados (sem await)
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-          console.log('Login detectado - carregando dados...');
-          await checkUserRestaurants(currentSession.user.id);
+          checkUserRestaurants(currentSession.user.id);
         }
-      } else {
-        clearUserData();
       }
       
       setIsLoading(false);
     });
+
+    // Inicializar auth DEPOIS do listener
+    initializeAuth();
 
     return () => {
       mounted = false;

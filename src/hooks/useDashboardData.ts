@@ -13,9 +13,8 @@ import {
 import { toast } from 'sonner';
 import { debounce } from '@/utils/debounce';
 
-// Cache otimizado para diferentes tipos de dados
-const FINANCIAL_CACHE_DURATION = 10 * 60 * 1000; // 10 minutos para dados financeiros
-const STATIC_CACHE_DURATION = 30 * 60 * 1000; // 30 minutos para metas/estoque
+// Cache unificado para performance máxima
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutos unificado
 const dataCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
 
 const getCachedData = (key: string) => {
@@ -26,7 +25,7 @@ const getCachedData = (key: string) => {
   return null;
 };
 
-const setCachedData = (key: string, data: any, ttl: number = FINANCIAL_CACHE_DURATION) => {
+const setCachedData = (key: string, data: any, ttl: number = CACHE_DURATION) => {
   dataCache.set(key, { data, timestamp: Date.now(), ttl });
 };
 
@@ -294,13 +293,14 @@ export function useDashboardData() {
     setDashboardStats(calculateDashboardStats);
   }, [calculateDashboardStats]);
 
-  // Carregamento otimizado com consulta única
+  // Carregamento super otimizado com consultas paralelas
   const loadCombinedData = useCallback(async () => {
     if (!currentRestaurant?.id) return;
 
     const cacheKey = `${COMBINED_CACHE_KEY}${currentRestaurant.id}`;
     const cached = getCachedData(cacheKey);
     if (cached) {
+      console.log('⚡ Dashboard cache hit');
       setFinancialData(cached.financial || []);
       setGoals(cached.goals || []);
       setInventory(cached.inventory || []);
@@ -310,7 +310,8 @@ export function useDashboardData() {
     }
 
     try {
-      // Executar consultas em paralelo de forma otimizada
+      console.log('⚡ Carregando dados em paralelo...');
+      // Queries super otimizadas com LIMIT para performance
       const [
         { data: cashFlowData },
         { data: goalsData },
@@ -318,10 +319,10 @@ export function useDashboardData() {
         { data: alertsData },
         { data: businessData }
       ] = await Promise.all([
-        supabase.from('cash_flow').select('*').eq('restaurant_id', currentRestaurant.id).order('date', { ascending: false }).limit(50),
-        supabase.from('goals').select('*').eq('restaurant_id', currentRestaurant.id),
-        supabase.from('insumos').select('*').eq('restaurant_id', currentRestaurant.id),
-        supabase.from('alertas_sistema').select('*').eq('restaurant_id', currentRestaurant.id).eq('resolvido', false).order('data_criacao', { ascending: false }),
+        supabase.from('cash_flow').select('id, type, amount, date, category, description, restaurant_id').eq('restaurant_id', currentRestaurant.id).order('date', { ascending: false }).limit(30),
+        supabase.from('goals').select('id, title, target, current, completed, deadline, description, restaurant_id').eq('restaurant_id', currentRestaurant.id).limit(20),
+        supabase.from('insumos').select('id, nome, estoque_atual, estoque_minimo, preco_unitario, unidade_medida, categoria, restaurant_id').eq('restaurant_id', currentRestaurant.id).limit(50),
+        supabase.from('alertas_sistema').select('id, titulo, mensagem, prioridade, restaurant_id, data_criacao, resolvido').eq('restaurant_id', currentRestaurant.id).eq('resolvido', false).order('data_criacao', { ascending: false }).limit(10),
         supabase.from('business_profiles').select('*').eq('restaurant_id', currentRestaurant.id).maybeSingle()
       ]);
 
@@ -394,14 +395,16 @@ export function useDashboardData() {
       setAlerts(typedAlerts);
       if (typedBusinessProfile) setBusinessProfile(typedBusinessProfile);
 
-      // Cachear resultado combinado
+      // Cache com TTL otimizado
       setCachedData(cacheKey, {
         financial: typedFinancialData,
         goals: typedGoals,
         inventory: typedInventory,
         alerts: typedAlerts,
         businessProfile: typedBusinessProfile
-      }, FINANCIAL_CACHE_DURATION);
+      }, CACHE_DURATION);
+      
+      console.log('⚡ Dashboard dados carregados e cacheados');
 
     } catch (err) {
       console.error('Erro ao carregar dados combinados:', err);

@@ -13,13 +13,13 @@ import { PerformanceMonitor } from "@/components/performance/PerformanceMonitor"
 import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Páginas críticas (não lazy)
+// Páginas críticas carregamento direto para performance
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard"; // Dashboard direto para performance
 
-// Lazy loading para páginas pesadas
-const Dashboard = lazy(() => import("./pages/Dashboard"));
+// Lazy loading apenas para páginas secundárias
 const FichaTecnicaInteligenteCompleta = lazy(() => import("./pages/FichaTecnicaInteligenteCompleta"));
 const SystemValidation = lazy(() => import("./pages/SystemValidation"));
 const DreCmv = lazy(() => import("./pages/DreCmv"));
@@ -110,9 +110,7 @@ function App() {
                 } />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Dashboard />
-                    </Suspense>
+                    <Dashboard />
                   </ProtectedRoute>
                 } />
                 <Route path="/dre-cmv" element={
