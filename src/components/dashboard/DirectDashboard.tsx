@@ -81,8 +81,8 @@ export const DirectDashboard = memo(function DirectDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      {/* Header Otimizado */}
-      <div className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
+        {/* Header Otimizado */}
+        <div className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
         <div className="px-4 lg:px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -193,7 +193,7 @@ export const DirectDashboard = memo(function DirectDashboard() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
     </div>
   );
 });

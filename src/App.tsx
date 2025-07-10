@@ -52,6 +52,7 @@ const Index = lazy(() => import("./pages/Index"));
 
 // Import optimized branded loader
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 // Loading component otimizado com branding Lucraí
 const PageLoader = ({ message }: { message?: string }) => (
@@ -110,84 +111,144 @@ function App() {
                 } />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <DashboardLayout>
+                      <Dashboard />
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/dre-cmv" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <DreCmv />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <DreCmv />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/dre" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <DreCmv />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <DreCmv />
+                      </Suspense>
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/dri" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <DreCmv />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/cmv" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <DreCmv />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <DreCmv />
+                      </Suspense>
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/fluxo-caixa" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <FluxoDeCaixa />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/fluxo-de-caixa" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <FluxoDeCaixa />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <FluxoDeCaixa />
+                      </Suspense>
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/assinaturas" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Assinatura />
+                      </Suspense>
+                    </DashboardLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/projecao" element={
+                  <ProtectedRoute>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <ProjecoesPagina />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/simulador" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Simulador />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Simulador />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/metas" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Metas />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Metas />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/estoque" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Estoque />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Estoque />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/cardapio" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Cardapio />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Cardapio />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/assistente-ia" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <AiAssistant />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <AiAssistant />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/ai-assistant" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <AiAssistant />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <AiAssistant />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/projecoes" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <ProjecoesPagina />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <ProjecoesPagina />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/gerenciar-usuarios" element={
@@ -199,44 +260,56 @@ function App() {
                 } />
                 <Route path="/assinatura" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Assinatura />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Assinatura />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/configuracoes" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Configuracoes />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Configuracoes />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/gestao-tarefas" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <GestaoTarefas />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <GestaoTarefas />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/tarefas" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <GestaoTarefas />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <GestaoTarefas />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/documentacao" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Documentacao />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Documentacao />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/privacidade" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <Privacidade />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Privacidade />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/status-sistema" element={
@@ -291,23 +364,29 @@ function App() {
                 {/* New Feature Routes */}
                 <Route path="/developer" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <DeveloperDashboard />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <DeveloperDashboard />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/branding" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <BrandingGuide />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <BrandingGuide />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/affiliate" element={
                   <ProtectedRoute>
-                    <Suspense fallback={<PageLoader />}>
-                      <AffiliateSystem />
-                    </Suspense>
+                    <DashboardLayout>
+                      <Suspense fallback={<PageLoader />}>
+                        <AffiliateSystem />
+                      </Suspense>
+                    </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="*" element={<NotFound />} />

@@ -36,25 +36,46 @@ const navigation = [
     category: "overview"
   },
   {
-    title: "Projeções",
+    title: "Fluxo de Caixa",
+    href: "/fluxo-caixa",
+    icon: DollarSign,
+    description: "Controle financeiro completo",
+    category: "financial"
+  },
+  {
+    title: "DRE",
+    href: "/dre",
+    icon: BarChart3,
+    description: "Demonstração de Resultados",
+    category: "financial"
+  },
+  {
+    title: "CMV",
+    href: "/cmv",
+    icon: Calculator,
+    description: "Custo da Mercadoria Vendida",
+    category: "financial"
+  },
+  {
+    title: "Assinaturas",
+    href: "/assinatura",
+    icon: CreditCard,
+    description: "Planos e pagamentos",
+    category: "account"
+  },
+  {
+    title: "Estoque",
+    href: "/estoque",
+    icon: Package,
+    description: "Gestão de inventário",
+    category: "operations"
+  },
+  {
+    title: "Projeção",
     href: "/projecoes",
     icon: TrendingUp,
     description: "Planejamento e cenários futuros",
     category: "analytics"
-  },
-  {
-    title: "Fluxo de Caixa",
-    href: "/fluxo-de-caixa",
-    icon: DollarSign,
-    description: "Controle financeiro",
-    category: "financial"
-  },
-  {
-    title: "DRE & CMV",
-    href: "/dre-cmv",
-    icon: BarChart3,
-    description: "Demonstração e custo",
-    category: "financial"
   },
   {
     title: "Simulador",
@@ -71,13 +92,6 @@ const navigation = [
     category: "management"
   },
   {
-    title: "Estoque",
-    href: "/estoque",
-    icon: Package,
-    description: "Gestão de inventário",
-    category: "operations"
-  },
-  {
     title: "Cardápio",
     href: "/cardapio",
     icon: Utensils,
@@ -90,13 +104,6 @@ const navigation = [
     icon: Bot,
     description: "Suporte inteligente",
     category: "ai"
-  },
-  {
-    title: "Assinatura",
-    href: "/assinatura",
-    icon: CreditCard,
-    description: "Planos e pagamentos",
-    category: "account"
   },
   {
     title: "Gestão de Tarefas",
@@ -143,17 +150,17 @@ const navigation = [
 ];
 
 const categories = {
-  overview: { label: "Visão Geral", color: "text-blue-600" },
-  analytics: { label: "Análises", color: "text-purple-600" },
-  financial: { label: "Financeiro", color: "text-green-600" },
-  tools: { label: "Ferramentas", color: "text-orange-600" },
-  operations: { label: "Operações", color: "text-blue-500" },
-  management: { label: "Gestão", color: "text-indigo-600" },
-  ai: { label: "Inteligência", color: "text-pink-600" },
-  account: { label: "Conta", color: "text-gray-600" },
-  support: { label: "Suporte", color: "text-gray-500" },
-  developer: { label: "Desenvolvedor", color: "text-red-600" },
-  business: { label: "Negócios", color: "text-green-700" }
+  overview: { label: "Visão Geral", color: "text-lucrai-blue-primary" },
+  analytics: { label: "Análises", color: "text-lucrai-green-primary" },
+  financial: { label: "Financeiro", color: "text-lucrai-green-primary" },
+  tools: { label: "Ferramentas", color: "text-lucrai-yellow-primary" },
+  operations: { label: "Operações", color: "text-lucrai-blue-secondary" },
+  management: { label: "Gestão", color: "text-lucrai-blue-primary" },
+  ai: { label: "Inteligência", color: "text-lucrai-green-primary" },
+  account: { label: "Conta", color: "text-lucrai-gray-600" },
+  support: { label: "Suporte", color: "text-lucrai-gray-500" },
+  developer: { label: "Desenvolvedor", color: "text-lucrai-orange-alert" },
+  business: { label: "Negócios", color: "text-lucrai-green-secondary" }
 };
 
 export function ModernSidebar() {
@@ -241,27 +248,34 @@ export function ModernSidebar() {
           !isMobileOpen && !isCollapsed && "md:w-72"
         )}
       >
-        {/* Header */}
-        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-sidebar-border flex-shrink-0" style={{ background: 'var(--lucrai-gradient-primary)' }}>
+        {/* Header com Branding Aprimorado */}
+        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-sidebar-border flex-shrink-0 bg-lucrai-gradient-primary">
           {(!isCollapsed || isMobileOpen) && (
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-content flex-shrink-0">
-                <img 
-                  src="/src/assets/lucrai-logo.png" 
-                  alt="Lucraí Logo" 
-                  className="w-full h-full object-contain"
-                />
+              <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0 bg-white/10 rounded-lg backdrop-blur-sm">
+                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded-sm flex items-center justify-center">
+                  <span className="text-xs sm:text-sm font-bold text-lucrai-blue-primary">L</span>
+                </div>
               </div>
-              <h2 className="text-sm sm:text-lg font-bold text-white truncate font-dm-sans">
+              <h2 className="text-sm sm:text-lg font-bold text-white truncate font-dm-sans tracking-wider">
                 Lucraí
               </h2>
+            </div>
+          )}
+          {isCollapsed && !isMobileOpen && (
+            <div className="flex items-center justify-center w-full">
+              <div className="w-6 h-6 flex items-center justify-center bg-white/10 rounded-lg backdrop-blur-sm">
+                <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center">
+                  <span className="text-xs font-bold text-lucrai-blue-primary">L</span>
+                </div>
+              </div>
             </div>
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="hidden md:flex text-white hover:bg-white/10 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
+            className="hidden md:flex text-white hover:bg-white/10 transition-all duration-200 h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 rounded-lg"
           >
             {isCollapsed ? (
               <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -344,12 +358,16 @@ export function ModernSidebar() {
           </ScrollArea>
         </div>
 
-        {/* Footer */}
+        {/* Footer com Branding */}
         {(!isCollapsed || isMobileOpen) && (
-          <div className="p-3 sm:p-4 border-t border-sidebar-border bg-gradient-to-r from-muted/50 to-card flex-shrink-0">
-            <div className="text-xs text-muted-foreground text-center">
-              <p className="font-medium">Lucraí v2.0</p>
-              <p className="hidden sm:block">Inteligência para seu restaurante</p>
+          <div className="p-3 sm:p-4 border-t border-sidebar-border bg-lucrai-gradient-subtle flex-shrink-0">
+            <div className="text-xs text-lucrai-gray-600 text-center space-y-1">
+              <p className="font-semibold text-lucrai-blue-primary">Lucraí v2.0</p>
+              <p className="hidden sm:block font-medium">Inteligência para seu restaurante</p>
+              <div className="hidden sm:flex items-center justify-center gap-1 mt-2">
+                <div className="w-2 h-2 bg-lucrai-green-primary rounded-full animate-pulse"></div>
+                <span className="text-lucrai-green-primary font-medium">Sistema Online</span>
+              </div>
             </div>
           </div>
         )}
