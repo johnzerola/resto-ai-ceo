@@ -1,1 +1,11 @@
 project_id = "llndccqumkrblpgystom"
+
+# Edge Functions
+[functions.transaction-recorded]
+verify_jwt = false
+
+[functions.inventory-movement]
+verify_jwt = false
+
+[functions.fixed-expense]
+verify_jwt = false

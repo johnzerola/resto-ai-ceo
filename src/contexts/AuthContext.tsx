@@ -369,6 +369,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           {
             name,
             owner_id: user.id,
+            tenant_id: crypto.randomUUID(),
             business_type: 'Restaurante',
             target_food_cost: 30,
             target_beverage_cost: 25,

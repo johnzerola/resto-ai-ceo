@@ -403,6 +403,7 @@ export type Database = {
           recorrente: boolean | null
           restaurant_id: string | null
           status: string | null
+          tenant_id: string | null
           type: string
           vencimento: string | null
         }
@@ -425,6 +426,7 @@ export type Database = {
           recorrente?: boolean | null
           restaurant_id?: string | null
           status?: string | null
+          tenant_id?: string | null
           type: string
           vencimento?: string | null
         }
@@ -447,6 +449,7 @@ export type Database = {
           recorrente?: boolean | null
           restaurant_id?: string | null
           status?: string | null
+          tenant_id?: string | null
           type?: string
           vencimento?: string | null
         }
@@ -1039,6 +1042,62 @@ export type Database = {
         }
         Relationships: []
       }
+      fixed_expenses: {
+        Row: {
+          active: boolean
+          amount: number
+          auto_pay: boolean | null
+          category: string
+          created_at: string | null
+          description: string | null
+          due_day: number
+          id: string
+          name: string
+          notification_days: number | null
+          restaurant_id: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean
+          amount?: number
+          auto_pay?: boolean | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          due_day?: number
+          id?: string
+          name: string
+          notification_days?: number | null
+          restaurant_id: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          auto_pay?: boolean | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          due_day?: number
+          id?: string
+          name?: string
+          notification_days?: number | null
+          restaurant_id?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixed_expenses_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           category: string | null
@@ -1358,6 +1417,7 @@ export type Database = {
           name: string
           quantity: number | null
           restaurant_id: string | null
+          tenant_id: string | null
           unit: string | null
           updated_at: string | null
         }
@@ -1370,6 +1430,7 @@ export type Database = {
           name: string
           quantity?: number | null
           restaurant_id?: string | null
+          tenant_id?: string | null
           unit?: string | null
           updated_at?: string | null
         }
@@ -1382,6 +1443,7 @@ export type Database = {
           name?: string
           quantity?: number | null
           restaurant_id?: string | null
+          tenant_id?: string | null
           unit?: string | null
           updated_at?: string | null
         }
@@ -2191,6 +2253,7 @@ export type Database = {
           owner_name: string | null
           target_beverage_cost: number | null
           target_food_cost: number | null
+          tenant_id: string
           updated_at: string | null
           variable_expenses: number | null
         }
@@ -2207,6 +2270,7 @@ export type Database = {
           owner_name?: string | null
           target_beverage_cost?: number | null
           target_food_cost?: number | null
+          tenant_id: string
           updated_at?: string | null
           variable_expenses?: number | null
         }
@@ -2223,6 +2287,7 @@ export type Database = {
           owner_name?: string | null
           target_beverage_cost?: number | null
           target_food_cost?: number | null
+          tenant_id?: string
           updated_at?: string | null
           variable_expenses?: number | null
         }
@@ -2568,6 +2633,42 @@ export type Database = {
           },
         ]
       }
+      tenant_instances: {
+        Row: {
+          created_at: string | null
+          id: string
+          instance_id: string
+          name: string
+          status: string
+          subscription_tier: string
+          tenant_id: string
+          trial_end: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instance_id: string
+          name: string
+          status?: string
+          subscription_tier?: string
+          tenant_id: string
+          trial_end?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instance_id?: string
+          name?: string
+          status?: string
+          subscription_tier?: string
+          tenant_id?: string
+          trial_end?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tendencias_estoque: {
         Row: {
           created_at: string | null
@@ -2837,6 +2938,10 @@ export type Database = {
       gerar_alertas_automaticos: {
         Args: { restaurant_uuid: string }
         Returns: undefined
+      }
+      get_current_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       gtrgm_compress: {
         Args: { "": unknown }

@@ -182,6 +182,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         .insert([{
           name: formData.restaurantName,
           owner_id: user.id,
+          tenant_id: crypto.randomUUID(),
           owner_name: formData.ownerName,
           business_type: formData.businessType,
           cnpj: formData.cnpj || null,
