@@ -55,7 +55,10 @@ interface ValidacaoStatus {
 
 // Hook principal corrigido e otimizado
 export function useFichaTecnicaFixed() {
-  const { currentRestaurant } = useAuth();
+  const { currentRestaurant, user } = useAuth();
+  
+  // Função para obter chave com prefixo do usuário
+  const getUserKey = (key: string) => user?.id ? `${key}_${user.id}` : key;
   const isInitialized = useRef(false);
   
   // Estados principais com inicialização controlada
@@ -92,9 +95,9 @@ export function useFichaTecnicaFixed() {
   useEffect(() => {
     if (!isInitialized.current) {
       try {
-        const savedDados = localStorage.getItem('ficha_tecnica_dados_prato');
-        const savedConfig = localStorage.getItem('ficha_tecnica_configuracao');
-        const savedIngredientes = localStorage.getItem('ficha_tecnica_ingredientes');
+        const savedDados = localStorage.getItem(getUserKey('ficha_tecnica_dados_prato'));
+        const savedConfig = localStorage.getItem(getUserKey('ficha_tecnica_configuracao'));
+        const savedIngredientes = localStorage.getItem(getUserKey('ficha_tecnica_ingredientes'));
 
         if (savedDados) {
           setDadosPrato(JSON.parse(savedDados));
@@ -115,19 +118,19 @@ export function useFichaTecnicaFixed() {
   // Persistir dados no localStorage de forma controlada
   useEffect(() => {
     if (isInitialized.current) {
-      localStorage.setItem('ficha_tecnica_dados_prato', JSON.stringify(dadosPrato));
+      localStorage.setItem(getUserKey('ficha_tecnica_dados_prato'), JSON.stringify(dadosPrato));
     }
   }, [dadosPrato]);
 
   useEffect(() => {
     if (isInitialized.current) {
-      localStorage.setItem('ficha_tecnica_configuracao', JSON.stringify(configuracaoAvancada));
+      localStorage.setItem(getUserKey('ficha_tecnica_configuracao'), JSON.stringify(configuracaoAvancada));
     }
   }, [configuracaoAvancada]);
 
   useEffect(() => {
     if (isInitialized.current) {
-      localStorage.setItem('ficha_tecnica_ingredientes', JSON.stringify(ingredientes));
+      localStorage.setItem(getUserKey('ficha_tecnica_ingredientes'), JSON.stringify(ingredientes));
     }
   }, [ingredientes]);
 
@@ -521,10 +524,12 @@ export function useFichaTecnicaFixed() {
     setResultados(null);
     setErrors([]);
     
-    // Limpar localStorage
-    localStorage.removeItem('ficha_tecnica_dados_prato');
-    localStorage.removeItem('ficha_tecnica_configuracao');
-    localStorage.removeItem('ficha_tecnica_ingredientes');
+    // Limpar localStorage com prefixo do usuário
+    if (user?.id) {
+      localStorage.removeItem(getUserKey('ficha_tecnica_dados_prato'));
+      localStorage.removeItem(getUserKey('ficha_tecnica_configuracao'));
+      localStorage.removeItem(getUserKey('ficha_tecnica_ingredientes'));
+    }
     
     toast.success('Ficha técnica limpa com sucesso!');
   }, []);

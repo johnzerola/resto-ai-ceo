@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface TechnicalSheetData {
   id: string;
@@ -33,8 +34,12 @@ export interface TechnicalSheetData {
 }
 
 export function useTechnicalSheets() {
+  const { user } = useAuth();
   const [sheets, setSheets] = useState<Record<string, TechnicalSheetData>>({});
   const [loading, setLoading] = useState(true);
+  
+  // Função para obter chave com prefixo do usuário
+  const getUserKey = (key: string) => user?.id ? `${key}_${user.id}` : key;
 
   useEffect(() => {
     loadSheets();
@@ -42,7 +47,7 @@ export function useTechnicalSheets() {
 
   const loadSheets = () => {
     try {
-      const storedSheets = localStorage.getItem("technicalSheets");
+      const storedSheets = localStorage.getItem(getUserKey("technicalSheets"));
       if (storedSheets) {
         setSheets(JSON.parse(storedSheets));
       }
@@ -66,7 +71,9 @@ export function useTechnicalSheets() {
     };
 
     setSheets(updatedSheets);
-    localStorage.setItem("technicalSheets", JSON.stringify(updatedSheets));
+    if (user?.id) {
+      localStorage.setItem(getUserKey("technicalSheets"), JSON.stringify(updatedSheets));
+    }
     
     // Disparar evento para sincronização
     window.dispatchEvent(new CustomEvent('technicalSheetUpdated', { 
@@ -83,7 +90,9 @@ export function useTechnicalSheets() {
     delete updatedSheets[sheetId];
     
     setSheets(updatedSheets);
-    localStorage.setItem("technicalSheets", JSON.stringify(updatedSheets));
+    if (user?.id) {
+      localStorage.setItem(getUserKey("technicalSheets"), JSON.stringify(updatedSheets));
+    }
   };
 
   const hasSheet = (sheetId: string): boolean => {

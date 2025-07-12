@@ -1,216 +1,107 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { securityService, SecurityEvent } from "@/services/SecurityService";
-import { useAuth } from "@/contexts/AuthContext";
-import { Shield, AlertTriangle, Eye, Download, Activity } from "lucide-react";
-import { toast } from "sonner";
+import React from 'react';
+import { useSecurityValidation } from '@/hooks/useSecurityValidation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Shield, ShieldAlert, ShieldCheck, RefreshCw, Trash2 } from 'lucide-react';
 
 export function SecurityDashboard() {
-  const { user } = useAuth();
-  const [securityLogs, setSecurityLogs] = useState<SecurityEvent[]>([]);
-  const [dataAccessLogs, setDataAccessLogs] = useState<any[]>([]);
+  const { 
+    issues, 
+    isValidating, 
+    runFullValidation, 
+    cleanupLocalStorage,
+    hasErrors,
+    hasWarnings 
+  } = useSecurityValidation();
 
-  useEffect(() => {
-    loadSecurityData();
-  }, []);
-
-  const loadSecurityData = () => {
-    setSecurityLogs(securityService.getSecurityLogs());
-    setDataAccessLogs(securityService.getDataAccessLogs());
+  const getSecurityStatus = () => {
+    if (hasErrors) return { icon: ShieldAlert, text: 'Problemas Críticos', variant: 'destructive' as const };
+    if (hasWarnings) return { icon: ShieldAlert, text: 'Avisos', variant: 'secondary' as const };
+    return { icon: ShieldCheck, text: 'Seguro', variant: 'default' as const };
   };
 
-  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário';
-
-  const exportSecurityReport = () => {
-    const report = {
-      user: userName,
-      exportDate: new Date().toISOString(),
-      securityEvents: securityLogs.filter(log => log.userId === user?.id),
-      dataAccessEvents: dataAccessLogs.filter(log => log.userId === user?.id),
-      summary: {
-        totalEvents: securityLogs.length,
-        failedLogins: securityLogs.filter(log => log.eventType === 'failed_login').length,
-        dataAccesses: dataAccessLogs.length
-      }
-    };
-
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `relatorio_seguranca_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    toast.success("Relatório de segurança exportado!");
-  };
-
-  const getEventTypeBadge = (eventType: SecurityEvent['eventType']) => {
-    const eventConfig = {
-      login: { color: "bg-green-100 text-green-800", text: "Login" },
-      logout: { color: "bg-blue-100 text-blue-800", text: "Logout" },
-      failed_login: { color: "bg-red-100 text-red-800", text: "Login Falhado" },
-      data_access: { color: "bg-purple-100 text-purple-800", text: "Acesso a Dados" },
-      data_export: { color: "bg-orange-100 text-orange-800", text: "Exportação" },
-      permission_denied: { color: "bg-red-100 text-red-800", text: "Permissão Negada" }
-    };
-
-    const config = eventConfig[eventType];
-    return <Badge className={config.color}>{config.text}</Badge>;
-  };
-
-  // Estatísticas de segurança
-  const securityStats = {
-    totalEvents: securityLogs.length,
-    failedLogins: securityLogs.filter(log => log.eventType === 'failed_login').length,
-    successfulLogins: securityLogs.filter(log => log.eventType === 'login').length,
-    dataAccesses: dataAccessLogs.length
-  };
+  const status = getSecurityStatus();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Painel de Segurança</h2>
-          <p className="text-muted-foreground">Monitore a segurança e atividades da sua conta</p>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          Painel de Segurança Multi-Tenant
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <status.icon className="h-5 w-5" />
+            <span className="font-medium">Status: </span>
+            <Badge variant={status.variant}>{status.text}</Badge>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button 
+              onClick={runFullValidation}
+              disabled={isValidating}
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isValidating ? 'animate-spin' : ''}`} />
+              {isValidating ? 'Validando...' : 'Validar'}
+            </Button>
+            
+            <Button 
+              onClick={cleanupLocalStorage}
+              variant="outline"
+              size="sm"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Limpar Cache
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={exportSecurityReport} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar Relatório
-          </Button>
+
+        {issues.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="font-medium">Problemas Encontrados:</h4>
+            {issues.map((issue, index) => (
+              <Alert key={index} variant={issue.type === 'error' ? 'destructive' : 'default'}>
+                <AlertDescription>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-medium">{issue.component}:</span> {issue.message}
+                    </div>
+                    <Badge variant={issue.type === 'error' ? 'destructive' : 'secondary'}>
+                      {issue.type}
+                    </Badge>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            ))}
+          </div>
+        )}
+
+        {issues.length === 0 && !isValidating && (
+          <Alert>
+            <ShieldCheck className="h-4 w-4" />
+            <AlertDescription>
+              ✅ Todos os testes de segurança passaram. O isolamento multi-tenant está funcionando corretamente.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="text-sm text-muted-foreground">
+          <h4 className="font-medium mb-2">Validações Realizadas:</h4>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Isolamento de dados no localStorage por usuário</li>
+            <li>Funcionamento das políticas RLS (Row Level Security)</li>
+            <li>Verificação de vazamento de dados entre usuários</li>
+            <li>Validação de queries com filtros adequados</li>
+            <li>Integridade das tabelas sensíveis</li>
+          </ul>
         </div>
-      </div>
-
-      {/* Estatísticas de Segurança */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Activity className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Total de Eventos</p>
-                <p className="text-2xl font-bold">{securityStats.totalEvents}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Shield className="h-8 w-8 text-green-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Logins Bem-sucedidos</p>
-                <p className="text-2xl font-bold">{securityStats.successfulLogins}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Tentativas Falhadas</p>
-                <p className="text-2xl font-bold">{securityStats.failedLogins}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Eye className="h-8 w-8 text-purple-600" />
-              <div>
-                <p className="text-sm text-muted-foreground">Acessos a Dados</p>
-                <p className="text-2xl font-bold">{securityStats.dataAccesses}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Log de Eventos de Segurança */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Eventos de Segurança Recentes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {securityLogs.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo de Evento</TableHead>
-                  <TableHead>Data/Hora</TableHead>
-                  <TableHead>Endereço IP</TableHead>
-                  <TableHead>Dispositivo</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {securityLogs.slice(0, 10).map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>{getEventTypeBadge(log.eventType)}</TableCell>
-                    <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
-                    <TableCell>{log.ipAddress || 'N/A'}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {log.userAgent?.split(' ')[0] || 'N/A'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-center py-8 text-muted-foreground">
-              Nenhum evento de segurança registrado
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Log de Acesso a Dados */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Acesso a Dados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {dataAccessLogs.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tipo de Dados</TableHead>
-                  <TableHead>Ação</TableHead>
-                  <TableHead>Data/Hora</TableHead>
-                  <TableHead>IP</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dataAccessLogs.slice(0, 10).map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>{log.dataType}</TableCell>
-                    <TableCell>
-                      <Badge variant={log.action === 'read' ? 'secondary' : 'default'}>
-                        {log.action}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
-                    <TableCell>{log.ipAddress}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-center py-8 text-muted-foreground">
-              Nenhum acesso a dados registrado
-            </p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -52,11 +52,22 @@ interface ValidacaoStatus {
 }
 
 export function useFichaTecnicaCompleta() {
-  const { currentRestaurant } = useAuth();
+  const { currentRestaurant, user } = useAuth();
   
-  // Estados principais com localStorage
+  // Função para obter chave com prefixo do usuário
+  const getUserKey = (key: string) => user?.id ? `${key}_${user.id}` : key;
+  
+  // Estados principais com localStorage prefixado por usuário
   const [dadosPrato, setDadosPrato] = useState<DadosPrato>(() => {
-    const saved = localStorage.getItem('ficha_tecnica_dados_prato');
+    if (!user?.id) return {
+      nome_prato: '',
+      categoria: '',
+      rendimento_porcoes: 1,
+      observacoes: '',
+      preco_desejado: 0
+    };
+    
+    const saved = localStorage.getItem(getUserKey('ficha_tecnica_dados_prato'));
     return saved ? JSON.parse(saved) : {
       nome_prato: '',
       categoria: '',
@@ -67,7 +78,16 @@ export function useFichaTecnicaCompleta() {
   });
 
   const [configuracaoAvancada, setConfiguracaoAvancada] = useState<ConfiguracaoAvancada>(() => {
-    const saved = localStorage.getItem('ficha_tecnica_configuracao');
+    if (!user?.id) return {
+      meta_lucro_percentual: 30,
+      despesas_fixas_mensais: 0,
+      despesas_variaveis_mensais: 0,
+      markup_personalizado: 250,
+      canal_venda: 'balcao',
+      preco_concorrente: 0
+    };
+    
+    const saved = localStorage.getItem(getUserKey('ficha_tecnica_configuracao'));
     return saved ? JSON.parse(saved) : {
       meta_lucro_percentual: 30,
       despesas_fixas_mensais: 0,
@@ -79,7 +99,8 @@ export function useFichaTecnicaCompleta() {
   });
 
   const [ingredientes, setIngredientes] = useState<IngredienteCompleto[]>(() => {
-    const saved = localStorage.getItem('ficha_tecnica_ingredientes');
+    if (!user?.id) return [];
+    const saved = localStorage.getItem(getUserKey('ficha_tecnica_ingredientes'));
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -89,18 +110,24 @@ export function useFichaTecnicaCompleta() {
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
-  // Persistir dados no localStorage
+  // Persistir dados no localStorage com prefixo do usuário
   useEffect(() => {
-    localStorage.setItem('ficha_tecnica_dados_prato', JSON.stringify(dadosPrato));
-  }, [dadosPrato]);
+    if (user?.id) {
+      localStorage.setItem(getUserKey('ficha_tecnica_dados_prato'), JSON.stringify(dadosPrato));
+    }
+  }, [dadosPrato, user?.id]);
 
   useEffect(() => {
-    localStorage.setItem('ficha_tecnica_configuracao', JSON.stringify(configuracaoAvancada));
-  }, [configuracaoAvancada]);
+    if (user?.id) {
+      localStorage.setItem(getUserKey('ficha_tecnica_configuracao'), JSON.stringify(configuracaoAvancada));
+    }
+  }, [configuracaoAvancada, user?.id]);
 
   useEffect(() => {
-    localStorage.setItem('ficha_tecnica_ingredientes', JSON.stringify(ingredientes));
-  }, [ingredientes]);
+    if (user?.id) {
+      localStorage.setItem(getUserKey('ficha_tecnica_ingredientes'), JSON.stringify(ingredientes));
+    }
+  }, [ingredientes, user?.id]);
 
   // Carregar insumos disponíveis automaticamente
   useEffect(() => {
@@ -484,10 +511,12 @@ export function useFichaTecnicaCompleta() {
     setResultados(null);
     setErrors([]);
     
-    // Limpar localStorage
-    localStorage.removeItem('ficha_tecnica_dados_prato');
-    localStorage.removeItem('ficha_tecnica_configuracao');
-    localStorage.removeItem('ficha_tecnica_ingredientes');
+    // Limpar localStorage com prefixo do usuário
+    if (user?.id) {
+      localStorage.removeItem(getUserKey('ficha_tecnica_dados_prato'));
+      localStorage.removeItem(getUserKey('ficha_tecnica_configuracao'));
+      localStorage.removeItem(getUserKey('ficha_tecnica_ingredientes'));
+    }
     
     toast.success('Ficha técnica limpa com sucesso!');
   }, []);
