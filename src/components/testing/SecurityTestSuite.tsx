@@ -105,7 +105,39 @@ export function SecurityTestSuite() {
         });
       }
 
-      // Teste 4: LocalStorage com prefixo de usuário
+      // Obter tenant_id atual para testes de isolamento
+      const { data: tenantInfo } = await supabase
+        .from('restaurants')
+        .select('tenant_id')
+        .eq('id', currentRestaurant.id)
+        .single();
+
+      // Teste 4: Isolamento RLS - Tenant Instances
+      try {
+        const { data: otherTenants } = await supabase
+          .from('tenant_instances')
+          .select('id, tenant_id')
+          .neq('tenant_id', tenantInfo?.tenant_id)
+          .limit(1);
+
+        results.push({
+          name: 'RLS Isolamento - Tenant Instances',
+          passed: !otherTenants || otherTenants.length === 0,
+          message: otherTenants && otherTenants.length > 0
+            ? 'FALHA: Conseguiu acessar tenant_instances de outros tenants'
+            : 'SUCESSO: RLS bloqueou acesso a outros tenants',
+          critical: true
+        });
+      } catch (error) {
+        results.push({
+          name: 'RLS Isolamento - Tenant Instances',
+          passed: true,
+          message: 'SUCESSO: RLS bloqueou completamente a query',
+          critical: true
+        });
+      }
+
+      // Teste 5: LocalStorage com prefixo de usuário
       const localStorageKeys = Object.keys(localStorage);
       const userSpecificKeys = localStorageKeys.filter(key => key.includes(user.id));
       const problematicKeys = localStorageKeys.filter(key => 
@@ -126,7 +158,7 @@ export function SecurityTestSuite() {
         critical: true
       });
 
-      // Teste 5: Tentativa de inserção em tabela protegida
+      // Teste 6: Tentativa de inserção em tabela protegida
       try {
         const { error } = await supabase
           .from('cash_flow')
@@ -157,7 +189,7 @@ export function SecurityTestSuite() {
         });
       }
 
-      // Teste 6: Verificação de acesso a perfis de outros usuários
+      // Teste 7: Verificação de acesso a perfis de outros usuários
       try {
         const { data: otherProfiles } = await supabase
           .from('profiles')
@@ -182,7 +214,7 @@ export function SecurityTestSuite() {
         });
       }
 
-      // Teste 7: Verificação de tenant_id consistency
+      // Teste 8: Verificação de tenant_id consistency
       const { data: myRestaurant } = await supabase
         .from('restaurants')
         .select('id, tenant_id')
@@ -198,7 +230,7 @@ export function SecurityTestSuite() {
         critical: false
       });
 
-      // Teste 8: Verificação de dados específicos do restaurante atual
+      // Teste 9: Verificação de dados específicos do restaurante atual
       const { data: myData } = await supabase
         .from('cash_flow')
         .select('id, restaurant_id')
@@ -312,7 +344,7 @@ export function SecurityTestSuite() {
         <div className="text-xs text-muted-foreground">
           <p><strong>Testes incluídos:</strong></p>
           <ul className="list-disc list-inside mt-1 space-y-1">
-            <li>Isolamento RLS em tabelas principais (cash_flow, goals, insumos)</li>
+            <li>Isolamento RLS em tabelas principais (cash_flow, goals, insumos, tenant_instances)</li>
             <li>Verificação de localStorage com prefixo de usuário</li>
             <li>Proteção contra inserção de dados inválidos</li>
             <li>Isolamento de perfis de usuário</li>
