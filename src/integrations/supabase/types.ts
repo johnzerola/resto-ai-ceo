@@ -1682,6 +1682,51 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string | null
+          tenant_id: string | null
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          title: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -2832,6 +2877,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      block_expired_users: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       calcular_cmv_completo: {
         Args: { prato_uuid: string }
         Returns: {
@@ -2934,6 +2983,10 @@ export type Database = {
       generate_affiliate_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      generate_expiration_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       gerar_alertas_automaticos: {
         Args: { restaurant_uuid: string }
