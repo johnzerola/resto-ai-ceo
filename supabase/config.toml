@@ -7,5 +7,14 @@ verify_jwt = false
 [functions.inventory-movement]
 verify_jwt = false
 
+[functions.whatsapp-response]
+verify_jwt = false
+
 [functions.fixed-expense]
+verify_jwt = false
+
+[functions.notification-system]
+verify_jwt = false
+
+[functions.subscription-middleware]
 verify_jwt = false

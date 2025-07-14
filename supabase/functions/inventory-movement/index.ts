@@ -20,6 +20,111 @@ interface InventoryRequest {
   timestamp: string;
 }
 
+// Função para processar áudio com OpenAI Whisper
+async function processAudio(audioUrl: string): Promise<string> {
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    throw new Error('OpenAI API key não configurada');
+  }
+
+  try {
+    const audioResponse = await fetch(audioUrl);
+    const audioBlob = await audioResponse.blob();
+    
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.wav');
+    formData.append('model', 'whisper-1');
+    formData.append('language', 'pt');
+
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.text || '';
+  } catch (error) {
+    logStep('Erro ao processar áudio', error);
+    throw new Error(`Falha na transcrição de áudio: ${error.message}`);
+  }
+}
+
+// Função para processar imagem com OpenAI Vision
+async function processImage(imageUrl: string): Promise<string> {
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    throw new Error('OpenAI API key não configurada');
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Analise esta imagem e extraia informações de movimentação de estoque. Se for uma nota ou documento, extraia: produto, quantidade, tipo de movimento (entrada/saída). Se for texto, extraia comandos como "comprei 5 mussarela" ou "usei 2 calabresa". Responda em português brasileiro no formato: Produto: X, Quantidade: Y, Movimento: entrada/saída'
+              },
+              {
+                type: 'image_url',
+                image_url: { url: imageUrl }
+              }
+            ]
+          }
+        ],
+        max_tokens: 300
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.choices[0]?.message?.content || '';
+  } catch (error) {
+    logStep('Erro ao processar imagem', error);
+    throw new Error(`Falha na análise de imagem: ${error.message}`);
+  }
+}
+
+// Função para enviar resposta via WhatsApp
+async function sendWhatsAppResponse(data: any) {
+  try {
+    const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/whatsapp-response`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      logStep('Erro ao enviar resposta WhatsApp', await response.text());
+    } else {
+      logStep('Resposta WhatsApp enviada com sucesso');
+    }
+  } catch (error) {
+    logStep('Erro ao chamar whatsapp-response function', error);
+  }
+}
+
 // Parser para movimentações de estoque
 function parseInventoryMovement(text: string): {
   type: 'entrada' | 'saida';
@@ -159,14 +264,46 @@ serve(async (req) => {
     }
 
     let parsedMovement = null;
+    let processedText = '';
 
     // Processar texto
     if (body.text) {
+      processedText = body.text;
       parsedMovement = parseInventoryMovement(body.text);
       logStep('Text parsed', parsedMovement);
     }
 
+    // Processar áudio usando OpenAI Whisper
+    if (body.audio && !parsedMovement) {
+      try {
+        processedText = await processAudio(body.audio);
+        logStep('Audio transcribed', { text: processedText });
+        parsedMovement = parseInventoryMovement(processedText);
+      } catch (error) {
+        logStep('Audio processing failed', error);
+      }
+    }
+
+    // Processar imagem usando OpenAI Vision
+    if (body.image && !parsedMovement) {
+      try {
+        processedText = await processImage(body.image);
+        logStep('Image processed', { text: processedText });
+        parsedMovement = parseInventoryMovement(processedText);
+      } catch (error) {
+        logStep('Image processing failed', error);
+      }
+    }
+
     if (!parsedMovement) {
+      // Enviar mensagem de erro via WhatsApp
+      await sendWhatsAppResponse({
+        phoneNumber: body.phoneNumber,
+        errorMessage: 'Não consegui interpretar sua mensagem de estoque. Tente enviar algo como "Comprei 5 mussarela" ou "Usei 2 calabresa".',
+        tenantId,
+        instanceId
+      });
+      
       throw new Error('Não foi possível interpretar a movimentação de estoque');
     }
 
@@ -246,6 +383,16 @@ serve(async (req) => {
       newQuantity 
     });
 
+    // Enviar confirmação via WhatsApp
+    await sendWhatsAppResponse({
+      phoneNumber: body.phoneNumber,
+      inventoryType: parsedMovement.type,
+      item: parsedMovement.item,
+      quantity: parsedMovement.quantity,
+      tenantId,
+      instanceId
+    });
+
     return new Response(JSON.stringify({
       success: true,
       movement: {
@@ -255,7 +402,8 @@ serve(async (req) => {
         unit: parsedMovement.unit,
         previousQuantity: currentQuantity,
         newQuantity
-      }
+      },
+      processedText
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,

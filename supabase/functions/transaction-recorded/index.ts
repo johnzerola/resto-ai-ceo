@@ -20,6 +20,113 @@ interface TransactionRequest {
   timestamp: string;
 }
 
+// Função para processar áudio com OpenAI Whisper
+async function processAudio(audioUrl: string): Promise<string> {
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    throw new Error('OpenAI API key não configurada');
+  }
+
+  try {
+    // Download do áudio
+    const audioResponse = await fetch(audioUrl);
+    const audioBlob = await audioResponse.blob();
+    
+    // Preparar FormData para OpenAI
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.wav');
+    formData.append('model', 'whisper-1');
+    formData.append('language', 'pt');
+
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.text || '';
+  } catch (error) {
+    logStep('Erro ao processar áudio', error);
+    throw new Error(`Falha na transcrição de áudio: ${error.message}`);
+  }
+}
+
+// Função para processar imagem com OpenAI Vision
+async function processImage(imageUrl: string): Promise<string> {
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    throw new Error('OpenAI API key não configurada');
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Analise esta imagem e extraia informações de transação financeira. Se for um recibo ou nota fiscal, extraia: valor, descrição, categoria. Se for texto, extraia comandos como "vendi X" ou "gastei Y". Responda em português brasileiro no formato: Valor: R$ X, Descrição: Y, Categoria: Z'
+              },
+              {
+                type: 'image_url',
+                image_url: { url: imageUrl }
+              }
+            ]
+          }
+        ],
+        max_tokens: 300
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.choices[0]?.message?.content || '';
+  } catch (error) {
+    logStep('Erro ao processar imagem', error);
+    throw new Error(`Falha na análise de imagem: ${error.message}`);
+  }
+}
+
+// Função para enviar resposta via WhatsApp
+async function sendWhatsAppResponse(data: any) {
+  try {
+    const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/whatsapp-response`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      logStep('Erro ao enviar resposta WhatsApp', await response.text());
+    } else {
+      logStep('Resposta WhatsApp enviada com sucesso');
+    }
+  } catch (error) {
+    logStep('Erro ao chamar whatsapp-response function', error);
+  }
+}
+
 // Parser de texto natural para comandos WhatsApp
 function parseTransaction(text: string): {
   type: 'income' | 'expense';
@@ -148,25 +255,46 @@ serve(async (req) => {
     }
 
     let parsedTransaction = null;
+    let processedText = '';
 
     // Processar texto
     if (body.text) {
+      processedText = body.text;
       parsedTransaction = parseTransaction(body.text);
       logStep('Text parsed', parsedTransaction);
     }
 
-    // TODO: Implementar processamento de áudio e imagem usando IA
+    // Processar áudio usando OpenAI Whisper
     if (body.audio && !parsedTransaction) {
-      // Integração futura com Groq/Whisper para transcrição
-      logStep('Audio processing not implemented yet');
+      try {
+        processedText = await processAudio(body.audio);
+        logStep('Audio transcribed', { text: processedText });
+        parsedTransaction = parseTransaction(processedText);
+      } catch (error) {
+        logStep('Audio processing failed', error);
+      }
     }
 
+    // Processar imagem usando OpenAI Vision
     if (body.image && !parsedTransaction) {
-      // Integração futura com OCR/Vision AI
-      logStep('Image processing not implemented yet');
+      try {
+        processedText = await processImage(body.image);
+        logStep('Image processed', { text: processedText });
+        parsedTransaction = parseTransaction(processedText);
+      } catch (error) {
+        logStep('Image processing failed', error);
+      }
     }
 
     if (!parsedTransaction) {
+      // Enviar mensagem de erro via WhatsApp
+      await sendWhatsAppResponse({
+        phoneNumber: body.phoneNumber,
+        errorMessage: 'Não consegui interpretar sua mensagem. Tente enviar algo como "Vendi R$ 100" ou "Gastei R$ 50 em marketing".',
+        tenantId,
+        instanceId
+      });
+      
       throw new Error('Não foi possível interpretar a transação');
     }
 
@@ -212,6 +340,29 @@ serve(async (req) => {
 
     logStep('Transaction saved successfully', transaction);
 
+    // Calcular saldo atual
+    const { data: currentBalance } = await supabaseClient
+      .from('cash_flow')
+      .select('amount, type')
+      .eq('restaurant_id', restaurant.id)
+      .eq('tenant_id', tenantId);
+
+    const balance = currentBalance?.reduce((total, item) => {
+      return total + (item.type === 'income' ? item.amount : -item.amount);
+    }, 0) || 0;
+
+    // Enviar confirmação via WhatsApp
+    await sendWhatsAppResponse({
+      phoneNumber: body.phoneNumber,
+      transactionType: transaction.type,
+      amount: transaction.amount,
+      description: transaction.description,
+      category: transaction.category,
+      currentBalance: balance,
+      tenantId,
+      instanceId
+    });
+
     return new Response(JSON.stringify({
       success: true,
       transaction: {
@@ -221,7 +372,9 @@ serve(async (req) => {
         category: transaction.category,
         description: transaction.description
       },
-      parsed: parsedTransaction
+      currentBalance: balance,
+      parsed: parsedTransaction,
+      processedText
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
