@@ -51,21 +51,54 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   
   useEffect(() => {
     const handleSidebarToggle = (e: CustomEvent) => {
-      setSidebarState(e.detail.isCollapsed ? 'closed' : 'open');
+      const { isCollapsed, isMobileOpen } = e.detail;
+      // Em mobile, sidebar aberto significa overlay
+      if (window.innerWidth < 768) {
+        setSidebarState(isMobileOpen ? 'open' : 'closed');
+      } else {
+        // Em desktop, collapsed significa sidebar pequeno
+        setSidebarState(isCollapsed ? 'closed' : 'open');
+      }
     };
     
     window.addEventListener('sidebarToggle' as any, handleSidebarToggle as any);
     
     const initializeSidebar = () => {
       const isMobile = window.innerWidth < 768;
-      setSidebarState(isMobile ? 'closed' : 'open');
+      const isTablet = window.innerWidth < 1024;
+      
+      if (isMobile) {
+        setSidebarState('closed');
+      } else if (isTablet) {
+        setSidebarState('closed'); // Collapsed no tablet
+      } else {
+        setSidebarState('open'); // Expandido no desktop
+      }
       setIsInitialized(true);
     };
     
+    // Aguarda um frame para garantir que o DOM esteja pronto
     requestAnimationFrame(initializeSidebar);
+    
+    // Listener para redimensionamento
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 768;
+      const isTablet = window.innerWidth < 1024;
+      
+      if (isMobile) {
+        setSidebarState('closed');
+      } else if (isTablet) {
+        setSidebarState('closed');
+      } else {
+        setSidebarState('open');
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
     
     return () => {
       window.removeEventListener('sidebarToggle' as any, handleSidebarToggle as any);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
   
@@ -101,7 +134,10 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
       <ModernSidebar />
       
       {/* Premium Fixed Header with Theme Toggle */}
-      <header className="fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 md:left-72 transition-all duration-300 shadow-sm">
+      <header className={cn(
+        "fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 transition-all duration-300 shadow-sm",
+        sidebarState === 'open' ? "md:left-72" : "md:left-16"
+      )}>
         <div className="flex items-center justify-between h-16 px-6">
           <div className="flex items-center gap-4">
             <div className="text-sm font-medium text-muted-foreground hidden md:block">
@@ -114,12 +150,13 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-
       <main className={cn(
         "flex-1 transition-all duration-300 ease-out min-h-screen relative",
         // Add top margin for premium header
         "pt-16",
-        sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
+        // Ajuste responsivo correto
+        sidebarState === 'open' ? "md:ml-72" : "md:ml-16",
+        "ml-0" // No mobile sempre 0
       )}>
         
         <EmailConfirmationBanner />
