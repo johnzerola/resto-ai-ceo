@@ -52,11 +52,12 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleSidebarToggle = (e: CustomEvent) => {
       const { isCollapsed, isMobileOpen } = e.detail;
-      // Em mobile, sidebar aberto significa overlay
+      
+      // Em mobile, o sidebar é sempre overlay, não afeta margem
       if (window.innerWidth < 768) {
-        setSidebarState(isMobileOpen ? 'open' : 'closed');
+        setSidebarState('closed');
       } else {
-        // Em desktop, collapsed significa sidebar pequeno
+        // Em desktop, isCollapsed determina o estado
         setSidebarState(isCollapsed ? 'closed' : 'open');
       }
     };
@@ -65,50 +66,23 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
     
     const initializeSidebar = () => {
       const isMobile = window.innerWidth < 768;
-      const isTablet = window.innerWidth < 1024;
-      
-      if (isMobile) {
-        setSidebarState('closed');
-      } else if (isTablet) {
-        setSidebarState('closed'); // Collapsed no tablet
-      } else {
-        setSidebarState('open'); // Expandido no desktop
-      }
+      setSidebarState(isMobile ? 'closed' : 'open');
       setIsInitialized(true);
     };
     
-    // Aguarda um frame para garantir que o DOM esteja pronto
-    requestAnimationFrame(initializeSidebar);
-    
-    // Listener para redimensionamento
-    const handleResize = () => {
-      const isMobile = window.innerWidth < 768;
-      const isTablet = window.innerWidth < 1024;
-      
-      if (isMobile) {
-        setSidebarState('closed');
-      } else if (isTablet) {
-        setSidebarState('closed');
-      } else {
-        setSidebarState('open');
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
+    initializeSidebar();
     
     return () => {
       window.removeEventListener('sidebarToggle' as any, handleSidebarToggle as any);
-      window.removeEventListener('resize', handleResize);
     };
   }, []);
   
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!isInitialized) {
-        console.warn('Layout initialization timeout - forcing render');
         setIsInitialized(true);
       }
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(timeout);
   }, [isInitialized]);
@@ -130,38 +104,31 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen w-full bg-gray-50">
+      {/* Sidebar */}
       <ModernSidebar />
       
-      {/* Premium Fixed Header with Theme Toggle */}
-      <header className={cn(
-        "fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 transition-all duration-300 shadow-sm",
-        sidebarState === 'open' ? "md:left-72" : "md:left-16"
+      {/* Main Content */}
+      <main className={cn(
+        "flex-1 transition-all duration-300 ease-in-out min-h-screen",
+        // Margem responsiva baseada no estado do sidebar
+        sidebarState === 'open' ? "md:ml-72" : "md:ml-16",
+        // No mobile sempre sem margem (sidebar é overlay)
+        "ml-0"
       )}>
-        <div className="flex items-center justify-between h-16 px-6">
-          <div className="flex items-center gap-4">
-            <div className="text-sm font-medium text-muted-foreground hidden md:block">
-              Lucraí Premium
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-semibold text-gray-900">Lucraí Premium</h1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            
-          </div>
-        </div>
-      </header>
-
-      <main className={cn(
-        "flex-1 transition-all duration-300 ease-out min-h-screen relative",
-        // Add top margin for premium header
-        "pt-16",
-        // Ajuste responsivo correto
-        sidebarState === 'open' ? "md:ml-72" : "md:ml-16",
-        "ml-0" // No mobile sempre 0
-      )}>
+        </header>
         
-        <EmailConfirmationBanner />
-        
-        <div className="min-h-screen p-6">
+        {/* Page Content */}
+        <div className="p-6">
+          <EmailConfirmationBanner />
+          
           <React.Suspense fallback={<LoadingSpinner message="Carregando conteúdo..." />}>
             <EnhancedErrorBoundary>
               {children}
@@ -169,7 +136,7 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
           </React.Suspense>
         </div>
         
-        {/* Integrated Feedback System */}
+        {/* Feedback System */}
         <FeedbackSystem />
       </main>
     </div>
