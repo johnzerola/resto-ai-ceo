@@ -51,15 +51,7 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   
   useEffect(() => {
     const handleSidebarToggle = (e: CustomEvent) => {
-      const { isCollapsed, isMobileOpen } = e.detail;
-      
-      // Em mobile, o sidebar é sempre overlay, não afeta margem
-      if (window.innerWidth < 768) {
-        setSidebarState('closed');
-      } else {
-        // Em desktop, isCollapsed determina o estado
-        setSidebarState(isCollapsed ? 'closed' : 'open');
-      }
+      setSidebarState(e.detail.isCollapsed ? 'closed' : 'open');
     };
     
     window.addEventListener('sidebarToggle' as any, handleSidebarToggle as any);
@@ -70,7 +62,7 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
       setIsInitialized(true);
     };
     
-    initializeSidebar();
+    requestAnimationFrame(initializeSidebar);
     
     return () => {
       window.removeEventListener('sidebarToggle' as any, handleSidebarToggle as any);
@@ -80,9 +72,10 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!isInitialized) {
+        console.warn('Layout initialization timeout - forcing render');
         setIsInitialized(true);
       }
-    }, 1000);
+    }, 2000);
 
     return () => clearTimeout(timeout);
   }, [isInitialized]);
@@ -104,31 +97,34 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-50">
-      {/* Sidebar */}
+    <div className="flex min-h-screen w-full bg-background">
       <ModernSidebar />
       
-      {/* Main Content */}
-      <main className={cn(
-        "flex-1 transition-all duration-300 ease-in-out min-h-screen",
-        // Margem responsiva baseada no estado do sidebar
-        sidebarState === 'open' ? "md:ml-72" : "md:ml-16",
-        // No mobile sempre sem margem (sidebar é overlay)
-        "ml-0"
-      )}>
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold text-gray-900">Lucraí Premium</h1>
+      {/* Premium Fixed Header with Theme Toggle */}
+      <header className="fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 md:left-72 transition-all duration-300 shadow-sm">
+        <div className="flex items-center justify-between h-16 px-6">
+          <div className="flex items-center gap-4">
+            <div className="text-sm font-medium text-muted-foreground hidden md:block">
+              Lucraí Premium
             </div>
           </div>
-        </header>
+          <div className="flex items-center gap-3">
+            
+          </div>
+        </div>
+      </header>
+
+
+      <main className={cn(
+        "flex-1 transition-all duration-300 ease-out min-h-screen relative",
+        // Add top margin for premium header
+        "pt-16",
+        sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
+      )}>
         
-        {/* Page Content */}
-        <div className="p-6">
-          <EmailConfirmationBanner />
-          
+        <EmailConfirmationBanner />
+        
+        <div className="min-h-screen p-6">
           <React.Suspense fallback={<LoadingSpinner message="Carregando conteúdo..." />}>
             <EnhancedErrorBoundary>
               {children}
@@ -136,7 +132,7 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
           </React.Suspense>
         </div>
         
-        {/* Feedback System */}
+        {/* Integrated Feedback System */}
         <FeedbackSystem />
       </main>
     </div>

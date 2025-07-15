@@ -92,12 +92,15 @@ export function DataSync({ children }: DataSyncProps) {
           // Primeiro, verificar e limpar se necessário
           await checkAndCleanNewUser(user.id);
           
-          // Migração de dados em background (não bloquear UI)
-          requestIdleCallback ? requestIdleCallback(() => {
-            migrateUserFinancialData().catch(console.error);
-          }) : setTimeout(() => {
-            migrateUserFinancialData().catch(console.error);
-          }, 100);
+          // Apenas depois de limpar, inicializar estrutura básica
+          if (!isCleaningData) {
+            // Migração de dados em background (não bloquear UI)
+            requestIdleCallback ? requestIdleCallback(() => {
+              migrateUserFinancialData().catch(console.error);
+            }) : setTimeout(() => {
+              migrateUserFinancialData().catch(console.error);
+            }, 100);
+          }
         }
 
         quickInit();
@@ -123,7 +126,7 @@ export function DataSync({ children }: DataSyncProps) {
       mounted = false;
       clearTimeout(safetyTimeout);
     };
-  }, [user, authLoading]);
+  }, [user, authLoading, isInitialized, isCleaningData]);
 
   // Mostrar loading apenas muito brevemente para não impactar UX
   if (!isInitialized) {

@@ -52,7 +52,7 @@ const Index = lazy(() => import("./pages/Index"));
 
 // Import optimized branded loader
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
-import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 // Loading component otimizado com branding Lucraí
 const PageLoader = ({ message }: { message?: string }) => (

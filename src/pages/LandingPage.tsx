@@ -17,16 +17,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Minus,
-  Sparkles,
-  Rocket,
-  Menu
+  Minus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { AboutSection } from '@/components/landing/AboutSection';
 
-// Componente de máquina de escrever aprimorado
-const Typewriter = ({ texts, speed = 150, deleteSpeed = 100, pauseTime = 3000 }: {
+// Componente de máquina de escrever
+const Typewriter = ({ texts, speed = 100, deleteSpeed = 50, pauseTime = 2000 }: {
   texts: string[];
   speed?: number;
   deleteSpeed?: number;
@@ -35,11 +31,8 @@ const Typewriter = ({ texts, speed = 150, deleteSpeed = 100, pauseTime = 3000 }:
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [currentText, setCurrentText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    if (isPaused) return;
-    
     const timeout = setTimeout(() => {
       const fullText = texts[currentTextIndex];
       
@@ -52,22 +45,18 @@ const Typewriter = ({ texts, speed = 150, deleteSpeed = 100, pauseTime = 3000 }:
       } else {
         setCurrentText(fullText.slice(0, currentText.length + 1));
         if (currentText === fullText) {
-          setIsPaused(true);
-          setTimeout(() => {
-            setIsPaused(false);
-            setIsDeleting(true);
-          }, pauseTime);
+          setTimeout(() => setIsDeleting(true), pauseTime);
         }
       }
     }, isDeleting ? deleteSpeed : speed);
 
     return () => clearTimeout(timeout);
-  }, [currentText, currentTextIndex, isDeleting, isPaused, texts, speed, deleteSpeed, pauseTime]);
+  }, [currentText, currentTextIndex, isDeleting, texts, speed, deleteSpeed, pauseTime]);
 
   return (
-    <span className="font-bold bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent">
+    <span className="font-bold">
       {currentText}
-      <span className="animate-[pulse_1.5s_ease-in-out_infinite] text-yellow-300">|</span>
+      <span className="animate-pulse">|</span>
     </span>
   );
 };
@@ -96,25 +85,20 @@ const FadeIn = ({ children, delay = 0, className = '' }: {
   );
 };
 
-// Seção Hero aprimorada
+// Seção Hero
 const HeroSection = () => {
   const typewriterTexts = [
-    "Transforme seu restaurante numa máquina de fazer dinheiro! 💰",
-    "Nunca mais erre no preço dos seus pratos! 🎯", 
-    "CMV automático que realmente funciona! ⚡",
-    "Veja seu lucro aumentar a cada dia! 📈",
-    "Controle total, sem planilhas, sem dor de cabeça! 🚀"
+    "O sistema mais fácil e barato para fazer seu negócio lucrar de verdade!",
+    "Sem complicação, sem dor de cabeça!",
+    "Controle total, lucro garantido!"
   ];
 
   return (
     <section className="min-h-screen bg-gradient-to-br from-[#0058A3] via-[#00B140] to-[#FFD400] relative overflow-hidden">
-      {/* Elementos decorativos animados */}
-      <div className="absolute inset-0 bg-white/5"></div>
-      <div className="absolute top-20 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-[pulse_4s_ease-in-out_infinite]"></div>
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-yellow-300/20 rounded-full blur-3xl animate-[pulse_6s_ease-in-out_infinite]"></div>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-blue-400/10 to-green-400/10 rounded-full blur-3xl animate-[spin_20s_linear_infinite]"></div>
+      {/* Elementos decorativos */}
+      <div className="absolute inset-0 bg-white/5 animate-pulse"></div>
       
-      <div className="container mx-auto px-4 pt-24 pb-12 flex flex-col lg:flex-row items-center min-h-screen relative z-10">
+      <div className="container mx-auto px-4 py-20 flex flex-col lg:flex-row items-center min-h-screen">
         {/* Conteúdo Principal */}
         <div className="lg:w-1/2 text-white mb-10 lg:mb-0">
           <FadeIn delay={200}>
@@ -455,65 +439,30 @@ const TestimonialsCarousel = () => {
   );
 };
 
-// Seção de Planos com integração Stripe
+// Seção de Planos
 const PricingSection = () => {
   const [isAnnual, setIsAnnual] = useState(false);
-  const [hoveredPlan, setHoveredPlan] = useState<number | null>(null);
 
   const plans = [
     {
       name: "Starter",
-      price: isAnnual ? 47 : 59,
-      originalPrice: isAnnual ? 59 : null,
-      stripeMonthlyPriceId: "price_1QXgr2J9z1ZzFvG3pL8sNkMq",
-      stripeAnnualPriceId: "price_1QXgr2J9z1ZzFvG3pL8sNkMq", 
-      features: [
-        "1 Restaurante", 
-        "Controle básico de estoque", 
-        "CMV automático", 
-        "Relatórios básicos",
-        "Suporte por email"
-      ],
-      popular: false,
-      description: "Ideal para começar",
-      savings: isAnnual ? "Economize R$ 144/ano" : null
+      price: isAnnual ? 39 : 49,
+      originalPrice: isAnnual ? 49 : null,
+      features: ["1 Restaurante", "Controle básico de estoque", "CMV automático", "Suporte por email"],
+      popular: false
     },
     {
-      name: "Professional",
-      price: isAnnual ? 97 : 119,
-      originalPrice: isAnnual ? 119 : null,
-      stripeMonthlyPriceId: "price_1QXgr2J9z1ZzFvG3pL8sNkMq",
-      stripeAnnualPriceId: "price_1QXgr2J9z1ZzFvG3pL8sNkMq",
-      features: [
-        "Até 3 Restaurantes", 
-        "IA para precificação avançada", 
-        "DRE completo automatizado", 
-        "Relatórios avançados",
-        "Analytics em tempo real",
-        "Suporte prioritário",
-        "WhatsApp integration"
-      ],
-      popular: true,
-      description: "Mais escolhido",
-      savings: isAnnual ? "Economize R$ 264/ano" : null
+      name: "Pro",
+      price: isAnnual ? 79 : 99,
+      originalPrice: isAnnual ? 99 : null,
+      features: ["3 Restaurantes", "IA para precificação", "DRE completo", "Relatórios avançados", "Suporte prioritário"],
+      popular: true
     },
     {
       name: "Enterprise",
-      price: "Personalizado",
-      customPrice: true,
-      features: [
-        "Restaurantes ilimitados", 
-        "Customizações exclusivas", 
-        "Integração com ERPs", 
-        "Multi-unidades",
-        "API dedicada",
-        "Suporte 24/7",
-        "Gerente de conta dedicado",
-        "Treinamento personalizado"
-      ],
-      popular: false,
-      description: "Para redes e grandes operações",
-      savings: null
+      price: "Sob consulta",
+      features: ["Restaurantes ilimitados", "Customizações", "Integração com sistemas", "Suporte dedicado"],
+      popular: false
     }
   ];
 
@@ -553,116 +502,78 @@ const PricingSection = () => {
           </div>
         </FadeIn>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {plans.map((plan, index) => (
             <FadeIn key={index} delay={index * 200}>
-              <Card 
-                className={cn(
-                  "relative p-8 h-full transition-all duration-500 cursor-pointer group",
-                  plan.popular 
-                    ? "border-2 border-[#00B140] shadow-2xl scale-105 bg-gradient-to-br from-green-50 to-blue-50" 
-                    : "border border-gray-200 hover:shadow-xl hover:scale-105 hover:border-green-300",
-                  hoveredPlan === index ? "shadow-2xl scale-105" : ""
-                )}
-                onMouseEnter={() => setHoveredPlan(index)}
-                onMouseLeave={() => setHoveredPlan(null)}
-              >
+              <Card className={cn(
+                "relative p-8 h-full",
+                plan.popular 
+                  ? "border-2 border-[#00B140] shadow-xl scale-105" 
+                  : "border border-gray-200 hover:shadow-lg"
+              )}>
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                    <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold animate-pulse">
-                      🔥 {plan.description}
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-[#00B140] text-white px-4 py-1">
+                      Mais Popular
                     </Badge>
                   </div>
                 )}
-                
-                {plan.savings && (
-                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-3 py-1 rounded-full transform rotate-12 font-bold">
-                    {plan.savings}
-                  </div>
-                )}
-
                 <CardContent className="p-0">
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">{plan.name}</h3>
-                    {!plan.popular && (
-                      <p className="text-gray-600 text-sm">{plan.description}</p>
-                    )}
-                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4">{plan.name}</h3>
                   
-                  <div className="text-center mb-8">
-                    {!plan.customPrice ? (
+                  <div className="mb-6">
+                    {typeof plan.price === 'number' ? (
                       <div>
-                        <div className="flex items-baseline justify-center mb-2">
-                          <span className="text-5xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                            R${plan.price}
-                          </span>
-                          <span className="text-gray-600 ml-1">/mês</span>
+                        <div className="flex items-baseline">
+                          <span className="text-4xl font-bold text-gray-800">R${plan.price}</span>
+                          <span className="text-gray-600">/mês</span>
                         </div>
                         {plan.originalPrice && (
-                          <div className="text-gray-500 line-through text-lg">
+                          <div className="text-gray-500 line-through">
                             De R${plan.originalPrice}/mês
                           </div>
                         )}
-                        <div className="text-green-600 font-semibold text-sm mt-1">
-                          💸 Faturamento coberto em 1 dia
-                        </div>
                       </div>
                     ) : (
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-gray-800 mb-2">{plan.price}</div>
-                        <p className="text-gray-600 text-sm">{plan.description}</p>
-                      </div>
+                      <div className="text-2xl font-bold text-gray-800">{plan.price}</div>
                     )}
                   </div>
 
-                  <ul className="space-y-4 mb-8">
+                  <ul className="space-y-3 mb-8">
                     {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start">
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                        <span className="text-gray-700 text-sm leading-relaxed">{feature}</span>
+                      <li key={idx} className="flex items-center">
+                        <Check className="w-5 h-5 text-[#00B140] mr-3" />
+                        <span className="text-gray-600">{feature}</span>
                       </li>
                     ))}
                   </ul>
 
                   <Button 
                     className={cn(
-                      "w-full py-4 text-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg",
+                      "w-full py-3",
                       plan.popular 
-                        ? "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white shadow-lg" 
-                        : plan.customPrice
-                        ? "bg-gray-800 hover:bg-gray-700 text-white"
-                        : "bg-white border-2 border-green-500 text-green-600 hover:bg-green-500 hover:text-white"
+                        ? "bg-[#FFD400] hover:bg-[#FFD400]/90 text-gray-800" 
+                        : "bg-[#00B140] hover:bg-[#00B140]/90 text-white"
                     )}
                   >
-                    {plan.customPrice ? '📞 Falar com Vendas' : '🚀 Teste Grátis 7 Dias'}
-                    {!plan.customPrice && (
-                      <div className="text-xs opacity-75 ml-2">• Sem cartão</div>
-                    )}
+                    {typeof plan.price === 'number' ? 'Teste Grátis Agora' : 'Falar com Vendas'}
                   </Button>
-                  
-                  {!plan.customPrice && (
-                    <p className="text-center text-xs text-gray-500 mt-3">
-                      ✅ Cancele quando quiser • 💳 Sem compromisso
-                    </p>
-                  )}
                 </CardContent>
               </Card>
             </FadeIn>
           ))}
         </div>
 
-          <FadeIn delay={600}>
-            <div className="text-center mt-12">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6 max-w-2xl mx-auto">
-                <h4 className="font-semibold text-gray-800 mb-2">✅ Garantia de 30 dias</h4>
-                <p className="text-gray-600">
-                  Teste grátis por 7 dias — sem compromisso. Se não gostar, devolvemos 100% do seu dinheiro.
-                </p>
-              </div>
+        <FadeIn delay={600}>
+          <div className="text-center mt-12">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6 max-w-2xl mx-auto">
+              <h4 className="font-semibold text-gray-800 mb-2">Garantia de 30 dias</h4>
+              <p className="text-gray-600">
+                Teste grátis por 7 dias — sem compromisso. Se não gostar, devolvemos 100% do seu dinheiro.
+              </p>
             </div>
-          </FadeIn>
+          </div>
+        </FadeIn>
       </div>
     </section>
   );
@@ -822,120 +733,16 @@ const Footer = () => {
   );
 };
 
-// Navigation Component
-const Navigation = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState('inicio');
-
-  const navItems = [
-    { id: 'inicio', label: 'Início', href: '#inicio' },
-    { id: 'recursos', label: 'Recursos', href: '#recursos' },
-    { id: 'sobre', label: 'Sobre', href: '#sobre' },
-    { id: 'precos', label: 'Preços', href: '#precos' },
-    { id: 'faq', label: 'FAQ', href: '#faq' }
-  ];
-
-  const scrollToSection = (href: string, id: string) => {
-    setActiveSection(id);
-    setIsMenuOpen(false);
-    const element = document.querySelector(href);
-    element?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-b border-gray-200">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-[#0058A3] to-[#FFD400] rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-[#0058A3] to-[#00B140] bg-clip-text text-transparent">
-              Lucraí
-            </span>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => scrollToSection(item.href, item.id)}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-[#00B140]",
-                  activeSection === item.id ? "text-[#00B140]" : "text-gray-600"
-                )}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          {/* CTA Button */}
-          <div className="hidden md:block">
-            <Button className="bg-gradient-to-r from-[#00B140] to-[#0058A3] hover:opacity-90 text-white">
-              <Rocket className="w-4 h-4 mr-2" />
-              Teste Grátis
-            </Button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-b border-gray-200 shadow-lg">
-            <div className="px-4 py-4 space-y-4">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.href, item.id)}
-                  className="block w-full text-left text-gray-600 hover:text-[#00B140] transition-colors"
-                >
-                  {item.label}
-                </button>
-              ))}
-              <Button className="w-full bg-gradient-to-r from-[#00B140] to-[#0058A3] text-white mt-4">
-                <Rocket className="w-4 h-4 mr-2" />
-                Teste Grátis
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
-  );
-};
-
 // Componente Principal
 export default function LandingPage() {
   return (
     <div className="font-inter">
-      <Navigation />
-      <div id="inicio">
-        <HeroSection />
-      </div>
-      <div id="recursos">
-        <BenefitsSection />
-        <PainSolutionSection />
-      </div>
+      <HeroSection />
+      <BenefitsSection />
+      <PainSolutionSection />
       <TestimonialsCarousel />
-      <div id="sobre">
-        <AboutSection />
-      </div>
-      <div id="precos">
-        <PricingSection />
-      </div>
-      <div id="faq">
-        <FAQSection />
-      </div>
+      <PricingSection />
+      <FAQSection />
       <Footer />
     </div>
   );
