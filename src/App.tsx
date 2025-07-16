@@ -49,6 +49,7 @@ const DeveloperDashboard = lazy(() => import("./components/developer/DeveloperDa
 const BrandingGuide = lazy(() => import("./components/branding/BrandingGuide").then(module => ({ default: module.BrandingGuide })));
 const AffiliateSystem = lazy(() => import("./components/affiliate/AffiliateSystem").then(module => ({ default: module.AffiliateSystem })));
 const Index = lazy(() => import("./pages/Index"));
+const OptimizedIndex = lazy(() => import("./pages/OptimizedIndex"));
 
 // Import optimized branded loader
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
@@ -92,8 +93,14 @@ function App() {
                     </Suspense>
                   </ProtectedRoute>
                 } />
-                {/* Landing Page como página inicial */}
+                {/* Optimized Landing Page */}
                 <Route path="/" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <OptimizedIndex />
+                  </Suspense>
+                } />
+                {/* Original landing for comparison */}
+                <Route path="/original" element={
                   <Suspense fallback={<PageLoader />}>
                     <Index />
                   </Suspense>
