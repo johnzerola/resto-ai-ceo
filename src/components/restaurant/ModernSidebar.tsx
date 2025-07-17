@@ -174,7 +174,7 @@ export function ModernSidebar() {
       }
       if (window.innerWidth < 1024) {
         setIsCollapsed(true);
-      } else {
+      } else if (window.innerWidth >= 1024) {
         setIsCollapsed(false);
       }
     };
@@ -240,10 +240,12 @@ export function ModernSidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
-          "bg-white",
+          "fixed left-0 top-0 z-40 h-full border-r border-border transition-all duration-300 ease-out shadow-lg flex flex-col",
+          "bg-background border-sidebar-border",
+          // Mobile behavior
           "md:translate-x-0",
           isMobileOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full",
+          // Desktop behavior
           !isMobileOpen && isCollapsed && "md:w-16",
           !isMobileOpen && !isCollapsed && "md:w-72"
         )}

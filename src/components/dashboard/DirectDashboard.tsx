@@ -25,24 +25,24 @@ const StatCard = memo(({
   description?: string;
   href?: string;
 }) => (
-  <Card className="border-0 shadow-sm bg-white/80 backdrop-blur-sm hover:shadow-md transition-shadow">
+  <Card className="border-0 shadow-sm bg-card/80 backdrop-blur-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium text-slate-700">
+      <CardTitle className="text-sm font-medium text-muted-foreground">
         {title}
       </CardTitle>
-      <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg text-white">
+      <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-lg text-primary-foreground">
         <Icon className="h-4 w-4" />
       </div>
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold text-slate-900 mb-1">
+      <div className="text-2xl font-bold text-foreground mb-1">
         {value}
       </div>
       {description && (
-        <p className="text-xs text-slate-600 mt-1">{description}</p>
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
       )}
       {href && (
-        <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs" asChild>
+        <Button variant="ghost" size="sm" className="mt-2 p-0 h-auto text-xs text-primary hover:text-accent" asChild>
           <a href={href}>Ver detalhes →</a>
         </Button>
       )}
@@ -80,22 +80,22 @@ export const DirectDashboard = memo(function DirectDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-card to-background">
         {/* Header Otimizado */}
-        <div className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
+        <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-10">
         <div className="px-4 lg:px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-xl lg:text-2xl font-bold text-slate-900">
-                Dashboard Rápido
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground">
+                Dashboard Principal
               </h1>
-              <p className="text-slate-600 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {currentRestaurant?.name || 'Lucraí CEO'}
               </p>
             </div>
             
             <div className="flex items-center gap-3">
-              <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+              <Badge variant="secondary" className="text-xs bg-success/10 text-success border-success/20">
                 <Activity className="h-3 w-3 mr-1" />
                 Sistema Ativo
               </Badge>
