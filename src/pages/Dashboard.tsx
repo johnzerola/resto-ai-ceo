@@ -1,9 +1,9 @@
 
 import React from "react";
-import { DirectDashboard } from "@/components/dashboard/DirectDashboard";
+import { OptimizedDirectDashboard } from "@/components/dashboard/OptimizedDirectDashboard";
 
 const Dashboard = () => {
-  return <DirectDashboard />;
+  return <OptimizedDirectDashboard />;
 };
 
 export default Dashboard;

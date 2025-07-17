@@ -1,24 +1,14 @@
 
+// DEPRECATED: Use OptimizedDashboardLayout instead
 import React from 'react';
-import { ModernLayout } from '@/components/restaurant/ModernLayout';
-import { TrialBanner } from '@/components/trial/TrialBanner';
-import { EmailConfirmationBanner } from '@/components/auth/EmailConfirmationBanner';
-import { DataSync } from '@/components/restaurant/DataSync';
+import { OptimizedDashboardLayout } from '@/components/layout/OptimizedDashboardLayout';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
+// Forward to new optimized layout
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  return (
-    <DataSync>
-      <ModernLayout>
-        <div className="space-y-4">
-          <EmailConfirmationBanner />
-          <TrialBanner />
-          {children}
-        </div>
-      </ModernLayout>
-    </DataSync>
-  );
+  console.warn('DashboardLayout is deprecated. Use OptimizedDashboardLayout instead.');
+  return <OptimizedDashboardLayout>{children}</OptimizedDashboardLayout>;
 }
