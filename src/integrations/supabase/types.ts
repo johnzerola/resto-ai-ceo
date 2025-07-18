@@ -1009,6 +1009,33 @@ export type Database = {
           },
         ]
       }
+      expense_keywords: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          impacts_cmv: boolean | null
+          impacts_dre: boolean | null
+          keyword: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          impacts_cmv?: boolean | null
+          impacts_dre?: boolean | null
+          keyword: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          impacts_cmv?: boolean | null
+          impacts_dre?: boolean | null
+          keyword?: string
+        }
+        Relationships: []
+      }
       feedback_submissions: {
         Row: {
           content: Json
@@ -2469,6 +2496,57 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_movements: {
+        Row: {
+          cost_per_unit: number | null
+          created_at: string | null
+          current_stock: number | null
+          id: string
+          item_name: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes: string | null
+          phone_number: string | null
+          processed_at: string | null
+          quantity: number
+          tenant_id: string
+          total_cost: number | null
+          unit: string | null
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          cost_per_unit?: number | null
+          created_at?: string | null
+          current_stock?: number | null
+          id?: string
+          item_name: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          phone_number?: string | null
+          processed_at?: string | null
+          quantity: number
+          tenant_id: string
+          total_cost?: number | null
+          unit?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          cost_per_unit?: number | null
+          created_at?: string | null
+          current_stock?: number | null
+          id?: string
+          item_name?: string
+          movement_type?: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          phone_number?: string | null
+          processed_at?: string | null
+          quantity?: number
+          tenant_id?: string
+          total_cost?: number | null
+          unit?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -2478,16 +2556,19 @@ export type Database = {
           last_login: string | null
           limits: Json | null
           name: string | null
+          phone_numbers: string[] | null
           plan_status: string | null
           stripe_customer_id: string | null
           subscribed: boolean
           subscription_end: string | null
           subscription_tier: string | null
+          tenant_id: string | null
           trial_end: string | null
           trial_start: string | null
           trial_used: boolean | null
           updated_at: string
           user_id: string | null
+          whatsapp_enabled: boolean | null
         }
         Insert: {
           created_at?: string
@@ -2497,16 +2578,19 @@ export type Database = {
           last_login?: string | null
           limits?: Json | null
           name?: string | null
+          phone_numbers?: string[] | null
           plan_status?: string | null
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
+          tenant_id?: string | null
           trial_end?: string | null
           trial_start?: string | null
           trial_used?: boolean | null
           updated_at?: string
           user_id?: string | null
+          whatsapp_enabled?: boolean | null
         }
         Update: {
           created_at?: string
@@ -2516,16 +2600,19 @@ export type Database = {
           last_login?: string | null
           limits?: Json | null
           name?: string | null
+          phone_numbers?: string[] | null
           plan_status?: string | null
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
+          tenant_id?: string | null
           trial_end?: string | null
           trial_start?: string | null
           trial_used?: boolean | null
           updated_at?: string
           user_id?: string | null
+          whatsapp_enabled?: boolean | null
         }
         Relationships: []
       }
@@ -2864,6 +2951,84 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_integrations: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_authorized: boolean | null
+          last_activity_at: string | null
+          phone_number: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_authorized?: boolean | null
+          last_activity_at?: string | null
+          phone_number: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_authorized?: boolean | null
+          last_activity_at?: string | null
+          phone_number?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_transactions: {
+        Row: {
+          amount: number
+          auto_category: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          impacts_cmv: boolean | null
+          impacts_dre: boolean | null
+          phone_number: string | null
+          processed_at: string | null
+          tenant_id: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          amount: number
+          auto_category?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impacts_cmv?: boolean | null
+          impacts_dre?: boolean | null
+          phone_number?: string | null
+          processed_at?: string | null
+          tenant_id: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          amount?: number
+          auto_category?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impacts_cmv?: boolean | null
+          impacts_dre?: boolean | null
+          phone_number?: string | null
+          processed_at?: string | null
+          tenant_id?: string
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          whatsapp_message_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2996,6 +3161,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_summary: {
+        Args: { p_tenant_id: string }
+        Returns: Json
+      }
       gtrgm_compress: {
         Args: { "": unknown }
         Returns: unknown
@@ -3023,8 +3192,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_plan_active: {
+        Args: { user_email: string }
+        Returns: boolean
+      }
       log_security_event: {
         Args: { event_type: string; user_id?: string; details?: Json }
+        Returns: undefined
+      }
+      recalc_dre: {
+        Args: { p_tenant_id: string; p_month: number; p_year: number }
+        Returns: undefined
+      }
+      recalc_stock_levels: {
+        Args: { p_tenant_id: string }
         Returns: undefined
       }
       set_limit: {
@@ -3058,6 +3239,9 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "developer" | "affiliate" | "user"
+      movement_type: "entrada" | "saida" | "ajuste"
+      subscription_status: "active" | "canceled" | "past_due" | "unpaid"
+      transaction_type: "income" | "expense"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3186,6 +3370,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "developer", "affiliate", "user"],
+      movement_type: ["entrada", "saida", "ajuste"],
+      subscription_status: ["active", "canceled", "past_due", "unpaid"],
+      transaction_type: ["income", "expense"],
     },
   },
 } as const

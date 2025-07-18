@@ -22,7 +22,9 @@ import {
   ClipboardList,
   Code2,
   Palette,
-  Users2
+  Users2,
+  MessageCircle,
+  Workflow
 } from "lucide-react";
 import { ModernNavItem } from "@/components/restaurant/ModernNavItem";
 import { ConditionalNavItem } from "@/components/restaurant/ConditionalNavItem";
@@ -119,6 +121,13 @@ const navigation: NavigationItem[] = [
     icon: Bot,
     description: "Suporte inteligente",
     category: "ai"
+  },
+  {
+    title: "WhatsApp Bot",
+    href: "/whatsapp",
+    icon: MessageCircle,
+    description: "Controle via WhatsApp",
+    category: "tools"
   },
   {
     title: "Gestão de Tarefas",

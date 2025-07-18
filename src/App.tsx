@@ -43,6 +43,7 @@ const BusinessProfile = lazy(() => import("./pages/BusinessProfile"));
 const ProjecoesPagina = lazy(() => import("./pages/ProjecoesPagina").then(module => ({ default: module.ProjecoesPagina })));
 const Integracoes = lazy(() => import("./pages/Integracoes").then(module => ({ default: module.Integracoes })));
 const OnboardingGuiado = lazy(() => import("./pages/OnboardingGuiado").then(module => ({ default: module.OnboardingGuiado })));
+const WhatsAppIntegration = lazy(() => import("./pages/WhatsAppIntegration"));
 
 // New feature pages
 const DeveloperDashboard = lazy(() => import("./components/developer/DeveloperDashboard").then(module => ({ default: module.DeveloperDashboard })));
@@ -365,6 +366,13 @@ function App() {
                   <ProtectedRoute>
                     <Suspense fallback={<PageLoader />}>
                       <OnboardingGuiado />
+                    </Suspense>
+                  </ProtectedRoute>
+                } />
+                <Route path="/whatsapp" element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<PageLoader />}>
+                      <WhatsAppIntegration />
                     </Suspense>
                   </ProtectedRoute>
                 } />
