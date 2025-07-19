@@ -36,12 +36,15 @@ export function StripeCheckout({
     setIsLoading(true);
     
     try {
+      // Sincronizar status antes do checkout
+      await supabase.functions.invoke('sync-subscription-status');
+      
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
           priceId,
           planName,
           isYearly,
-          successUrl: `${window.location.origin}/dashboard?welcome=true&plan=${planName}`,
+          successUrl: `${window.location.origin}/dashboard?welcome=true&plan=${planName.toLowerCase()}&payment=success`,
           cancelUrl: `${window.location.origin}/?checkout=cancelled`
         }
       });
@@ -51,9 +54,14 @@ export function StripeCheckout({
       }
 
       if (data?.url) {
-        // Open in new tab for better UX
+        // Abrir em nova aba para melhor UX
         window.open(data.url, '_blank');
         onSuccess?.();
+        
+        // Mostrar toast informativo
+        toast.success('Redirecionando para pagamento seguro...', {
+          description: 'Após o pagamento, seu plano será ativado automaticamente.'
+        });
       } else {
         throw new Error('URL de checkout não recebida');
       }

@@ -136,20 +136,23 @@ const pricingPlans: PricingPlan[] = [
 // Checkout function using Supabase Edge Function
 const handleCheckout = async (priceId: string, planName: string) => {
   try {
+    // Primeiro sincronizar status atual
+    await supabase.functions.invoke('sync-subscription-status');
+    
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: { 
         priceId,
         planName,
-        successUrl: `${window.location.origin}/dashboard?welcome=true`,
+        successUrl: `${window.location.origin}/dashboard?welcome=true&plan=${planName.toLowerCase()}`,
         cancelUrl: `${window.location.origin}/?checkout=cancelled`
       }
     });
 
     if (error) throw error;
 
-    // Redirect to Stripe Checkout
+    // Abrir Stripe Checkout em nova aba para melhor UX
     if (data?.url) {
-      window.location.href = data.url;
+      window.open(data.url, '_blank');
     }
   } catch (error) {
     console.error('Checkout error:', error);

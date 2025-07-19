@@ -55,13 +55,27 @@ const OptimizedIndex = lazy(() => import("./pages/OptimizedIndex"));
 // Import optimized branded loader
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { SubscriptionSync } from "@/components/subscription/SubscriptionSync";
 
 // Loading component otimizado com branding Lucraí
 const PageLoader = ({ message }: { message?: string }) => (
   <PageBrandedLoader message={message} />
 );
 
-const queryClient = new QueryClient();
+// QueryClient otimizado
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      gcTime: 10 * 60 * 1000, // 10 minutos
+      refetchOnWindowFocus: false,
+      retry: 2
+    },
+    mutations: {
+      retry: 2
+    }
+  }
+});
 
 function App() {
   return (
@@ -69,6 +83,7 @@ function App() {
       <PerformanceMonitor />
       <EnhancedErrorBoundary>
         <AuthProvider>
+          <SubscriptionSync />
           <TooltipProvider>
             <Toaster />
             <Sonner />
