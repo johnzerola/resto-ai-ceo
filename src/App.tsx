@@ -56,6 +56,7 @@ const OptimizedIndex = lazy(() => import("./pages/OptimizedIndex"));
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { SubscriptionSync } from "@/components/subscription/SubscriptionSync";
+import { CheckoutTester } from "@/components/debug/CheckoutTester";
 
 // Loading component otimizado com branding Lucraí
 const PageLoader = ({ message }: { message?: string }) => (
@@ -87,6 +88,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            <CheckoutTester />
             <BrowserRouter>
                   <Routes>
                 <Route path="/login" element={<Login />} />

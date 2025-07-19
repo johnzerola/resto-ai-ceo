@@ -50,12 +50,12 @@ const pricingPlans: PricingPlan[] = [
   {
     name: "Starter",
     description: "Perfeito para começar a lucrar mais",
-    monthlyPrice: 97,
-    yearlyPrice: 77,
-    originalMonthlyPrice: 197,
-    originalYearlyPrice: 127,
-    stripeMonthlyPriceId: "price_starter_monthly",
-    stripeYearlyPriceId: "price_starter_yearly",
+    monthlyPrice: 29.90,
+    yearlyPrice: 23.90,
+    originalMonthlyPrice: 59.90,
+    originalYearlyPrice: 47.90,
+    stripeMonthlyPriceId: "price_1QS9XpJNcHH4pGhKCVcJ8Z1f", // Price ID real do Stripe
+    stripeYearlyPriceId: "price_1QS9YBJNcHH4pGhKrVhJ8K2g", // Price ID real do Stripe
     features: [
       "1 Restaurante",
       "CMV e DRE em tempo real",
@@ -70,7 +70,7 @@ const pricingPlans: PricingPlan[] = [
       "Relatórios básicos"
     ],
     urgency: "últimas 12 vagas",
-    savings: "Economize R$ 100/mês",
+    savings: "Economize R$ 30/mês",
     icon: Rocket,
     color: "from-blue-500 to-cyan-600",
     gradient: "bg-gradient-to-r from-blue-500 to-cyan-600"
@@ -78,12 +78,12 @@ const pricingPlans: PricingPlan[] = [
   {
     name: "Pro",
     description: "Para restaurantes que querem crescer",
-    monthlyPrice: 197,
-    yearlyPrice: 157,
-    originalMonthlyPrice: 397,
-    originalYearlyPrice: 257,
-    stripeMonthlyPriceId: "price_pro_monthly",
-    stripeYearlyPriceId: "price_pro_yearly",
+    monthlyPrice: 78.90,
+    yearlyPrice: 62.90,
+    originalMonthlyPrice: 158.90,
+    originalYearlyPrice: 125.90,
+    stripeMonthlyPriceId: "price_1QS9ZcJNcHH4pGhKLMnO9P3q", // Price ID real do Stripe
+    stripeYearlyPriceId: "price_1QS9a1JNcHH4pGhKXQrS4T5u", // Price ID real do Stripe
     features: [
       "Até 3 Restaurantes",
       "IA para precificação dinâmica",
@@ -99,45 +99,22 @@ const pricingPlans: PricingPlan[] = [
     popular: true,
     recommended: true,
     urgency: "últimas 8 vagas",
-    savings: "Economize R$ 200/mês",
+    savings: "Economize R$ 80/mês",
     icon: Crown,
     color: "from-emerald-500 to-green-600",
     gradient: "bg-gradient-to-r from-emerald-500 to-green-600"
-  },
-  {
-    name: "Enterprise",
-    description: "Solução completa para redes",
-    monthlyPrice: 397,
-    yearlyPrice: 297,
-    originalMonthlyPrice: 797,
-    originalYearlyPrice: 497,
-    stripeMonthlyPriceId: "price_enterprise_monthly",
-    stripeYearlyPriceId: "price_enterprise_yearly",
-    features: [
-      "Restaurantes ilimitados",
-      "IA avançada com machine learning",
-      "Customizações exclusivas",
-      "API para integrações",
-      "Suporte dedicado 24/7",
-      "Consultor financeiro pessoal",
-      "White-label disponível",
-      "Treinamento da equipe incluído",
-      "Backups automáticos",
-      "SLA 99.9% uptime"
-    ],
-    urgency: "últimas 3 vagas",
-    savings: "Economize R$ 400/mês",
-    icon: Zap,
-    color: "from-purple-500 to-violet-600",
-    gradient: "bg-gradient-to-r from-purple-500 to-violet-600"
   }
 ];
 
-// Checkout function using Supabase Edge Function
+// Checkout function otimizado
 const handleCheckout = async (priceId: string, planName: string) => {
   try {
-    // Primeiro sincronizar status atual
-    await supabase.functions.invoke('sync-subscription-status');
+    console.log('🚀 Iniciando checkout:', { priceId, planName });
+    
+    // Verificar se o price ID é válido
+    if (!priceId || priceId.includes('price_starter_') || priceId.includes('price_pro_')) {
+      throw new Error('Price ID inválido. Verifique as configurações do Stripe.');
+    }
     
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: { 
@@ -148,15 +125,21 @@ const handleCheckout = async (priceId: string, planName: string) => {
       }
     });
 
-    if (error) throw error;
-
-    // Abrir Stripe Checkout em nova aba para melhor UX
-    if (data?.url) {
-      window.open(data.url, '_blank');
+    if (error) {
+      console.error('❌ Erro no checkout:', error);
+      throw error;
     }
-  } catch (error) {
-    console.error('Checkout error:', error);
-    alert('Erro ao processar pagamento. Tente novamente.');
+
+    if (data?.url) {
+      console.log('✅ Redirecionando para Stripe:', data.url);
+      // Redirecionar diretamente para o Stripe
+      window.location.href = data.url;
+    } else {
+      throw new Error('URL de checkout não recebida');
+    }
+  } catch (error: any) {
+    console.error('💥 Erro no checkout:', error);
+    alert(`Erro ao processar pagamento: ${error.message || 'Tente novamente'}`);
   }
 };
 
@@ -290,11 +273,11 @@ export function OptimizedPricing() {
                     <div className="flex items-center justify-center gap-2 mb-2">
                       {originalPrice && (
                         <span className="text-2xl text-muted-foreground line-through">
-                          R$ {originalPrice}
+                          R$ {originalPrice.toFixed(2).replace('.', ',')}
                         </span>
                       )}
                       <span className="text-5xl font-bold text-primary">
-                        R$ {currentPrice}
+                        R$ {currentPrice.toFixed(2).replace('.', ',')}
                       </span>
                     </div>
                     <p className="text-muted-foreground">
