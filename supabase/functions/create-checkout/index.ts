@@ -32,6 +32,12 @@ serve(async (req) => {
     }
 
     const { priceId, planName, successUrl, cancelUrl } = await req.json();
+    
+    console.log("Received data:", { priceId, planName, successUrl, cancelUrl });
+    
+    if (!priceId) {
+      throw new Error("priceId is required");
+    }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
