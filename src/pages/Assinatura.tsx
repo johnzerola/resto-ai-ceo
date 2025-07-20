@@ -74,9 +74,9 @@ export function Assinatura() {
         // Determinar o price ID correto baseado no plano
         let priceId = '';
         if (selectedPlan.id === 'basico') {
-          priceId = 'price_1QqJbJLNcHH4pGhKbasico29'; // Básico mensal - prod_ScEOIQOyRxpW4r
+          priceId = 'price_1RgzvXRon1VrwJMGcv0TECIa'; // Básico - R$ 29,90
         } else if (selectedPlan.id === 'profissional') {
-          priceId = 'price_1QqJbJLNcHH4pGhKpro79'; // Profissional mensal - prod_ScEPJDdBU5a0xq
+          priceId = 'price_1RgzwaRon1VrwJMGoESYbq1r'; // Profissional - R$ 78,90
         }
         
         if (!priceId) {
