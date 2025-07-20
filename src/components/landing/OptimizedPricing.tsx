@@ -54,8 +54,8 @@ const pricingPlans: PricingPlan[] = [
     yearlyPrice: 23.90,
     originalMonthlyPrice: 59.90,
     originalYearlyPrice: 47.90,
-    stripeMonthlyPriceId: "price_1QS9XpJNcHH4pGhKCVcJ8Z1f", // Price ID real do Stripe
-    stripeYearlyPriceId: "price_1QS9YBJNcHH4pGhKrVhJ8K2g", // Price ID real do Stripe
+    stripeMonthlyPriceId: "price_1QqJbJLNcHH4pGhKbasico29", // Básico Mensal - prod_ScEOIQOyRxpW4r
+    stripeYearlyPriceId: "price_1QqJbJLNcHH4pGhKbasico23", // Básico Anual - prod_ScEOIQOyRxpW4r
     features: [
       "1 Restaurante",
       "CMV e DRE em tempo real",
@@ -82,8 +82,8 @@ const pricingPlans: PricingPlan[] = [
     yearlyPrice: 62.90,
     originalMonthlyPrice: 158.90,
     originalYearlyPrice: 125.90,
-    stripeMonthlyPriceId: "price_1QS9ZcJNcHH4pGhKLMnO9P3q", // Price ID real do Stripe
-    stripeYearlyPriceId: "price_1QS9a1JNcHH4pGhKXQrS4T5u", // Price ID real do Stripe
+    stripeMonthlyPriceId: "price_1QqJbJLNcHH4pGhKpro79", // Profissional Mensal - prod_ScEPJDdBU5a0xq  
+    stripeYearlyPriceId: "price_1QqJbJLNcHH4pGhKpro63", // Profissional Anual - prod_ScEPJDdBU5a0xq
     features: [
       "Até 3 Restaurantes",
       "IA para precificação dinâmica",

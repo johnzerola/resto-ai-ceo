@@ -71,10 +71,22 @@ export function Assinatura() {
     
     await handleAsyncError(
       async () => {
+        // Determinar o price ID correto baseado no plano
+        let priceId = '';
+        if (selectedPlan.id === 'basico') {
+          priceId = 'price_1QqJbJLNcHH4pGhKbasico29'; // Básico mensal - prod_ScEOIQOyRxpW4r
+        } else if (selectedPlan.id === 'profissional') {
+          priceId = 'price_1QqJbJLNcHH4pGhKpro79'; // Profissional mensal - prod_ScEPJDdBU5a0xq
+        }
+        
+        if (!priceId) {
+          throw new Error('Price ID não encontrado para o plano selecionado');
+        }
+        
         const { data, error } = await supabase.functions.invoke('create-checkout', {
           body: {
-            productId: selectedPlan.stripeProductId,
-            planId: selectedPlan.id
+            priceId: priceId,
+            planName: selectedPlan.name
           }
         });
         
