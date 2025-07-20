@@ -66,13 +66,11 @@ serve(async (req) => {
         const priceId = subscription.items.data[0].price.id;
         
         // Determinar plano baseado no price ID
-        let tier = 'basic';
-        if (priceId.includes('pro') || priceId.includes('profissional')) {
-          tier = 'profissional';
-        } else if (priceId.includes('enterprise')) {
-          tier = 'enterprise';
-        } else if (priceId.includes('starter') || priceId.includes('basico')) {
-          tier = 'basico';
+        let tier = 'Básico';
+        if (priceId === 'price_1RgzwaRon1VrwJMGoESYbq1r') {
+          tier = 'Profissional';
+        } else if (priceId === 'price_1RgzvXRon1VrwJMGcv0TECIa') {
+          tier = 'Básico';
         }
 
         subscriptionStatus = {
