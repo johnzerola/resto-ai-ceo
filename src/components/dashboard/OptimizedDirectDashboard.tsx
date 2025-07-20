@@ -19,7 +19,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 // Lazy load heavy components for better performance
-const QuickActionGrid = lazy(() => import('./components/QuickActionGrid'));
 const RecentActivity = lazy(() => import('./components/RecentActivity'));
 
 interface StatCardProps {
