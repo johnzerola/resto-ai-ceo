@@ -422,3 +422,4 @@ const BusinessProfilePage = () => {
 };
 
 export default BusinessProfilePage;
+export { BusinessProfilePage };
