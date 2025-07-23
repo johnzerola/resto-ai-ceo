@@ -4,6 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/services/AuthService';
 import { toast } from 'sonner';
+import { mapSupabaseAuthError, AuthResult } from '@/utils/supabaseErrorMapper';
 // Cache otimizado para restaurantes (1 hora)
 const RESTAURANT_CACHE_TIME = 60 * 60 * 1000;
 const restaurantCache = new Map<string, { data: Restaurant[]; timestamp: number }>();
@@ -35,11 +36,11 @@ interface AuthContextType {
   subscriptionInfo: SubscriptionInfo;
   userRestaurants: Restaurant[];
   currentRestaurant: Restaurant | null;
-  signIn: (email: string, password: string) => Promise<boolean>;
-  signUp: (email: string, password: string, name: string) => Promise<boolean>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (email: string, password: string, name: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, name: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<AuthResult>;
+  register: (email: string, password: string, name: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   hasPermission: (requiredRole: UserRole) => boolean;
   setCurrentRestaurant: (restaurant: Restaurant) => void;
@@ -236,9 +237,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signIn = async (email: string, password: string): Promise<boolean> => {
+  const signIn = async (email: string, password: string): Promise<AuthResult> => {
     try {
-      // Tentativa de login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -246,31 +246,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Erro no login:', error);
-        toast.error('Erro no login. Verifique suas credenciais.');
-        return false;
+        const errorMessage = mapSupabaseAuthError(error);
+        return { ok: false, error: errorMessage };
       }
 
       if (data.user && data.session) {
-        toast.success('Login realizado com sucesso!');
-        return true;
+        return { ok: true };
       }
 
-      return false;
+      return { ok: false, error: 'Falha na autenticação' };
     } catch (error) {
       console.error('Erro no login:', error);
-      toast.error('Erro no login. Verifique suas credenciais.');
-      return false;
+      return { ok: false, error: 'Erro de conexão. Tente novamente.' };
     }
   };
 
-  const signUp = async (email: string, password: string, name: string): Promise<boolean> => {
+  const signUp = async (email: string, password: string, name: string): Promise<AuthResult> => {
     try {
-      // Tentativa de criação de conta
-      
-      // Garantir HTTPS para redirecionamento em produção
-      const redirectUrl = window.location.protocol === 'https:' 
-        ? `${window.location.origin}/login?confirmed=true`
-        : `https://${window.location.host}/login?confirmed=true`;
+      // URL de confirmação segura
+      const redirectUrl = `${window.location.origin}/login?confirmed=true`;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -285,35 +279,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Erro no cadastro:', error);
-        if (error.message.includes('already registered')) {
-          toast.error('Este email já está cadastrado. Tente fazer login.');
-        } else {
-          toast.error(`Erro no cadastro: ${error.message}`);
-        }
-        return false;
+        const errorMessage = mapSupabaseAuthError(error);
+        return { ok: false, error: errorMessage };
       }
 
       if (data.user) {
         // Conta criada com sucesso
-        
-        // Verificar se precisa confirmar email
         if (!data.session) {
-          toast.success('Conta criada com sucesso! Verifique seu email para confirmar.', {
-            description: 'Um email de confirmação foi enviado automaticamente.',
-            duration: 8000
-          });
+          // Precisa confirmar email
+          return { ok: true };
         } else {
-          toast.success('Conta criada e confirmada com sucesso!');
+          // Conta confirmada automaticamente
+          return { ok: true };
         }
-        
-        return true;
       }
 
-      return false;
+      return { ok: false, error: 'Falha ao criar conta' };
     } catch (error) {
       console.error('Erro no cadastro:', error);
-      toast.error('Erro no cadastro. Tente novamente.');
-      return false;
+      return { ok: false, error: 'Erro de conexão. Tente novamente.' };
     }
   };
 
