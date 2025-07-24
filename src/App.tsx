@@ -18,6 +18,7 @@ import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard"; // Dashboard direto para performance
+import { Assinatura } from "./pages/Assinatura";
 
 // Lazy loading apenas para páginas secundárias
 const FichaTecnicaInteligenteCompleta = lazy(() => import("./pages/FichaTecnicaInteligenteCompleta"));
@@ -29,7 +30,7 @@ const Metas = lazy(() => import("./pages/Metas").then(module => ({ default: modu
 const Estoque = lazy(() => import("./pages/Estoque"));
 const Cardapio = lazy(() => import("./pages/Cardapio"));
 const GerenciarUsuarios = lazy(() => import("./pages/GerenciarUsuarios"));
-const Assinatura = lazy(() => import("./pages/Assinatura").then(module => ({ default: module.Assinatura })));
+// Assinatura movido para import direto
 const GestaoTarefas = lazy(() => import("./pages/GestaoTarefas"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const Documentacao = lazy(() => import("./pages/Documentacao"));
@@ -198,9 +199,7 @@ function App() {
                 <Route path="/assinaturas" element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <Assinatura />
-                      </Suspense>
+                      <Assinatura />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />
@@ -286,9 +285,7 @@ function App() {
                 <Route path="/assinatura" element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <Assinatura />
-                      </Suspense>
+                      <Assinatura />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />
