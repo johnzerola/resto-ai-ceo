@@ -1,4 +1,4 @@
-import React, { memo, useMemo, Suspense, lazy } from 'react';
+import React, { memo, useMemo, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-
-// Lazy load heavy components for better performance
-const RecentActivity = lazy(() => import('./components/RecentActivity'));
+import RecentActivity from './components/RecentActivity';
 
 interface StatCardProps {
   title: string;
@@ -273,10 +271,8 @@ export const OptimizedDirectDashboard = memo(function OptimizedDirectDashboard()
           </CardContent>
         </Card>
 
-        {/* Recent Activity - Lazy loaded */}
-        <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-          <RecentActivity />
-        </Suspense>
+        {/* Recent Activity */}
+        <RecentActivity />
       </div>
     </div>
   );
