@@ -1,13 +1,18 @@
 
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { FinancialInsights } from "@/components/restaurant/FinancialInsights";
+import { TrialBlocker } from "@/components/trial/TrialBlocker";
 import { AccountsManager } from "@/components/restaurant/AccountsManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TrendingUp, CreditCard } from "lucide-react";
 
 export function Financeiro() {
   return (
-    <ModernLayout>
+    <TrialBlocker 
+      featureName="Gestão Financeira Completa" 
+      description="Insights financeiros, DRE automático, controle de contas a pagar e receber"
+    >
+      <ModernLayout>
       <div className="main-content-padding space-y-4 sm:space-y-6 bg-background min-h-screen">
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:justify-between sm:items-start">
           <div className="space-y-1">
@@ -46,5 +51,6 @@ export function Financeiro() {
         </div>
       </div>
     </ModernLayout>
+    </TrialBlocker>
   );
 }

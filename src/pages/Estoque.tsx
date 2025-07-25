@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
+import { TrialBlocker } from "@/components/trial/TrialBlocker";
 import { InventoryOverview } from "@/components/restaurant/InventoryOverview";
 import { InventoryForm } from "@/components/restaurant/InventoryForm";
 import { PurchaseListGenerator } from "@/components/restaurant/PurchaseListGenerator";
@@ -212,8 +213,12 @@ const Estoque = () => {
   };
 
   return (
-    <ModernLayout>
-      <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-2 sm:p-4 lg:p-6 bg-background min-h-screen max-w-full overflow-hidden">
+    <TrialBlocker 
+      featureName="Gestão de Estoque Inteligente" 
+      description="Controle completo de inventário, lista de compras automática e tendências de estoque"
+    >
+      <ModernLayout>
+        <div className="space-y-3 sm:space-y-4 lg:space-y-6 p-2 sm:p-4 lg:p-6 bg-background min-h-screen max-w-full overflow-hidden">
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start">
           <div className="space-y-1 min-w-0 flex-1">
             <h1 className="text-base sm:text-lg lg:text-xl font-bold tracking-tight text-foreground truncate">
@@ -299,6 +304,7 @@ const Estoque = () => {
         </div>
       </div>
     </ModernLayout>
+    </TrialBlocker>
   );
 };
 

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,10 +26,14 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    // Inicializar Resend se a chave estiver disponível
+    const resendKey = Deno.env.get("RESEND_API_KEY");
+    const resend = resendKey ? new Resend(resendKey) : null;
+
     // Executar as funções de notificação automaticamente
     const results = await Promise.allSettled([
       // Enviar notificações de trial
-      supabaseClient.functions.invoke('send-trial-notifications'),
+      sendTrialNotifications(supabaseClient, resend),
       
       // Bloquear usuários expirados
       blockExpiredUsers(supabaseClient),
@@ -113,6 +118,120 @@ async function blockExpiredUsers(supabaseClient: any) {
   logStep("Users blocked successfully", { count: expiredUsers.length });
 }
 
+async function sendTrialNotifications(supabaseClient: any, resend: any) {
+  logStep("Starting trial notifications");
+  
+  if (!resend) {
+    logStep("Resend API key not configured, skipping email notifications");
+    return;
+  }
+
+  const now = new Date();
+  
+  // Buscar usuários em trial
+  const { data: trialUsers, error } = await supabaseClient
+    .from('profiles')
+    .select('id, email, name, trial_end, plan_status')
+    .eq('plan_status', 'trial')
+    .eq('status', 'active');
+
+  if (error) {
+    throw new Error(`Error fetching trial users: ${error.message}`);
+  }
+
+  if (!trialUsers?.length) {
+    logStep("No trial users found");
+    return;
+  }
+
+  logStep("Found trial users", { count: trialUsers.length });
+
+  for (const user of trialUsers) {
+    const trialEnd = new Date(user.trial_end);
+    const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    logStep(`User ${user.email}: ${daysRemaining} days remaining`);
+
+    try {
+      // Notificação 3 dias antes
+      if (daysRemaining === 3) {
+        await sendTrialWarningEmail(resend, user, daysRemaining);
+      }
+      // Notificação 1 dia antes
+      else if (daysRemaining === 1) {
+        await sendTrialUrgentEmail(resend, user, daysRemaining);
+      }
+    } catch (emailError) {
+      logStep(`Email error for ${user.email}`, emailError);
+    }
+  }
+}
+
+async function sendTrialWarningEmail(resend: any, profile: any, daysRemaining: number) {
+  await resend.emails.send({
+    from: "Sistema RestauranteGPT <noreply@restaurantegpt.com>",
+    to: [profile.email],
+    subject: "Seu trial expira em 3 dias! 🚨",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #ef4444;">⏰ Seu trial expira em ${daysRemaining} dias!</h1>
+        <p>Olá, ${profile.name || 'usuário'}!</p>
+        <p>Seu período de teste gratuito do RestauranteGPT expira em <strong>${daysRemaining} dias</strong>.</p>
+        <p>Não perca acesso às funcionalidades premium:</p>
+        <ul>
+          <li>✅ Dashboard completo com métricas financeiras</li>
+          <li>✅ Gestão inteligente de estoque</li>
+          <li>✅ Controle de receitas e custos</li>
+          <li>✅ Análises financeiras automatizadas</li>
+        </ul>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${Deno.env.get('SITE_URL') || 'https://restaurantegpt.com'}/assinatura" 
+             style="background-color: #22c55e; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+            💎 ASSINAR AGORA
+          </a>
+        </div>
+        <p style="color: #6b7280; font-size: 14px;">
+          Tem dúvidas? Responda este email que nossa equipe te ajuda!
+        </p>
+      </div>
+    `,
+  });
+  logStep(`Warning email sent to ${profile.email}`);
+}
+
+async function sendTrialUrgentEmail(resend: any, profile: any, daysRemaining: number) {
+  await resend.emails.send({
+    from: "Sistema RestauranteGPT <noreply@restaurantegpt.com>",
+    to: [profile.email],
+    subject: "🚨 URGENTE: Seu trial expira AMANHÃ!",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; border-left: 4px solid #ef4444;">
+          <h1 style="color: #ef4444; margin: 0;">🚨 ÚLTIMA CHANCE!</h1>
+          <p style="margin: 10px 0 0 0; font-size: 18px; font-weight: bold;">
+            Seu trial expira AMANHÃ!
+          </p>
+        </div>
+        
+        <p>Olá, ${profile.name || 'usuário'}!</p>
+        <p><strong>Seu período de teste do RestauranteGPT expira em menos de 24 horas!</strong></p>
+        
+        <div style="text-align: center; margin: 30px 0; padding: 20px; background-color: #f0fdf4; border-radius: 8px;">
+          <a href="${Deno.env.get('SITE_URL') || 'https://restaurantegpt.com'}/assinatura" 
+             style="background-color: #ef4444; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+            🔥 ASSINAR AGORA - ÚLTIMAS HORAS
+          </a>
+        </div>
+        
+        <p style="color: #6b7280; font-size: 14px;">
+          Precisa de ajuda? Responda este email imediatamente!
+        </p>
+      </div>
+    `,
+  });
+  logStep(`Urgent email sent to ${profile.email}`);
+}
+
 async function cleanupOldData(supabaseClient: any) {
   logStep("Starting data cleanup");
   
@@ -130,19 +249,6 @@ async function cleanupOldData(supabaseClient: any) {
       logStep("Error cleaning system logs", logsError);
     } else {
       logStep("Old system logs cleaned");
-    }
-
-    // Limpar notificações antigas
-    const { error: notificationsError } = await supabaseClient
-      .from('notifications')
-      .delete()
-      .lte('created_at', thirtyDaysAgo.toISOString())
-      .eq('read', true);
-
-    if (notificationsError) {
-      logStep("Error cleaning notifications", notificationsError);
-    } else {
-      logStep("Old notifications cleaned");
     }
 
   } catch (error) {
