@@ -20,11 +20,13 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard"; // Dashboard direto para performance
 import { Assinatura } from "./pages/Assinatura";
 
+// Import direto para páginas críticas - melhor performance
+import DreCmv from "./pages/DreCmv";
+import FluxoDeCaixa from "./pages/FluxoDeCaixa";
+
 // Lazy loading apenas para páginas secundárias
 const FichaTecnicaInteligenteCompleta = lazy(() => import("./pages/FichaTecnicaInteligenteCompleta"));
 const SystemValidation = lazy(() => import("./pages/SystemValidation"));
-const DreCmv = lazy(() => import("./pages/DreCmv"));
-const FluxoDeCaixa = lazy(() => import("./pages/FluxoDeCaixa"));
 const Simulador = lazy(() => import("./pages/Simulador"));
 const Metas = lazy(() => import("./pages/Metas").then(module => ({ default: module.Metas })));
 const Estoque = lazy(() => import("./pages/Estoque"));
@@ -57,7 +59,6 @@ const OptimizedIndex = lazy(() => import("./pages/OptimizedIndex"));
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { SubscriptionSync } from "@/components/subscription/SubscriptionSync";
-import { CheckoutTester } from "@/components/debug/CheckoutTester";
 
 // Loading component otimizado com branding Lucraí
 const PageLoader = ({ message }: { message?: string }) => (
@@ -89,7 +90,6 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <CheckoutTester />
             <BrowserRouter>
                   <Routes>
                 <Route path="/login" element={<Login />} />
@@ -145,54 +145,42 @@ function App() {
                 <Route path="/dre-cmv" element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <DreCmv />
-                      </Suspense>
+                      <DreCmv />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/dre" element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <DreCmv />
-                      </Suspense>
+                      <DreCmv />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/dri" element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <DreCmv />
-                      </Suspense>
+                      <DreCmv />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/cmv" element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <DreCmv />
-                      </Suspense>
+                      <DreCmv />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/fluxo-caixa" element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <FluxoDeCaixa />
-                      </Suspense>
+                      <FluxoDeCaixa />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />
                 <Route path="/fluxo-de-caixa" element={
                   <ProtectedRoute>
                     <DashboardLayout>
-                      <Suspense fallback={<PageLoader />}>
-                        <FluxoDeCaixa />
-                      </Suspense>
+                      <FluxoDeCaixa />
                     </DashboardLayout>
                   </ProtectedRoute>
                 } />

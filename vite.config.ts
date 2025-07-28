@@ -20,30 +20,34 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    target: 'esnext',
+    target: 'es2022',
     minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // Vendor chunks otimizados
+          'react-vendor': ['react', 'react-dom'],
+          'router-vendor': ['react-router-dom'],
           'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-tabs'],
           'chart-vendor': ['recharts'],
           'supabase-vendor': ['@supabase/supabase-js'],
-          // App chunks
-          'dashboard': [
-            'src/components/dashboard/UnifiedDashboard.tsx',
-            'src/hooks/useDashboardData.ts'
-          ],
+          'query-vendor': ['@tanstack/react-query'],
+          // App chunks principais
           'auth': [
             'src/contexts/AuthContext.tsx',
             'src/components/auth/AuthButton.tsx'
+          ],
+          'core-pages': [
+            'src/pages/DreCmv.tsx',
+            'src/pages/FluxoDeCaixa.tsx',
+            'src/pages/Dashboard.tsx'
           ]
         }
       }
     },
     chunkSizeWarningLimit: 1000,
-    sourcemap: false
+    sourcemap: false,
+    cssMinify: true
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@supabase/supabase-js'],
