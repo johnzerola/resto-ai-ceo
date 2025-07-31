@@ -54,6 +54,9 @@ const BrandingGuide = lazy(() => import("./components/branding/BrandingGuide").t
 const AffiliateSystem = lazy(() => import("./components/affiliate/AffiliateSystem").then(module => ({ default: module.AffiliateSystem })));
 const Index = lazy(() => import("./pages/Index"));
 const OptimizedIndex = lazy(() => import("./pages/OptimizedIndex"));
+const Blog = lazy(() => import("./pages/Blog"));
+const CalculadoraCMV = lazy(() => import("./pages/CalculadoraCMV"));
+const GuiaCompletoPrecificacao = lazy(() => import("./pages/GuiaCompletoPrecificacao"));
 
 // Import optimized branded loader
 import { PageBrandedLoader } from "@/components/common/BrandedLoader";
@@ -405,6 +408,22 @@ function App() {
                       </Suspense>
                     </DashboardLayout>
                   </ProtectedRoute>
+                } />
+                {/* SEO Pages */}
+                <Route path="/blog" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <Blog />
+                  </Suspense>
+                } />
+                <Route path="/calculadora-cmv" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <CalculadoraCMV />
+                  </Suspense>
+                } />
+                <Route path="/guia-completo-precificacao" element={
+                  <Suspense fallback={<PageLoader />}>
+                    <GuiaCompletoPrecificacao />
+                  </Suspense>
                 } />
                 <Route path="*" element={<NotFound />} />
                   </Routes>
