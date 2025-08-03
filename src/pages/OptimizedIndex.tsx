@@ -4,6 +4,7 @@ import { OptimizedHero } from "@/components/landing/OptimizedHero";
 import { PersuasiveAbout } from "@/components/landing/PersuasiveAbout";
 import { OptimizedPricing } from "@/components/landing/OptimizedPricing";
 import { PersuasiveCTA } from "@/components/landing/PersuasiveCTA";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { 
   ChefHat, 
   Menu,
@@ -19,8 +20,36 @@ import { Button } from "@/components/ui/button";
 export default function OptimizedIndex() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Lucraí CEO",
+    "description": "Sistema de gestão financeira para restaurantes com controle de CMV, DRE e precificação inteligente",
+    "url": "https://lucrai.com",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "BRL",
+      "description": "Teste grátis por 7 dias"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "ratingCount": "200"
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <SEOHead 
+        title="Lucraí CEO - Aumente o Lucro do Seu Restaurante em 40% | Teste Grátis"
+        description="🚀 Sistema completo de gestão financeira para restaurantes. Controle CMV, DRE e precificação. +200 restaurantes aumentaram lucro em 30 dias. Teste 7 dias grátis!"
+        keywords="gestão restaurante, CMV restaurante, DRE restaurante, precificação restaurante, lucro restaurante, sistema gestão gastronômica, controle financeiro restaurante, como precificar prato, restaurante dando prejuízo"
+        structuredData={structuredData}
+      />
+      <div className="min-h-screen bg-background">
       {/* Optimized Header with sticky navigation */}
       <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container mx-auto px-6 py-4">
@@ -218,5 +247,6 @@ export default function OptimizedIndex() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

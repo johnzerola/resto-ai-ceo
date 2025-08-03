@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import { 
   CheckCircle, 
   Star, 
@@ -145,6 +148,16 @@ const handleCheckout = async (priceId: string, planName: string) => {
 export function OptimizedPricing() {
   const [urgencyTime, setUrgencyTime] = useState({ hours: 23, minutes: 47 });
   const { user, isAuthenticated } = useAuth();
+  const { trialStatus } = useTrialStatus();
+
+  // 50% discount for users in trial
+  const getDiscountedPrice = (plan: PricingPlan) => {
+    const basePrice = plan.monthlyPrice;
+    const isInTrial = isAuthenticated && trialStatus?.isTrialActive;
+    return isInTrial ? Math.round(basePrice * 0.5) : basePrice;
+  };
+
+  const hasTrialDiscount = isAuthenticated && trialStatus?.isTrialActive;
 
   // Countdown timer for urgency
   useEffect(() => {
@@ -180,18 +193,30 @@ export function OptimizedPricing() {
       <div className="container mx-auto px-6">
         {/* Header with urgency */}
         <div className="max-w-4xl mx-auto text-center mb-16">
-          <Badge className="mb-6 bg-destructive/10 text-destructive border-destructive/20 animate-pulse">
-            <Clock className="mr-2 h-4 w-4" />
-            🔥 Promoção de lançamento termina em {urgencyTime.hours}h {urgencyTime.minutes}min
-          </Badge>
+          {hasTrialDiscount ? (
+            <Badge className="mb-6 bg-gradient-to-r from-green-500 to-green-600 text-white border-0 animate-pulse text-lg px-6 py-2">
+              <Zap className="mr-2 h-5 w-5" />
+              🎉 OFERTA ESPECIAL: 50% OFF apenas para quem está no trial!
+            </Badge>
+          ) : (
+            <Badge className="mb-6 bg-destructive/10 text-destructive border-destructive/20 animate-pulse">
+              <Clock className="mr-2 h-4 w-4" />
+              🔥 Promoção de lançamento termina em {urgencyTime.hours}h {urgencyTime.minutes}min
+            </Badge>
+          )}
           
           <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-            Escolha o plano que vai transformar seu restaurante
+            {hasTrialDiscount ? 'Ative Seu Plano com 50% de Desconto!' : 'Escolha o plano que vai transformar seu restaurante'}
           </h2>
           
           <p className="text-xl text-muted-foreground leading-relaxed mb-8">
-            <span className="text-primary font-semibold">Mais de 200 restaurantes</span> já aumentaram 
-            seu lucro em até <span className="text-primary font-semibold">40% em 30 dias</span>
+            {hasTrialDiscount 
+              ? `Aproveite sua oferta exclusiva de trial! Restam apenas ${trialStatus?.daysRemaining} ${trialStatus?.daysRemaining === 1 ? 'dia' : 'dias'}.`
+              : <>
+                  <span className="text-primary font-semibold">Mais de 200 restaurantes</span> já aumentaram 
+                  seu lucro em até <span className="text-primary font-semibold">40% em 30 dias</span>
+                </>
+            }
           </p>
 
 
@@ -251,23 +276,39 @@ export function OptimizedPricing() {
                   <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
                   <p className="text-muted-foreground">{plan.description}</p>
                   
-                  {/* Pricing */}
+                   {/* Pricing */}
                   <div className="py-6">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      {originalPrice && (
+                      {hasTrialDiscount && (
+                        <div className="text-center">
+                          <div className="text-lg text-muted-foreground line-through">
+                            R$ {currentPrice.toFixed(2).replace('.', ',')}
+                          </div>
+                          <span className="text-4xl font-bold text-green-600">
+                            R$ {getDiscountedPrice(plan).toFixed(2).replace('.', ',')}
+                          </span>
+                        </div>
+                      )}
+                      {!hasTrialDiscount && originalPrice && (
                         <span className="text-2xl text-muted-foreground line-through">
                           R$ {originalPrice.toFixed(2).replace('.', ',')}
                         </span>
                       )}
-                      <span className="text-5xl font-bold text-primary">
-                        R$ {currentPrice.toFixed(2).replace('.', ',')}
-                      </span>
+                      {!hasTrialDiscount && (
+                        <span className="text-5xl font-bold text-primary">
+                          R$ {currentPrice.toFixed(2).replace('.', ',')}
+                        </span>
+                      )}
                     </div>
                     <p className="text-muted-foreground">
                       por mês
                     </p>
                     
-                    {savings > 0 && (
+                    {hasTrialDiscount ? (
+                      <Badge className="mt-2 bg-green-100 text-green-700 border-green-200 animate-pulse">
+                        🎉 50% OFF - Oferta exclusiva de trial!
+                      </Badge>
+                    ) : savings > 0 && (
                       <Badge className="mt-2 bg-green-100 text-green-700 border-green-200">
                         💰 Economize {savingsPercentage}%
                       </Badge>
@@ -299,19 +340,49 @@ export function OptimizedPricing() {
                     </div>
                   )}
 
+                  {/* Trial urgency for authenticated users */}
+                  {hasTrialDiscount && trialStatus && trialStatus.daysRemaining <= 1 && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-center">
+                      <div className="flex items-center justify-center gap-2 text-red-700">
+                        <Clock className="h-4 w-4" />
+                        <span className="text-sm font-semibold">
+                          ⚠️ Oferta expira hoje! Não perca!
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* CTA Button */}
-                  <Button 
-                    onClick={() => handlePlanSelect(plan)}
-                    className={cn(
-                      "w-full py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105",
-                      plan.popular 
-                        ? "bg-gradient-to-r from-primary to-accent hover:shadow-xl animate-pulse" 
-                        : "bg-primary hover:bg-primary/90"
-                    )}
-                  >
-                    {isAuthenticated ? "Assinar Agora" : "Começar Teste Grátis"}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
+                  {!isAuthenticated ? (
+                    <Link to="/login?tab=register">
+                      <Button 
+                        className={cn(
+                          "w-full py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105",
+                          plan.popular 
+                            ? "bg-gradient-to-r from-primary to-accent hover:shadow-xl animate-pulse" 
+                            : "bg-primary hover:bg-primary/90"
+                        )}
+                      >
+                        Começar Teste Grátis
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button 
+                      onClick={() => handlePlanSelect(plan)}
+                      className={cn(
+                        "w-full py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105",
+                        hasTrialDiscount 
+                          ? "bg-gradient-to-r from-green-500 to-green-600 hover:shadow-xl animate-pulse"
+                          : plan.popular 
+                            ? "bg-gradient-to-r from-primary to-accent hover:shadow-xl" 
+                            : "bg-primary hover:bg-primary/90"
+                      )}
+                    >
+                      {hasTrialDiscount ? "Ativar com 50% OFF" : "Assinar Agora"}
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  )}
 
                   {/* Savings highlight */}
                   {plan.savings && (

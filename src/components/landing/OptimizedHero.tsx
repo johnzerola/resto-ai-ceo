@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TrialCountdown } from "@/components/trial/TrialCountdown";
+import { TrialExpirationPopup } from "@/components/trial/TrialExpirationPopup";
 import { 
   PlayCircle, 
   ArrowRight, 
@@ -12,7 +15,8 @@ import {
   Shield,
   Users,
   Clock,
-  Star
+  Star,
+  Crown
 } from "lucide-react";
 
 // Typewriter effect component
@@ -82,6 +86,8 @@ const FadeInUp = ({ children, delay = 0 }: {
 
 export function OptimizedHero() {
   const { isAuthenticated } = useAuth();
+  const { trialStatus } = useTrialStatus();
+  const [showTrialPopup, setShowTrialPopup] = useState(false);
   
   const heroTexts = [
     "Aumente seu lucro em até 40% em 30 dias",
@@ -103,10 +109,18 @@ export function OptimizedHero() {
           {/* Content */}
           <div className="space-y-8">
             <FadeInUp delay={200}>
-              <Badge className="bg-destructive/10 text-destructive border-destructive/20 animate-bounce">
-                <Zap className="mr-2 h-4 w-4" />
-                🔥 ÚLTIMAS 47 VAGAS - Teste Grátis
-              </Badge>
+              {isAuthenticated && trialStatus?.isTrialActive ? (
+                <TrialCountdown 
+                  daysRemaining={trialStatus.daysRemaining} 
+                  isTrialActive={trialStatus.isTrialActive}
+                  variant="compact"
+                />
+              ) : (
+                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 animate-bounce shadow-lg">
+                  <Crown className="mr-2 h-4 w-4" />
+                  🔥 ÚLTIMAS 47 VAGAS - Teste Grátis 7 dias
+                </Badge>
+              )}
             </FadeInUp>
 
             <FadeInUp delay={400}>
@@ -128,15 +142,27 @@ export function OptimizedHero() {
             <FadeInUp delay={800}>
               <div className="flex flex-col sm:flex-row gap-4">
                 {isAuthenticated ? (
-                  <Link to="/dashboard">
-                    <Button 
-                      size="lg" 
-                      className="bg-gradient-to-r from-primary to-accent hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto group"
-                    >
-                      <ArrowRight className="mr-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                      Acessar Dashboard
-                    </Button>
-                  </Link>
+                  trialStatus?.isTrialActive ? (
+                    <Link to="/assinatura">
+                      <Button 
+                        size="lg" 
+                        className="bg-gradient-to-r from-green-500 to-green-600 hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto group animate-pulse"
+                      >
+                        <Crown className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                        ATIVAR PLANO - 50% OFF
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link to="/dashboard">
+                      <Button 
+                        size="lg" 
+                        className="bg-gradient-to-r from-primary to-accent hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto group"
+                      >
+                        <ArrowRight className="mr-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                        Acessar Dashboard
+                      </Button>
+                    </Link>
+                  )
                 ) : (
                   <Link to="/login?tab=register">
                     <Button 
@@ -202,15 +228,23 @@ export function OptimizedHero() {
                   </div>
                 </div>
 
-                {/* Urgency element */}
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 animate-pulse">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-destructive" />
-                    <span className="text-sm font-semibold text-destructive">
-                      Promoção encerra em: 24h 59min
-                    </span>
+                {/* Urgency element - Trial countdown for authenticated users */}
+                {isAuthenticated && trialStatus?.isTrialActive && trialStatus.daysRemaining <= 3 ? (
+                  <TrialCountdown 
+                    daysRemaining={trialStatus.daysRemaining} 
+                    isTrialActive={trialStatus.isTrialActive}
+                    variant="hero"
+                  />
+                ) : (
+                  <div className="bg-gradient-to-r from-yellow-400/20 to-orange-500/20 border border-yellow-400/30 rounded-lg p-3 animate-pulse">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-yellow-600" />
+                      <span className="text-sm font-semibold text-yellow-700">
+                        🔥 Promoção especial: 50% OFF termina em breve!
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </FadeInUp>
           </div>
