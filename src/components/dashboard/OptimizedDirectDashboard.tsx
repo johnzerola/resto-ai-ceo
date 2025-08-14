@@ -196,10 +196,10 @@ export const OptimizedDirectDashboard = memo(function OptimizedDirectDashboard()
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10">
+    <div className="w-full">
       {/* Optimized Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="container mx-auto max-w-7xl px-4 lg:px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="space-y-1">
               <h1 className="text-xl lg:text-2xl font-bold text-foreground">
@@ -231,7 +231,7 @@ export const OptimizedDirectDashboard = memo(function OptimizedDirectDashboard()
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto max-w-7xl px-4 lg:px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 space-y-6">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 responsive-grid">
           {isLoading ? (
