@@ -40,22 +40,22 @@ const StatCard = memo(({
   trend
 }: StatCardProps) => (
   <Card className="group border-0 shadow-sm bg-card/80 backdrop-blur-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02] touch-manipulation tactile-feedback h-full">
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
-      <CardTitle className="text-xs font-medium text-muted-foreground leading-tight truncate flex-1 pr-2">
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 pt-3">
+      <CardTitle className="text-xs font-medium text-muted-foreground leading-tight flex-1 pr-2 break-words">
         {title}
       </CardTitle>
-      <div className="p-2 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg border border-primary/20 flex-shrink-0">
-        <Icon className="h-4 w-4 text-primary" />
+      <div className="p-1.5 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg border border-primary/20 flex-shrink-0">
+        <Icon className="h-3.5 w-3.5 text-primary" />
       </div>
     </CardHeader>
-    <CardContent className="space-y-2 px-4 pb-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-lg sm:text-xl font-bold text-foreground truncate flex-1 min-w-0">
+    <CardContent className="space-y-2 px-3 pb-3">
+      <div className="flex flex-col gap-1">
+        <div className="text-lg sm:text-xl font-bold text-foreground break-words">
           {value}
         </div>
         {trend && (
           <div className={cn(
-            "flex items-center text-xs font-medium shrink-0",
+            "flex items-center text-xs font-medium",
             trend.isPositive ? "text-success" : "text-destructive"
           )}>
             <TrendingUp className={cn(
@@ -68,18 +68,18 @@ const StatCard = memo(({
       </div>
       
       {description && (
-        <p className="text-xs text-muted-foreground truncate">{description}</p>
+        <p className="text-xs text-muted-foreground break-words">{description}</p>
       )}
       
       {href && (
         <Button 
           variant="ghost" 
           size="sm" 
-          className="mt-2 p-0 h-auto text-xs text-primary hover:text-accent transition-colors duration-200" 
+          className="mt-2 p-0 h-auto text-xs text-primary hover:text-accent transition-colors duration-200 w-full justify-start" 
           asChild
         >
-          <a href={href} className="flex items-center gap-1 truncate">
-            <span className="truncate">Ver detalhes</span>
+          <a href={href} className="flex items-center gap-1 text-left">
+            <span>Ver detalhes</span>
             <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
