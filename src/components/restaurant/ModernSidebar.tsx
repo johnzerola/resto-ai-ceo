@@ -219,39 +219,44 @@ export function ModernSidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button - Otimizado para Touch */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-3 left-3 z-50 md:hidden bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white/100 transition-all duration-200 border border-gray-200/50"
+        className="fixed top-4 left-4 z-50 md:hidden bg-white/95 backdrop-blur-sm shadow-xl hover:bg-white/100 transition-all duration-200 border border-border/50 h-12 w-12 rounded-xl touch-manipulation"
         onClick={toggleMobile}
+        aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
       >
-        {isMobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay - Aprimorado */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden touch-manipulation"
           onClick={() => setIsMobileOpen(false)}
+          onTouchStart={() => setIsMobileOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full border-r border-border transition-all duration-300 ease-out shadow-lg flex flex-col",
+          "fixed left-0 top-0 z-40 h-full border-r border-border transition-all duration-300 ease-out shadow-xl flex flex-col touch-manipulation",
           "bg-background border-sidebar-border",
-          // Mobile behavior
+          // Mobile behavior - Otimizado para diferentes tamanhos
           "md:translate-x-0",
-          isMobileOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full",
+          // Mobile pequeno (< 360px)
+          "max-[359px]:w-[280px]",
+          // Mobile padrão (360px+)
+          isMobileOpen ? "w-80 sm:w-72 translate-x-0" : "w-80 sm:w-72 -translate-x-full",
           // Desktop behavior
           !isMobileOpen && isCollapsed && "md:w-16",
           !isMobileOpen && !isCollapsed && "md:w-72"
         )}
       >
-        {/* Header com Branding Aprimorado */}
-        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-sidebar-border flex-shrink-0 bg-lucrai-gradient-primary">
+        {/* Header com Branding - Mobile Otimizado */}
+        <div className="flex h-16 sm:h-18 items-center justify-between px-4 sm:px-6 border-b border-sidebar-border flex-shrink-0 bg-lucrai-gradient-primary touch-manipulation">
           {(!isCollapsed || isMobileOpen) && (
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0 bg-white/10 rounded-lg backdrop-blur-sm">
@@ -277,12 +282,13 @@ export function ModernSidebar() {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="hidden md:flex text-white hover:bg-white/10 transition-all duration-200 h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 rounded-lg"
+            className="hidden md:flex text-white hover:bg-white/10 transition-all duration-200 h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 rounded-lg touch-manipulation"
+            aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
           >
             {isCollapsed ? (
-              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
             ) : (
-              <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
           </Button>
         </div>

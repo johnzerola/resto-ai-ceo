@@ -104,12 +104,12 @@ export const OptimizedDashboardLayout: React.FC<OptimizedDashboardLayoutProps> =
     return <SkeletonLoader message="Configurando restaurante..." />;
   }
 
-  // Calculate main content margin based on sidebar state
+  // Calculate main content margin based on sidebar state - Mobile optimized
   const getMainContentMargin = () => {
     if (typeof window === 'undefined') return 'md:ml-72';
     
     const isMobile = window.innerWidth < 768;
-    if (isMobile) return 'ml-0';
+    if (isMobile) return 'ml-0 pt-16'; // Add top padding for mobile menu button
     
     switch (sidebarConfig.state) {
       case 'expanded':
@@ -129,11 +129,11 @@ export const OptimizedDashboardLayout: React.FC<OptimizedDashboardLayoutProps> =
         <UnifiedSidebar />
         
         <main className={cn(
-          "flex-1 transition-all duration-300 ease-out min-h-screen",
+          "flex-1 transition-all duration-300 ease-out min-h-screen touch-manipulation",
           getMainContentMargin()
         )}>
           <div className="container mx-auto max-w-7xl">
-            <div className="space-y-4 p-4 md:p-6">
+            <div className="space-y-4 p-3 sm:p-4 md:p-6 pb-20 sm:pb-6">
               <EmailConfirmationBanner />
               <TrialBanner />
               

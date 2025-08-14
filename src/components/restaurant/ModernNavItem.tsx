@@ -35,15 +35,17 @@ export const ModernNavItem: React.FC<ModernNavItemProps> = ({
       to={href}
       onClick={handleClick}
       className={cn(
-        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group sidebar-nav-item",
+        "flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-lg transition-all duration-200 group sidebar-nav-item touch-manipulation",
         "text-sidebar-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
+        "active:scale-95 active:bg-sidebar-accent/80", // Touch feedback
+        "min-h-[44px] sm:min-h-[40px]", // Touch target size
         isActive && "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm border border-sidebar-border/50",
         isCollapsed ? "justify-center px-2" : "justify-start"
       )}
       title={isCollapsed ? title : undefined}
     >
       <Icon className={cn(
-        "h-4 w-4 flex-shrink-0 transition-colors",
+        "h-5 w-5 sm:h-4 sm:w-4 flex-shrink-0 transition-colors",
         isActive ? "text-sidebar-primary" : "text-sidebar-foreground/70",
         "group-hover:text-sidebar-accent-foreground"
       )} />

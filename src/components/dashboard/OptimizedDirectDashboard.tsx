@@ -39,13 +39,13 @@ const StatCard = memo(({
   href,
   trend
 }: StatCardProps) => (
-  <Card className="group border-0 shadow-sm bg-card/80 backdrop-blur-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02] responsive-card">
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-      <CardTitle className="text-sm font-medium text-muted-foreground">
+  <Card className="group border-0 shadow-sm bg-card/80 backdrop-blur-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02] touch-manipulation tactile-feedback">
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
+      <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight">
         {title}
       </CardTitle>
-      <div className="p-2 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg border border-primary/20">
-        <Icon className="h-4 w-4 text-primary" />
+      <div className="p-2 sm:p-2.5 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg border border-primary/20 flex-shrink-0">
+        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
       </div>
     </CardHeader>
     <CardContent className="space-y-2">

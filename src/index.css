@@ -308,15 +308,36 @@ body {
 @media (max-width: 768px) {
   * {
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Permitir seleção apenas em inputs e elementos de texto */
+  input, textarea, [contenteditable="true"], .selectable {
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
   }
   
   body {
     -webkit-overflow-scrolling: touch;
     overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
   
   .animate-spin {
     animation-duration: 1s;
+  }
+  
+  /* Prevenir zoom duplo toque */
+  button, a, [role="button"] {
+    touch-action: manipulation;
   }
 }
 
@@ -782,4 +803,126 @@ body {
 .cache-indicator.error {
   background-color: rgb(254 226 226);
   color: rgb(153 27 27);
+}
+
+/* CLASSES DE UTILIDADE RESPONSIVAS ADICIONAIS */
+
+/* Touch targets otimizados */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+@media (min-width: 640px) {
+  .touch-target {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}
+
+/* Espaçamento responsivo entre elementos tocáveis */
+.touch-spacing > * + * {
+  margin-top: 8px;
+}
+
+@media (min-width: 640px) {
+  .touch-spacing > * + * {
+    margin-top: 4px;
+  }
+}
+
+/* Container responsivo com margens laterais adequadas */
+.responsive-container {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 640px) {
+  .responsive-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Stack horizontal/vertical responsivo */
+.responsive-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-stack {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
+/* Texto responsivo com quebras apropriadas */
+.responsive-text {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Scroll horizontal para tabelas */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 3px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Estados de loading mobile-friendly */
+.mobile-loading {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Feedback tátil para interações */
+.tactile-feedback {
+  transition: transform 0.1s ease-out;
+}
+
+.tactile-feedback:active {
+  transform: scale(0.95);
+}
+
+@media (min-width: 1024px) {
+  .tactile-feedback:active {
+    transform: none;
+  }
+  
+  .tactile-feedback:hover {
+    transform: translateY(-1px);
+  }
 }
