@@ -243,12 +243,11 @@ export function ModernSidebar() {
       <div
         className={cn(
           "fixed left-0 top-0 z-40 h-full border-r border-border transition-all duration-300 ease-out shadow-xl flex flex-col",
-          "bg-background border-sidebar-border",
-          // Mobile behavior - Fullscreen na lateral
-          "md:translate-x-0",
-          isMobileOpen ? "w-screen max-w-xs translate-x-0" : "w-screen max-w-xs -translate-x-full",
-          // Desktop behavior - Comportamento normal
-          "md:relative md:w-auto md:translate-x-0",
+          "bg-white dark:bg-gray-900", // Fundo sólido
+          // Mobile behavior - Sidebar overlay
+          isMobileOpen ? "w-80 translate-x-0" : "w-80 -translate-x-full",
+          // Desktop behavior - Sidebar fixa
+          "md:translate-x-0 md:relative md:shadow-none",
           isCollapsed && "md:w-16",
           !isCollapsed && "md:w-72"
         )}

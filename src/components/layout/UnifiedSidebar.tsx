@@ -23,8 +23,7 @@ import {
   Code2,
   Palette,
   Users2,
-  MessageCircle,
-  Workflow
+  MessageCircle
 } from "lucide-react";
 import { ModernNavItem } from "@/components/restaurant/ModernNavItem";
 import { ConditionalNavItem } from "@/components/restaurant/ConditionalNavItem";
@@ -174,156 +173,47 @@ const navigation: NavigationItem[] = [
 ];
 
 const categories = {
-  overview: { label: "Visão Geral", color: "text-primary" },
-  analytics: { label: "Análises", color: "text-accent" },
-  financial: { label: "Financeiro", color: "text-accent" },
-  tools: { label: "Ferramentas", color: "text-warning" },
-  operations: { label: "Operações", color: "text-primary" },
-  management: { label: "Gestão", color: "text-primary" },
-  ai: { label: "Inteligência", color: "text-accent" },
-  account: { label: "Conta", color: "text-muted-foreground" },
-  support: { label: "Suporte", color: "text-muted-foreground" },
+  overview: { label: "Visão Geral", color: "text-blue-600" },
+  analytics: { label: "Análises", color: "text-green-600" },
+  financial: { label: "Financeiro", color: "text-green-600" },
+  tools: { label: "Ferramentas", color: "text-orange-600" },
+  operations: { label: "Operações", color: "text-blue-600" },
+  management: { label: "Gestão", color: "text-blue-600" },
+  ai: { label: "Inteligência", color: "text-purple-600" },
+  account: { label: "Conta", color: "text-gray-600" },
+  support: { label: "Suporte", color: "text-gray-500" },
   developer: { label: "Desenvolvedor", color: "text-orange-500" },
-  business: { label: "Negócios", color: "text-accent" }
+  business: { label: "Negócios", color: "text-green-600" }
 };
-
-const getInitialSidebarState = (): SidebarConfig => {
-  const width = typeof window !== 'undefined' ? window.innerWidth : 1024;
-  
-  if (width < 768) {
-    return { state: 'hidden', isMobileMenuOpen: false };
-  } else if (width < 1024) {
-    return { state: 'collapsed', isMobileMenuOpen: false };
-  } else {
-    return { state: 'expanded', isMobileMenuOpen: false };
-  }
-};
-
-const SidebarHeader = memo(({ 
-  config, 
-  onToggle, 
-  onMobileToggle 
-}: {
-  config: SidebarConfig;
-  onToggle: () => void;
-  onMobileToggle: () => void;
-}) => (
-  <>
-    {/* Mobile Menu Button */}
-    <Button
-      variant="ghost"
-      size="icon"
-      className="fixed top-3 left-3 z-50 md:hidden bg-background/95 backdrop-blur-sm shadow-lg hover:bg-background/100 transition-all duration-200 border border-border/50"
-      onClick={onMobileToggle}
-    >
-      {config.isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-    </Button>
-
-    {/* Sidebar Header */}
-    <div className="flex h-14 items-center justify-between px-3 border-b border-sidebar-border flex-shrink-0 bg-gradient-to-r from-primary to-accent">
-      {(config.state === 'expanded' || config.isMobileMenuOpen) && (
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-6 h-6 flex items-center justify-center flex-shrink-0 bg-white/10 rounded-lg backdrop-blur-sm">
-            <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">L</span>
-            </div>
-          </div>
-          <h2 className="text-lg font-bold text-white truncate tracking-wider">
-            Lucraí
-          </h2>
-        </div>
-      )}
-      
-      {config.state === 'collapsed' && !config.isMobileMenuOpen && (
-        <div className="flex items-center justify-center w-full">
-          <div className="w-6 h-6 flex items-center justify-center bg-white/10 rounded-lg backdrop-blur-sm">
-            <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center">
-              <span className="text-xs font-bold text-primary">L</span>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onToggle}
-        className="hidden md:flex text-white hover:bg-white/10 transition-all duration-200 h-7 w-7 flex-shrink-0 rounded-lg"
-      >
-        {config.state === 'collapsed' ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
-        )}
-      </Button>
-    </div>
-  </>
-));
-
-const SidebarFooter = memo(({ config }: { config: SidebarConfig }) => (
-  <>
-    {(config.state === 'expanded' || config.isMobileMenuOpen) && (
-      <div className="p-3 border-t border-sidebar-border bg-gradient-to-r from-background to-muted/20 flex-shrink-0">
-        <div className="text-xs text-muted-foreground text-center space-y-1">
-          <p className="font-semibold text-primary">Lucraí v2.0</p>
-          <p className="font-medium">Inteligência para seu restaurante</p>
-          <div className="flex items-center justify-center gap-1 mt-2">
-            <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
-            <span className="text-accent font-medium">Sistema Online</span>
-          </div>
-        </div>
-      </div>
-    )}
-  </>
-));
 
 export const UnifiedSidebar = memo(function UnifiedSidebar() {
-  const [config, setConfig] = useState<SidebarConfig>(getInitialSidebarState);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const handleResize = useCallback(() => {
-    const newConfig = getInitialSidebarState();
-    if (newConfig.state !== config.state) {
-      setConfig(prev => ({ ...prev, state: newConfig.state, isMobileMenuOpen: false }));
-    }
-  }, [config.state]);
-
-  const toggleSidebar = useCallback(() => {
-    setConfig(prev => ({
-      ...prev,
-      state: prev.state === 'expanded' ? 'collapsed' : 'expanded'
-    }));
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMobileOpen(false);
+      }
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const toggleMobile = useCallback(() => {
-    setConfig(prev => ({
-      ...prev,
-      isMobileMenuOpen: !prev.isMobileMenuOpen
-    }));
-  }, []);
+    setIsMobileOpen(!isMobileOpen);
+  }, [isMobileOpen]);
 
-  const closeMobileMenu = useCallback(() => {
-    setConfig(prev => ({
-      ...prev,
-      isMobileMenuOpen: false
-    }));
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('closeMobileMenu' as any, closeMobileMenu);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('closeMobileMenu' as any, closeMobileMenu);
-    };
-  }, [handleResize, closeMobileMenu]);
-
-  useEffect(() => {
-    const event = new CustomEvent('sidebarStateChange', {
-      detail: { config }
-    });
-    window.dispatchEvent(event);
-  }, [config]);
+  const toggleSidebar = useCallback(() => {
+    setIsCollapsed(!isCollapsed);
+  }, [isCollapsed]);
 
   const groupedNavigation = React.useMemo(() => {
     return navigation.reduce((groups, item) => {
@@ -336,50 +226,88 @@ export const UnifiedSidebar = memo(function UnifiedSidebar() {
     }, {} as Record<string, NavigationItem[]>);
   }, []);
 
-  const sidebarWidth = config.state === 'expanded' || config.isMobileMenuOpen ? 'w-72' : config.state === 'collapsed' ? 'w-16' : 'w-0';
-  const sidebarTransform = config.state === 'hidden' && !config.isMobileMenuOpen ? '-translate-x-full' : 'translate-x-0';
-
   return (
     <>
-      <SidebarHeader 
-        config={config}
-        onToggle={toggleSidebar}
-        onMobileToggle={toggleMobile}
-      />
+      {/* Mobile Menu Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-4 left-4 z-50 md:hidden bg-white shadow-lg hover:bg-gray-50 border border-gray-200 h-12 w-12 rounded-xl"
+        onClick={toggleMobile}
+        aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
+      >
+        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </Button>
 
       {/* Mobile Overlay */}
-      {config.isMobileMenuOpen && (
+      {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
-          onClick={closeMobileMenu}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Mobile First Design */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
-          "bg-sidebar-background",
-          sidebarWidth,
-          sidebarTransform,
-          "md:translate-x-0"
+          "fixed left-0 top-0 z-50 h-full bg-white border-r border-gray-200 shadow-xl flex flex-col transition-all duration-300 ease-out",
+          // Mobile: Full overlay sidebar
+          isMobileOpen ? "w-80 translate-x-0" : "w-80 -translate-x-full",
+          // Desktop: Fixed sidebar
+          "md:translate-x-0 md:relative md:shadow-none md:z-auto",
+          isCollapsed && "md:w-16",
+          !isCollapsed && "md:w-72"
         )}
       >
-        <SidebarHeader 
-          config={config}
-          onToggle={toggleSidebar}
-          onMobileToggle={toggleMobile}
-        />
+        {/* Header */}
+        <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200 flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700">
+          {(!isCollapsed || isMobileOpen) && (
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 bg-white/10 rounded-lg">
+                <div className="w-6 h-6 bg-white rounded-sm flex items-center justify-center">
+                  <span className="text-sm font-bold text-blue-600">L</span>
+                </div>
+              </div>
+              <h2 className="text-lg font-bold text-white truncate tracking-wider">
+                Lucraí
+              </h2>
+            </div>
+          )}
+          
+          {isCollapsed && !isMobileOpen && (
+            <div className="flex items-center justify-center w-full">
+              <div className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg">
+                <div className="w-6 h-6 bg-white rounded-sm flex items-center justify-center">
+                  <span className="text-sm font-bold text-blue-600">L</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="hidden md:flex text-white hover:bg-white/10 h-10 w-10 rounded-lg"
+            aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-5 w-5" />
+            ) : (
+              <ChevronLeft className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
 
         {/* Navigation Content */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
-            <nav className="px-2 py-3 space-y-4">
+            <nav className="px-3 py-4 space-y-6">
               {Object.entries(groupedNavigation).map(([categoryKey, items]) => {
                 const categoryInfo = categories[categoryKey as keyof typeof categories];
                 return (
-                  <div key={categoryKey} className="space-y-1">
-                    {(config.state === 'expanded' || config.isMobileMenuOpen) && (
+                  <div key={categoryKey} className="space-y-2">
+                    {(!isCollapsed || isMobileOpen) && (
                       <div className="px-3 py-2">
                         <h3 className={cn(
                           "text-xs font-semibold uppercase tracking-wider",
@@ -389,9 +317,9 @@ export const UnifiedSidebar = memo(function UnifiedSidebar() {
                         </h3>
                       </div>
                     )}
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                       {items.map((item) => {
-                        const isCollapsed = config.state === 'collapsed' && !config.isMobileMenuOpen;
+                        const itemIsCollapsed = isCollapsed && !isMobileOpen;
                         
                         if (item.category === 'developer') {
                           return (
@@ -401,7 +329,7 @@ export const UnifiedSidebar = memo(function UnifiedSidebar() {
                               icon={item.icon as any}
                               title={item.title}
                               description={item.description}
-                              isCollapsed={isCollapsed}
+                              isCollapsed={itemIsCollapsed}
                               category={categoryKey}
                               requiredRole="developer"
                             />
@@ -416,7 +344,7 @@ export const UnifiedSidebar = memo(function UnifiedSidebar() {
                               icon={item.icon as any}
                               title={item.title}
                               description={item.description}
-                              isCollapsed={isCollapsed}
+                              isCollapsed={itemIsCollapsed}
                               category={categoryKey}
                               requiredRole="affiliate"
                             />
@@ -430,7 +358,7 @@ export const UnifiedSidebar = memo(function UnifiedSidebar() {
                             icon={item.icon as any}
                             title={item.title}
                             description={item.description}
-                            isCollapsed={isCollapsed}
+                            isCollapsed={itemIsCollapsed}
                             category={categoryKey}
                           />
                         );
@@ -443,7 +371,19 @@ export const UnifiedSidebar = memo(function UnifiedSidebar() {
           </ScrollArea>
         </div>
 
-        <SidebarFooter config={config} />
+        {/* Footer */}
+        {(!isCollapsed || isMobileOpen) && (
+          <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+            <div className="text-xs text-gray-600 text-center space-y-1">
+              <p className="font-semibold text-blue-600">Lucraí v2.0</p>
+              <p className="font-medium">Inteligência para seu restaurante</p>
+              <div className="flex items-center justify-center gap-1 mt-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-green-600 font-medium">Sistema Online</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -51,18 +51,20 @@ const ContentSkeleton = memo(() => (
 
 export const OptimizedDashboardLayout: React.FC<OptimizedDashboardLayoutProps> = memo(({ children }) => {
   const { isAuthenticated, isLoading, currentRestaurant, userRestaurants } = useAuth();
-  const [sidebarConfig, setSidebarConfig] = useState<SidebarConfig>({ 
-    state: 'expanded', 
-    isMobileMenuOpen: false 
-  });
   const [isInitialized, setIsInitialized] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    const handleSidebarStateChange = (e: CustomEvent) => {
-      setSidebarConfig(e.detail.config);
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarCollapsed(true);
+      } else {
+        setSidebarCollapsed(false);
+      }
     };
     
-    window.addEventListener('sidebarStateChange' as any, handleSidebarStateChange);
+    handleResize();
+    window.addEventListener('resize', handleResize);
     
     const initializeLayout = () => {
       setIsInitialized(true);
@@ -71,7 +73,7 @@ export const OptimizedDashboardLayout: React.FC<OptimizedDashboardLayoutProps> =
     const timer = requestAnimationFrame(initializeLayout);
     
     return () => {
-      window.removeEventListener('sidebarStateChange' as any, handleSidebarStateChange);
+      window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(timer);
     };
   }, []);
@@ -104,36 +106,17 @@ export const OptimizedDashboardLayout: React.FC<OptimizedDashboardLayoutProps> =
     return <SkeletonLoader message="Configurando restaurante..." />;
   }
 
-  // Calculate main content margin based on sidebar state - Mobile optimized
-  const getMainContentMargin = () => {
-    if (typeof window === 'undefined') return 'md:ml-72';
-    
-    const isMobile = window.innerWidth < 768;
-    if (isMobile) return 'ml-0 pt-16'; // Add top padding for mobile menu button
-    
-    switch (sidebarConfig.state) {
-      case 'expanded':
-        return 'md:ml-72';
-      case 'collapsed':
-        return 'md:ml-16';
-      case 'hidden':
-        return 'md:ml-0';
-      default:
-        return 'md:ml-72';
-    }
-  };
-
   return (
     <DataSync>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/10">
         <UnifiedSidebar />
         
         <main className={cn(
-          "flex-1 transition-all duration-300 ease-out min-h-screen touch-manipulation",
-          getMainContentMargin()
+          "flex-1 min-h-screen w-full transition-all duration-300",
+          sidebarCollapsed ? "md:ml-16" : "md:ml-72"
         )}>
-          <div className="container mx-auto max-w-7xl">
-            <div className="space-y-4 p-3 sm:p-4 md:p-6 pb-20 sm:pb-6">
+          <div className="w-full">
+            <div className="p-4 md:p-6 pb-20 md:pb-6 pt-16 md:pt-6">
               <EmailConfirmationBanner />
               <TrialBanner />
               
