@@ -242,38 +242,36 @@ export function ModernSidebar() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full border-r border-border transition-all duration-300 ease-out shadow-xl flex flex-col touch-manipulation",
+          "fixed left-0 top-0 z-40 h-full border-r border-border transition-all duration-300 ease-out shadow-xl flex flex-col",
           "bg-background border-sidebar-border",
-          // Mobile behavior - Otimizado para diferentes tamanhos
+          // Mobile behavior - Fullscreen na lateral
           "md:translate-x-0",
-          // Mobile pequeno (< 360px)
-          "max-[359px]:w-[280px]",
-          // Mobile padrão (360px+)
-          isMobileOpen ? "w-80 sm:w-72 translate-x-0" : "w-80 sm:w-72 -translate-x-full",
-          // Desktop behavior
-          !isMobileOpen && isCollapsed && "md:w-16",
-          !isMobileOpen && !isCollapsed && "md:w-72"
+          isMobileOpen ? "w-screen max-w-xs translate-x-0" : "w-screen max-w-xs -translate-x-full",
+          // Desktop behavior - Comportamento normal
+          "md:relative md:w-auto md:translate-x-0",
+          isCollapsed && "md:w-16",
+          !isCollapsed && "md:w-72"
         )}
       >
         {/* Header com Branding - Mobile Otimizado */}
-        <div className="flex h-16 sm:h-18 items-center justify-between px-4 sm:px-6 border-b border-sidebar-border flex-shrink-0 bg-lucrai-gradient-primary touch-manipulation">
+        <div className="flex h-14 md:h-16 items-center justify-between px-4 border-b border-sidebar-border flex-shrink-0 bg-lucrai-gradient-primary">
           {(!isCollapsed || isMobileOpen) && (
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center flex-shrink-0 bg-white/10 rounded-lg backdrop-blur-sm">
-                <div className="w-4 h-4 sm:w-6 sm:h-6 bg-white rounded-sm flex items-center justify-center">
-                  <span className="text-xs sm:text-sm font-bold text-lucrai-blue-primary">L</span>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 bg-white/10 rounded-lg backdrop-blur-sm">
+                <div className="w-6 h-6 bg-white rounded-sm flex items-center justify-center">
+                  <span className="text-sm font-bold text-lucrai-blue-primary">L</span>
                 </div>
               </div>
-              <h2 className="text-sm sm:text-lg font-bold text-white truncate font-dm-sans tracking-wider">
+              <h2 className="text-lg font-bold text-white truncate font-dm-sans tracking-wider">
                 Lucraí
               </h2>
             </div>
           )}
           {isCollapsed && !isMobileOpen && (
             <div className="flex items-center justify-center w-full">
-              <div className="w-6 h-6 flex items-center justify-center bg-white/10 rounded-lg backdrop-blur-sm">
-                <div className="w-4 h-4 bg-white rounded-sm flex items-center justify-center">
-                  <span className="text-xs font-bold text-lucrai-blue-primary">L</span>
+              <div className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg backdrop-blur-sm">
+                <div className="w-6 h-6 bg-white rounded-sm flex items-center justify-center">
+                  <span className="text-sm font-bold text-lucrai-blue-primary">L</span>
                 </div>
               </div>
             </div>
@@ -282,13 +280,13 @@ export function ModernSidebar() {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="hidden md:flex text-white hover:bg-white/10 transition-all duration-200 h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 rounded-lg touch-manipulation"
+            className="hidden md:flex text-white hover:bg-white/10 transition-all duration-200 h-10 w-10 flex-shrink-0 rounded-lg"
             aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
           >
             {isCollapsed ? (
-              <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+              <ChevronRight className="h-5 w-5" />
             ) : (
-              <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              <ChevronLeft className="h-5 w-5" />
             )}
           </Button>
         </div>
@@ -296,13 +294,13 @@ export function ModernSidebar() {
         {/* Scrollable Navigation Content */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full custom-scrollbar">
-            <nav className="px-2 sm:px-3 py-3 sm:py-4 space-y-4 sm:space-y-6">
+            <nav className="px-3 py-4 space-y-6">
               {Object.entries(groupedNavigation).map(([categoryKey, items]) => {
                 const categoryInfo = categories[categoryKey as keyof typeof categories];
                 return (
-                  <div key={categoryKey} className="space-y-1 sm:space-y-2">
+                  <div key={categoryKey} className="space-y-2">
                     {(!isCollapsed || isMobileOpen) && (
-                      <div className="px-2 sm:px-3 py-1 sm:py-2">
+                      <div className="px-3 py-2">
                         <h3 className={cn(
                           "text-xs font-semibold uppercase tracking-wider sidebar-category-label",
                           categoryInfo.color,
@@ -312,7 +310,7 @@ export function ModernSidebar() {
                         </h3>
                       </div>
                     )}
-                    <div className="space-y-0.5 sm:space-y-1">
+                    <div className="space-y-1">
                       {items.map((item) => {
                         // Use ConditionalNavItem for developer features
                         if (item.category === 'developer') {
@@ -368,11 +366,11 @@ export function ModernSidebar() {
 
         {/* Footer com Branding */}
         {(!isCollapsed || isMobileOpen) && (
-          <div className="p-3 sm:p-4 border-t border-sidebar-border bg-lucrai-gradient-subtle flex-shrink-0">
+          <div className="p-4 border-t border-sidebar-border bg-lucrai-gradient-subtle flex-shrink-0">
             <div className="text-xs text-lucrai-gray-600 text-center space-y-1">
               <p className="font-semibold text-lucrai-blue-primary">Lucraí v2.0</p>
-              <p className="hidden sm:block font-medium">Inteligência para seu restaurante</p>
-              <div className="hidden sm:flex items-center justify-center gap-1 mt-2">
+              <p className="font-medium">Inteligência para seu restaurante</p>
+              <div className="flex items-center justify-center gap-1 mt-2">
                 <div className="w-2 h-2 bg-lucrai-green-primary rounded-full animate-pulse"></div>
                 <span className="text-lucrai-green-primary font-medium">Sistema Online</span>
               </div>
