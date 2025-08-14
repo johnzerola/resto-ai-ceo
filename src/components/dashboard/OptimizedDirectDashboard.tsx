@@ -39,23 +39,23 @@ const StatCard = memo(({
   href,
   trend
 }: StatCardProps) => (
-  <Card className="group border-0 shadow-sm bg-card/80 backdrop-blur-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02] touch-manipulation tactile-feedback">
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 sm:px-6 pt-4 sm:pt-6">
-      <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground leading-tight">
+  <Card className="group border-0 shadow-sm bg-card/80 backdrop-blur-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02] touch-manipulation tactile-feedback h-full">
+    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+      <CardTitle className="text-xs font-medium text-muted-foreground leading-tight truncate flex-1 pr-2">
         {title}
       </CardTitle>
-      <div className="p-2 sm:p-2.5 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg border border-primary/20 flex-shrink-0">
-        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+      <div className="p-2 bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg border border-primary/20 flex-shrink-0">
+        <Icon className="h-4 w-4 text-primary" />
       </div>
     </CardHeader>
-    <CardContent className="space-y-2">
-      <div className="flex items-end justify-between">
-        <div className="text-2xl font-bold text-foreground">
+    <CardContent className="space-y-2 px-4 pb-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-lg sm:text-xl font-bold text-foreground truncate flex-1 min-w-0">
           {value}
         </div>
         {trend && (
           <div className={cn(
-            "flex items-center text-xs font-medium",
+            "flex items-center text-xs font-medium shrink-0",
             trend.isPositive ? "text-success" : "text-destructive"
           )}>
             <TrendingUp className={cn(
@@ -68,7 +68,7 @@ const StatCard = memo(({
       </div>
       
       {description && (
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <p className="text-xs text-muted-foreground truncate">{description}</p>
       )}
       
       {href && (
@@ -78,9 +78,9 @@ const StatCard = memo(({
           className="mt-2 p-0 h-auto text-xs text-primary hover:text-accent transition-colors duration-200" 
           asChild
         >
-          <a href={href} className="flex items-center gap-1">
-            Ver detalhes 
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <a href={href} className="flex items-center gap-1 truncate">
+            <span className="truncate">Ver detalhes</span>
+            <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </a>
@@ -199,7 +199,7 @@ export const OptimizedDirectDashboard = memo(function OptimizedDirectDashboard()
     <div className="w-full">
       {/* Optimized Header */}
       <div className="border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4">
+        <div className="max-w-5xl mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="space-y-1">
               <h1 className="text-xl lg:text-2xl font-bold text-foreground">
@@ -231,9 +231,9 @@ export const OptimizedDirectDashboard = memo(function OptimizedDirectDashboard()
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 responsive-grid">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <StatCardSkeleton key={i} />
@@ -254,16 +254,16 @@ export const OptimizedDirectDashboard = memo(function OptimizedDirectDashboard()
         <Card className="border-0 shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-success/10 rounded-lg">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="p-2 bg-success/10 rounded-lg shrink-0">
                   <Activity className="h-4 w-4 text-success" />
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-foreground">Status do Sistema</h3>
-                  <p className="text-xs text-muted-foreground mt-1">Todas as funcionalidades operacionais</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-medium text-foreground truncate">Status do Sistema</h3>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">Todas as funcionalidades operacionais</p>
                 </div>
               </div>
-              <Badge className="bg-success/10 text-success border-success/20">
+              <Badge className="bg-success/10 text-success border-success/20 shrink-0">
                 <div className="w-2 h-2 bg-success rounded-full mr-2 animate-pulse"></div>
                 Online
               </Badge>
