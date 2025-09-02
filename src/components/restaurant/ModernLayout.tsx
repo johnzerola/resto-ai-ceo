@@ -101,7 +101,7 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
       <ModernSidebar />
       
       {/* Premium Fixed Header with Theme Toggle */}
-      <header className="fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 md:left-72 transition-all duration-300 shadow-sm">
+      <header className="fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 md:left-60 transition-all duration-300 shadow-sm">
         <div className="flex items-center justify-between h-16 px-6">
           <div className="flex items-center gap-4">
             <div className="text-sm font-medium text-muted-foreground hidden md:block">
@@ -119,7 +119,7 @@ export function ModernLayout({ children }: { children: React.ReactNode }) {
         "flex-1 transition-all duration-300 ease-out min-h-screen relative",
         // Add top margin for premium header
         "pt-16",
-        sidebarState === 'open' ? "md:ml-72" : "md:ml-16"
+        sidebarState === 'open' ? "md:ml-60" : "md:ml-16"
       )}>
         
         <EmailConfirmationBanner />

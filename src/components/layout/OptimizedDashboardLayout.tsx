@@ -113,7 +113,7 @@ export const OptimizedDashboardLayout: React.FC<OptimizedDashboardLayoutProps> =
         
         <main className={cn(
           "flex-1 min-h-screen w-full transition-all duration-300",
-          sidebarCollapsed ? "md:ml-16" : "md:ml-72"
+          sidebarCollapsed ? "md:ml-16" : "md:ml-60"
         )}>
           <div className="w-full max-w-7xl mx-auto">
             <div className="p-4 md:p-6 pb-20 md:pb-6 pt-16 md:pt-6">

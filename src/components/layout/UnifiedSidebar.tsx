@@ -256,7 +256,7 @@ export const UnifiedSidebar = memo(function UnifiedSidebar() {
           // Desktop: Fixed sidebar
           "md:translate-x-0 md:relative md:shadow-none md:z-auto",
           isCollapsed && "md:w-16",
-          !isCollapsed && "md:w-72"
+          !isCollapsed && "md:w-60"
         )}
       >
         {/* Header */}
