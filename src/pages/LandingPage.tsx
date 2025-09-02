@@ -123,7 +123,7 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Button 
                 size="lg" 
-                className="bg-[#00B140] hover:bg-[#009935] text-white text-lg px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 animate-pulse"
+                className="bg-[#00B140] hover:bg-[#009935] text-white text-lg px-8 py-4 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 animate-slow-pulse"
               >
                 <Play className="mr-2 h-5 w-5" />
                 Teste Grátis 7 Dias

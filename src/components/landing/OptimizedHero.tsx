@@ -178,7 +178,7 @@ export function OptimizedHero() {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-border hover:border-primary hover:text-primary transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto group"
+                  className="border-primary text-primary hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto group"
                 >
                   <PlayCircle className="mr-2 h-5 w-5 group-hover:rotate-90 transition-transform" />
                   Ver Demonstração
