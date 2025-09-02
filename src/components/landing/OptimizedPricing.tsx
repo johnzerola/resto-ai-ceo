@@ -193,12 +193,12 @@ export function OptimizedPricing() {
         {/* Header with urgency */}
         <div className="max-w-4xl mx-auto text-center mb-16">
           {hasTrialDiscount ? (
-            <Badge className="mb-6 bg-gradient-to-r from-green-500 to-green-600 text-white border-0 animate-pulse text-lg px-6 py-2">
+            <Badge className="mb-6 bg-gradient-to-r from-green-500 to-green-600 text-white border-0 animate-slow-pulse text-lg px-6 py-2">
               <Zap className="mr-2 h-5 w-5" />
               🎉 OFERTA ESPECIAL: 50% OFF apenas para quem está no trial!
             </Badge>
           ) : (
-            <Badge className="mb-6 bg-destructive/10 text-destructive border-destructive/20 animate-pulse">
+            <Badge className="mb-6 bg-destructive/10 text-destructive border-destructive/20 animate-slow-pulse">
               <Clock className="mr-2 h-4 w-4" />
               🔥 Promoção de lançamento termina em {urgencyTime.hours}h {urgencyTime.minutes}min
             </Badge>
@@ -304,7 +304,7 @@ export function OptimizedPricing() {
                     </p>
                     
                     {hasTrialDiscount ? (
-                      <Badge className="mt-2 bg-green-100 text-green-700 border-green-200 animate-pulse">
+                      <Badge className="mt-8 bg-green-100 text-green-700 border-green-200 animate-slow-pulse">
                         🎉 50% OFF - Oferta exclusiva de trial!
                       </Badge>
                     ) : savings > 0 && (
@@ -356,9 +356,9 @@ export function OptimizedPricing() {
                     <Link to="/login?tab=register">
                       <Button 
                         className={cn(
-                          "w-full py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105",
+                          "w-full py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105 mt-8",
                           plan.popular 
-                            ? "bg-gradient-to-r from-primary to-accent hover:shadow-xl animate-pulse" 
+                            ? "bg-gradient-to-r from-primary to-accent hover:shadow-xl animate-slow-pulse" 
                             : "bg-primary hover:bg-primary/90"
                         )}
                       >
@@ -370,9 +370,9 @@ export function OptimizedPricing() {
                     <Button 
                       onClick={() => handlePlanSelect(plan)}
                       className={cn(
-                        "w-full py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105",
+                        "w-full py-6 text-lg font-semibold transition-all duration-300 transform hover:scale-105 mt-8",
                         hasTrialDiscount 
-                          ? "bg-gradient-to-r from-green-500 to-green-600 hover:shadow-xl animate-pulse"
+                          ? "bg-gradient-to-r from-green-500 to-green-600 hover:shadow-xl animate-slow-pulse"
                           : plan.popular 
                             ? "bg-gradient-to-r from-primary to-accent hover:shadow-xl" 
                             : "bg-primary hover:bg-primary/90"

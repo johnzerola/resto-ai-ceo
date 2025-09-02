@@ -116,10 +116,10 @@ export function OptimizedHero() {
                   variant="compact"
                 />
               ) : (
-                <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 animate-bounce shadow-lg">
-                  <Crown className="mr-2 h-4 w-4" />
-                  🔥 ÚLTIMAS 47 VAGAS - Teste Grátis 7 dias
-                </Badge>
+            <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 animate-slow-pulse shadow-lg">
+              <Crown className="mr-2 h-4 w-4" />
+              🔥 ÚLTIMAS 47 VAGAS - Teste Grátis 7 dias
+            </Badge>
               )}
             </FadeInUp>
 
@@ -146,7 +146,7 @@ export function OptimizedHero() {
                     <Link to="/assinatura">
                       <Button 
                         size="lg" 
-                        className="bg-gradient-to-r from-green-500 to-green-600 hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto group animate-pulse"
+                        className="bg-gradient-to-r from-green-500 to-green-600 hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto group animate-slow-pulse"
                       >
                         <Crown className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                         ATIVAR PLANO - 50% OFF
@@ -167,7 +167,7 @@ export function OptimizedHero() {
                   <Link to="/login?tab=register">
                     <Button 
                       size="lg" 
-                      className="bg-gradient-to-r from-primary to-accent hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto group animate-pulse"
+                      className="bg-gradient-to-r from-primary to-accent hover:shadow-xl transform hover:scale-105 transition-all duration-300 text-lg px-8 py-6 w-full sm:w-auto group animate-slow-pulse"
                     >
                       <PlayCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                       TESTE GRÁTIS 7 DIAS
@@ -236,7 +236,7 @@ export function OptimizedHero() {
                     variant="hero"
                   />
                 ) : (
-                  <div className="bg-gradient-to-r from-yellow-400/20 to-orange-500/20 border border-yellow-400/30 rounded-lg p-3 animate-pulse">
+                  <div className="bg-gradient-to-r from-yellow-400/20 to-orange-500/20 border border-yellow-400/30 rounded-lg p-3 animate-slow-pulse">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-yellow-600" />
                       <span className="text-sm font-semibold text-yellow-700">
@@ -303,15 +303,6 @@ export function OptimizedHero() {
               </div>
 
               {/* Floating elements */}
-              <div className="absolute -top-4 -right-4 bg-card rounded-xl shadow-lg p-4 border animate-bounce">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  <div>
-                    <div className="text-sm font-semibold">Secure</div>
-                    <div className="text-xs text-muted-foreground">Bank-level</div>
-                  </div>
-                </div>
-              </div>
 
               <div className="absolute -bottom-4 -left-4 bg-card rounded-xl shadow-lg p-4 border animate-bounce delay-500">
                 <div className="flex items-center gap-2">

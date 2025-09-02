@@ -80,7 +80,7 @@ export function PersuasiveCTA() {
         <div className="max-w-4xl mx-auto text-center text-white">
           
           {/* Urgency header */}
-          <Badge className="mb-6 bg-destructive/20 text-white border-destructive/30 animate-pulse">
+          <Badge className="mb-6 bg-destructive/20 text-white border-destructive/30 animate-slow-pulse">
             <AlertTriangle className="mr-2 h-4 w-4" />
             🔥 ÚLTIMAS HORAS - Promoção encerra em:
           </Badge>
@@ -139,7 +139,7 @@ export function PersuasiveCTA() {
               <Link to="/dashboard">
                 <Button 
                   size="lg" 
-                  className="bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xl px-12 py-6 rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 font-bold animate-pulse"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xl px-12 py-6 rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 font-bold animate-slow-pulse"
                 >
                   <TrendingUp className="mr-3 h-6 w-6" />
                   ACESSAR DASHBOARD
@@ -149,7 +149,7 @@ export function PersuasiveCTA() {
               <Link to="/login?tab=register">
                 <Button 
                   size="lg" 
-                  className="bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xl px-12 py-6 rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 font-bold animate-pulse"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xl px-12 py-6 rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 font-bold animate-slow-pulse"
                 >
                   <Zap className="mr-3 h-6 w-6" />
                   TESTE GRÁTIS 7 DIAS
