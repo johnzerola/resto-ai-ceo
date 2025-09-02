@@ -45,7 +45,7 @@ export function CTASection() {
                     Acessar Dashboard
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="border-white/50 text-white hover:bg-white/10 transition-all duration-300 text-lg px-10 py-6">
+                <Button size="lg" variant="outline" className="border-white/50 text-white hover:bg-white hover:text-primary transition-all duration-300 text-lg px-10 py-6">
                   <PlayCircle className="mr-2 h-6 w-6" />
                   Ver tutorial
                 </Button>
@@ -58,7 +58,7 @@ export function CTASection() {
                     Começar teste gratuito
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="border-white/50 text-white hover:bg-white/10 transition-all duration-300 text-lg px-10 py-6">
+                <Button size="lg" variant="outline" className="border-white/50 text-white hover:bg-white hover:text-primary transition-all duration-300 text-lg px-10 py-6">
                   <PlayCircle className="mr-2 h-6 w-6" />
                   Ver demonstração
                 </Button>

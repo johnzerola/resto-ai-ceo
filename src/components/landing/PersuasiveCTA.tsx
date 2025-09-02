@@ -160,7 +160,7 @@ export function PersuasiveCTA() {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-white/30 text-white hover:bg-white/10 text-xl px-12 py-6 rounded-xl backdrop-blur-sm"
+              className="border-white/30 text-white hover:bg-white hover:text-primary text-xl px-12 py-6 rounded-xl backdrop-blur-sm"
             >
               <PlayCircle className="mr-3 h-6 w-6" />
               Ver Demonstração
