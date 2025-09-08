@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useSubscriptionPlan } from "@/hooks/useSubscriptionPlan";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { SubscriptionBanner } from "@/components/subscription/SubscriptionBanner";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Crown, 
   Check, 
@@ -25,47 +27,26 @@ import { toast } from "sonner";
 
 const plans = [
   {
-    id: 'free',
-    name: 'Gratuito',
-    price: 0,
-    period: '',
-    description: 'Para começar',
+    id: 'basico',
+    name: 'Básico',
+    price: 29.90,
+    period: '/mês',
+    description: 'Perfeito para restaurantes pequenos',
+    stripeProductId: 'prod_ScEOIQOyRxpW4r',
     features: [
       'Dashboard básico',
-      '1 restaurante',
-      'Relatórios simples',
+      'Até 2 restaurantes',
+      'Controle de estoque',
+      'Fluxo de caixa',
+      'Relatórios básicos',
+      'CMV e DRE básicos',
       'Suporte por email'
     ],
     limitations: [
-      'Funcionalidades limitadas',
-      'Sem assistente IA',
-      'Relatórios básicos'
-    ],
-    icon: Shield,
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50',
-    borderColor: 'border-gray-200'
-  },
-  {
-    id: 'essencial',
-    name: 'Essencial',
-    price: 99,
-    period: '/mês',
-    description: 'Para crescer',
-    popular: false,
-    features: [
-      'Até 2 restaurantes',
-      'Gestão de estoque',
-      'Análise financeira',
-      'Relatórios avançados',
-      'CMV e DRE detalhados',
-      'Controle de fluxo de caixa',
-      'Suporte prioritário'
-    ],
-    limitations: [
       'IA com funcionalidades limitadas',
-      'Simulador básico'
+      'Relatórios simples'
     ],
+    popular: false,
     icon: BarChart3,
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
@@ -74,9 +55,10 @@ const plans = [
   {
     id: 'profissional',
     name: 'Profissional',
-    price: 199,
+    price: 78.90,
     period: '/mês',
-    description: 'Para dominar',
+    description: 'Ideal para restaurantes em crescimento',
+    stripeProductId: 'prod_ScEPJDdBU5a0xq',
     popular: true,
     features: [
       'Restaurantes ilimitados',
@@ -89,7 +71,8 @@ const plans = [
       'Gestão de equipe',
       'Suporte VIP 24/7',
       'Integração com marketplaces',
-      'API personalizada'
+      'API personalizada',
+      'Análise financeira avançada'
     ],
     icon: Crown,
     color: 'text-purple-600',
@@ -100,8 +83,9 @@ const plans = [
 
 export function AssinaturaCompleta() {
   const { planType, subscription, refreshSubscription, isLoading } = useSubscriptionPlan();
-  const [selectedPlan, setSelectedPlan] = useState<string>(planType || 'free');
+  const [selectedPlan, setSelectedPlan] = useState<string>(planType || 'basico');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
     // Forçar atualização imediata dos dados da assinatura
@@ -134,21 +118,49 @@ export function AssinaturaCompleta() {
     }
   };
 
-  const handlePlanSelection = (planId: string) => {
-    setSelectedPlan(planId);
-    
-    if (planId === 'free') {
-      toast.info('Você já está no plano gratuito');
-      return;
-    }
-
+  const handlePlanSelection = async (planId: string) => {
     if (planId === planType) {
       toast.success('Este já é seu plano atual!');
       return;
     }
 
-    // Aqui seria integrado com Stripe ou outro gateway
-    toast.success(`Plano ${planId} selecionado! Integração com pagamento em desenvolvimento.`);
+    setIsProcessingPayment(true);
+    try {
+      const selectedPlanData = plans.find(p => p.id === planId);
+      if (!selectedPlanData) {
+        toast.error('Plano não encontrado');
+        return;
+      }
+
+      console.log('Iniciando checkout para plano:', selectedPlanData.name);
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          productId: selectedPlanData.stripeProductId,
+          planId: planId
+        }
+      });
+
+      if (error) {
+        console.error('Erro ao criar sessão de checkout:', error);
+        toast.error('Erro ao processar pagamento. Tente novamente.');
+        return;
+      }
+
+      if (data?.url) {
+        console.log('Redirecionando para Stripe Checkout:', data.url);
+        // Abrir Stripe checkout em uma nova aba
+        window.open(data.url, '_blank');
+        toast.success('Redirecionando para o pagamento...');
+      } else {
+        toast.error('Erro ao gerar link de pagamento');
+      }
+    } catch (error) {
+      console.error('Erro no processamento:', error);
+      toast.error('Erro ao processar pagamento. Tente novamente.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -212,7 +224,7 @@ export function AssinaturaCompleta() {
         )}
 
         {/* Planos */}
-        <div className="grid gap-6 lg:gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto justify-center items-stretch">
           {plans.map((plan) => {
             const Icon = plan.icon;
             const isCurrentPlan = planType === plan.id;
@@ -255,11 +267,9 @@ export function AssinaturaCompleta() {
                   
                   <div className="space-y-1">
                     <div className="text-4xl font-bold">
-                      {plan.price === 0 ? 'Grátis' : formatPrice(plan.price)}
+                      {formatPrice(plan.price)}
                     </div>
-                    {plan.period && (
-                      <div className="text-sm text-muted-foreground">{plan.period}</div>
-                    )}
+                    <div className="text-sm text-muted-foreground">{plan.period}</div>
                   </div>
                 </CardHeader>
 
@@ -308,9 +318,14 @@ export function AssinaturaCompleta() {
                           : ''
                     }`}
                     variant={isCurrentPlan ? "default" : isPopular ? "default" : "outline"}
-                    disabled={isCurrentPlan}
+                    disabled={isCurrentPlan || isProcessingPayment}
                   >
-                    {isCurrentPlan ? (
+                    {isProcessingPayment ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                        Processando...
+                      </>
+                    ) : isCurrentPlan ? (
                       <>
                         <Check className="h-4 w-4 mr-2" />
                         Plano Atual
@@ -318,7 +333,7 @@ export function AssinaturaCompleta() {
                     ) : (
                       <>
                         {isPopular && <Crown className="h-4 w-4 mr-2" />}
-                        {plan.price === 0 ? 'Continuar Gratuito' : 'Assinar Agora'}
+                        Assinar Agora
                       </>
                     )}
                   </Button>
@@ -335,34 +350,30 @@ export function AssinaturaCompleta() {
             <p className="text-muted-foreground">Veja em detalhes o que cada plano oferece</p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-4xl mx-auto">
             {[
               {
                 icon: Brain,
                 title: "Assistente IA",
-                free: "❌",
-                essencial: "Limitado",
+                basico: "Limitado",
                 profissional: "✅ Completo"
               },
               {
                 icon: ChartBar,
                 title: "Relatórios",
-                free: "Básicos",
-                essencial: "✅ Avançados",
-                profissional: "✅ Personalizados"
+                basico: "Básicos",
+                profissional: "✅ Avançados"
               },
               {
                 icon: Database,
                 title: "Restaurantes",
-                free: "1",
-                essencial: "2",
+                basico: "2",
                 profissional: "Ilimitado"
               },
               {
                 icon: Target,
                 title: "Simulador",
-                free: "❌",
-                essencial: "Básico",
+                basico: "❌",
                 profissional: "✅ Avançado"
               }
             ].map((feature, index) => (
@@ -373,8 +384,7 @@ export function AssinaturaCompleta() {
                 </CardHeader>
                 <CardContent className="space-y-3 text-center text-sm">
                   <div className="space-y-2">
-                    <div className="font-medium">Gratuito: <span className="text-muted-foreground">{feature.free}</span></div>
-                    <div className="font-medium">Essencial: <span className="text-blue-600">{feature.essencial}</span></div>
+                    <div className="font-medium">Básico: <span className="text-blue-600">{feature.basico}</span></div>
                     <div className="font-medium">Profissional: <span className="text-purple-600">{feature.profissional}</span></div>
                   </div>
                 </CardContent>
@@ -394,6 +404,7 @@ export function AssinaturaCompleta() {
             variant="secondary"
             onClick={() => handlePlanSelection('profissional')}
             className="bg-white text-purple-600 hover:bg-gray-100"
+            disabled={isProcessingPayment}
           >
             <Crown className="h-5 w-5 mr-2" />
             Assinar Plano Profissional

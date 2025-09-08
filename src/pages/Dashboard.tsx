@@ -1,12 +1,16 @@
 
-import { ModernLayout } from "@/components/restaurant/ModernLayout";
-import { EnhancedDashboard } from "@/components/restaurant/EnhancedDashboard";
+import React from "react";
+import { OptimizedDirectDashboard } from "@/components/dashboard/OptimizedDirectDashboard";
+import { TrialBlocker } from "@/components/trial/TrialBlocker";
 
 const Dashboard = () => {
   return (
-    <ModernLayout>
-      <EnhancedDashboard />
-    </ModernLayout>
+    <TrialBlocker 
+      featureName="Dashboard Completo" 
+      description="Visualize todas as métricas e dados financeiros do seu restaurante"
+    >
+      <OptimizedDirectDashboard />
+    </TrialBlocker>
   );
 };
 

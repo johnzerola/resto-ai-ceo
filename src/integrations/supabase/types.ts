@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instanciate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
       achievements: {
@@ -55,6 +60,83 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      affiliate_referrals: {
+        Row: {
+          affiliate_id: string | null
+          commission_earned: number | null
+          conversion_date: string | null
+          created_at: string | null
+          id: string
+          referral_code: string
+          referred_user_id: string | null
+          status: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          commission_earned?: number | null
+          conversion_date?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code: string
+          referred_user_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          commission_earned?: number | null
+          conversion_date?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_user_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_referrals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          affiliate_code: string
+          commission_rate: number | null
+          created_at: string | null
+          id: string
+          status: string | null
+          total_earnings: number | null
+          total_referrals: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          affiliate_code: string
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          affiliate_code?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       alertas_sistema: {
         Row: {
@@ -156,6 +238,110 @@ export type Database = {
           },
         ]
       }
+      branding_assets: {
+        Row: {
+          asset_data: Json
+          category: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          asset_data: Json
+          category: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          asset_data?: Json
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: []
+      }
+      business_profiles: {
+        Row: {
+          average_monthly_revenue: number | null
+          average_ticket: number | null
+          break_even_point: number | null
+          cnpj: string | null
+          created_at: string | null
+          daily_operating_hours: string | null
+          desired_profit_margin: number | null
+          fixed_monthly_costs: number | null
+          id: string
+          ideal_cmv_percentage: number | null
+          ideal_net_margin: number | null
+          monthly_sales_target: number | null
+          motivational_insights: Json | null
+          owner_name: string | null
+          restaurant_id: string
+          updated_at: string | null
+          variable_monthly_costs: number | null
+          weekly_operating_days: number | null
+        }
+        Insert: {
+          average_monthly_revenue?: number | null
+          average_ticket?: number | null
+          break_even_point?: number | null
+          cnpj?: string | null
+          created_at?: string | null
+          daily_operating_hours?: string | null
+          desired_profit_margin?: number | null
+          fixed_monthly_costs?: number | null
+          id?: string
+          ideal_cmv_percentage?: number | null
+          ideal_net_margin?: number | null
+          monthly_sales_target?: number | null
+          motivational_insights?: Json | null
+          owner_name?: string | null
+          restaurant_id: string
+          updated_at?: string | null
+          variable_monthly_costs?: number | null
+          weekly_operating_days?: number | null
+        }
+        Update: {
+          average_monthly_revenue?: number | null
+          average_ticket?: number | null
+          break_even_point?: number | null
+          cnpj?: string | null
+          created_at?: string | null
+          daily_operating_hours?: string | null
+          desired_profit_margin?: number | null
+          fixed_monthly_costs?: number | null
+          id?: string
+          ideal_cmv_percentage?: number | null
+          ideal_net_margin?: number | null
+          monthly_sales_target?: number | null
+          motivational_insights?: Json | null
+          owner_name?: string | null
+          restaurant_id?: string
+          updated_at?: string | null
+          variable_monthly_costs?: number | null
+          weekly_operating_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profiles_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: true
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       canais_venda: {
         Row: {
           ativo: boolean | null
@@ -217,6 +403,7 @@ export type Database = {
           recorrente: boolean | null
           restaurant_id: string | null
           status: string | null
+          tenant_id: string | null
           type: string
           vencimento: string | null
         }
@@ -239,6 +426,7 @@ export type Database = {
           recorrente?: boolean | null
           restaurant_id?: string | null
           status?: string | null
+          tenant_id?: string | null
           type: string
           vencimento?: string | null
         }
@@ -261,6 +449,7 @@ export type Database = {
           recorrente?: boolean | null
           restaurant_id?: string | null
           status?: string | null
+          tenant_id?: string | null
           type?: string
           vencimento?: string | null
         }
@@ -317,6 +506,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "categorias_despesas_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categorias_financeiras: {
+        Row: {
+          ativa: boolean
+          cor: string | null
+          created_at: string | null
+          icone: string | null
+          id: string
+          impacta_cmv: boolean
+          impacta_dre: boolean
+          nome: string
+          restaurant_id: string | null
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativa?: boolean
+          cor?: string | null
+          created_at?: string | null
+          icone?: string | null
+          id?: string
+          impacta_cmv?: boolean
+          impacta_dre?: boolean
+          nome: string
+          restaurant_id?: string | null
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativa?: boolean
+          cor?: string | null
+          created_at?: string | null
+          icone?: string | null
+          id?: string
+          impacta_cmv?: boolean
+          impacta_dre?: boolean
+          nome?: string
+          restaurant_id?: string | null
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorias_financeiras_restaurant_id_fkey"
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
@@ -566,6 +805,80 @@ export type Database = {
           },
         ]
       }
+      developer_permissions: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          permission_type: string
+          resource_access: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          permission_type: string
+          resource_access?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          permission_type?: string
+          resource_access?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      discount_coupons: {
+        Row: {
+          affiliate_id: string | null
+          code: string
+          created_at: string | null
+          discount_type: string | null
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          usage_limit: number | null
+          used_count: number | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          code: string
+          created_at?: string | null
+          discount_type?: string | null
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          usage_limit?: number | null
+          used_count?: number | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          code?: string
+          created_at?: string | null
+          discount_type?: string | null
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          usage_limit?: number | null
+          used_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_coupons_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dre_mensal: {
         Row: {
           ano: number
@@ -696,6 +1009,122 @@ export type Database = {
           },
         ]
       }
+      expense_keywords: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          impacts_cmv: boolean | null
+          impacts_dre: boolean | null
+          keyword: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          impacts_cmv?: boolean | null
+          impacts_dre?: boolean | null
+          keyword: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          impacts_cmv?: boolean | null
+          impacts_dre?: boolean | null
+          keyword?: string
+        }
+        Relationships: []
+      }
+      feedback_submissions: {
+        Row: {
+          content: Json
+          created_at: string | null
+          feedback_type: string
+          id: string
+          page_url: string | null
+          processed: boolean | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: Json
+          created_at?: string | null
+          feedback_type: string
+          id?: string
+          page_url?: string | null
+          processed?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: Json
+          created_at?: string | null
+          feedback_type?: string
+          id?: string
+          page_url?: string | null
+          processed?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      fixed_expenses: {
+        Row: {
+          active: boolean
+          amount: number
+          auto_pay: boolean | null
+          category: string
+          created_at: string | null
+          description: string | null
+          due_day: number
+          id: string
+          name: string
+          notification_days: number | null
+          restaurant_id: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean
+          amount?: number
+          auto_pay?: boolean | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          due_day?: number
+          id?: string
+          name: string
+          notification_days?: number | null
+          restaurant_id: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          auto_pay?: boolean | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          due_day?: number
+          id?: string
+          name?: string
+          notification_days?: number | null
+          restaurant_id?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixed_expenses_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           category: string | null
@@ -793,6 +1222,54 @@ export type Database = {
           },
         ]
       }
+      historico_rupturas: {
+        Row: {
+          created_at: string | null
+          data_ruptura: string
+          dias_sem_estoque: number | null
+          id: string
+          impacto_vendas: number | null
+          insumo_id: string | null
+          motivo: string | null
+          restaurant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_ruptura: string
+          dias_sem_estoque?: number | null
+          id?: string
+          impacto_vendas?: number | null
+          insumo_id?: string | null
+          motivo?: string | null
+          restaurant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_ruptura?: string
+          dias_sem_estoque?: number | null
+          id?: string
+          impacto_vendas?: number | null
+          insumo_id?: string | null
+          motivo?: string | null
+          restaurant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_rupturas_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historico_rupturas_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ia_usage: {
         Row: {
           created_at: string | null
@@ -877,7 +1354,10 @@ export type Database = {
       insumos: {
         Row: {
           categoria: string | null
+          ciclo_compra_dias: number | null
           codigo: number | null
+          consumo_medio_diario: number | null
+          conversoes_unidade: Json | null
           created_at: string | null
           estoque_atual: number | null
           estoque_minimo: number | null
@@ -886,8 +1366,11 @@ export type Database = {
           nome: string
           perda_media_percentual: number | null
           preco_pago: number
+          preco_ultima_compra: number | null
           preco_unitario: number | null
           restaurant_id: string | null
+          tempo_entrega_dias: number | null
+          ultima_compra: string | null
           unidade_medida: string
           updated_at: string | null
           validade_dias: number | null
@@ -895,7 +1378,10 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
+          ciclo_compra_dias?: number | null
           codigo?: number | null
+          consumo_medio_diario?: number | null
+          conversoes_unidade?: Json | null
           created_at?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
@@ -904,8 +1390,11 @@ export type Database = {
           nome: string
           perda_media_percentual?: number | null
           preco_pago: number
+          preco_ultima_compra?: number | null
           preco_unitario?: number | null
           restaurant_id?: string | null
+          tempo_entrega_dias?: number | null
+          ultima_compra?: string | null
           unidade_medida: string
           updated_at?: string | null
           validade_dias?: number | null
@@ -913,7 +1402,10 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
+          ciclo_compra_dias?: number | null
           codigo?: number | null
+          consumo_medio_diario?: number | null
+          conversoes_unidade?: Json | null
           created_at?: string | null
           estoque_atual?: number | null
           estoque_minimo?: number | null
@@ -922,8 +1414,11 @@ export type Database = {
           nome?: string
           perda_media_percentual?: number | null
           preco_pago?: number
+          preco_ultima_compra?: number | null
           preco_unitario?: number | null
           restaurant_id?: string | null
+          tempo_entrega_dias?: number | null
+          ultima_compra?: string | null
           unidade_medida?: string
           updated_at?: string | null
           validade_dias?: number | null
@@ -949,6 +1444,7 @@ export type Database = {
           name: string
           quantity: number | null
           restaurant_id: string | null
+          tenant_id: string | null
           unit: string | null
           updated_at: string | null
         }
@@ -961,6 +1457,7 @@ export type Database = {
           name: string
           quantity?: number | null
           restaurant_id?: string | null
+          tenant_id?: string | null
           unit?: string | null
           updated_at?: string | null
         }
@@ -973,6 +1470,7 @@ export type Database = {
           name?: string
           quantity?: number | null
           restaurant_id?: string | null
+          tenant_id?: string | null
           unit?: string | null
           updated_at?: string | null
         }
@@ -1211,6 +1709,51 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          scheduled_for: string
+          sent_at: string | null
+          status: string | null
+          tenant_id: string | null
+          title: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          title: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -1309,18 +1852,23 @@ export type Database = {
       pratos: {
         Row: {
           ativo: boolean | null
+          canal_venda: string | null
           categoria: string | null
           created_at: string | null
           custo_embalagem: number | null
           custo_perdas: number | null
           custo_por_porcao: number | null
           custo_total: number | null
+          despesas_fixas_mensais: number | null
+          despesas_variaveis_mensais: number | null
           embalagem_id: string | null
           formato_venda: string | null
           id: string
           lucro_estimado: number | null
           margem_percentual: number | null
           margem_seguranca: number | null
+          markup_personalizado: number | null
+          meta_lucro_percentual: number | null
           nome_prato: string
           observacoes: string | null
           peso_bruto_kg: number | null
@@ -1344,18 +1892,23 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          canal_venda?: string | null
           categoria?: string | null
           created_at?: string | null
           custo_embalagem?: number | null
           custo_perdas?: number | null
           custo_por_porcao?: number | null
           custo_total?: number | null
+          despesas_fixas_mensais?: number | null
+          despesas_variaveis_mensais?: number | null
           embalagem_id?: string | null
           formato_venda?: string | null
           id?: string
           lucro_estimado?: number | null
           margem_percentual?: number | null
           margem_seguranca?: number | null
+          markup_personalizado?: number | null
+          meta_lucro_percentual?: number | null
           nome_prato: string
           observacoes?: string | null
           peso_bruto_kg?: number | null
@@ -1379,18 +1932,23 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          canal_venda?: string | null
           categoria?: string | null
           created_at?: string | null
           custo_embalagem?: number | null
           custo_perdas?: number | null
           custo_por_porcao?: number | null
           custo_total?: number | null
+          despesas_fixas_mensais?: number | null
+          despesas_variaveis_mensais?: number | null
           embalagem_id?: string | null
           formato_venda?: string | null
           id?: string
           lucro_estimado?: number | null
           margem_percentual?: number | null
           margem_seguranca?: number | null
+          markup_personalizado?: number | null
+          meta_lucro_percentual?: number | null
           nome_prato?: string
           observacoes?: string | null
           peso_bruto_kg?: number | null
@@ -1524,9 +2082,14 @@ export type Database = {
           id: string
           last_login: string | null
           name: string | null
+          onboarding_complete: boolean | null
+          onboarding_step: number | null
+          plan_status: string | null
           preferences: Json | null
           role: string | null
           status: string | null
+          trial_end: string | null
+          trial_start: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1535,9 +2098,14 @@ export type Database = {
           id: string
           last_login?: string | null
           name?: string | null
+          onboarding_complete?: boolean | null
+          onboarding_step?: number | null
+          plan_status?: string | null
           preferences?: Json | null
           role?: string | null
           status?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1546,12 +2114,79 @@ export type Database = {
           id?: string
           last_login?: string | null
           name?: string | null
+          onboarding_complete?: boolean | null
+          onboarding_step?: number | null
+          plan_status?: string | null
           preferences?: Json | null
           role?: string | null
           status?: string | null
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string | null
         }
         Relationships: []
+      }
+      projecoes_financeiras: {
+        Row: {
+          cenario_selecionado: string | null
+          created_at: string | null
+          dados_mensais: Json | null
+          despesas_mensais_atuais: number
+          id: string
+          lucro_projetado_final: number | null
+          margem_final_percentual: number | null
+          nome_projecao: string
+          observacoes: string | null
+          periodo_meses: number
+          receita_mensal_atual: number
+          receita_projetada_final: number | null
+          restaurant_id: string | null
+          taxa_crescimento_anual: number
+          updated_at: string | null
+        }
+        Insert: {
+          cenario_selecionado?: string | null
+          created_at?: string | null
+          dados_mensais?: Json | null
+          despesas_mensais_atuais?: number
+          id?: string
+          lucro_projetado_final?: number | null
+          margem_final_percentual?: number | null
+          nome_projecao: string
+          observacoes?: string | null
+          periodo_meses?: number
+          receita_mensal_atual?: number
+          receita_projetada_final?: number | null
+          restaurant_id?: string | null
+          taxa_crescimento_anual?: number
+          updated_at?: string | null
+        }
+        Update: {
+          cenario_selecionado?: string | null
+          created_at?: string | null
+          dados_mensais?: Json | null
+          despesas_mensais_atuais?: number
+          id?: string
+          lucro_projetado_final?: number | null
+          margem_final_percentual?: number | null
+          nome_projecao?: string
+          observacoes?: string | null
+          periodo_meses?: number
+          receita_mensal_atual?: number
+          receita_projetada_final?: number | null
+          restaurant_id?: string | null
+          taxa_crescimento_anual?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projecoes_financeiras_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recipe_ingredients: {
         Row: {
@@ -1680,42 +2315,51 @@ export type Database = {
         Row: {
           average_monthly_sales: number | null
           business_type: string | null
+          cnpj: string | null
           created_at: string | null
           desired_profit_margin: number | null
           fixed_expenses: number | null
           id: string
           name: string
           owner_id: string
+          owner_name: string | null
           target_beverage_cost: number | null
           target_food_cost: number | null
+          tenant_id: string
           updated_at: string | null
           variable_expenses: number | null
         }
         Insert: {
           average_monthly_sales?: number | null
           business_type?: string | null
+          cnpj?: string | null
           created_at?: string | null
           desired_profit_margin?: number | null
           fixed_expenses?: number | null
           id?: string
           name: string
           owner_id: string
+          owner_name?: string | null
           target_beverage_cost?: number | null
           target_food_cost?: number | null
+          tenant_id: string
           updated_at?: string | null
           variable_expenses?: number | null
         }
         Update: {
           average_monthly_sales?: number | null
           business_type?: string | null
+          cnpj?: string | null
           created_at?: string | null
           desired_profit_margin?: number | null
           fixed_expenses?: number | null
           id?: string
           name?: string
           owner_id?: string
+          owner_name?: string | null
           target_beverage_cost?: number | null
           target_food_cost?: number | null
+          tenant_id?: string
           updated_at?: string | null
           variable_expenses?: number | null
         }
@@ -1786,6 +2430,123 @@ export type Database = {
           },
         ]
       }
+      simulacoes_precos: {
+        Row: {
+          created_at: string
+          custo_direto: number
+          custo_mao_obra: number
+          custos_fixos: number
+          id: string
+          impostos_percentual: number
+          lucro_bruto: number
+          margem_desejada: number
+          markup_calculado: number
+          nome_produto: string
+          observacoes: string | null
+          preco_sugerido: number
+          precos_concorrentes: Json | null
+          restaurant_id: string
+          status_viabilidade: string
+          taxa_entrega: number
+          taxa_plataforma: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custo_direto?: number
+          custo_mao_obra?: number
+          custos_fixos?: number
+          id?: string
+          impostos_percentual?: number
+          lucro_bruto?: number
+          margem_desejada?: number
+          markup_calculado?: number
+          nome_produto: string
+          observacoes?: string | null
+          preco_sugerido?: number
+          precos_concorrentes?: Json | null
+          restaurant_id: string
+          status_viabilidade?: string
+          taxa_entrega?: number
+          taxa_plataforma?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custo_direto?: number
+          custo_mao_obra?: number
+          custos_fixos?: number
+          id?: string
+          impostos_percentual?: number
+          lucro_bruto?: number
+          margem_desejada?: number
+          markup_calculado?: number
+          nome_produto?: string
+          observacoes?: string | null
+          preco_sugerido?: number
+          precos_concorrentes?: Json | null
+          restaurant_id?: string
+          status_viabilidade?: string
+          taxa_entrega?: number
+          taxa_plataforma?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          cost_per_unit: number | null
+          created_at: string | null
+          current_stock: number | null
+          id: string
+          item_name: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes: string | null
+          phone_number: string | null
+          processed_at: string | null
+          quantity: number
+          tenant_id: string
+          total_cost: number | null
+          unit: string | null
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          cost_per_unit?: number | null
+          created_at?: string | null
+          current_stock?: number | null
+          id?: string
+          item_name: string
+          movement_type: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          phone_number?: string | null
+          processed_at?: string | null
+          quantity: number
+          tenant_id: string
+          total_cost?: number | null
+          unit?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          cost_per_unit?: number | null
+          created_at?: string | null
+          current_stock?: number | null
+          id?: string
+          item_name?: string
+          movement_type?: Database["public"]["Enums"]["movement_type"]
+          notes?: string | null
+          phone_number?: string | null
+          processed_at?: string | null
+          quantity?: number
+          tenant_id?: string
+          total_cost?: number | null
+          unit?: string | null
+          whatsapp_message_id?: string | null
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           created_at: string
@@ -1795,16 +2556,19 @@ export type Database = {
           last_login: string | null
           limits: Json | null
           name: string | null
+          phone_numbers: string[] | null
           plan_status: string | null
           stripe_customer_id: string | null
           subscribed: boolean
           subscription_end: string | null
           subscription_tier: string | null
+          tenant_id: string | null
           trial_end: string | null
           trial_start: string | null
           trial_used: boolean | null
           updated_at: string
           user_id: string | null
+          whatsapp_enabled: boolean | null
         }
         Insert: {
           created_at?: string
@@ -1814,16 +2578,19 @@ export type Database = {
           last_login?: string | null
           limits?: Json | null
           name?: string | null
+          phone_numbers?: string[] | null
           plan_status?: string | null
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
+          tenant_id?: string | null
           trial_end?: string | null
           trial_start?: string | null
           trial_used?: boolean | null
           updated_at?: string
           user_id?: string | null
+          whatsapp_enabled?: boolean | null
         }
         Update: {
           created_at?: string
@@ -1833,16 +2600,19 @@ export type Database = {
           last_login?: string | null
           limits?: Json | null
           name?: string | null
+          phone_numbers?: string[] | null
           plan_status?: string | null
           stripe_customer_id?: string | null
           subscribed?: boolean
           subscription_end?: string | null
           subscription_tier?: string | null
+          tenant_id?: string | null
           trial_end?: string | null
           trial_start?: string | null
           trial_used?: boolean | null
           updated_at?: string
           user_id?: string | null
+          whatsapp_enabled?: boolean | null
         }
         Relationships: []
       }
@@ -1903,6 +2673,30 @@ export type Database = {
           timestamp?: string | null
           type?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      system_metrics: {
+        Row: {
+          id: string
+          metric_type: string
+          metric_value: Json
+          restaurant_id: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          id?: string
+          metric_type: string
+          metric_value: Json
+          restaurant_id?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          id?: string
+          metric_type?: string
+          metric_value?: Json
+          restaurant_id?: string | null
+          timestamp?: string | null
         }
         Relationships: []
       }
@@ -1971,6 +2765,102 @@ export type Database = {
           },
         ]
       }
+      tenant_instances: {
+        Row: {
+          created_at: string | null
+          id: string
+          instance_id: string
+          name: string
+          status: string
+          subscription_tier: string
+          tenant_id: string
+          trial_end: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instance_id: string
+          name: string
+          status?: string
+          subscription_tier?: string
+          tenant_id: string
+          trial_end?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instance_id?: string
+          name?: string
+          status?: string
+          subscription_tier?: string
+          tenant_id?: string
+          trial_end?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tendencias_estoque: {
+        Row: {
+          created_at: string | null
+          data_analise: string
+          dias_para_ruptura: number | null
+          entradas_periodo: number | null
+          estoque_final: number | null
+          estoque_inicial: number | null
+          id: string
+          insumo_id: string | null
+          restaurant_id: string | null
+          saidas_periodo: number | null
+          taxa_consumo_diaria: number | null
+          tendencia: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_analise?: string
+          dias_para_ruptura?: number | null
+          entradas_periodo?: number | null
+          estoque_final?: number | null
+          estoque_inicial?: number | null
+          id?: string
+          insumo_id?: string | null
+          restaurant_id?: string | null
+          saidas_periodo?: number | null
+          taxa_consumo_diaria?: number | null
+          tendencia?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_analise?: string
+          dias_para_ruptura?: number | null
+          entradas_periodo?: number | null
+          estoque_final?: number | null
+          estoque_inicial?: number | null
+          id?: string
+          insumo_id?: string | null
+          restaurant_id?: string | null
+          saidas_periodo?: number | null
+          taxa_consumo_diaria?: number | null
+          tendencia?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tendencias_estoque_insumo_id_fkey"
+            columns: ["insumo_id"]
+            isOneToOne: false
+            referencedRelation: "insumos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tendencias_estoque_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unidades_medida: {
         Row: {
           created_at: string | null
@@ -1995,6 +2885,33 @@ export type Database = {
           nome?: string
           tipo?: string
           unidade_base?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          restaurant_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          restaurant_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          restaurant_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -2034,12 +2951,98 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_integrations: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_authorized: boolean | null
+          last_activity_at: string | null
+          phone_number: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_authorized?: boolean | null
+          last_activity_at?: string | null
+          phone_number: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_authorized?: boolean | null
+          last_activity_at?: string | null
+          phone_number?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_transactions: {
+        Row: {
+          amount: number
+          auto_category: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          impacts_cmv: boolean | null
+          impacts_dre: boolean | null
+          phone_number: string | null
+          processed_at: string | null
+          tenant_id: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          amount: number
+          auto_category?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impacts_cmv?: boolean | null
+          impacts_dre?: boolean | null
+          phone_number?: string | null
+          processed_at?: string | null
+          tenant_id: string
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          amount?: number
+          auto_category?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          impacts_cmv?: boolean | null
+          impacts_dre?: boolean | null
+          phone_number?: string | null
+          processed_at?: string | null
+          tenant_id?: string
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+          whatsapp_message_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      auto_clean_new_users: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       auto_expire_trials: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      block_expired_users: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
@@ -2056,6 +3059,21 @@ export type Database = {
           preco_sugerido_balcao: number
           preco_sugerido_ifood: number
           status_viabilidade: string
+        }[]
+      }
+      calcular_cmv_completo_melhorado: {
+        Args: { prato_uuid: string }
+        Returns: {
+          custo_ingredientes: number
+          despesas_fixas_prato: number
+          despesas_variaveis_prato: number
+          custo_total_final: number
+          custo_por_porcao: number
+          preco_sugerido_calculado: number
+          margem_bruta_percentual: number
+          margem_liquida_percentual: number
+          status_viabilidade: string
+          alertas: Json
         }[]
       }
       calcular_cmv_inteligente: {
@@ -2087,12 +3105,27 @@ export type Database = {
         Args: { restaurant_uuid: string; mes_param: number; ano_param: number }
         Returns: undefined
       }
+      calcular_estoque_minimo_automatico: {
+        Args: { insumo_uuid: string }
+        Returns: number
+      }
       calcular_meta_diaria: {
         Args: { restaurant_uuid: string }
         Returns: {
           meta_receita: number
           meta_pratos: number
           ticket_medio: number
+        }[]
+      }
+      calcular_metricas_financeiras: {
+        Args: { restaurant_uuid: string }
+        Returns: {
+          cmv_valor: number
+          cmv_percentual: number
+          receita_total: number
+          despesas_operacionais: number
+          lucro_bruto: number
+          margem_bruta_percentual: number
         }[]
       }
       check_trial_status: {
@@ -2104,9 +3137,33 @@ export type Database = {
           plan_status: string
         }[]
       }
+      clean_user_data: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
+      detectar_tendencias_estoque: {
+        Args: { restaurant_uuid: string }
+        Returns: undefined
+      }
+      generate_affiliate_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_expiration_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       gerar_alertas_automaticos: {
         Args: { restaurant_uuid: string }
         Returns: undefined
+      }
+      get_current_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_summary: {
+        Args: { p_tenant_id: string }
+        Returns: Json
       }
       gtrgm_compress: {
         Args: { "": unknown }
@@ -2128,8 +3185,27 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
+      is_plan_active: {
+        Args: { user_email: string }
+        Returns: boolean
+      }
       log_security_event: {
         Args: { event_type: string; user_id?: string; details?: Json }
+        Returns: undefined
+      }
+      recalc_dre: {
+        Args: { p_tenant_id: string; p_month: number; p_year: number }
+        Returns: undefined
+      }
+      recalc_stock_levels: {
+        Args: { p_tenant_id: string }
         Returns: undefined
       }
       set_limit: {
@@ -2148,13 +3224,24 @@ export type Database = {
         Args: { restaurant_uuid: string }
         Returns: Json
       }
+      validate_business_data: {
+        Args: {
+          restaurant_uuid: string
+          selling_price: number
+          cost_price: number
+        }
+        Returns: Json
+      }
       validate_password_strength: {
         Args: { password_text: string }
         Returns: Json
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "owner" | "admin" | "developer" | "affiliate" | "user"
+      movement_type: "entrada" | "saida" | "ajuste"
+      subscription_status: "active" | "canceled" | "past_due" | "unpaid"
+      transaction_type: "income" | "expense"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2162,21 +3249,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -2194,14 +3285,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -2217,14 +3310,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -2240,14 +3335,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -2255,20 +3352,27 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["owner", "admin", "developer", "affiliate", "user"],
+      movement_type: ["entrada", "saida", "ajuste"],
+      subscription_status: ["active", "canceled", "past_due", "unpaid"],
+      transaction_type: ["income", "expense"],
+    },
   },
 } as const

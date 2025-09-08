@@ -78,7 +78,8 @@ export function MetasVendas() {
         .eq('restaurant_id', currentRestaurant.id)
         .single();
 
-      if (!config) return;
+      // Só gerar metas se houver configurações
+      if (!config || !config.meta_vendas_diaria) return;
 
       const inicioMes = startOfMonth(selectedDate);
       const fimMes = endOfMonth(selectedDate);

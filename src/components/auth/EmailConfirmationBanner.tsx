@@ -68,7 +68,7 @@ export function EmailConfirmationBanner() {
 
         // Em desenvolvimento, mostrar o link de debug
         if (data.debug_link && process.env.NODE_ENV === 'development') {
-          console.log('🔗 Link de confirmação (DEBUG):', data.debug_link);
+          // Debug link disponível em desenvolvimento
           toast.info('Link de confirmação disponível no console (modo debug)');
         }
       } else {

@@ -1,14 +1,26 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://lucrai.com/sitemap.xml
+
+# Específico para melhores práticas
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
 
-User-agent: Twitterbot
-Allow: /
+# Bloquear páginas administrativas
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /login/
+Disallow: /register/
+Disallow: /configuracoes/
 
-User-agent: facebookexternalhit
-Allow: /
-
-User-agent: *
-Allow: /
+# Permitir acesso completo ao blog e landing pages
+Allow: /blog/
+Allow: /calculadora-cmv
+Allow: /guia-completo-precificacao

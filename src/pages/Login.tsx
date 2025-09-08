@@ -56,14 +56,15 @@ const Login = () => {
     setIsSubmitting(true);
     
     try {
-      const success = await login(loginEmail, loginPassword);
+      const result = await login(loginEmail, loginPassword);
       
-      if (success) {
+      if (result.ok) {
         console.log("Login bem-sucedido, redirecionando...");
+        toast.success("Login realizado com sucesso!");
         // Usar replace para evitar problemas de navegação no mobile
         navigate("/dashboard", { replace: true });
       } else {
-        toast.error("Credenciais inválidas. Verifique email e senha.");
+        toast.error(result.error || "Erro no login");
       }
     } catch (error) {
       console.error("Erro no login:", error);
@@ -103,9 +104,9 @@ const Login = () => {
     setIsSubmitting(true);
     
     try {
-      const success = await register(registerEmail, registerPassword, registerName);
+      const result = await register(registerEmail, registerPassword, registerName);
       
-      if (success) {
+      if (result.ok) {
         toast.success("Conta criada com sucesso!", {
           description: "Verifique seu email para confirmar sua conta.",
           duration: 5000
@@ -117,7 +118,7 @@ const Login = () => {
         setRegisterPassword("");
         setConfirmPassword("");
       } else {
-        toast.error("Erro ao criar conta. Email pode já estar em uso.");
+        toast.error(result.error || "Erro ao criar conta");
       }
     } catch (error) {
       console.error("Erro no registro:", error);
@@ -326,7 +327,7 @@ const Login = () => {
         </Card>
         
         <div className={`mt-6 text-center text-gray-600 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-          <p>© {new Date().getFullYear()} RestoAI CEO. Todos os direitos reservados.</p>
+          <p>© {new Date().getFullYear()} Lucraí. Todos os direitos reservados.</p>
         </div>
       </div>
     </div>

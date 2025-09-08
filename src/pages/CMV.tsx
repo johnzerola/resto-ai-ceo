@@ -1,6 +1,6 @@
 
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
-import { CMVAnalysis } from "@/components/restaurant/CMVAnalysis";
+import { IntegratedCMVAnalysis } from "@/components/restaurant/IntegratedCMVAnalysis";
 
 export function CMV() {
   return (
@@ -14,7 +14,7 @@ export function CMV() {
             </p>
           </div>
         </div>
-        <CMVAnalysis />
+        <IntegratedCMVAnalysis />
       </div>
     </ModernLayout>
   );

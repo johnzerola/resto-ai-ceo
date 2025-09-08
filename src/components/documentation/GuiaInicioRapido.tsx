@@ -15,7 +15,7 @@ export function GuiaInicioRapido() {
       <div>
         <h1 className="text-2xl font-bold">Guia de Início Rápido</h1>
         <TypographyP>
-          Este guia ajudará você a começar a usar o sistema Resto AI CEO rapidamente. 
+          Este guia ajudará você a começar a usar o sistema Lucraí rapidamente. 
           Siga os passos abaixo para configurar seu restaurante e começar a usar as funcionalidades.
         </TypographyP>
       </div>
@@ -114,7 +114,7 @@ export function GuiaInicioRapido() {
 
       <TypographyH3>Recursos Avançados</TypographyH3>
       <TypographyP>
-        O sistema Resto AI CEO oferece recursos avançados para ajudar na gestão do seu restaurante:
+        O sistema Lucraí oferece recursos avançados para ajudar na gestão do seu restaurante:
       </TypographyP>
       <TypographyList>
         <li><strong>Gerente IA</strong> - Assistente virtual que analisa seus dados e oferece recomendações</li>
@@ -127,7 +127,7 @@ export function GuiaInicioRapido() {
         <TypographyH4 className="mt-0">Precisa de ajuda?</TypographyH4>
         <TypographyP>
           Caso tenha dúvidas ou precise de suporte, acesse o manual completo do usuário 
-          ou entre em contato com nosso suporte através do menu Configurações.
+          ou entre em contato com nosso suporte através do menu Gestão de Tarefas.
         </TypographyP>
       </div>
     </div>

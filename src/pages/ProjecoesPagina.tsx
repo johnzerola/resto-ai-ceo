@@ -1,6 +1,6 @@
 
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
-import { ProfitForecasting } from "@/components/restaurant/ProfitForecasting";
+import { ProjecoesInteligentes } from "@/components/restaurant/ProjecoesInteligentes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Calculator, Target } from "lucide-react";
 
@@ -70,7 +70,7 @@ export function ProjecoesPagina() {
         </div>
 
         {/* Main Forecasting Component */}
-        <ProfitForecasting />
+        <ProjecoesInteligentes />
 
         {/* Additional Information */}
         <Card>

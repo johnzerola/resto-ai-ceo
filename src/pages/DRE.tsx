@@ -1,6 +1,6 @@
 
 import { ModernLayout } from "@/components/restaurant/ModernLayout";
-import { DREOverview } from "@/components/restaurant/DREOverview";
+import { IntegratedDREOverview } from "@/components/restaurant/IntegratedDREOverview";
 
 export function DRE() {
   return (
@@ -18,7 +18,7 @@ export function DRE() {
         </div>
         
         <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
-          <DREOverview />
+          <IntegratedDREOverview />
         </div>
       </div>
     </ModernLayout>

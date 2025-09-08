@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { useTrialStatus } from './useTrialStatus';
 
 export enum PlanType {
-  ESSENCIAL = 'essencial',
+  BASICO = 'basico',
   PROFISSIONAL = 'profissional', 
   FREE = 'free'
 }
@@ -45,7 +45,7 @@ export function useSubscriptionPlan() {
 
   const fetchUserSubscription = useCallback(async () => {
     if (!user?.id) {
-      // Usuário não logado - plano gratuito por padrão
+      // Usuário não logado - plano gratuito por padrão com acesso básico
       const freeSubscription: UserSubscription = {
         id: 'free-guest',
         plan_type: PlanType.FREE,
@@ -96,22 +96,44 @@ export function useSubscriptionPlan() {
           status = 'active';
           console.log('🎯 [Subscription] USUÁRIO ESPECÍFICO - FORÇANDO PLANO PROFISSIONAL');
         } else if (trialStatus?.isTrialActive) {
-          // Trial ativo - liberar recursos baseado no tier ou dar acesso básico
-          planType = subscriberData.subscription_tier === 'profissional' ? PlanType.PROFISSIONAL : PlanType.ESSENCIAL;
+          // Trial ativo - dar acesso ao plano básico durante o trial
+          planType = PlanType.BASICO;
           status = 'trial';
-          console.log('✅ [Subscription] TRIAL ATIVO - Plano liberado:', planType);
-        } else if (subscriberData.subscription_tier) {
+          console.log('✅ [Subscription] TRIAL ATIVO - Liberando plano básico');
+        } else if (subscriberData.subscription_tier && subscriberData.subscribed) {
           const tier = subscriberData.subscription_tier.toLowerCase().trim();
           console.log('🔍 [Subscription] Processando tier:', tier);
           
           if (tier === 'profissional' || tier === 'professional') {
             planType = PlanType.PROFISSIONAL;
-            status = subscriberData.subscribed ? 'active' : 'inactive';
-            console.log('✅ [Subscription] PLANO PROFISSIONAL identificado');
-          } else if (tier === 'essencial' || tier === 'essential') {
-            planType = PlanType.ESSENCIAL;
-            status = subscriberData.subscribed ? 'active' : 'inactive';
-            console.log('✅ [Subscription] Plano ESSENCIAL identificado');
+            status = 'active';
+            console.log('✅ [Subscription] PLANO PROFISSIONAL ativo');
+          } else if (tier === 'basico' || tier === 'basic') {
+            planType = PlanType.BASICO;
+            status = 'active';
+            console.log('✅ [Subscription] Plano BÁSICO ativo');
+          }
+        } else {
+          // Usuário registrado mas sem plano ativo - dar 14 dias de trial
+          if (!subscriberData.trial_used && !subscriberData.trial_start) {
+            console.log('🎁 [Subscription] Iniciando trial de 14 dias para novo usuário');
+            
+            // Atualizar dados do trial
+            const { error: updateError } = await supabase
+              .from('subscribers')
+              .update({
+                plan_status: 'trial',
+                trial_start: new Date().toISOString(),
+                trial_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+                subscription_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .eq('email', user.email);
+            
+            if (!updateError) {
+              planType = PlanType.BASICO;
+              status = 'trial';
+            }
           }
         }
 
@@ -137,17 +159,44 @@ export function useSubscriptionPlan() {
           trial_active: trialStatus?.isTrialActive
         });
       } else {
-        console.log('⚠️ [Subscription] Nenhum registro encontrado - aplicando plano gratuito');
+        console.log('⚠️ [Subscription] Nenhum registro encontrado - criando trial de 14 dias');
+        
+        // Criar novo registro com trial
+        const { data: newSubscriber, error: insertError } = await supabase
+          .from('subscribers')
+          .insert({
+            user_id: user.id,
+            email: user.email,
+            subscription_tier: 'free',
+            subscribed: true,
+            plan_status: 'trial',
+            trial_start: new Date().toISOString(),
+            trial_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+            subscription_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error('❌ [Subscription] Erro ao criar trial:', insertError);
+          throw insertError;
+        }
         
         finalSubscription = {
-          id: 'free-user',
-          plan_type: PlanType.FREE,
-          status: 'active',
-          expires_at: null,
-          created_at: new Date().toISOString(),
-          user_id: user.id,
-          email: user.email || ''
+          id: newSubscriber.id,
+          plan_type: PlanType.BASICO,
+          status: 'trial',
+          expires_at: newSubscriber.subscription_end,
+          created_at: newSubscriber.created_at,
+          user_id: newSubscriber.user_id,
+          email: newSubscriber.email,
+          stripe_customer_id: newSubscriber.stripe_customer_id,
+          trial_start: newSubscriber.trial_start,
+          trial_end: newSubscriber.trial_end,
+          trial_used: newSubscriber.trial_used
         };
+        
+        console.log('🎁 [Subscription] Trial de 14 dias criado com sucesso');
       }
 
       setSubscription(finalSubscription);
@@ -185,11 +234,11 @@ export function useSubscriptionPlan() {
           hasAdvancedReports: true,
           hasInventoryManagement: true,
           hasFinancialAnalysis: true,
-          maxRestaurants: 5,
+          maxRestaurants: -1,
           hasTeamManagement: true,
           hasPrioritySupport: true,
         };
-      case PlanType.ESSENCIAL:
+      case PlanType.BASICO:
         return {
           hasSimuladorCenarios: false,
           hasFullAIAssistant: false,
@@ -220,15 +269,15 @@ export function useSubscriptionPlan() {
       return false;
     }
 
-    // Se está em trial ativo, liberar mais funcionalidades
-    if (trialStatus?.isTrialActive) {
-      const trialFeatures = getPlanFeatures(PlanType.ESSENCIAL); // Trial tem acesso ao essencial
+    // Se está em trial ativo, liberar funcionalidades do plano básico
+    if (subscription.status === 'trial' || trialStatus?.isTrialActive) {
+      const trialFeatures = getPlanFeatures(PlanType.BASICO);
       const hasAccess = feature === 'maxRestaurants' ? trialFeatures.maxRestaurants > 0 : trialFeatures[feature] as boolean;
       console.log(`🎁 [Feature Check] TRIAL ATIVO - ${feature}:`, hasAccess ? '✅ LIBERADO' : '❌ BLOQUEADO');
       return hasAccess;
     }
 
-    if (subscription.status !== 'active' && subscription.status !== 'trial') {
+    if (!['active', 'trial'].includes(subscription.status)) {
       console.log('🔒 [Feature Check] Assinatura inativa, negando acesso a:', feature);
       return false;
     }
@@ -253,14 +302,13 @@ export function useSubscriptionPlan() {
   }, [hasFeature]);
 
   const getRequiredPlan = useCallback((feature: keyof PlanFeatures): PlanType => {
-    // Mapear quais funcionalidades requerem qual plano
     const featurePlanMap: { [K in keyof PlanFeatures]: PlanType } = {
       hasSimuladorCenarios: PlanType.PROFISSIONAL,
       hasFullAIAssistant: PlanType.PROFISSIONAL,
-      hasAdvancedReports: PlanType.ESSENCIAL,
-      hasInventoryManagement: PlanType.ESSENCIAL,
-      hasFinancialAnalysis: PlanType.ESSENCIAL,
-      maxRestaurants: PlanType.ESSENCIAL,
+      hasAdvancedReports: PlanType.BASICO,
+      hasInventoryManagement: PlanType.BASICO,
+      hasFinancialAnalysis: PlanType.BASICO,
+      maxRestaurants: PlanType.BASICO,
       hasTeamManagement: PlanType.PROFISSIONAL,
       hasPrioritySupport: PlanType.PROFISSIONAL,
     };
@@ -271,21 +319,21 @@ export function useSubscriptionPlan() {
   const canAccess = useCallback((requiredPlan: PlanType): boolean => {
     if (!subscription) return false;
     
-    // Trial ativo permite acesso ao plano essencial
-    if (trialStatus?.isTrialActive) {
+    // Trial ativo permite acesso ao plano básico
+    if (subscription.status === 'trial' || trialStatus?.isTrialActive) {
       const planHierarchy = {
         [PlanType.FREE]: 0,
-        [PlanType.ESSENCIAL]: 1,
+        [PlanType.BASICO]: 1,
         [PlanType.PROFISSIONAL]: 2
       };
-      return planHierarchy[PlanType.ESSENCIAL] >= planHierarchy[requiredPlan];
+      return planHierarchy[PlanType.BASICO] >= planHierarchy[requiredPlan];
     }
     
-    if (subscription.status !== 'active' && subscription.status !== 'trial') return false;
+    if (!['active', 'trial'].includes(subscription.status)) return false;
     
     const planHierarchy = {
       [PlanType.FREE]: 0,
-      [PlanType.ESSENCIAL]: 1,
+      [PlanType.BASICO]: 1,
       [PlanType.PROFISSIONAL]: 2
     };
     
@@ -295,9 +343,9 @@ export function useSubscriptionPlan() {
   const showUpgradeMessage = useCallback((featureName: string) => {
     const currentPlan = subscription?.plan_type || PlanType.FREE;
     
-    if (trialStatus?.isTrialActive) {
+    if (subscription?.status === 'trial' || trialStatus?.isTrialActive) {
       toast.info(
-        `${featureName} estará disponível durante seu trial! Trial expira em ${trialStatus.daysRemaining} dias.`,
+        `${featureName} está disponível durante seu trial! Trial expira em ${trialStatus?.daysRemaining || 14} dias.`,
         {
           duration: 5000,
           action: {
@@ -312,8 +360,8 @@ export function useSubscriptionPlan() {
     let targetPlan = '';
     
     if (currentPlan === PlanType.FREE) {
-      targetPlan = 'Essencial ou Profissional';
-    } else if (currentPlan === PlanType.ESSENCIAL) {
+      targetPlan = 'Básico ou Profissional';
+    } else if (currentPlan === PlanType.BASICO) {
       targetPlan = 'Profissional';
     }
 
@@ -331,12 +379,10 @@ export function useSubscriptionPlan() {
 
   const refreshSubscription = useCallback(() => {
     console.log('🔄 [Subscription] Forçando atualização TOTAL dos dados...');
-    // Limpar subscription atual
     setSubscription(null);
     setIsLoading(true);
     setError(null);
     
-    // Forçar nova busca
     return fetchUserSubscription();
   }, [fetchUserSubscription]);
 

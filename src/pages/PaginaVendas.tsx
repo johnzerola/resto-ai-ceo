@@ -151,7 +151,7 @@ const PaginaVendas = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-6">
-              Por que mais de 5.000 restaurantes escolheram o RestoAI CEO?
+              Por que mais de 5.000 restaurantes escolheram o LucrAÍ?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Resultados comprovados que você pode alcançar nos primeiros 30 dias
@@ -632,7 +632,7 @@ const PaginaVendas = () => {
                 Preciso ter conhecimentos técnicos para usar o sistema?
               </AccordionTrigger>
               <AccordionContent>
-                Não! O RestoAI CEO foi desenvolvido para ser extremamente intuitivo. Oferecemos:
+                Não! O LucrAÍ foi desenvolvido para ser extremamente intuitivo. Oferecemos:
                 <ul className="list-disc pl-6 mt-4 space-y-2">
                   <li>Interface simples e amigável</li>
                   <li>Onboarding guiado passo a passo</li>
@@ -675,7 +675,7 @@ const PaginaVendas = () => {
                 Vocês têm suporte para diferentes tipos de estabelecimento?
               </AccordionTrigger>
               <AccordionContent>
-                Sim! O RestoAI CEO atende todos os tipos de estabelecimentos:
+                Sim! O LucrAÍ atende todos os tipos de estabelecimentos:
                 <ul className="list-disc pl-6 mt-4 space-y-2">
                   <li>Restaurantes tradicionais</li>
                   <li>Fast food e delivery</li>
@@ -698,7 +698,7 @@ const PaginaVendas = () => {
           </h2>
           <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
             Junte-se a mais de 5.000 restaurantes que já aumentaram sua lucratividade 
-            com o RestoAI CEO. Comece seu teste gratuito hoje mesmo!
+            com o LucrAÍ. Comece seu teste gratuito hoje mesmo!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Button 
@@ -729,7 +729,7 @@ const PaginaVendas = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-white font-bold text-xl mb-4">RestoAI CEO</h3>
+              <h3 className="text-white font-bold text-xl mb-4">LucrAÍ</h3>
               <p className="text-sm mb-4">
                 A plataforma completa que transforma restaurantes com inteligência artificial.
               </p>
@@ -760,14 +760,14 @@ const PaginaVendas = () => {
               <h3 className="text-white font-bold mb-4">Suporte</h3>
               <ul className="space-y-2 text-sm">
                 <li>📞 (11) 99999-9999</li>
-                <li>📧 contato@restoaiceo.com</li>
+                <li>📧 contato@lucr.ai</li>
                 <li>💬 Chat 24/7</li>
                 <li><Link to="/privacidade" className="hover:text-white">Privacidade</Link></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-12 pt-8 text-sm text-center">
-            <p>© {new Date().getFullYear()} RestoAI CEO. Todos os direitos reservados.</p>
+            <p>© {new Date().getFullYear()} LucrAÍ. Todos os direitos reservados.</p>
             <p className="mt-2 text-gray-400">
               CNPJ: 00.000.000/0001-00 • Feito com ❤️ para restauranteurs brasileiros
             </p>

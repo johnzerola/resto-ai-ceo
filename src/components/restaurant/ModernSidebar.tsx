@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,11 +17,15 @@ import {
   BarChart3,
   Settings,
   Bot,
-  HelpCircle,
   Shield,
-  CreditCard
+  CreditCard,
+  ClipboardList,
+  Code2,
+  Palette,
+  Users2
 } from "lucide-react";
 import { ModernNavItem } from "./ModernNavItem";
+import { ConditionalNavItem } from "./ConditionalNavItem";
 
 const navigation = [
   {
@@ -33,32 +36,46 @@ const navigation = [
     category: "overview"
   },
   {
-    title: "Projeções",
-    href: "/projecoes",
-    icon: TrendingUp,
-    description: "Planejamento e cenários futuros",
-    category: "analytics"
-  },
-  {
     title: "Fluxo de Caixa",
-    href: "/fluxo-de-caixa",
+    href: "/fluxo-caixa",
     icon: DollarSign,
-    description: "Controle financeiro",
+    description: "Controle financeiro completo",
     category: "financial"
   },
   {
     title: "DRE",
     href: "/dre",
     icon: BarChart3,
-    description: "Demonstração de resultados",
+    description: "Demonstração de Resultados",
     category: "financial"
   },
   {
     title: "CMV",
     href: "/cmv",
     icon: Calculator,
-    description: "Custo da mercadoria vendida",
+    description: "Custo da Mercadoria Vendida",
     category: "financial"
+  },
+  {
+    title: "Assinaturas",
+    href: "/assinatura",
+    icon: CreditCard,
+    description: "Planos e pagamentos",
+    category: "account"
+  },
+  {
+    title: "Estoque",
+    href: "/estoque",
+    icon: Package,
+    description: "Gestão de inventário",
+    category: "operations"
+  },
+  {
+    title: "Projeção",
+    href: "/projecoes",
+    icon: TrendingUp,
+    description: "Planejamento e cenários futuros",
+    category: "analytics"
   },
   {
     title: "Simulador",
@@ -75,17 +92,10 @@ const navigation = [
     category: "management"
   },
   {
-    title: "Estoque",
-    href: "/estoque",
-    icon: Package,
-    description: "Gestão de inventário",
-    category: "operations"
-  },
-  {
     title: "Cardápio",
     href: "/cardapio",
     icon: Utensils,
-    description: "Gestão do cardápio",
+    description: "Gestão do cardápio e preços",
     category: "operations"
   },
   {
@@ -96,38 +106,61 @@ const navigation = [
     category: "ai"
   },
   {
-    title: "Assinatura",
-    href: "/assinatura",
-    icon: CreditCard,
-    description: "Planos e pagamentos",
-    category: "account"
-  },
-  {
-    title: "Configurações",
+    title: "Gestão de Tarefas",
     href: "/configuracoes",
-    icon: Settings,
+    icon: ClipboardList,
     description: "Configurações do sistema",
     category: "account"
   },
   {
-    title: "Dados",
+    title: "Dados do Negócio",
+    href: "/dados-negocio",
+    icon: Settings,
+    description: "Configurações empresariais",
+    category: "account"
+  },
+  {
+    title: "Privacidade",
     href: "/privacidade",
     icon: Shield,
     description: "Privacidade e segurança",
     category: "support"
+  },
+  {
+    title: "Developer",
+    href: "/developer",
+    icon: Code2,
+    description: "Dashboard do desenvolvedor",
+    category: "developer"
+  },
+  {
+    title: "Branding",
+    href: "/branding",
+    icon: Palette,
+    description: "Guia de marca",
+    category: "developer"
+  },
+  {
+    title: "Programa Afiliados",
+    href: "/affiliate",
+    icon: Users2,
+    description: "Sistema de afiliados",
+    category: "business"
   }
 ];
 
 const categories = {
-  overview: { label: "Visão Geral", color: "text-blue-600" },
-  analytics: { label: "Análises", color: "text-purple-600" },
-  financial: { label: "Financeiro", color: "text-green-600" },
-  tools: { label: "Ferramentas", color: "text-orange-600" },
-  operations: { label: "Operações", color: "text-blue-500" },
-  management: { label: "Gestão", color: "text-indigo-600" },
-  ai: { label: "Inteligência", color: "text-pink-600" },
-  account: { label: "Conta", color: "text-gray-600" },
-  support: { label: "Suporte", color: "text-gray-500" }
+  overview: { label: "Visão Geral", color: "text-lucrai-blue-primary" },
+  analytics: { label: "Análises", color: "text-lucrai-green-primary" },
+  financial: { label: "Financeiro", color: "text-lucrai-green-primary" },
+  tools: { label: "Ferramentas", color: "text-lucrai-yellow-primary" },
+  operations: { label: "Operações", color: "text-lucrai-blue-secondary" },
+  management: { label: "Gestão", color: "text-lucrai-blue-primary" },
+  ai: { label: "Inteligência", color: "text-lucrai-green-primary" },
+  account: { label: "Conta", color: "text-lucrai-gray-600" },
+  support: { label: "Suporte", color: "text-lucrai-gray-500" },
+  developer: { label: "Desenvolvedor", color: "text-lucrai-orange-alert" },
+  business: { label: "Negócios", color: "text-lucrai-green-secondary" }
 };
 
 export function ModernSidebar() {
@@ -139,15 +172,14 @@ export function ModernSidebar() {
       if (window.innerWidth >= 768) {
         setIsMobileOpen(false);
       }
-      // Auto-collapse on smaller screens
       if (window.innerWidth < 1024) {
         setIsCollapsed(true);
-      } else {
+      } else if (window.innerWidth >= 1024) {
         setIsCollapsed(false);
       }
     };
     
-    handleResize(); // Set initial state
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -187,59 +219,73 @@ export function ModernSidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button - Otimizado para Touch */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-3 left-3 z-50 md:hidden bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white/100 transition-all duration-200 border border-gray-200/50 dark:bg-gray-900/95 dark:border-gray-700/50 dark:hover:bg-gray-900/100"
+        className="fixed top-4 left-4 z-50 md:hidden bg-white/95 backdrop-blur-sm shadow-xl hover:bg-white/100 transition-all duration-200 border border-border/50 h-12 w-12 rounded-xl touch-manipulation"
         onClick={toggleMobile}
+        aria-label={isMobileOpen ? "Fechar menu" : "Abrir menu"}
       >
-        {isMobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {/* Mobile Overlay */}
+      {/* Mobile Overlay - Aprimorado */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden touch-manipulation"
           onClick={() => setIsMobileOpen(false)}
+          onTouchStart={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar - Solid background with improved dark mode visibility */}
+      {/* Sidebar */}
       <div
         className={cn(
-          "fixed left-0 top-0 z-40 h-full border-r border-sidebar-border transition-all duration-300 ease-out shadow-lg flex flex-col",
-          // Solid background with improved dark mode text visibility
-          "bg-white dark:bg-gray-900",
-          // Mobile: always show full width when open, hide when closed
-          "md:translate-x-0", // Always visible on desktop
-          isMobileOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full", // Mobile behavior
-          !isMobileOpen && isCollapsed && "md:w-16", // Collapsed state only on desktop
-          !isMobileOpen && !isCollapsed && "md:w-72" // Expanded state only on desktop
+          "fixed left-0 top-0 z-40 h-full border-r border-border transition-all duration-300 ease-out shadow-xl flex flex-col",
+          "bg-white dark:bg-gray-900", // Fundo sólido
+          // Mobile behavior - Sidebar overlay
+          isMobileOpen ? "w-80 translate-x-0" : "w-80 -translate-x-full",
+          // Desktop behavior - Sidebar fixa
+          "md:translate-x-0 md:relative md:shadow-none",
+          isCollapsed && "md:w-16",
+          !isCollapsed && "md:w-72"
         )}
       >
-        {/* Header */}
-        <div className="flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 border-b border-sidebar-border bg-gradient-to-r from-[#1B2C4F] to-[#2D4A7A] flex-shrink-0">
+        {/* Header com Branding - Mobile Otimizado */}
+        <div className="flex h-14 md:h-16 items-center justify-between px-4 border-b border-sidebar-border flex-shrink-0 bg-lucrai-gradient-primary">
           {(!isCollapsed || isMobileOpen) && (
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-[#00D887] to-[#1B2C4F] rounded-lg flex items-center justify-center flex-shrink-0">
-                <Utensils className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 bg-white/10 rounded-lg backdrop-blur-sm">
+                <div className="w-6 h-6 bg-white rounded-sm flex items-center justify-center">
+                  <span className="text-sm font-bold text-lucrai-blue-primary">L</span>
+                </div>
               </div>
-              <h2 className="text-sm sm:text-lg font-bold text-white truncate">
-                RestaurIA
+              <h2 className="text-lg font-bold text-white truncate font-dm-sans tracking-wider">
+                Lucraí
               </h2>
+            </div>
+          )}
+          {isCollapsed && !isMobileOpen && (
+            <div className="flex items-center justify-center w-full">
+              <div className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg backdrop-blur-sm">
+                <div className="w-6 h-6 bg-white rounded-sm flex items-center justify-center">
+                  <span className="text-sm font-bold text-lucrai-blue-primary">L</span>
+                </div>
+              </div>
             </div>
           )}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="hidden md:flex text-white hover:bg-white/10 transition-colors h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
+            className="hidden md:flex text-white hover:bg-white/10 transition-all duration-200 h-10 w-10 flex-shrink-0 rounded-lg"
+            aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
           >
             {isCollapsed ? (
-              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+              <ChevronRight className="h-5 w-5" />
             ) : (
-              <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+              <ChevronLeft className="h-5 w-5" />
             )}
           </Button>
         </div>
@@ -247,35 +293,68 @@ export function ModernSidebar() {
         {/* Scrollable Navigation Content */}
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full custom-scrollbar">
-            <nav className="px-2 sm:px-3 py-3 sm:py-4 space-y-4 sm:space-y-6">
+            <nav className="px-3 py-4 space-y-6">
               {Object.entries(groupedNavigation).map(([categoryKey, items]) => {
                 const categoryInfo = categories[categoryKey as keyof typeof categories];
                 return (
-                  <div key={categoryKey} className="space-y-1 sm:space-y-2">
+                  <div key={categoryKey} className="space-y-2">
                     {(!isCollapsed || isMobileOpen) && (
-                      <div className="px-2 sm:px-3 py-1 sm:py-2">
+                      <div className="px-3 py-2">
                         <h3 className={cn(
                           "text-xs font-semibold uppercase tracking-wider sidebar-category-label",
                           categoryInfo.color,
-                          // Melhor visibilidade no dark mode
                           "dark:text-gray-300"
                         )}>
                           {categoryInfo.label}
                         </h3>
                       </div>
                     )}
-                    <div className="space-y-0.5 sm:space-y-1">
-                      {items.map((item) => (
-                        <ModernNavItem
-                          key={item.href}
-                          href={item.href}
-                          icon={item.icon}
-                          title={item.title}
-                          description={item.description}
-                          isCollapsed={isCollapsed && !isMobileOpen}
-                          category={categoryKey}
-                        />
-                      ))}
+                    <div className="space-y-1">
+                      {items.map((item) => {
+                        // Use ConditionalNavItem for developer features
+                        if (item.category === 'developer') {
+                          return (
+                            <ConditionalNavItem
+                              key={item.href}
+                              href={item.href}
+                              icon={item.icon}
+                              title={item.title}
+                              description={item.description}
+                              isCollapsed={isCollapsed && !isMobileOpen}
+                              category={categoryKey}
+                              requiredRole="developer"
+                            />
+                          );
+                        }
+                        
+                        // Use ConditionalNavItem for affiliate features
+                        if (item.href === '/affiliate') {
+                          return (
+                            <ConditionalNavItem
+                              key={item.href}
+                              href={item.href}
+                              icon={item.icon}
+                              title={item.title}
+                              description={item.description}
+                              isCollapsed={isCollapsed && !isMobileOpen}
+                              category={categoryKey}
+                              requiredRole="affiliate"
+                            />
+                          );
+                        }
+                        
+                        return (
+                          <ModernNavItem
+                            key={item.href}
+                            href={item.href}
+                            icon={item.icon}
+                            title={item.title}
+                            description={item.description}
+                            isCollapsed={isCollapsed && !isMobileOpen}
+                            category={categoryKey}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -284,12 +363,16 @@ export function ModernSidebar() {
           </ScrollArea>
         </div>
 
-        {/* Footer */}
+        {/* Footer com Branding */}
         {(!isCollapsed || isMobileOpen) && (
-          <div className="p-3 sm:p-4 border-t border-sidebar-border bg-gradient-to-r from-muted/50 to-card flex-shrink-0">
-            <div className="text-xs text-muted-foreground text-center dark:text-gray-300">
-              <p className="font-medium">RestaurIA v2.0</p>
-              <p className="hidden sm:block">Inteligência para seu restaurante</p>
+          <div className="p-4 border-t border-sidebar-border bg-lucrai-gradient-subtle flex-shrink-0">
+            <div className="text-xs text-lucrai-gray-600 text-center space-y-1">
+              <p className="font-semibold text-lucrai-blue-primary">Lucraí v2.0</p>
+              <p className="font-medium">Inteligência para seu restaurante</p>
+              <div className="flex items-center justify-center gap-1 mt-2">
+                <div className="w-2 h-2 bg-lucrai-green-primary rounded-full animate-pulse"></div>
+                <span className="text-lucrai-green-primary font-medium">Sistema Online</span>
+              </div>
             </div>
           </div>
         )}

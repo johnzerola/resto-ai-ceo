@@ -39,7 +39,7 @@ export function SubscriptionStatus() {
   const getPlanBadgeVariant = () => {
     switch (planType) {
       case 'profissional': return 'default';
-      case 'essencial': return 'secondary';
+      case 'basico': return 'secondary';
       default: return 'outline';
     }
   };
@@ -47,7 +47,7 @@ export function SubscriptionStatus() {
   const getPlanDisplayName = () => {
     switch (planType) {
       case 'profissional': return 'Profissional';
-      case 'essencial': return 'Essencial';
+      case 'basico': return 'Básico';
       default: return 'Gratuito';
     }
   };

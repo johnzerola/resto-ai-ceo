@@ -1,0 +1,2 @@
+-- Esta migração foi removida para evitar criação de dados para todos os restaurantes
+-- As categorias financeiras serão criadas apenas quando necessário pelo sistema

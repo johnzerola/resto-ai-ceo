@@ -2,7 +2,6 @@
 import { type Config } from "tailwindcss";
 
 export default {
-  darkMode: ["class"],
   content: [
     "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
@@ -50,31 +49,75 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // RestaurIA Brand Colors
-        'restauria': {
-          'blue-tech': '#1B2C4F',
-          'blue-tech-light': '#2D4A7A',
-          'green-profit': '#00D887',
-          'green-profit-dark': '#00B572',
-          'white-clean': '#FFFFFF',
-          'gray-neutral': '#F4F5F7',
-          'gray-text': '#6B7280',
+        // 🎨 Lucraí Brand Colors - Tokens Semânticos Completos
+        'lucrai': {
+          // Cores Base
+          'blue': {
+            50: 'hsl(var(--lucrai-gray-50))',
+            100: 'hsl(var(--lucrai-gray-100))',
+            200: 'hsl(var(--lucrai-gray-200))',
+            300: 'hsl(var(--lucrai-gray-300))',
+            400: 'hsl(var(--lucrai-gray-400))',
+            500: 'hsl(var(--lucrai-gray-500))',
+            600: 'hsl(var(--lucrai-gray-600))',
+            700: 'hsl(var(--lucrai-gray-700))',
+            800: 'hsl(var(--lucrai-gray-800))',
+            900: 'hsl(var(--lucrai-gray-900))',
+            'primary': 'hsl(var(--lucrai-blue-primary))',
+            'secondary': 'hsl(var(--lucrai-blue-secondary))',
+            'tech': 'hsl(var(--lucrai-blue-primary))', // Alias for brand consistency
+          },
+          'green': {
+            'primary': 'hsl(var(--lucrai-green-primary))',
+            'secondary': 'hsl(var(--lucrai-green-secondary))',
+            'profit': 'hsl(var(--lucrai-green-primary))', // Alias for brand consistency
+            'profit-dark': 'hsl(var(--lucrai-green-secondary))', // Darker variant
+          },
+          'yellow': {
+            'primary': 'hsl(var(--lucrai-yellow-primary))',
+            'secondary': 'hsl(var(--lucrai-yellow-secondary))',
+          },
+          'orange': {
+            'alert': 'hsl(var(--lucrai-orange-alert))',
+          },
+          'gold': {
+            'accent': 'hsl(var(--lucrai-yellow-primary))', // Alias for gold accent
+          },
+          'gray': {
+            50: 'hsl(var(--lucrai-gray-50))',
+            100: 'hsl(var(--lucrai-gray-100))',
+            200: 'hsl(var(--lucrai-gray-200))',
+            300: 'hsl(var(--lucrai-gray-300))',
+            400: 'hsl(var(--lucrai-gray-400))',
+            500: 'hsl(var(--lucrai-gray-500))',
+            600: 'hsl(var(--lucrai-gray-600))',
+            700: 'hsl(var(--lucrai-gray-700))',
+            800: 'hsl(var(--lucrai-gray-800))',
+            900: 'hsl(var(--lucrai-gray-900))',
+            'neutral': 'hsl(var(--lucrai-gray-100))', // Alias for neutral background
+            'text': 'hsl(var(--lucrai-gray-600))', // Alias for text color
+          },
         },
+        // Estados Semânticos
+        success: "hsl(var(--success))",
+        warning: "hsl(var(--warning))",
+        info: "hsl(var(--info))",
+        // Compatibilidade com sistema antigo
         resto: {
           blue: {
-            100: "#e6f0ff",
-            400: "#4c84ff",
-            500: "#1a56db",
-            600: "#1245b5",
-            700: "#1B2C4F", // RestaurIA Blue-Tech
+            100: "hsl(var(--lucrai-gray-100))",
+            400: "hsl(var(--lucrai-blue-secondary))",
+            500: "hsl(var(--lucrai-blue-primary))",
+            600: "hsl(var(--lucrai-blue-primary))",
+            700: "hsl(var(--lucrai-blue-primary))",
           },
           green: {
-            500: "#00D887", // RestaurIA Green-Profit
-            600: "#00B572", // RestaurIA Green-Profit Dark
+            500: "hsl(var(--lucrai-green-primary))",
+            600: "hsl(var(--lucrai-green-secondary))",
           },
           gray: {
-            500: "#6b7280",
-            neutral: "#F4F5F7", // RestaurIA Gray-Neutral
+            500: "hsl(var(--lucrai-gray-500))",
+            neutral: "hsl(var(--lucrai-gray-100))",
           }
         }
       },
@@ -83,9 +126,18 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        'lucrai': '0 4px 20px hsl(210 70% 26% / 0.15)',
+        'lucrai-lg': '0 10px 40px hsl(210 70% 26% / 0.2)',
+        'lucrai-success': '0 4px 20px hsl(174 100% 42% / 0.15)',
+        'lucrai-warning': '0 4px 20px hsl(51 100% 50% / 0.15)',
+      },
       fontFamily: {
-        'satoshi': ['Satoshi', 'Poppins', 'system-ui', 'sans-serif'],
-        'inter': ['Inter', 'SF Pro Text', 'system-ui', 'sans-serif'],
+        'dm-sans': ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
+        'inter': ['Inter', 'DM Sans', 'system-ui', 'sans-serif'],
+        'satoshi': ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
+        // Alias para compatibilidade
+        'sans': ['DM Sans', 'Inter', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         "accordion-down": {
@@ -129,12 +181,22 @@ export default {
             opacity: "1",
             transform: "scale(1)"
           }
+        },
+        "shine": {
+          "0%": {
+            transform: "translateX(-100%)"
+          },
+          "100%": {
+            transform: "translateX(100%)"
+          }
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "pulse-slow": "pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "shine": "shine 3s ease-in-out infinite",
+        "pulse-slow": "pulse-slow 6s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "slow-pulse": "pulse-slow 6s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         "fade-in": "fade-in 0.3s ease-out",
         "slide-up": "slide-up 0.4s ease-out",
         "scale-in": "scale-in 0.2s ease-out",

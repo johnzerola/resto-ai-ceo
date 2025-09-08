@@ -24,7 +24,7 @@ export function IntegracaoModulos() {
       
       <TypographyH3>Fluxo de Dados entre Módulos</TypographyH3>
       <TypographyP>
-        O Resto AI CEO foi projetado para que todos os módulos compartilhem dados entre si, 
+        O Lucraí foi projetado para que todos os módulos compartilhem dados entre si, 
         criando uma experiência integrada que evita a duplicação de informações e mantém a consistência.
       </TypographyP>
       
@@ -112,7 +112,7 @@ export function IntegracaoModulos() {
       </Table>
       
       <TypographyP>
-        Este mapeamento pode ser customizado em Configurações {'>'}  Integrações {'>'}  Categorias Financeiras.
+        Este mapeamento pode ser customizado em Gestão de Tarefas {'>'}  Integrações {'>'}  Categorias Financeiras.
       </TypographyP>
       
       <Separator />

@@ -123,7 +123,7 @@ export function StreamlinedDashboard() {
             <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
               <div className="space-y-1">
                 <h1 className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                  RestaurIA CEO
+                  Lucraí CEO
                 </h1>
                 <p className="text-slate-600 text-xs lg:text-sm">
                   Sistema inteligente de gestão empresarial
@@ -283,7 +283,7 @@ export function StreamlinedDashboard() {
                         </Link>
                         <Link to="/configuracoes">
                           <MobileButton variant="outline" className="w-full sm:w-auto">
-                            Configurações
+                            Gestão de Tarefas
                           </MobileButton>
                         </Link>
                       </div>

@@ -1,9 +1,13 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/services/AuthService';
 import { toast } from 'sonner';
+import { mapSupabaseAuthError, AuthResult } from '@/utils/supabaseErrorMapper';
+// Cache otimizado para restaurantes (1 hora)
+const RESTAURANT_CACHE_TIME = 60 * 60 * 1000;
+const restaurantCache = new Map<string, { data: Restaurant[]; timestamp: number }>();
 
 interface SubscriptionInfo {
   subscribed: boolean;
@@ -32,11 +36,11 @@ interface AuthContextType {
   subscriptionInfo: SubscriptionInfo;
   userRestaurants: Restaurant[];
   currentRestaurant: Restaurant | null;
-  signIn: (email: string, password: string) => Promise<boolean>;
-  signUp: (email: string, password: string, name: string) => Promise<boolean>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (email: string, password: string, name: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, name: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<AuthResult>;
+  register: (email: string, password: string, name: string) => Promise<AuthResult>;
   logout: () => Promise<void>;
   hasPermission: (requiredRole: UserRole) => boolean;
   setCurrentRestaurant: (restaurant: Restaurant) => void;
@@ -56,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRestaurants, setUserRestaurants] = useState<Restaurant[]>([]);
   const [currentRestaurant, setCurrentRestaurant] = useState<Restaurant | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [lastAuthCheck, setLastAuthCheck] = useState<number>(0);
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo>({
     subscribed: false,
     subscription_tier: null,
@@ -65,6 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     nextBilling: null,
     amount: null,
   });
+
+  // Remover dependência do useOptimizedQueries para acelerar
 
   // Função para limpar dados do usuário
   const clearUserData = () => {
@@ -84,34 +91,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       amount: null,
     });
     
-    // Limpar TODOS os dados específicos do usuário do localStorage
-    const allKeys = Object.keys(localStorage);
-    const userSpecificKeys = allKeys.filter(key => 
-      key.includes('financialData_') ||
-      key.includes('cashFlowEntries_') ||
-      key.includes('restaurantData_') ||
-      key === 'financialData' ||
-      key === 'cashFlow' ||
-      key === 'cashFlowEntries' ||
-      key === 'goals' ||
-      key === 'restaurantData' ||
-      key === 'currentUser' ||
-      key === 'inventory' ||
-      key === 'recipes'
-    );
+    // Limpar cache simples
+    restaurantCache.clear();
     
-    userSpecificKeys.forEach(key => {
+    // Limpar apenas dados temporários do localStorage
+    // NÃO limpar dados que devem persistir entre sessões
+    const tempKeys = [
+      'currentUser',
+      'financialData',
+      'cashFlow',
+      'cashFlowEntries',
+      'goals',
+      'inventory',
+      'recipes'
+    ];
+    
+    tempKeys.forEach(key => {
       try {
         localStorage.removeItem(key);
-        console.log(`Removido: ${key}`);
       } catch (error) {
         console.error(`Erro ao remover ${key} do localStorage:`, error);
       }
     });
+    
+    // Dados do restaurante são mantidos entre sessões
   };
 
-  const checkSubscription = async () => {
+  const checkSubscription = useCallback(async () => {
     try {
+      // Debounce subscription check (máximo 1 vez por minuto)
+      const now = Date.now();
+      if (now - lastAuthCheck < 60000) {
+        return;
+      }
+      setLastAuthCheck(now);
+
       if (!session?.access_token) {
         console.log('No session available for subscription check');
         return;
@@ -142,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error checking subscription:', error);
     }
-  };
+  }, [session?.access_token, lastAuthCheck]);
 
   const createCheckoutSession = async (priceId: string) => {
     try {
@@ -223,9 +237,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signIn = async (email: string, password: string): Promise<boolean> => {
+  const signIn = async (email: string, password: string): Promise<AuthResult> => {
     try {
-      console.log('Tentando fazer login com:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -233,32 +246,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Erro no login:', error);
-        toast.error('Erro no login. Verifique suas credenciais.');
-        return false;
+        const errorMessage = mapSupabaseAuthError(error);
+        return { ok: false, error: errorMessage };
       }
 
       if (data.user && data.session) {
-        console.log('Login bem-sucedido!', data.user.email);
-        toast.success('Login realizado com sucesso!');
-        return true;
+        return { ok: true };
       }
 
-      return false;
+      return { ok: false, error: 'Falha na autenticação' };
     } catch (error) {
       console.error('Erro no login:', error);
-      toast.error('Erro no login. Verifique suas credenciais.');
-      return false;
+      return { ok: false, error: 'Erro de conexão. Tente novamente.' };
     }
   };
 
-  const signUp = async (email: string, password: string, name: string): Promise<boolean> => {
+  const signUp = async (email: string, password: string, name: string): Promise<AuthResult> => {
     try {
-      console.log('Tentando criar conta para:', email);
-      
-      // Garantir HTTPS para redirecionamento em produção
-      const redirectUrl = window.location.protocol === 'https:' 
-        ? `${window.location.origin}/login?confirmed=true`
-        : `https://${window.location.host}/login?confirmed=true`;
+      // URL de confirmação segura
+      const redirectUrl = `${window.location.origin}/login?confirmed=true`;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -273,35 +279,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Erro no cadastro:', error);
-        if (error.message.includes('already registered')) {
-          toast.error('Este email já está cadastrado. Tente fazer login.');
-        } else {
-          toast.error(`Erro no cadastro: ${error.message}`);
-        }
-        return false;
+        const errorMessage = mapSupabaseAuthError(error);
+        return { ok: false, error: errorMessage };
       }
 
       if (data.user) {
-        console.log('Conta criada com sucesso para:', data.user.email);
-        
-        // Verificar se precisa confirmar email
+        // Conta criada com sucesso
         if (!data.session) {
-          toast.success('Conta criada com sucesso! Verifique seu email para confirmar.', {
-            description: 'Um email de confirmação foi enviado automaticamente.',
-            duration: 8000
-          });
+          // Precisa confirmar email
+          return { ok: true };
         } else {
-          toast.success('Conta criada e confirmada com sucesso!');
+          // Conta confirmada automaticamente
+          return { ok: true };
         }
-        
-        return true;
       }
 
-      return false;
+      return { ok: false, error: 'Falha ao criar conta' };
     } catch (error) {
       console.error('Erro no cadastro:', error);
-      toast.error('Erro no cadastro. Tente novamente.');
-      return false;
+      return { ok: false, error: 'Erro de conexão. Tente novamente.' };
     }
   };
 
@@ -357,6 +353,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           {
             name,
             owner_id: user.id,
+            tenant_id: crypto.randomUUID(),
             business_type: 'Restaurante',
             target_food_cost: 30,
             target_beverage_cost: 25,
@@ -399,59 +396,93 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const checkUserRestaurants = async (userId: string) => {
+  const checkUserRestaurants = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      console.log('🔍 Verificando restaurantes para usuário:', userId);
+      
+      // Verificar cache primeiro (1 hora)
+      const cacheKey = `restaurants_${userId}`;
+      const cached = restaurantCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < 3600000) { // 1 hora
+        console.log('📦 Cache hit - carregando instantâneo');
+        const restaurants = cached.data;
+        setUserRestaurants(restaurants);
+        if (restaurants.length > 0) {
+          setCurrentRestaurant(restaurants[0]);
+          setNeedsOnboarding(false);
+        } else {
+          setNeedsOnboarding(true);
+        }
+        setUserRole(UserRole.OWNER);
+        return;
+      }
+      
+      // Query otimizada - somente campos essenciais com LIMIT
+      const { data: restaurants, error } = await supabase
         .from('restaurants')
-        .select('*')
-        .eq('owner_id', userId);
+        .select('id, name, owner_id, created_at')
+        .eq('owner_id', userId)
+        .limit(10);
 
       if (error) {
         console.error('Erro ao buscar restaurantes:', error);
-        // Fallback - assumir que precisa de onboarding
         setNeedsOnboarding(true);
+        setUserRole(UserRole.OWNER);
         return;
       }
-
-      if (data && data.length > 0) {
-        const restaurants = data.map(r => ({
-          id: r.id,
-          name: r.name,
-          user_id: r.owner_id,
-          created_at: r.created_at,
-        }));
-        
-        setUserRestaurants(restaurants);
-        setCurrentRestaurant(restaurants[0]);
+      
+      const formattedRestaurants = (restaurants || []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        user_id: r.owner_id,
+        created_at: r.created_at,
+      }));
+      
+      // Cache com TTL de 1 hora
+      restaurantCache.set(cacheKey, {
+        data: formattedRestaurants,
+        timestamp: Date.now()
+      });
+      
+      console.log('🏪 Restaurantes carregados:', formattedRestaurants.length);
+      
+      setUserRestaurants(formattedRestaurants);
+      if (formattedRestaurants.length > 0) {
+        setCurrentRestaurant(formattedRestaurants[0]);
         setNeedsOnboarding(false);
       } else {
-        // Usuário não tem restaurante - precisa de onboarding
         setNeedsOnboarding(true);
       }
+      setUserRole(UserRole.OWNER);
+      
     } catch (error) {
-      console.error('Erro ao verificar restaurantes:', error);
+      console.error('Erro crítico ao verificar restaurantes:', error);
       setNeedsOnboarding(true);
+      setUserRole(UserRole.OWNER);
     }
-  };
+  }, []);
+
+  // Remover debounce para acelerar carregamento
 
   useEffect(() => {
     let mounted = true;
 
     const initializeAuth = async () => {
       try {
-        console.log('Inicializando autenticação...');
+        console.log('⚡ Auth otimizada iniciando...');
+        
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession?.user && mounted) {
-          console.log('Sessão encontrada:', currentSession.user.email);
+          console.log('⚡ Sessão encontrada:', currentSession.user.email);
           setSession(currentSession);
           setUser(currentSession.user);
           setUserRole(UserRole.OWNER);
           
-          // Verificar se o usuário tem restaurantes
-          await checkUserRestaurants(currentSession.user.id);
+          // Carregamento imediato de restaurantes (sem await para não bloquear)
+          checkUserRestaurants(currentSession.user.id);
         } else {
-          console.log('Nenhuma sessão ativa encontrada');
+          console.log('ℹ️ Sem sessão - redirecionando');
           clearUserData();
         }
       } catch (error) {
@@ -464,43 +495,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    initializeAuth();
-
-    // Auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log('Auth state changed:', event, currentSession?.user?.email);
+    // Auth state listener simplificado - SEM debounce
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      console.log('⚡ Auth change:', event);
       
       if (!mounted) return;
 
       if (event === 'SIGNED_OUT' || !currentSession) {
-        console.log('Usuário deslogado');
         clearUserData();
         setIsLoading(false);
         return;
       }
 
       if (currentSession?.user) {
-        console.log('Usuário logado:', currentSession.user.email);
         setSession(currentSession);
         setUser(currentSession.user);
         setUserRole(UserRole.OWNER);
         
-        // Verificar se o usuário tem restaurantes
-        setTimeout(() => {
+        // Carregamento instantâneo de dados (sem await)
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
           checkUserRestaurants(currentSession.user.id);
-        }, 100);
-      } else {
-        clearUserData();
+        }
       }
       
       setIsLoading(false);
     });
 
+    // Inicializar auth DEPOIS do listener
+    initializeAuth();
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [checkUserRestaurants]);
 
   // Check subscription when session changes
   useEffect(() => {
@@ -513,7 +541,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = !!user && !!session;
 
-  const value: AuthContextType = {
+  // Memoizar o valor do contexto para evitar re-renders desnecessários
+  const value: AuthContextType = useMemo(() => ({
     user,
     session,
     userRole,
@@ -535,7 +564,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSubscription,
     createCheckoutSession,
     openCustomerPortal,
-  };
+  }), [
+    user,
+    session,
+    userRole,
+    isLoading,
+    isAuthenticated,
+    needsOnboarding,
+    subscriptionInfo,
+    userRestaurants,
+    currentRestaurant,
+    signIn,
+    signUp,
+    signOut,
+    login,
+    register,
+    logout,
+    hasPermission,
+    setCurrentRestaurant,
+    createRestaurant,
+    checkSubscription,
+    createCheckoutSession,
+    openCustomerPortal,
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

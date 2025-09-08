@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
-import { getCashFlowEntries, saveCashFlowEntries } from "@/services/FinancialStorageService";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface CashFlowEntry {
   id: string;
@@ -61,11 +63,13 @@ const categoryTranslations: { [key: string]: string } = {
 };
 
 export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
+  const { currentRestaurant } = useAuth();
   const [cashFlow, setCashFlow] = useState<CashFlowEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedView, setSelectedView] = useState("list");
+  const [isLoading, setIsLoading] = useState(false);
   
   const [summary, setSummary] = useState({
     totalIncome: 0,
@@ -76,50 +80,57 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
   });
 
   const loadCashFlowData = async () => {
+    if (!currentRestaurant?.id) {
+      console.log('Restaurante não selecionado');
+      return;
+    }
+
+    console.log('Carregando dados do fluxo de caixa para restaurante:', currentRestaurant.id);
+    setIsLoading(true);
+    
     try {
-      console.log('Carregando dados do fluxo de caixa...');
-      const entries = await getCashFlowEntries();
-      console.log('Dados carregados:', entries.length, 'entradas');
-      setCashFlow(entries);
-      calculateSummary(entries);
+      const { data, error } = await supabase
+        .from('cash_flow')
+        .select('*')
+        .eq('restaurant_id', currentRestaurant.id)
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao carregar dados:', error);
+        throw error;
+      }
+
+      console.log('Dados carregados do Supabase:', data);
+
+      // Mapear os dados do Supabase para o formato esperado
+      const mappedEntries: CashFlowEntry[] = (data || []).map(item => ({
+        id: item.id,
+        date: item.date,
+        description: item.description,
+        amount: item.amount,
+        type: item.type as "income" | "expense",
+        category: item.category,
+        paymentMethod: item.payment_method,
+        notes: item.documento,
+        status: item.status === 'paid' ? 'completed' : (item.status === 'pending' ? 'pending' : 'canceled') as "completed" | "pending" | "canceled"
+      }));
+
+      console.log('Entradas mapeadas:', mappedEntries);
+      setCashFlow(mappedEntries);
+      calculateSummary(mappedEntries);
     } catch (error) {
       console.error('Erro ao carregar dados do fluxo de caixa:', error);
+      toast.error('Erro ao carregar dados do fluxo de caixa');
       setCashFlow([]);
       calculateSummary([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     loadCashFlowData();
-  }, []);
-
-  useEffect(() => {
-    const handleCashFlowUpdate = (event: CustomEvent) => {
-      console.log('Evento de atualização do fluxo de caixa recebido:', event.detail);
-      if (Array.isArray(event.detail)) {
-        setCashFlow(event.detail);
-        calculateSummary(event.detail);
-      } else {
-        // Se não for array, recarregar os dados
-        loadCashFlowData();
-      }
-    };
-
-    const handleDataSync = () => {
-      console.log('Evento de sincronização de dados recebido');
-      loadCashFlowData();
-    };
-
-    window.addEventListener('cashFlowUpdated', handleCashFlowUpdate as EventListener);
-    window.addEventListener('dataSync', handleDataSync);
-    window.addEventListener('financialDataUpdated', handleDataSync);
-
-    return () => {
-      window.removeEventListener('cashFlowUpdated', handleCashFlowUpdate as EventListener);
-      window.removeEventListener('dataSync', handleDataSync);
-      window.removeEventListener('financialDataUpdated', handleDataSync);
-    };
-  }, []);
+  }, [currentRestaurant]);
 
   const calculateSummary = (entries: CashFlowEntry[]) => {
     const completedEntries = entries.filter(entry => entry.status === "completed");
@@ -186,20 +197,23 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
   };
 
   const deleteEntry = async (entryId: string) => {
-    if (confirm("Tem certeza que deseja excluir esta transação?")) {
-      try {
-        const updatedCashFlow = cashFlow.filter((entry) => entry.id !== entryId);
-        setCashFlow(updatedCashFlow);
-        await saveCashFlowEntries(updatedCashFlow);
-        calculateSummary(updatedCashFlow);
-        
-        window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedCashFlow }));
-        
-        toast.success("Transação excluída com sucesso!");
-      } catch (error) {
-        console.error('Erro ao excluir transação:', error);
-        toast.error("Erro ao excluir transação");
-      }
+    if (!confirm("Tem certeza que deseja excluir esta transação?")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('cash_flow')
+        .delete()
+        .eq('id', entryId);
+
+      if (error) throw error;
+
+      toast.success("Transação excluída com sucesso!");
+      loadCashFlowData(); // Recarregar dados
+    } catch (error) {
+      console.error('Erro ao excluir transação:', error);
+      toast.error("Erro ao excluir transação");
     }
   };
 
@@ -255,6 +269,17 @@ export function CashFlowOverview({ onEdit }: CashFlowOverviewProps) {
 
   const monthlyData = generateMonthlyData();
   const filteredCashFlow = getFilteredCashFlow();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

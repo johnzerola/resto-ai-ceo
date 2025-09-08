@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CascadePriceUpdater } from "@/components/restaurant/CascadePriceUpdater";
 
 const FichaTecnica = () => {
   const [isAddingRecipe, setIsAddingRecipe] = useState(false);
@@ -97,7 +98,10 @@ const FichaTecnica = () => {
           }}
         />
       ) : (
-        <RecipeList onEdit={editRecipe} />
+        <div className="space-y-6">
+          <RecipeList onEdit={editRecipe} />
+          <CascadePriceUpdater />
+        </div>
       )}
     </ModernLayout>
   );

@@ -154,8 +154,8 @@ export function EnhancedSystemStatusWidget() {
               className="flex items-center gap-2 h-10"
             >
               <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Configurações</span>
-              <span className="sm:hidden">Config</span>
+              <span className="hidden sm:inline">Gestão de Tarefas</span>
+              <span className="sm:hidden">Tarefas</span>
             </Button>
             
             <Button 

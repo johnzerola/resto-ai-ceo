@@ -23,28 +23,26 @@ import {
   Save,
   RotateCcw
 } from "lucide-react";
-import { useFichaTecnicaCore } from "@/hooks/useFichaTecnicaCore";
-import { useFichaTecnicaActions } from "@/hooks/useFichaTecnicaActions";
+import { toast } from 'sonner';
+import { useFichaTecnicaOptimized } from "@/hooks/useFichaTecnicaOptimized";
 
 export function FichaTecnicaInteligenteCompleta() {
-  const { 
-    ingredientes, 
-    setIngredientes, 
-    resultados, 
-    isCalculating, 
-    calcularResultados 
-  } = useFichaTecnicaCore();
-  
   const {
-    metasLucro,
-    setMetasLucro,
-    precoDesejado,
-    setPrecoDesejado,
+    ingredientes,
+    resultados,
+    isCalculating,
     insumosDisponiveis,
+    precoDesejado,
+    configuracaoAvancada,
+    setPrecoDesejado,
+    atualizarConfiguracao,
     adicionarIngrediente,
     atualizarIngrediente,
-    salvarFichaTecnica
-  } = useFichaTecnicaActions();
+    removerIngrediente,
+    calcularResultados,
+    salvarFichaTecnica,
+    limparFormulario
+  } = useFichaTecnicaOptimized();
 
   const [prato, setPrato] = useState({
     nome_prato: '',
@@ -57,36 +55,121 @@ export function FichaTecnicaInteligenteCompleta() {
 
   // Adicionar novo ingrediente
   const handleAdicionarIngrediente = () => {
-    const novoIngrediente = adicionarIngrediente();
-    setIngredientes(prev => [...prev, novoIngrediente]);
+    adicionarIngrediente();
   };
 
-  // Atualizar ingrediente com debounce
+  // Atualizar ingrediente com debounce e validação
   const handleAtualizarIngrediente = (id: string, campo: string, valor: any) => {
-    const novosIngredientes = atualizarIngrediente(ingredientes, id, campo as any, valor);
-    setIngredientes(novosIngredientes);
+    // Se está selecionando um insumo, buscar os dados completos
+    if (campo === 'insumo_id' && valor) {
+      const insumoSelecionado = insumosDisponiveis.find(ins => ins.id === valor);
+      if (insumoSelecionado) {
+        atualizarIngrediente(id, 'insumo_id', valor);
+        atualizarIngrediente(id, 'nome_insumo', insumoSelecionado.nome);
+        atualizarIngrediente(id, 'preco_unitario', insumoSelecionado.preco_unitario);
+        atualizarIngrediente(id, 'unidade_medida', insumoSelecionado.unidade_medida);
+        return;
+      }
+    }
+
+    // Para outros campos, usar a função padrão
+    atualizarIngrediente(id, campo as any, valor);
   };
 
   // Remover ingrediente
   const handleRemoverIngrediente = (id: string) => {
-    setIngredientes(prev => prev.filter(ing => ing.id !== id));
+    removerIngrediente(id);
   };
 
   // Calcular automaticamente quando dados mudarem
   useEffect(() => {
     if (ingredientes.length > 0 && ingredientes.some(ing => ing.custo_total > 0)) {
       const timer = setTimeout(() => {
-        calcularResultados(undefined, precoDesejado || undefined);
+        console.log('🧮 Trigger automático de cálculo com configuração avançada');
+        calcularResultados(precoDesejado || undefined, {
+          ...prato,
+          ...configuracaoAvancada
+        });
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [ingredientes, precoDesejado, calcularResultados]);
+  }, [ingredientes, precoDesejado, configuracaoAvancada, prato, calcularResultados]);
 
-  // Salvar ficha
+  // Salvar ficha com validações robustas
   const handleSalvar = async () => {
-    const sucesso = await salvarFichaTecnica(ingredientes, resultados, prato);
+    console.log('🚀 Iniciando salvamento da ficha técnica...');
+    
+    // Validações obrigatórias
+    if (!prato.nome_prato?.trim()) {
+      toast.error('Nome do prato é obrigatório');
+      return;
+    }
+
+    if (!prato.categoria?.trim()) {
+      toast.error('Categoria do prato é obrigatória');
+      return;
+    }
+
+    if (prato.rendimento_porcoes <= 0) {
+      toast.error('Rendimento deve ser maior que zero');
+      return;
+    }
+
+    if (ingredientes.length === 0) {
+      toast.error('Adicione pelo menos um ingrediente');
+      return;
+    }
+
+    // Validar cada ingrediente
+    const ingredientesInvalidos = ingredientes.filter(ing => 
+      !ing.insumo_id || 
+      !ing.nome_insumo || 
+      ing.quantidade_bruta <= 0 ||
+      ing.preco_unitario <= 0
+    );
+
+    if (ingredientesInvalidos.length > 0) {
+      toast.error(`${ingredientesInvalidos.length} ingrediente(s) com dados incompletos. Verifique os campos.`);
+      return;
+    }
+
+    // Calcular resultados se não tiver
+    if (!resultados) {
+      console.log('⏳ Calculando resultados antes de salvar...');
+      await calcularResultados(precoDesejado || undefined, {
+        ...prato,
+        ...configuracaoAvancada
+      });
+      
+      // Dar um tempo para o cálculo processar
+      setTimeout(() => {
+        if (resultados) {
+          handleSalvar(); // Tentar salvar novamente com resultados
+        } else {
+          toast.error('Erro ao calcular resultados. Tente novamente.');
+        }
+      }, 1000);
+      return;
+    }
+
+    console.log('💾 Salvando ficha técnica completa:', { 
+      prato, 
+      configuracaoAvancada, 
+      ingredientes, 
+      resultados 
+    });
+    
+    const dadosCompletos = {
+      ...prato,
+      ...configuracaoAvancada
+    };
+    
+    const sucesso = await salvarFichaTecnica(dadosCompletos);
     if (sucesso) {
       handleLimparTudo();
+      toast.success('🎉 Ficha técnica salva com sucesso!', {
+        description: 'Todos os dados foram sincronizados automaticamente'
+      });
     }
   };
 
@@ -98,8 +181,7 @@ export function FichaTecnicaInteligenteCompleta() {
       rendimento_porcoes: 1,
       observacoes: ''
     });
-    setIngredientes([]);
-    setPrecoDesejado(0);
+    limparFormulario();
   };
 
   // Funções de estilo
@@ -121,10 +203,25 @@ export function FichaTecnicaInteligenteCompleta() {
     }
   };
 
+  // Validar se todos os campos obrigatórios estão preenchidos
   const isFormularioValido = () => {
-    return prato.nome_prato.trim() && 
-           ingredientes.length > 0 && 
-           ingredientes.every(ing => ing.insumo_id && ing.quantidade_bruta > 0);
+    const pratoValido = prato.nome_prato?.trim() && prato.categoria && prato.rendimento_porcoes > 0;
+    const ingredientesValidos = ingredientes.length > 0 && 
+      ingredientes.every(ing => 
+        ing.insumo_id && 
+        ing.nome_insumo && 
+        ing.quantidade_bruta > 0 &&
+        ing.preco_unitario > 0
+      );
+    
+    console.log('🔍 Validação formulário:', { 
+      pratoValido, 
+      ingredientesValidos, 
+      ingredientesCount: ingredientes.length,
+      resultados: !!resultados 
+    });
+    
+    return pratoValido && ingredientesValidos;
   };
 
   return (
@@ -137,6 +234,28 @@ export function FichaTecnicaInteligenteCompleta() {
         <p className="text-gray-600 text-sm sm:text-base">
           Calcule automaticamente CMV, lucro e preço ideal
         </p>
+        
+        {/* Botões de Ação Sempre Visíveis */}
+        <div className="flex justify-center gap-3 mt-4">
+          <Button 
+            variant="outline" 
+            onClick={handleLimparTudo}
+            size="sm"
+            className="min-w-[100px]"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Limpar
+          </Button>
+            <Button 
+              onClick={handleSalvar}
+              disabled={!isFormularioValido() || isCalculating}
+              className="bg-green-600 hover:bg-green-700 min-w-[120px]"
+              size="sm"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {isCalculating ? 'Calculando...' : 'Salvar Ficha'}
+            </Button>
+        </div>
       </div>
 
       <MobileScrollContainer maxHeight="85vh">
@@ -202,6 +321,122 @@ export function FichaTecnicaInteligenteCompleta() {
                   helpText="Se informar, calculamos se vale a pena cobrar esse preço"
                 />
               </div>
+
+              {/* Seção de Configurações Avançadas - SEMPRE VISÍVEL */}
+              <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg text-purple-800 flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    🎯 Configurações de Precificação
+                  </CardTitle>
+                  <p className="text-sm text-purple-600">
+                    Configure suas metas e parâmetros para precificação inteligente
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <MobileFriendlyInput
+                        label="🎯 Meta de Lucro (%)"
+                        value={configuracaoAvancada.meta_lucro_percentual}
+                        onChange={(value) => atualizarConfiguracao('meta_lucro_percentual', Number(value))}
+                        type="number"
+                        placeholder="30"
+                        helpText="Margem de lucro desejada"
+                      />
+                    </div>
+                    
+                    <div>
+                      <MobileFriendlyInput
+                        label="🏢 Despesas Fixas/Mês (R$)"
+                        value={configuracaoAvancada.despesas_fixas_mensais}
+                        onChange={(value) => atualizarConfiguracao('despesas_fixas_mensais', Number(value))}
+                        type="number"
+                        placeholder="5000"
+                        helpText="Aluguel, salários, etc."
+                      />
+                    </div>
+                    
+                    <div>
+                      <MobileFriendlyInput
+                        label="📊 Despesas Variáveis (%)"
+                        value={configuracaoAvancada.despesas_variaveis_mensais}
+                        onChange={(value) => atualizarConfiguracao('despesas_variaveis_mensais', Number(value))}
+                        type="number"
+                        placeholder="10"
+                        helpText="% sobre custo dos ingredientes"
+                      />
+                    </div>
+                    
+                    <div>
+                      <MobileFriendlyInput
+                        label="🔢 Markup Personalizado (%)"
+                        value={configuracaoAvancada.markup_personalizado}
+                        onChange={(value) => atualizarConfiguracao('markup_personalizado', Number(value))}
+                        type="number"
+                        placeholder="250"
+                        helpText="Multiplicador para preço sugerido"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-purple-700">
+                        🚀 Canal de Venda
+                      </Label>
+                      <Select 
+                        value={configuracaoAvancada.canal_venda} 
+                        onValueChange={(value) => atualizarConfiguracao('canal_venda', value)}
+                      >
+                        <SelectTrigger className="mt-1 h-12 bg-white">
+                          <SelectValue placeholder="Selecione o canal" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="balcao">🍽️ Balcão/Presencial</SelectItem>
+                          <SelectItem value="ifood">🛵 iFood (15% taxa)</SelectItem>
+                          <SelectItem value="uber_eats">🚗 Uber Eats (12% taxa)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-purple-600 mt-1">
+                        Taxas são consideradas no cálculo
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <MobileFriendlyInput
+                        label="🏆 Preço Concorrente (R$)"
+                        value={configuracaoAvancada.preco_concorrente || ''}
+                        onChange={(value) => atualizarConfiguracao('preco_concorrente', Number(value))}
+                        type="number"
+                        placeholder="20.00"
+                        helpText="Preço da concorrência para comparação"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Preview em tempo real */}
+                  {resultados && (
+                    <div className="mt-4 p-3 bg-white rounded-lg border border-purple-200">
+                      <h4 className="font-medium text-purple-800 mb-2">📊 Preview dos Resultados:</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-gray-600">Preço Sugerido:</span>
+                          <span className="font-bold text-green-600 ml-2">
+                            R$ {resultados.preco_sugerido.toFixed(2)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Margem Líquida:</span>
+                          <span className={`font-bold ml-2 ${resultados.margem_liquida >= configuracaoAvancada.meta_lucro_percentual ? 'text-green-600' : 'text-red-600'}`}>
+                            {resultados.margem_liquida.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Campos Avançados (Colapsáveis) */}
               <div>
@@ -299,9 +534,13 @@ export function FichaTecnicaInteligenteCompleta() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <div>
                           <MobileFriendlyInput
-                            label={`Quantidade (${ingrediente.unidade_medida})`}
+                            label={`Quantidade (${ingrediente.unidade_medida || 'g'})`}
                             value={ingrediente.quantidade_bruta || ''}
-                            onChange={(value) => handleAtualizarIngrediente(ingrediente.id, 'quantidade_bruta', Number(value))}
+                            onChange={(value) => {
+                              const novaQuantidade = Number(value);
+                              console.log('📊 Atualizando quantidade:', novaQuantidade);
+                              handleAtualizarIngrediente(ingrediente.id, 'quantidade_bruta', novaQuantidade);
+                            }}
                             type="number"
                             placeholder="0"
                           />
@@ -424,7 +663,7 @@ export function FichaTecnicaInteligenteCompleta() {
             </Card>
           )}
 
-          {/* Botões de Ação - Mobile friendly */}
+          {/* Botões de Ação - Sempre Visíveis e Funcionais */}
           <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4">
             <Button 
               variant="outline" 

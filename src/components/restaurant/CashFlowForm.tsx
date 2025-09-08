@@ -8,8 +8,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { getCashFlowEntries, saveCashFlowEntries } from "@/services/FinancialStorageService";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useFinancialCategories } from "@/hooks/useFinancialCategories";
 import type { CashFlowEntry } from "./CashFlowOverview";
+
+// Hook para escutar atualizações de categorias
+function useCategoriesRefresh(reloadFn: () => void) {
+  useEffect(() => {
+    const handleCategoriesUpdate = () => {
+      reloadFn();
+    };
+    
+    window.addEventListener('categoriesUpdated', handleCategoriesUpdate);
+    return () => window.removeEventListener('categoriesUpdated', handleCategoriesUpdate);
+  }, [reloadFn]);
+}
 
 interface CashFlowFormProps {
   onEntryAdded: () => void;
@@ -18,6 +32,8 @@ interface CashFlowFormProps {
 }
 
 export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: CashFlowFormProps) {
+  const { currentRestaurant } = useAuth();
+  const { getIncomeCategories, getExpenseCategories, reloadCategories } = useFinancialCategories();
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: "",
@@ -34,69 +50,24 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
 
   useEffect(() => {
     if (editingEntry) {
+      console.log('Configurando formulário para edição:', editingEntry);
+      
+      // Garantir que a data esteja no formato correto para o input
+      const dateForInput = editingEntry.date ? editingEntry.date.split('T')[0] : new Date().toISOString().split('T')[0];
+        
       setFormData({
-        date: editingEntry.date,
-        description: editingEntry.description,
-        category: editingEntry.category,
-        amount: editingEntry.amount,
-        type: editingEntry.type,
-        status: editingEntry.status,
+        date: dateForInput,
+        description: editingEntry.description || "",
+        category: editingEntry.category || "",
+        amount: editingEntry.amount || 0,
+        type: editingEntry.type || "income",
+        status: editingEntry.status || "completed",
         paymentMethod: editingEntry.paymentMethod || "cash",
         recurring: false,
         notes: editingEntry.notes || ""
       });
-    }
-  }, [editingEntry]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.description.trim() || formData.amount <= 0 || !formData.category) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-
-    console.log('Tentando salvar entrada:', formData);
-    setIsSubmitting(true);
-
-    try {
-      const existingEntries = await getCashFlowEntries();
-      
-      const newEntry: CashFlowEntry = {
-        id: editingEntry?.id || Date.now().toString(),
-        date: formData.date,
-        description: formData.description,
-        category: formData.category,
-        amount: formData.amount,
-        type: formData.type,
-        status: formData.status,
-        paymentMethod: formData.paymentMethod,
-        notes: formData.notes
-      };
-
-      console.log('Entrada a ser salva:', newEntry);
-
-      let updatedEntries;
-      if (editingEntry) {
-        // Editando entrada existente
-        updatedEntries = existingEntries.map(entry => 
-          entry.id === editingEntry.id ? newEntry : entry
-        );
-        console.log('Editando entrada existente');
-      } else {
-        // Adicionando nova entrada
-        updatedEntries = [newEntry, ...existingEntries];
-        console.log('Adicionando nova entrada');
-      }
-
-      await saveCashFlowEntries(updatedEntries);
-      console.log('Entradas salvas para o usuário atual:', updatedEntries);
-
-      // Disparar evento de atualização
-      window.dispatchEvent(new CustomEvent('cashFlowUpdated', { detail: updatedEntries }));
-      window.dispatchEvent(new CustomEvent('dataSync'));
-
-      // Reset form
+    } else {
+      // Reset form quando não está editando
       setFormData({
         date: new Date().toISOString().split('T')[0],
         description: "",
@@ -108,8 +79,90 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
         recurring: false,
         notes: ""
       });
+    }
+  }, [editingEntry]);
 
-      toast.success(editingEntry ? "Transação editada com sucesso!" : "Transação adicionada com sucesso!");
+  // Escutar atualizações de categorias
+  useCategoriesRefresh(reloadCategories);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.description.trim() || formData.amount <= 0 || !formData.category) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (!currentRestaurant?.id) {
+      toast.error("Restaurante não selecionado");
+      return;
+    }
+
+    console.log('Tentando salvar entrada:', formData);
+    setIsSubmitting(true);
+
+    try {
+      // Buscar dados da categoria para determinar impacto CMV/DRE
+      const { data: categoryData } = await supabase
+        .from('categorias_financeiras')
+        .select('impacta_cmv, impacta_dre')
+        .eq('restaurant_id', currentRestaurant.id)
+        .eq('nome', formData.category)
+        .single();
+
+      const entryData = {
+        restaurant_id: currentRestaurant.id,
+        type: formData.type,
+        amount: formData.amount,
+        date: formData.date,
+        description: formData.description,
+        category: formData.category,
+        status: formData.status === 'completed' ? 'paid' : formData.status,
+        payment_method: formData.paymentMethod,
+        documento: formData.notes || null,
+        impacta_cmv: categoryData?.impacta_cmv || false,
+        impacta_dre: categoryData?.impacta_dre || true
+      };
+
+      console.log('Dados que serão salvos no Supabase:', entryData);
+
+      if (editingEntry) {
+        // Editando entrada existente
+        const { error } = await supabase
+          .from('cash_flow')
+          .update(entryData)
+          .eq('id', editingEntry.id);
+
+        if (error) throw error;
+        
+        console.log('Entrada editada com sucesso');
+        toast.success("Transação editada com sucesso!");
+      } else {
+        // Adicionando nova entrada
+        const { error } = await supabase
+          .from('cash_flow')
+          .insert(entryData);
+
+        if (error) throw error;
+
+        console.log('Nova entrada adicionada com sucesso');
+        toast.success("Transação adicionada com sucesso!");
+      }
+
+      // Reset form apenas quando não está editando
+      if (!editingEntry) {
+        setFormData({
+          date: new Date().toISOString().split('T')[0],
+          description: "",
+          category: "",
+          amount: 0,
+          type: "income",
+          status: "completed",
+          paymentMethod: "cash",
+          recurring: false,
+          notes: ""
+        });
+      }
       
       if (editingEntry && onEditComplete) {
         onEditComplete();
@@ -118,31 +171,21 @@ export function CashFlowForm({ onEntryAdded, onEditComplete, editingEntry }: Cas
       }
     } catch (error) {
       console.error('Erro ao salvar entrada:', error);
-      toast.error("Erro ao salvar transação");
+      toast.error("Erro ao salvar transação: " + (error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const incomeCategories = [
-    { value: "sales", label: "Vendas" },
-    { value: "food", label: "Alimentação" },
-    { value: "beverage", label: "Bebidas" },
-    { value: "delivery", label: "Delivery" },
-    { value: "other_income", label: "Outras Receitas" }
-  ];
+  const incomeCategories = getIncomeCategories().map(cat => ({ 
+    value: cat.nome, 
+    label: cat.nome 
+  }));
 
-  const expenseCategories = [
-    { value: "food_supplies", label: "Insumos Alimentares" },
-    { value: "beverage_supplies", label: "Insumos Bebidas" },
-    { value: "supplies", label: "Suprimentos" },
-    { value: "rent", label: "Aluguel" },
-    { value: "utilities", label: "Utilidades" },
-    { value: "salaries", label: "Salários" },
-    { value: "marketing", label: "Marketing" },
-    { value: "maintenance", label: "Manutenção" },
-    { value: "other_expense", label: "Outras Despesas" }
-  ];
+  const expenseCategories = getExpenseCategories().map(cat => ({ 
+    value: cat.nome, 
+    label: cat.nome 
+  }));
 
   const paymentMethods = [
     { value: "cash", label: "Dinheiro" },

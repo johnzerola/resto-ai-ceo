@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/services/AuthService";
 import { Navigate, useLocation } from "react-router-dom";
 import { ReactNode } from "react";
+import { ProtectedOnboardingRoute } from "./ProtectedOnboardingRoute";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -18,14 +19,7 @@ export function ProtectedRoute({
   const { isAuthenticated, isLoading, userRole, user, needsOnboarding } = useAuth();
   const location = useLocation();
 
-  console.log('ProtectedRoute - Estado:', {
-    isAuthenticated,
-    isLoading,
-    needsOnboarding,
-    pathname: location.pathname,
-    userRole: userRole || 'undefined',
-    userId: user?.id
-  });
+  // Estado monitorado via context
 
   // Mostrar loading enquanto verifica autenticação
   if (isLoading) {
@@ -38,13 +32,14 @@ export function ProtectedRoute({
 
   // Se requer autenticação e não está autenticado, redirecionar para login
   if (requireAuth && !isAuthenticated) {
-    console.log('ProtectedRoute: Redirecionando para login - usuário não autenticado');
+    // Redirecionamento automático para login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Se está autenticado mas precisa de onboarding e não está na página de onboarding
-  if (isAuthenticated && needsOnboarding && location.pathname !== '/onboarding') {
-    console.log('ProtectedRoute: Redirecionando para onboarding - usuário precisa configurar restaurante');
+  // Adicionar verificação extra para prevenir loops
+  if (isAuthenticated && needsOnboarding && location.pathname !== '/onboarding' && location.pathname !== '/dashboard') {
+    // Redirecionamento para onboarding obrigatório apenas se não estiver tentando acessar dashboard
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -63,11 +58,15 @@ export function ProtectedRoute({
     };
 
     if (!hasPermission()) {
-      console.log('ProtectedRoute: Acesso negado - permissões insuficientes');
+      // Acesso negado por permissões insuficientes
       return <Navigate to="/access-denied" replace />;
     }
   }
 
-  // Se passou por todas as verificações, renderizar o componente
-  return <>{children}</>;
+  // Se passou por todas as verificações, usar o ProtectedOnboardingRoute
+  return (
+    <ProtectedOnboardingRoute requireOnboardingComplete={true}>
+      {children}
+    </ProtectedOnboardingRoute>
+  );
 }

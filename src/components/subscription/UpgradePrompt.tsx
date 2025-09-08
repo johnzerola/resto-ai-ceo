@@ -23,17 +23,17 @@ export function UpgradePrompt({
   const { planType } = useSubscriptionPlan();
 
   const planFeatures = {
-    [PlanType.ESSENCIAL]: [
+    [PlanType.BASICO]: [
       'Gestão de Estoque',
       'Relatórios Avançados',
       'Análise Financeira',
       'Até 2 restaurantes'
     ],
     [PlanType.PROFISSIONAL]: [
-      'Tudo do Essencial',
+      'Tudo do Básico',
       'Assistente IA Completo',
       'Simulador de Cenários',
-      'Até 5 restaurantes',
+      'Restaurantes ilimitados',
       'Suporte prioritário'
     ]
   };
@@ -44,8 +44,8 @@ export function UpgradePrompt({
   };
 
   const getPlanPrice = (plan: PlanType) => {
-    if (plan === PlanType.PROFISSIONAL) return 'R$ 199/mês';
-    return 'R$ 99/mês';
+    if (plan === PlanType.PROFISSIONAL) return 'R$ 78,90/mês';
+    return 'R$ 29,90/mês';
   };
 
   if (compact) {

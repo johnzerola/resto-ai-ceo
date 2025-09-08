@@ -1,5 +1,6 @@
 
 import { FinancialData, CMVCategory } from "@/types/financial-data";
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Criar dados financeiros vazios
@@ -146,3 +147,64 @@ export function formatPercentage(value: number): string {
     maximumFractionDigits: 1
   }).format(value / 100);
 }
+
+export const createDefaultFinancialCategories = async (restaurantId: string) => {
+  try {
+    // Verificar se já existem categorias para este restaurante
+    const { data: existingCategories, error: checkError } = await supabase
+      .from('categorias_financeiras')
+      .select('id')
+      .eq('restaurant_id', restaurantId)
+      .limit(1);
+
+    if (checkError) throw checkError;
+
+    // Se já existem categorias, não criar novamente
+    if (existingCategories && existingCategories.length > 0) {
+      return;
+    }
+
+    // Categorias padrão
+    const categoriasPadrao = [
+      // Categorias de despesa que impactam CMV
+      { nome: 'Ingredientes', tipo: 'despesa', impacta_cmv: true, impacta_dre: true, cor: '#ef4444', icone: 'utensils' },
+      { nome: 'Alimentos', tipo: 'despesa', impacta_cmv: true, impacta_dre: true, cor: '#f97316', icone: 'apple' },
+      { nome: 'Bebidas', tipo: 'despesa', impacta_cmv: true, impacta_dre: true, cor: '#3b82f6', icone: 'coffee' },
+      { nome: 'Insumos', tipo: 'despesa', impacta_cmv: true, impacta_dre: true, cor: '#8b5cf6', icone: 'package' },
+      { nome: 'Embalagens', tipo: 'despesa', impacta_cmv: true, impacta_dre: true, cor: '#06b6d4', icone: 'box' },
+      
+      // Categorias de despesa operacional (não impactam CMV)
+      { nome: 'Aluguel', tipo: 'despesa', impacta_cmv: false, impacta_dre: true, cor: '#64748b', icone: 'home' },
+      { nome: 'Funcionários', tipo: 'despesa', impacta_cmv: false, impacta_dre: true, cor: '#10b981', icone: 'users' },
+      { nome: 'Marketing', tipo: 'despesa', impacta_cmv: false, impacta_dre: true, cor: '#f59e0b', icone: 'megaphone' },
+      { nome: 'Delivery', tipo: 'despesa', impacta_cmv: false, impacta_dre: true, cor: '#84cc16', icone: 'truck' },
+      { nome: 'Equipamentos', tipo: 'despesa', impacta_cmv: false, impacta_dre: true, cor: '#6366f1', icone: 'settings' },
+      { nome: 'Impostos', tipo: 'despesa', impacta_cmv: false, impacta_dre: true, cor: '#dc2626', icone: 'file-text' },
+      { nome: 'Manutenção', tipo: 'despesa', impacta_cmv: false, impacta_dre: true, cor: '#7c3aed', icone: 'wrench' },
+      
+      // Categorias de receita
+      { nome: 'Vendas Balcão', tipo: 'receita', impacta_cmv: false, impacta_dre: true, cor: '#22c55e', icone: 'store' },
+      { nome: 'Vendas Delivery', tipo: 'receita', impacta_cmv: false, impacta_dre: true, cor: '#3b82f6', icone: 'bike' },
+      { nome: 'Vendas iFood', tipo: 'receita', impacta_cmv: false, impacta_dre: true, cor: '#f59e0b', icone: 'smartphone' },
+      { nome: 'Vendas Uber Eats', tipo: 'receita', impacta_cmv: false, impacta_dre: true, cor: '#000000', icone: 'car' },
+      { nome: 'Outras Receitas', tipo: 'receita', impacta_cmv: false, impacta_dre: true, cor: '#8b5cf6', icone: 'plus-circle' }
+    ];
+
+    const { error } = await supabase
+      .from('categorias_financeiras')
+      .insert(
+        categoriasPadrao.map(cat => ({
+          restaurant_id: restaurantId,
+          ...cat,
+          ativa: true
+        }))
+      );
+
+    if (error) throw error;
+    
+    console.log('Categorias financeiras padrão criadas para o restaurante:', restaurantId);
+  } catch (error) {
+    console.error('Erro ao criar categorias financeiras padrão:', error);
+    throw error;
+  }
+};

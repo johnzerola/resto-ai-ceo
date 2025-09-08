@@ -1,46 +1,147 @@
-
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://restaurante-gestao.lovable.app/</loc>
-    <lastmod>2024-12-29</lastmod>
+    <loc>https://lucrai.com/</loc>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://restaurante-gestao.lovable.app/dashboard</loc>
-    <lastmod>2024-12-29</lastmod>
-    <changefreq>daily</changefreq>
+    <loc>https://lucrai.com/blog</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://restaurante-gestao.lovable.app/fluxo-caixa</loc>
-    <lastmod>2024-12-29</lastmod>
-    <changefreq>daily</changefreq>
+    <loc>https://lucrai.com/blog/como-precificar-pratos-restaurante</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/blog/como-calcular-cmv-restaurante</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/blog/como-aumentar-lucro-restaurante</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/blog/restaurante-dando-prejuizo</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/blog/controle-financeiro-restaurante</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://restaurante-gestao.lovable.app/dre</loc>
-    <lastmod>2024-12-29</lastmod>
+    <loc>https://lucrai.com/blog/dre-restaurante</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/blog/gestao-restaurante</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/blog/planilha-controle-estoque</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/blog/software-gestao-restaurante</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/blog/margem-lucro-restaurante</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/calculadora-cmv</loc>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://restaurante-gestao.lovable.app/contas</loc>
-    <lastmod>2024-12-29</lastmod>
+    <loc>https://lucrai.com/guia-completo-precificacao</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/cardapio</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/ficha-tecnica</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/estoque</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/financeiro</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/dashboard</loc>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://restaurante-gestao.lovable.app/precificacao</loc>
-    <lastmod>2024-12-29</lastmod>
+    <loc>https://lucrai.com/simulador</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/metas</loc>
+    <lastmod>2025-07-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://restaurante-gestao.lovable.app/auditoria</loc>
-    <lastmod>2024-12-29</lastmod>
-    <changefreq>weekly</changefreq>
+    <loc>https://lucrai.com/configuracoes</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/login</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://lucrai.com/register</loc>
+    <lastmod>2025-07-30</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>

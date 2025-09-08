@@ -60,13 +60,6 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## SEO features
-
-The application includes basic search engine optimization setup. Pages can
-customize their title, description and canonical URL using the `SEO` component
-located at `src/components/SEO.tsx`. A `robots.txt` and `sitemap.xml` are also
-provided in the `public` folder.
-
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/0005761a-44b8-44a3-8399-ec161dcc8416) and click on Share -> Publish.

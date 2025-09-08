@@ -53,30 +53,46 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
 
   // Load inventory data
   useEffect(() => {
+    loadInventoryData();
+  }, []);
+
+  const loadInventoryData = () => {
     const savedInventory = localStorage.getItem("inventoryItems");
     if (savedInventory) {
       try {
         const parsedInventory = JSON.parse(savedInventory);
-        setInventory(parsedInventory);
+        const processedInventory = parsedInventory.map((item: any) => ({
+          ...item,
+          costPerUnit: Number(item.costPerUnit) || Number(item.cost) || 0,
+          quantity: Number(item.quantity) || 0,
+          minStockLevel: Number(item.minStockLevel) || Number(item.minStock) || 0,
+          totalCost: (Number(item.quantity) || 0) * (Number(item.costPerUnit) || Number(item.cost) || 0)
+        }));
         
-        // Calculate low stock items
-        const lowStock = parsedInventory.filter(
-          (item: InventoryItem) => item.quantity <= item.minStockLevel
-        );
-        setLowStockItems(lowStock);
-        
-        // Calculate total inventory cost
-        const totalCost = parsedInventory.reduce(
-          (sum: number, item: InventoryItem) => sum + (item.totalCost || item.quantity * item.costPerUnit),
-          0
-        );
-        setTotalInventoryCost(totalCost);
+        setInventory(processedInventory);
+        updateLowStockItems(processedInventory);
+        updateTotalCost(processedInventory);
       } catch (error) {
         console.error("Error parsing inventory:", error);
         setInventory([]);
       }
     }
-  }, []);
+  };
+
+  const updateLowStockItems = (inventoryData: InventoryItem[]) => {
+    const lowStock = inventoryData.filter(
+      (item: InventoryItem) => item.quantity <= item.minStockLevel
+    );
+    setLowStockItems(lowStock);
+  };
+
+  const updateTotalCost = (inventoryData: InventoryItem[]) => {
+    const totalCost = inventoryData.reduce(
+      (sum: number, item: InventoryItem) => sum + item.totalCost,
+      0
+    );
+    setTotalInventoryCost(totalCost);
+  };
 
   // Filter inventory based on search
   const filteredInventory = inventory.filter((item) =>
@@ -104,18 +120,9 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
     setInventory(updatedInventory);
     localStorage.setItem("inventoryItems", JSON.stringify(updatedInventory));
     
-    // Update low stock items
-    const lowStock = updatedInventory.filter(
-      (item: InventoryItem) => item.quantity <= item.minStockLevel
-    );
-    setLowStockItems(lowStock);
-    
-    // Update total inventory cost
-    const totalCost = updatedInventory.reduce(
-      (sum: number, item: InventoryItem) => sum + (item.totalCost || item.quantity * item.costPerUnit),
-      0
-    );
-    setTotalInventoryCost(totalCost);
+    // Update low stock items and total cost
+    updateLowStockItems(updatedInventory);
+    updateTotalCost(updatedInventory);
     
     toast.success("Estoque atualizado com sucesso!");
   };
@@ -127,18 +134,9 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
       setInventory(updatedInventory);
       localStorage.setItem("inventoryItems", JSON.stringify(updatedInventory));
       
-      // Update low stock items
-      const lowStock = updatedInventory.filter(
-        (item: InventoryItem) => item.quantity <= item.minStockLevel
-      );
-      setLowStockItems(lowStock);
-      
-      // Update total inventory cost
-      const totalCost = updatedInventory.reduce(
-        (sum: number, item: InventoryItem) => sum + (item.totalCost || item.quantity * item.costPerUnit),
-        0
-      );
-      setTotalInventoryCost(totalCost);
+      // Update low stock items and total cost
+      updateLowStockItems(updatedInventory);
+      updateTotalCost(updatedInventory);
       
       toast.success("Item excluído com sucesso!");
     }
@@ -146,6 +144,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
 
   // Format currency
   const formatCurrency = (value: number) => {
+    if (isNaN(value) || value === null || value === undefined) return "R$ 0,00";
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
@@ -296,7 +295,7 @@ export function InventoryOverview({ onEdit }: InventoryOverviewProps) {
                       </div>
                     </TableCell>
                     <TableCell>{formatCurrency(item.costPerUnit)}</TableCell>
-                    <TableCell>{formatCurrency(item.totalCost || item.quantity * item.costPerUnit)}</TableCell>
+                    <TableCell>{formatCurrency(item.totalCost)}</TableCell>
                     <TableCell>{formatDate(item.lastUpdated)}</TableCell>
                     <TableCell className="text-right space-x-1">
                       <Button
